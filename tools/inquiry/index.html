@@ -15,6 +15,12 @@
     · 다중 월 from-to 동시 안내 + 안내문도 월별 그룹화
     · 호텔 매핑 모달 → 풀 설정 모달로 진화
     · 별장 카테고리 정리(아소 야마나미 풀로 흡수)
+  - v1.2 변경:
+    · 스가다이라 그린CC 분리(온천호텔 / 맨션형)
+      맨션형 트윈 = 엑셀 잔여수 기반 (단일 룸이라 capacity 불필요)
+    · 미야자키 시내 호텔(메인) capacity 20 적용
+    · 재고 현황 탭 추가 (블록·사용·잔여 한눈에)
+    · 업로드 칸 단일화 (블록조회 엑셀 하나로)
   ============================================================
 -->
 <!-- SheetJS 라이브러리: 회사망 차단 회피를 위해 3개 CDN 순차 시도 -->
@@ -56,6 +62,8 @@
     --paper: #FFFFFF;
     --gold: #B8935A;
     --gold-2: #C9A876;
+    --accent: #2563EB;
+    --accent-2: #3B82F6;
     --wine: #8B3A2F;
     --green: #34D399;
     --green-d: #065F46;
@@ -587,6 +595,139 @@
     color: var(--paper);
   }
 
+  /* 뷰 탭 (출발 가능 일정 / 재고 현황) */
+  .view-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 4px 0 18px;
+    border-bottom: 2px solid var(--gray-2);
+  }
+  .view-tab {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+    font-family: inherit;
+  }
+  .view-tab:hover { color: var(--gray-4); }
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* 재고 현황 툴바 */
+  .stock-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .stock-toggle {
+    font-size: 13px;
+    color: var(--gray-4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .stock-search {
+    flex: 1;
+    min-width: 160px;
+    max-width: 280px;
+    padding: 7px 12px;
+    border: 1px solid var(--gray-2);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .stock-search:focus { outline: none; border-color: var(--accent); }
+  .stock-legend { display: flex; gap: 12px; margin-left: auto; }
+  .sl-item { font-size: 12px; color: var(--gray-4); display: flex; align-items: center; gap: 5px; }
+  .sl-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  /* 재고 카드 */
+  .stock-card {
+    border: 1px solid var(--gray-2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .stock-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--gray-1);
+    border-bottom: 1px solid var(--gray-2);
+    border-left: 3px solid var(--accent);
+  }
+  .stock-card-head .sc-name { font-weight: 700; font-size: 15px; color: var(--navy); }
+  .stock-card-head .sc-region { font-size: 11px; color: var(--gray-3); margin-left: 8px; }
+  .stock-card-head .sc-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--navy);
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--gray-2);
+  }
+  .stock-card-head .sc-meta.cap { background: #DBEAFE; color: #0C447C; border-color: #B5D4F4; }
+
+  /* 일자 행 (단일 풀) */
+  .stock-row {
+    display: grid;
+    grid-template-columns: 92px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--gray-1);
+    font-size: 13px;
+  }
+  .stock-row:last-child { border-bottom: none; }
+  .stock-row .sr-date { font-weight: 600; color: var(--navy); }
+  .stock-row .sr-date .dow { font-size: 11px; color: var(--gray-3); margin-left: 3px; }
+  .stock-row .sr-nums { font-family: 'JetBrains Mono', monospace; color: var(--gray-4); font-size: 12px; }
+  .stock-row .sr-nums b { color: var(--navy); font-weight: 600; }
+  .stock-row .sr-nums .rem { font-size: 14px; font-weight: 700; }
+  .stock-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .stock-status.ok { background: #EAF3DE; color: #3B6D11; }
+  .stock-status.warn { background: #FAEEDA; color: #854F0B; }
+  .stock-status.full { background: #FCEBEB; color: #A32D2D; }
+  .stock-row.is-full { background: #fffafa; }
+
+  /* 통합 풀 룸별 배지 */
+  .stock-row.integrated { grid-template-columns: 92px 1fr auto; }
+  .room-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+  .room-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--gray-1);
+    border: 1px solid var(--gray-2);
+    color: var(--gray-4);
+    white-space: nowrap;
+  }
+  .room-badge b { color: var(--navy); }
+  .room-badge.neg { background: #FCEBEB; border-color: #F7C1C1; color: #A32D2D; }
+  .room-badge.neg b { color: #A32D2D; }
+  .room-badge.low { background: #FAEEDA; border-color: #FAC775; color: #854F0B; }
+  .room-badge.low b { color: #854F0B; }
+
+  .stock-empty { padding: 20px 16px; text-align: center; color: var(--gray-3); font-size: 13px; }
+
   /* 안내문 */
   .msg-tabs {
     display: flex;
@@ -903,6 +1044,7 @@
 </head>
 <body>
 
+
 <div class="container">
 
   <!-- 헤더 -->
@@ -927,7 +1069,7 @@
       <span style="font-size:12px;color:var(--gray-4);">Mclick에서 다운로드한 엑셀 업로드</span>
     </div>
     <div class="card-body">
-      <div class="input-row">
+      <div class="input-row" style="grid-template-columns:1fr;">
         <div>
           <div class="dropzone" id="dzBlock" data-kind="block">
             <div class="dz-icon">📊</div>
@@ -935,16 +1077,8 @@
             <div class="dz-sub">호텔 → 블록/요금관리에서 엑셀 다운로드 (여러 월 한 번에 가능)<br>드래그하거나 클릭하여 업로드 (다중 파일 지원)</div>
           </div>
         </div>
-        <div>
-          <div class="dropzone" id="dzReserve" data-kind="reserve">
-            <div class="dz-icon">📅</div>
-            <div class="dz-title">월별 호텔 수배현황 <span style="color:var(--gray-3);">(옵션·검산용)</span></div>
-            <div class="dz-sub">호텔 → 호텔별 예약현황에서 월별 엑셀 다운로드<br>여러 월 한 번에 올리기 가능</div>
-          </div>
-        </div>
       </div>
       <input type="file" id="fileBlock" accept=".xlsx,.xls" multiple style="display:none">
-      <input type="file" id="fileReserve" accept=".xlsx,.xls" multiple style="display:none">
 
       <div class="summary-grid" id="summaryGrid" style="display:none;">
         <div class="summary-cell"><div class="label">활성 풀</div><div class="value" id="sumPools">—<span class="unit">개</span></div></div>
@@ -991,7 +1125,7 @@
             <select id="selMonthTo"></select>
           </div>
         </div>
-        <div class="ctl-group">
+        <div class="ctl-group" id="ctlMinStock">
           <label>최소 잔여 기준</label>
           <select id="selMinStock">
             <option value="1">1실 이상 (마감만 제외)</option>
@@ -1003,20 +1137,42 @@
         </div>
       </div>
 
-      <div class="legend">
-        <span class="legend-item"><span class="legend-sw" style="background:#f0fdf4;border-color:var(--green);"></span>잔여 여유</span>
-        <span class="legend-item"><span class="legend-sw" style="background:#fffbeb;border-color:var(--orange);"></span>잔여 임박 (1~2실)</span>
-        <span class="legend-item"><span class="legend-sw" style="background:#fef2f2;border-color:var(--red);"></span>마감</span>
-        <span class="legend-item" style="margin-left:auto;color:var(--gray-3);">출발일~귀국일 중 최소 잔여 기준</span>
+      <div class="view-tabs">
+        <button class="view-tab active" data-view="departure">🛫 출발 가능 일정</button>
+        <button class="view-tab" data-view="stock">📦 재고 현황</button>
       </div>
 
-      <div id="depMatrix">
-        <div class="empty-state">풀과 기간을 선택하면 출발 가능 일정이 자동 표시됩니다.</div>
+      <div id="viewDeparture">
+        <div class="legend">
+          <span class="legend-item"><span class="legend-sw" style="background:#f0fdf4;border-color:var(--green);"></span>잔여 여유</span>
+          <span class="legend-item"><span class="legend-sw" style="background:#fffbeb;border-color:var(--orange);"></span>잔여 임박 (1~2실)</span>
+          <span class="legend-item"><span class="legend-sw" style="background:#fef2f2;border-color:var(--red);"></span>마감</span>
+          <span class="legend-item" style="margin-left:auto;color:var(--gray-3);">출발일~귀국일 중 최소 잔여 기준</span>
+        </div>
+
+        <div id="depMatrix">
+          <div class="empty-state">풀과 기간을 선택하면 출발 가능 일정이 자동 표시됩니다.</div>
+        </div>
+
+        <div class="stock-line" id="stockLine" style="display:none;">
+          <h3>📅 일자별 잔여 (풀 합산 + 멤버별)</h3>
+          <div id="stockLineBody"></div>
+        </div>
       </div>
 
-      <div class="stock-line" id="stockLine" style="display:none;">
-        <h3>📅 일자별 잔여 (풀 합산 + 멤버별)</h3>
-        <div id="stockLineBody"></div>
+      <div id="viewStock" style="display:none;">
+        <div class="stock-toolbar">
+          <label class="stock-toggle"><input type="checkbox" id="chkHideSoldout"> 마감일 숨기기</label>
+          <input type="text" id="stockSearch" placeholder="🔍 호텔·룸 검색" class="stock-search">
+          <span class="stock-legend">
+            <span class="sl-item"><span class="sl-dot" style="background:var(--green);"></span>여유</span>
+            <span class="sl-item"><span class="sl-dot" style="background:var(--orange);"></span>임박</span>
+            <span class="sl-item"><span class="sl-dot" style="background:var(--red);"></span>마감</span>
+          </span>
+        </div>
+        <div id="stockGrid">
+          <div class="empty-state">풀과 기간을 선택하면 호텔별 블록·사용·잔여 현황이 표시됩니다.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1226,13 +1382,15 @@ const DEFAULT_POOLS = [
   {
     id: 'shirosato', label: '시로사토CC', region: '이바라키',
     match: { hotels: ['시로사토CC 골프텔'] },
-    departures: '인천 / 김해',
+    departures: '인천',
+    busanInquiry: true,
     patterns: [{ nights: 6, dow: 0 }]
   },
   {
     id: 'fukuroda', label: '후쿠로다노타키CC', region: '이바라키',
     match: { hotels: ['후쿠로다노타키CC 골프텔'] },
-    departures: '인천 / 김해',
+    departures: '인천',
+    busanInquiry: true,
     patterns: [{ nights: 7, dow: 1 }]
   },
   // ===== 미야자키 =====
@@ -1243,16 +1401,28 @@ const DEFAULT_POOLS = [
     patterns: [{ nights: 5, dow: 0 }]
   },
   {
-    id: 'miyazaki_city', label: '미야자키 시내 호텔', region: '미야자키',
+    id: 'miyazaki_city', label: '미야자키 시내 호텔 (메인)', region: '미야자키',
+    note: '미야자키 2색 골프 메인 숙소 — capacity 20 (잔여 = 20 − 사용수)',
     match: { hotels: ['미야자키 시내 호텔'] },
+    capacity: 20,
     departures: '인천',
-    patterns: [],
-    needsMapping: true
+    patterns: [{ nights: 5, dow: 0 }]
   },
   // ===== 나가노 =====
   {
-    id: 'sugadaira', label: '스가다이라 그린CC', region: '나가노',
+    id: 'sugadaira', label: '스가다이라 그린CC (온천호텔)', region: '나가노',
     match: { hotels: ['스가다이라 고원 온천호텔'] },
+    departures: '인천 (니가타)',
+    patterns: [
+      { nights: 5, dow: 4 },
+      { nights: 7, dow: 2 }, { nights: 7, dow: 4 },
+      { nights: 14, dow: 2 }, { nights: 14, dow: 4 }
+    ]
+  },
+  {
+    id: 'sugadaira_mansion', label: '스가다이라 그린CC (맨션형)', region: '나가노',
+    note: '맨션형 숙소 트윈 — 엑셀 잔여수 기반 (블록은 예약 등록 후 결정)',
+    match: { hotels: ['스가다이라 맨션형 숙소'], rooms: ['트윈'] },
     departures: '인천 (니가타)',
     patterns: [
       { nights: 5, dow: 4 },
@@ -1277,7 +1447,6 @@ const REGION_ORDER = ['구마모토(아소)', '구마모토', '나고야', '벳�
 // ============================================================
 const state = {
   blocks: [],       // [{hotel, room, bed, date, block, used, remain}]
-  reserves: [],     // [{hotel, room, year, month, days:{1:n,...}}]
   pools: null,      // null이면 DEFAULT_POOLS 사용, 배열이면 운영자 커스텀
   selected: {
     poolIds: [],
@@ -1300,7 +1469,6 @@ function loadState() {
         if (legacy) {
           const obj = JSON.parse(legacy);
           if (obj.blocks) state.blocks = obj.blocks;
-          if (obj.reserves) state.reserves = obj.reserves;
           if (obj.pools) state.pools = obj.pools;
           console.log(`[migrate] ${key}에서 데이터를 가져왔습니다`);
           saveState();
@@ -1360,66 +1528,6 @@ async function parseBlockExcel(file) {
       hotel, room, bed, date,
       block: num(r['블록수']), used: num(r['사용수']), remain: num(r['잔여수'])
     });
-  }
-  return out;
-}
-
-async function parseReserveHtmlFile(file) {
-  const text = await readFileAsText(file);
-  const doc = new DOMParser().parseFromString(text, 'text/html');
-  const tables = [...doc.querySelectorAll('table')];
-  if (tables.length === 0) throw new Error('테이블을 찾을 수 없습니다');
-  let table = tables[0], maxCells = 0;
-  for (const t of tables) {
-    const c = t.querySelectorAll('td,th').length;
-    if (c > maxCells) { maxCells = c; table = t; }
-  }
-  const rows = [...table.querySelectorAll('tr')];
-
-  let headerRow = null, dataStart = 0;
-  for (let i = 0; i < Math.min(rows.length, 30); i++) {
-    const cells = [...rows[i].children].map(c => c.textContent.replace(/\s+/g,' ').trim());
-    const hits = cells.filter(c => /^\d{1,2}\s*\([일월화수목금토]\)/.test(c)).length;
-    if (hits >= 5) { headerRow = cells; dataStart = i + 1; break; }
-  }
-  if (!headerRow) {
-    for (let i = 0; i < Math.min(rows.length, 30); i++) {
-      const cells = [...rows[i].children].map(c => c.textContent.replace(/\s+/g,' ').trim());
-      if (cells.some(c => /^호텔명$/.test(c))) { headerRow = cells; dataStart = i + 1; break; }
-    }
-  }
-  if (!headerRow) throw new Error('헤더 행을 찾을 수 없습니다');
-
-  const dayCols = [];
-  let hotelCol = 0, roomCol = 1;
-  headerRow.forEach((h, i) => {
-    const m = /^(\d{1,2})\s*\([일월화수목금토]\)/.exec(h);
-    if (m) dayCols.push({ idx: i, day: parseInt(m[1], 10) });
-    if (/^호텔명$/.test(h)) hotelCol = i;
-    if (/^룸타입$/.test(h)) roomCol = i;
-  });
-
-  let year = null, month = null;
-  const fm = /(20\d{2})[\-\._년 ]?(\d{1,2})/.exec(file.name);
-  if (fm) { year = parseInt(fm[1], 10); month = parseInt(fm[2], 10); }
-
-  const out = [];
-  let lastHotel = '';
-  for (let i = dataStart; i < rows.length; i++) {
-    const cells = [...rows[i].children].map(c => c.textContent.replace(/\s+/g,' ').trim());
-    if (cells.length < 3) continue;
-    const hotelCell = cells[hotelCol] || '';
-    const roomCell  = cells[roomCol] || '';
-    if (hotelCell === '합계' || roomCell === '소계') continue;
-    const hotel = hotelCell || lastHotel;
-    if (hotel) lastHotel = hotel;
-    if (!hotel || !roomCell) continue;
-    const days = {};
-    dayCols.forEach(({ idx, day }) => {
-      const v = cells[idx];
-      if (v && v !== '') { const n = num(v); if (!isNaN(n)) days[day] = n; }
-    });
-    out.push({ hotel, room: roomCell, year, month, days });
   }
   return out;
 }
@@ -1778,6 +1886,7 @@ function renderAll() {
 
   renderDepartures(minStock);
   renderStockLine();
+  renderStockView();
   renderMessage();
 }
 
@@ -1814,8 +1923,23 @@ function renderDepartures(minStock) {
     // 풀 섹션 헤더 메타 정보
     const metaParts = [];
     if (p.region) metaParts.push(`<span class="ps-region">${escHtml(p.region)}</span>`);
-    if (p.capacity != null) metaParts.push(`<span class="ps-cap">CAP ${p.capacity}</span>`);
-    else metaParts.push(`<span style="font-size:11px;">잔여수 기반</span>`);
+    if (p.capacity != null) {
+      metaParts.push(`<span class="ps-cap">CAP ${p.capacity}</span>`);
+    } else {
+      // 단일/합산 풀: 총 블록 수 집계해서 표시
+      const idx = poolIndex[p.id] || {};
+      const blockVals = Object.keys(idx)
+        .filter(dk => months.includes(dk.slice(0,7)))
+        .map(dk => idx[dk].blockSum);
+      const uniq = [...new Set(blockVals)].filter(v => v > 0);
+      if (uniq.length === 1) {
+        metaParts.push(`<span class="ps-cap" style="background:var(--gray-1);color:var(--navy);border:1px solid var(--gray-2);">총 블록 ${uniq[0]}</span>`);
+      } else if (uniq.length > 1) {
+        metaParts.push(`<span class="ps-cap" style="background:var(--gray-1);color:var(--navy);border:1px solid var(--gray-2);">블록 ${Math.min(...uniq)}~${Math.max(...uniq)}</span>`);
+      } else {
+        metaParts.push(`<span style="font-size:11px;">잔여수 기반</span>`);
+      }
+    }
     if (p.departures) metaParts.push(`<span style="font-size:11px;">✈ ${escHtml(p.departures)}</span>`);
 
     let bodyHtml;
@@ -1897,8 +2021,26 @@ function renderStockLine() {
     if (memberKeys.size === 0) continue;
     const members = [...memberKeys].sort();
 
+    // 총 블록 정보 계산 (헤더 표시용)
+    let capInfo = '';
+    if (p.capacity != null) {
+      capInfo = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:#DBEAFE;color:#0C447C;padding:2px 9px;border-radius:6px;margin-left:8px;">CAP ${p.capacity}</span>`;
+    } else {
+      // 단일/합산 풀: 블록수 집계 (날짜별 blockSum의 대표값)
+      const idx = poolIndex[p.id] || {};
+      const blockVals = Object.keys(idx)
+        .filter(dk => months.includes(dk.slice(0,7)))
+        .map(dk => idx[dk].blockSum);
+      const uniq = [...new Set(blockVals)].filter(v => v > 0);
+      if (uniq.length === 1) {
+        capInfo = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gray-1);color:var(--navy);padding:2px 9px;border-radius:6px;margin-left:8px;border:1px solid var(--gray-2);">총 블록 ${uniq[0]}</span>`;
+      } else if (uniq.length > 1) {
+        capInfo = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--gray-1);color:var(--navy);padding:2px 9px;border-radius:6px;margin-left:8px;border:1px solid var(--gray-2);">블록 ${Math.min(...uniq)}~${Math.max(...uniq)}</span>`;
+      }
+    }
+
     html += `<div style="margin-bottom:18px;">
-      <h4 style="margin:0 0 8px;font-size:14px;color:var(--navy);font-family:inherit;border-left:3px solid var(--gold);padding-left:8px;">${escHtml(p.label)}</h4>`;
+      <h4 style="margin:0 0 8px;font-size:14px;color:var(--navy);font-family:inherit;border-left:3px solid var(--gold);padding-left:8px;display:flex;align-items:center;">${escHtml(p.label)}${capInfo}</h4>`;
 
     for (const yyyymm of months) {
       const [y, mo] = yyyymm.split('-').map(Number);
@@ -1953,6 +2095,151 @@ function renderStockLine() {
   }
   body.innerHTML = html;
   box.style.display = 'block';
+}
+
+// ============================================================
+// 9b) 재고 현황 뷰 (블록·사용·잔여)
+// ============================================================
+function stockStatusClass(rem) {
+  if (rem <= 0) return 'full';
+  if (rem <= 2) return 'warn';
+  return 'ok';
+}
+function stockStatusLabel(rem) {
+  if (rem <= 0) return '마감';
+  if (rem <= 2) return '임박';
+  return '여유';
+}
+
+// 풀의 선택 기간 내 날짜 키 목록 (정렬)
+function getPoolDatesInRange(poolId) {
+  const months = getSelectedMonths();
+  const idx = poolIndex[poolId] || {};
+  return Object.keys(idx)
+    .filter(dk => months.includes(dk.slice(0, 7)))
+    .sort();
+}
+
+// 야마나미 룸 라벨 단축 ("아소 야마나미 골프텔"+"트윈" → "골프텔 트윈")
+function shortRoomLabel(hotel, room) {
+  let h = String(hotel || '').replace(/^아소\s*야마나미\s*/, '').trim();
+  if (!h) h = hotel;
+  return room ? `${h} ${room}` : h;
+}
+
+function renderStockView() {
+  const container = document.getElementById('stockGrid');
+  const selectedPools = getSelectedPools();
+  const hideSoldout = document.getElementById('chkHideSoldout').checked;
+  const searchTerm = (document.getElementById('stockSearch').value || '').trim().toLowerCase();
+
+  if (selectedPools.length === 0) {
+    container.innerHTML = '<div class="empty-state">풀과 기간을 선택하면 호텔별 블록·사용·잔여 현황이 표시됩니다.</div>';
+    return;
+  }
+  const months = getSelectedMonths();
+  if (months.length === 0) {
+    container.innerHTML = '<div class="empty-state">조회 기간을 선택해 주세요.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const p of selectedPools) {
+    // 검색어 필터 (풀 라벨 매칭)
+    if (searchTerm && p.label.toLowerCase().indexOf(searchTerm) === -1) {
+      // 풀 라벨엔 없어도 멤버 호텔/룸에 매칭되면 통과
+      const dates = getPoolDatesInRange(p.id);
+      let hit = false;
+      for (const dk of dates) {
+        const cell = poolIndex[p.id][dk];
+        if (cell && cell.members.some(m =>
+          (m.hotel + ' ' + m.room).toLowerCase().indexOf(searchTerm) !== -1)) { hit = true; break; }
+      }
+      if (!hit) continue;
+    }
+
+    const dates = getPoolDatesInRange(p.id);
+    const isIntegrated = (p.capacity != null);
+
+    // 단일 풀: 블록 고정/변동 판별
+    let blockFixed = true, fixedBlock = null;
+    if (!isIntegrated) {
+      const blockVals = dates.map(dk => poolIndex[p.id][dk].blockSum);
+      const uniq = [...new Set(blockVals)];
+      blockFixed = uniq.length <= 1;
+      if (blockFixed) fixedBlock = uniq[0];
+    }
+
+    // 헤더 메타
+    let metaHtml;
+    if (isIntegrated) {
+      metaHtml = `<span class="sc-meta cap">CAP ${p.capacity}</span>`;
+    } else if (blockFixed && fixedBlock != null) {
+      metaHtml = `<span class="sc-meta">총 블록 ${fixedBlock}</span>`;
+    } else {
+      metaHtml = `<span class="sc-meta">블록 변동</span>`;
+    }
+
+    // 행 생성
+    let rowsHtml = '';
+    let shownCount = 0;
+    for (const dk of dates) {
+      const cell = poolIndex[p.id][dk];
+      if (!cell) continue;
+      const rem = getPoolStock(p.id, dk);
+      if (hideSoldout && rem <= 0) continue;
+      shownCount++;
+
+      const d = new Date(dk + 'T00:00:00');
+      const dow = DOW_KO_FULL[d.getDay()].charAt(0);
+      const [yy, mm, dd] = dk.split('-');
+      const dateLabel = `${parseInt(mm)}/${dd}<span class="dow">(${dow})</span>`;
+      const st = stockStatusClass(rem);
+
+      if (isIntegrated) {
+        // 룸별 배지
+        const badges = cell.members.map(m => {
+          let cls = '';
+          if (m.remain < 0) cls = 'neg';
+          else if (m.remain <= 2) cls = 'low';
+          return `<span class="room-badge ${cls}">${escHtml(shortRoomLabel(m.hotel, m.room))} <b>${m.remain}</b></span>`;
+        }).join('');
+        rowsHtml += `<div class="stock-row integrated ${rem<=0?'is-full':''}">
+          <div class="sr-date">${dateLabel}</div>
+          <div class="room-badges">${badges}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="sr-nums">사용 <b>${cell.usedSum}</b> · 잔여 <b class="rem">${rem}</b></span>
+            <span class="stock-status ${st}">${stockStatusLabel(rem)}</span>
+          </div>
+        </div>`;
+      } else {
+        const blockPart = blockFixed ? '' : `블록 <b>${cell.blockSum}</b> · `;
+        rowsHtml += `<div class="stock-row ${rem<=0?'is-full':''}">
+          <div class="sr-date">${dateLabel}</div>
+          <div class="sr-nums">${blockPart}사용 <b>${cell.usedSum}</b> · 잔여 <b class="rem">${rem}</b></div>
+          <span class="stock-status ${st}">${stockStatusLabel(rem)}</span>
+        </div>`;
+      }
+    }
+
+    if (shownCount === 0) {
+      rowsHtml = `<div class="stock-empty">${hideSoldout ? '이 풀은 선택 기간에 잔여가 있는 날이 없습니다.' : '선택 기간에 블록 데이터가 없습니다.'}</div>`;
+    }
+
+    const regionHtml = p.region ? `<span class="sc-region">${escHtml(p.region)}</span>` : '';
+    html += `<div class="stock-card">
+      <div class="stock-card-head">
+        <div><span class="sc-name">${escHtml(p.label)}</span>${regionHtml}</div>
+        ${metaHtml}
+      </div>
+      <div>${rowsHtml}</div>
+    </div>`;
+  }
+
+  if (!html) {
+    html = '<div class="empty-state">검색 결과가 없습니다.</div>';
+  }
+  container.innerHTML = html;
 }
 
 // ============================================================
@@ -2014,6 +2301,9 @@ function buildLongMessage({ perPool, monthsLabel, useEmoji, showGreeting, showDe
     }
     if (showDeparture && pool.departures) {
       lines.push(`▣ 출발 공항: ${pool.departures}`);
+      if (pool.busanInquiry) {
+        lines.push('  ※ 부산(김해) 출발은 별도 문의 바랍니다.');
+      }
     }
     if (isMulti || showDeparture) lines.push('');
 
@@ -2432,26 +2722,6 @@ async function handleBlockFile(files) {
   if (failures.length > 0) console.warn('실패 파일:', failures);
 }
 
-async function handleReserveFiles(files) {
-  if (!files || files.length === 0) return;
-  const all = [];
-  for (const f of files) {
-    try {
-      const rows = await parseReserveHtmlFile(f);
-      all.push(...rows);
-    } catch (e) {
-      console.warn(f.name, e);
-      toast(`${f.name} 읽기 실패: ${e.message}`);
-    }
-  }
-  state.reserves = all;
-  saveState();
-  document.getElementById('dzReserve').classList.add('has-file');
-  document.getElementById('dzReserve').querySelector('.dz-title').textContent =
-    `✅ 수배현황 ${files.length}개 (${all.length.toLocaleString()}행) — 검산용 로드`;
-  toast(`수배현황 ${files.length}개 불러옴`);
-}
-
 function enableSection(id, enabled) {
   const el = document.getElementById(id);
   if (enabled) el.classList.remove('disabled-state');
@@ -2513,7 +2783,6 @@ window.addEventListener('DOMContentLoaded', () => {
   loadState();
 
   setupDropzone(document.getElementById('dzBlock'), document.getElementById('fileBlock'), handleBlockFile);
-  setupDropzone(document.getElementById('dzReserve'), document.getElementById('fileReserve'), handleReserveFiles);
 
   document.getElementById('btnMapping').addEventListener('click', openMappingModal);
   document.getElementById('btnExport').addEventListener('click', exportSnapshot);
@@ -2594,6 +2863,24 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('selMonthFrom').addEventListener('change', renderAll);
   document.getElementById('selMonthTo').addEventListener('change', renderAll);
   document.getElementById('selMinStock').addEventListener('change', renderAll);
+
+  // 뷰 탭 전환 (출발 가능 일정 / 재고 현황)
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const view = t.dataset.view;
+      document.getElementById('viewDeparture').style.display = (view === 'departure') ? '' : 'none';
+      document.getElementById('viewStock').style.display = (view === 'stock') ? '' : 'none';
+      // 최소 잔여 기준은 출발 뷰 전용 → 재고 뷰에선 숨김
+      document.getElementById('ctlMinStock').style.display = (view === 'departure') ? '' : 'none';
+      state.selected.viewMode = view;
+      saveState();
+    });
+  });
+  // 재고 현황 툴바
+  document.getElementById('chkHideSoldout').addEventListener('change', renderStockView);
+  document.getElementById('stockSearch').addEventListener('input', renderStockView);
 
   document.querySelectorAll('.msg-tab').forEach(t => {
     t.addEventListener('click', () => {
