@@ -89,18 +89,34 @@
     line-height: 1.55;
   }
   .container { max-width: 1320px; margin: 0 auto; padding: 24px 20px 80px; }
+  .app-header + .container { padding-top: 24px; }
 
   /* 헤더 */
-  .header {
+  .app-header {
     background: var(--navy);
     color: var(--paper);
-    padding: 22px 28px;
-    border-radius: 8px;
-    margin-bottom: 24px;
+    padding: 16px 28px;
+    margin-bottom: 0;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 16px;
-    box-shadow: var(--shadow);
+    gap: 16px; flex-wrap: wrap;
   }
+  .app-header .h-left { min-width: 0; }
+  .app-header h1 {
+    margin: 0; font-family: inherit; font-weight: 600;
+    font-size: 20px; letter-spacing: -0.01em; color: var(--paper);
+  }
+  .app-header .sub {
+    font-size: 13px; color: var(--gold-2); margin-top: 4px;
+    letter-spacing: 0.04em; display: block;
+  }
+  .app-header .h-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .app-header .back-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; color: var(--paper); text-decoration: none;
+    border: 1px solid rgba(255,255,255,.4); padding: 8px 14px; border-radius: 6px;
+    white-space: nowrap; transition: all .15s;
+  }
+  .app-header .back-link:hover { border-color: var(--paper); background: rgba(255,255,255,.08); }
   .header h1 {
     margin: 0;
     font-family: inherit;
@@ -1040,27 +1056,66 @@
     margin-top: 30px;
     letter-spacing: 0.02em;
   }
+  .hdr-help {
+    background: var(--paper); border: 1px solid #E5E7EB; border-left: 3px solid var(--gold);
+    border-radius: 8px; padding: 0 16px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  .hdr-help summary {
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--navy);
+    padding: 13px 0; list-style: none; user-select: none;
+  }
+  .hdr-help summary::-webkit-details-marker { display: none; }
+  .hdr-help summary::before { content: '▸'; color: var(--gold); margin-right: 8px; font-size: 12px; }
+  .hdr-help[open] summary::before { content: '▾'; }
+  .hdr-help ul { margin: 0 0 14px; padding: 4px 0 0 4px; list-style: none; }
+  .hdr-help li {
+    font-size: 12.5px; color: var(--gray-4); line-height: 1.65;
+    padding: 5px 0 5px 14px; position: relative;
+  }
+  .hdr-help li::before { content: '·'; position: absolute; left: 2px; color: var(--gold); font-weight: 700; }
+  .hdr-help li b { color: var(--navy); font-weight: 600; }
+  .wait-stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .wait-stat { font-size:12px; background:#FAFAFA; border:1px solid #E5E7EB; border-radius:8px; padding:7px 12px; color:var(--gray-4); }
+  .wait-stat b { color:var(--navy); font-size:15px; margin-left:3px; }
+  .wait-stat.ok b { color:#3b6d11; } .wait-stat.full b { color:#a32d2d; } .wait-stat.unk b { color:#854f0b; }
+  .wait-group { font-weight:700; color:var(--navy); font-size:13px; background:#dbeafe; border-radius:6px; padding:7px 11px; margin:14px 0 6px; }
+  table.wait-tbl { width:100%; border-collapse:collapse; background:var(--paper); border:1px solid #E5E7EB; border-radius:8px; overflow:hidden; margin-bottom:8px; }
+  table.wait-tbl th, table.wait-tbl td { padding:8px 10px; text-align:left; font-size:12.5px; border-bottom:1px solid #F0F0F0; }
+  table.wait-tbl th { background:#FAFAFA; font-weight:600; color:var(--gray-4); font-size:11.5px; }
+  table.wait-tbl tr:last-child td { border-bottom:none; }
+  .wbadge { display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; }
+  .wbadge.ok { background:#f0fdf4; color:#3b6d11; } .wbadge.full { background:#fef2f2; color:#a32d2d; } .wbadge.unk { background:#fffbeb; color:#854f0b; }
+  .wait-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
+  .wait-cb:disabled { opacity:.35; cursor:not-allowed; }
+  .dz-files { margin-top:10px; }
+  .wait-chip { display:inline-flex; align-items:center; gap:6px; background:var(--paper); border:1px solid #3b6d11; color:#3b6d11; border-radius:16px; padding:3px 10px; margin:3px; font-size:11.5px; font-weight:500; }
+  .wait-chip-x { cursor:pointer; color:var(--gray-4); font-weight:700; }
+  .wait-chip-x:hover { color:#a32d2d; }
 </style>
 </head>
 <body>
 
 
+<header class="app-header">
+    <div class="h-left">
+      <h1>예약가능일자 안내</h1>
+      <span class="sub">MERITTOUR · 일본 골프투어 운영자용 · v1.2</span>
+    </div>
+    <div class="h-actions">
+      <button class="header-btn" id="btnMapping">⚙ 풀 설정</button>
+      <button class="header-btn" id="btnReset">🗑 초기화</button>
+      <a class="back-link" href="../../sales/">← 영업 도구</a>
+    </div>
+  </header>
 <div class="container">
 
-  <!-- 헤더 -->
-  <div class="header">
-    <div>
-      <h1>예약가능일자 안내 도구</h1>
-      <div class="sub">MERITTOUR · 일본 골프투어 운영자용 · v1.2</div>
-    </div>
-    <div class="header-actions">
-      <button class="header-btn" id="btnMapping">⚙ 풀 설정</button>
-      <button class="header-btn" id="btnExport">💾 내보내기</button>
-      <button class="header-btn" id="btnImport">📂 불러오기</button>
-      <button class="header-btn" id="btnReset">🗑 초기화</button>
-      <input type="file" id="snapshotFile" accept=".json" style="display:none">
-    </div>
-  </div>
+  <details class="hdr-help">
+    <summary>❓ 상단 버튼 설명 — 풀 설정 · 초기화</summary>
+    <ul>
+      <li><b>⚙ 풀 설정</b> — 호텔·룸을 하나의 “풀”로 묶고 정원(예: 야마나미 통합 정원)을 정합니다. 잔여 객실 계산의 기준이 되는 설정 창입니다. 어느 풀에도 속하지 않은 호텔이 있으면 여기서 표시됩니다.</li>
+      <li><b>🗑 초기화</b> — 입력한 데이터를 <b>모두 지우고</b> 처음 상태로 되돌립니다. 되돌릴 수 없으니 주의하세요.</li>
+    </ul>
+  </details>
 
   <!-- STEP 1: 데이터 입력 -->
   <div class="card" id="cardInput">
@@ -1208,7 +1263,44 @@
     <div class="card-foot">
       💡 안내문은 위 STEP 2 결과 기준으로 자동 생성됩니다. 미리보기를 직접 클릭해서 수정도 가능합니다.
     </div>
+  </div>  <div class="card" id="cardWaitlist">
+    <div class="card-head">
+      <h2><span class="step-tag">대기 점검</span>대기예약 → 예약가능 전환</h2>
+      <span style="font-size:12px;color:var(--gray-4);">예약리스트 엑셀(구분=대기) 업로드 · 위 블록 잔여와 대조</span>
+    </div>
+    <div class="card-body">
+      <details class="hdr-help" style="margin-bottom:16px">
+        <summary>❓ 이 기능은?</summary>
+        <ul>
+          <li>엠클릭 <b>예약리스트 엑셀</b>을 올리면 <b>구분=대기</b> 건만 뽑아, 위에서 계산된 <b>풀별 잔여 객실</b>과 대조합니다.</li>
+          <li><b>잔여 ≥ 인원</b>이면 “전환 가능”으로 표시됩니다. (블록 데이터가 없는 풀은 “확인 필요”)</li>
+          <li>전환 가능 건을 선택해 <b>전환 안내문</b>을 만들 수 있습니다. 실제 대기→확정 처리는 엠클릭에서 직접 하세요.</li>
+        </ul>
+      </details>
+
+      <div class="dropzone" id="dzWait">
+        <input type="file" id="fileWait" accept=".xlsx,.xls" style="display:none" multiple>
+        <div class="dz-inner">
+          <div class="dz-ico">⏳</div>
+          <div class="dz-text">예약리스트 엑셀을 끌어다 놓거나 클릭 (여러 개 가능)</div>
+          <div class="dz-sub">엠클릭 예약리스트.xlsx · 구분=대기 자동 추출</div>
+        </div>
+        <div class="dz-files" id="dzWaitFiles"></div>
+      </div>
+
+      <div id="waitResult" style="margin-top:18px"></div>
+
+      <div id="waitMsgBox" class="hidden" style="margin-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="header-btn" id="btnWaitMsg" style="border-color:var(--accent);color:var(--accent)">📝 선택 건 전환 안내문</button>
+          <span style="font-size:12px;color:var(--gray-4)" id="waitSelInfo">0건 선택</span>
+        </div>
+        <textarea id="waitMsgArea" readonly style="width:100%;min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.6;border:1px solid #E5E7EB;border-radius:8px;padding:10px;background:var(--paper);color:var(--text);resize:vertical"></textarea>
+        <div style="margin-top:8px"><button class="header-btn" id="btnWaitCopy">📋 안내문 복사</button></div>
+      </div>
+    </div>
   </div>
+
 
   <div class="footer-tip">
     MERITTOUR · 02-365-9800 · 데이터는 브라우저 localStorage에만 저장됩니다
@@ -2705,6 +2797,7 @@ async function handleBlockFile(files) {
   renderAll();
   enableSection('cardQuery', true);
   enableSection('cardMessage', true);
+  runWaitlistIfReady(); // 블록 갱신 시 대기 판정도 다시 계산
 
   // 드롭존 안내 갱신
   document.getElementById('dzBlock').classList.add('has-file');
@@ -2785,11 +2878,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setupDropzone(document.getElementById('dzBlock'), document.getElementById('fileBlock'), handleBlockFile);
 
   document.getElementById('btnMapping').addEventListener('click', openMappingModal);
-  document.getElementById('btnExport').addEventListener('click', exportSnapshot);
-  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('snapshotFile').click());
-  document.getElementById('snapshotFile').addEventListener('change', e => {
-    if (e.target.files[0]) importSnapshot(e.target.files[0]);
-  });
   document.getElementById('btnReset').addEventListener('click', resetAll);
 
   document.getElementById('modalMapClose').addEventListener('click', () => document.getElementById('modalMap').classList.remove('show'));
@@ -2938,7 +3026,198 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   console.log('메리트투어 예약가능일자 안내 도구 v1.2 준비됨 (다중 풀 동시 안내)');
+
+  // 대기 점검 초기화
+  const dzWait = document.getElementById('dzWait');
+  const fileWait = document.getElementById('fileWait');
+  if (dzWait && fileWait) {
+    setupDropzone(dzWait, fileWait, handleWaitFiles);
+  }
+  const bWaitMsg = document.getElementById('btnWaitMsg');
+  if (bWaitMsg) bWaitMsg.addEventListener('click', genWaitMsg);
+  const bWaitCopy = document.getElementById('btnWaitCopy');
+  if (bWaitCopy) bWaitCopy.addEventListener('click', copyWaitMsg);
 });
+
+/* ════════════════════ 대기 점검 (예약리스트 → 전환 가능) ════════════════════ */
+// 대기 명단 상품명 → 풀ID 매핑 (블록 호텔명과 표기가 다르므로 별도)
+// roomKw가 있으면 상품명에 그 룸 키워드까지 있어야 매칭 (포틴힐즈 트윈/패밀리 구분)
+const WAIT_POOL_MAP = [
+  { kw: '야마나미CC',  pool: 'yamanami' },          // 통합 (소형트윈/관내별장/돔하우스/트윈 무관)
+  { kw: '쿠주힐즈',    pool: 'kuju_hills' },
+  { kw: '시즈노야도',  pool: 'shizunoyado' },
+  { kw: '간지호텔',    pool: 'kanji' },
+  { kw: '포틴힐즈CC', roomKw: '패밀리룸', pool: 'fourteen_family' },
+  { kw: '포틴힐즈CC', roomKw: '카라반',  pool: 'fourteen_caravan' },
+  { kw: '포틴힐즈CC', roomKw: '트윈',    pool: 'fourteen_twin' },
+  { kw: '포틴힐즈CC', pool: 'fourteen_twin' },       // 룸 표기 없으면 트윈으로
+  { kw: '아키바',     pool: 'akiba' },
+  { kw: '무츠키',     pool: 'mutsuki' },
+  { kw: '시로사토',   pool: 'shirosato' },
+  { kw: '후쿠로다',   pool: 'fukuroda' },
+  { kw: '국제공항',   pool: 'miyazaki_kuko' },
+  { kw: '스가다이라', roomKw: '맨션',     pool: 'sugadaira_mansion' },
+  { kw: '스가다이라', roomKw: '온천',     pool: 'sugadaira' },
+  { kw: '스가다이라', pool: 'sugadaira' },            // 룸 표기 없으면 온천호텔로
+  { kw: '닐라이',     pool: 'nilai' },
+];
+function matchPoolByProduct(productName) {
+  const n = String(productName || '');
+  for (const m of WAIT_POOL_MAP) {
+    if (n.indexOf(m.kw) === -1) continue;
+    if (m.roomKw && n.indexOf(m.roomKw) === -1) continue;
+    return m.pool;
+  }
+  return null;
+}
+
+let waitTeams = [];
+const WAIT_SELECTED = new Set();
+const WAIT_FILES = []; // {name, rows}
+
+function readWaitXlsx(file) {
+  return readFileAsArrayBuffer(file).then(buf => {
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws, { defval: null });
+  });
+}
+function pickCol(row, cands) {
+  for (const c of cands) { if (row[c] != null && row[c] !== '') return row[c]; }
+  return null;
+}
+async function handleWaitFiles(fileList) {
+  for (const file of Array.from(fileList)) {
+    if (WAIT_FILES.some(f => f.name === file.name)) { toast('이미 추가된 파일: ' + file.name); continue; }
+    try { const rows = await readWaitXlsx(file); WAIT_FILES.push({ name: file.name, rows }); }
+    catch (e) { toast('읽기 실패: ' + file.name); }
+  }
+  renderWaitFiles();
+  runWaitlist();
+}
+function renderWaitFiles() {
+  const el = document.getElementById('dzWaitFiles');
+  if (!el) return;
+  if (WAIT_FILES.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = WAIT_FILES.map((f, i) =>
+    `<span class="wait-chip">✓ ${escHtml(f.name)} <span class="wait-chip-x" data-i="${i}">✕</span></span>`).join('');
+  el.querySelectorAll('.wait-chip-x').forEach(x => {
+    x.addEventListener('click', ev => { ev.stopPropagation(); WAIT_FILES.splice(+x.dataset.i, 1); renderWaitFiles(); runWaitlist(); });
+  });
+}
+function runWaitlist() {
+  waitTeams = [];
+  WAIT_SELECTED.clear();
+  const allRows = [].concat(...WAIT_FILES.map(f => f.rows));
+  let id = 0;
+  for (const r of allRows) {
+    const gubun = String(pickCol(r, ['구분', '진행구분']) || '').trim();
+    if (gubun !== '대기') continue;
+    const product = pickCol(r, ['상품명', '행사명']) || '';
+    const depRaw = pickCol(r, ['출발일자', '출발일']);
+    const dateKey = normalizeDate(depRaw);
+    const pax = num(pickCol(r, ['예약', '인원', '예약인원']));
+    const poolId = matchPoolByProduct(product);
+    let remain = null, status;
+    if (poolId && dateKey) remain = getPoolStock(poolId, dateKey); // inquiry 잔여 재사용
+    if (remain == null) status = 'unknown';
+    else if (remain >= pax && pax > 0) status = 'ok';
+    else status = 'full';
+    waitTeams.push({
+      id: 'w' + (id++),
+      eventNo: pickCol(r, ['행사번호']) || '',
+      name: pickCol(r, ['대표고객', '예약자명']) || '',
+      member: pickCol(r, ['회원권구분']) || '',
+      product, dateKey, pax,
+      poolId, poolLabel: poolId ? (getPools().find(p => p.id === poolId) || {}).label || poolId : '미매칭',
+      remain, status,
+    });
+  }
+  renderWaitResult();
+}
+function runWaitlistIfReady() { if (WAIT_FILES.length) runWaitlist(); }
+
+function renderWaitResult() {
+  const root = document.getElementById('waitResult');
+  if (!root) return;
+  if (WAIT_FILES.length === 0) { root.innerHTML = ''; document.getElementById('waitMsgBox').classList.add('hidden'); return; }
+  const okN = waitTeams.filter(t => t.status === 'ok').length;
+  const fullN = waitTeams.filter(t => t.status === 'full').length;
+  const unkN = waitTeams.filter(t => t.status === 'unknown').length;
+  let html = `<div class="wait-stats">
+    <span class="wait-stat">대기 <b>${waitTeams.length}</b></span>
+    <span class="wait-stat ok">전환 가능 <b>${okN}</b></span>
+    <span class="wait-stat full">자리 부족 <b>${fullN}</b></span>
+    <span class="wait-stat unk">확인 필요 <b>${unkN}</b></span>
+  </div>`;
+  // 출발일 그룹
+  const groups = {};
+  waitTeams.forEach(t => { (groups[t.dateKey || '미상'] = groups[t.dateKey || '미상'] || []).push(t); });
+  Object.keys(groups).sort().forEach(dk => {
+    const ts = groups[dk];
+    html += `<div class="wait-group">📅 ${dk} 출발 <span style="color:var(--gray-4);font-size:11px">${ts.length}건</span></div>`;
+    html += `<table class="wait-tbl"><thead><tr>
+      <th style="width:32px"></th><th>행사번호</th><th>대표고객</th><th>회원권</th><th>상품(풀)</th>
+      <th style="text-align:center">인원</th><th style="text-align:center">잔여</th><th style="text-align:center">판정</th></tr></thead><tbody>`;
+    ts.forEach(t => {
+      const badge = t.status === 'ok' ? '<span class="wbadge ok">전환 가능</span>'
+        : t.status === 'full' ? '<span class="wbadge full">자리 부족</span>'
+        : '<span class="wbadge unk">확인 필요</span>';
+      const sel = t.status === 'ok';
+      html += `<tr>
+        <td style="text-align:center"><input type="checkbox" class="wait-cb" data-id="${t.id}" ${sel ? '' : 'disabled'}></td>
+        <td style="font-family:var(--mono);font-size:11px">${escHtml(t.eventNo)}</td>
+        <td>${escHtml(t.name)}</td>
+        <td>${escHtml(t.member || '-')}</td>
+        <td>${escHtml(t.product || '-')}<br><span style="font-size:11px;color:var(--gray-4)">${escHtml(t.poolLabel)}</span></td>
+        <td style="text-align:center">${t.pax}</td>
+        <td style="text-align:center">${t.remain == null ? '—' : t.remain}</td>
+        <td style="text-align:center">${badge}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  });
+  root.innerHTML = html;
+  root.querySelectorAll('input.wait-cb:not([disabled])').forEach(cb => {
+    cb.addEventListener('change', () => { cb.checked ? WAIT_SELECTED.add(cb.dataset.id) : WAIT_SELECTED.delete(cb.dataset.id); updateWaitSel(); });
+  });
+  document.getElementById('waitMsgBox').classList.toggle('hidden', okN === 0);
+  updateWaitSel();
+}
+function updateWaitSel() {
+  const el = document.getElementById('waitSelInfo');
+  if (el) el.textContent = WAIT_SELECTED.size + '건 선택';
+}
+function buildWaitMsg(t) {
+  return `[메리트투어] 예약 가능 안내
+
+${t.name} 고객님, 안녕하세요.
+대기로 접수해 주신 아래 일정에 자리가 확보되어 예약이 가능해졌습니다.
+
+▶ 상품 : ${t.product}
+▶ 출발 : ${t.dateKey}
+▶ 인원 : ${t.pax}명
+
+예약 진행을 위해 예약금과 동행자 명단을 보내주시면
+순서대로 예약을 확정해 드리겠습니다.
+좌석·객실 사정에 따라 조기 마감될 수 있는 점 양해 부탁드립니다.
+
+문의 : 02-365-9800
+MERITTOUR 회원골프예약센터`;
+}
+function genWaitMsg() {
+  const sel = waitTeams.filter(t => WAIT_SELECTED.has(t.id));
+  if (sel.length === 0) { toast('선택된 전환 가능 건이 없습니다'); return; }
+  document.getElementById('waitMsgArea').value = sel.map(buildWaitMsg).join('\n\n─────────────────\n\n');
+  toast(sel.length + '건 안내문 생성');
+}
+async function copyWaitMsg() {
+  const ta = document.getElementById('waitMsgArea');
+  if (!ta.value) { toast('먼저 안내문을 생성하세요'); return; }
+  try { await navigator.clipboard.writeText(ta.value); }
+  catch (e) { ta.removeAttribute('readonly'); ta.select(); document.execCommand('copy'); ta.setAttribute('readonly', ''); }
+  toast('안내문 복사 완료');
+}
+
 </script>
 </body>
 </html>
