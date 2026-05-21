@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 리조트 날씨</title>
+<meta name="robots" content="noindex, nofollow" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F4F5F7; --surface: #FFFFFF; --surface2: #FAFAFA; --surface3: #F0F2F5; --surface4: #E5E7EB;
+  --border: #E5E7EB; --border2: #D1D5DB;
+  --brand: #1a2332; --brand2: #2a3548; --navy: #1a2332;
+  --accent: #2563EB; --accent2: #3B82F6; --accent-dim: #DBEAFE;
+  --gold: #B8935A; --gold2: #C9A876; --gold-dim: #FAF3E6;
+  --green: #059669; --green-dim: #D1FAE5;
+  --amber: #D97706; --amber-dim: #FEF3C7;
+  --red: #DC2626; --red-dim: #FEE2E2;
+  --wine: #8B3A2F;
+  --text: #1E2A45; --text2: #4A5A80; --text3: #8A97B8;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', sans-serif;
+  --shadow: 0 2px 12px rgba(26, 35, 50, 0.06);
+  --shadow-lg: 0 8px 28px rgba(26, 35, 50, 0.12);
+}
+
+body, body * { transition: background-color .25s, border-color .25s, color .15s; }
+html, body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 24px 80px; }
+.app-header{ background:var(--navy); padding:16px 28px; display:flex; align-items:center; gap:14px; }
+.app-header .h-left{ display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
+.app-header h1{ font-size:18px; font-weight:700; color:#fff; letter-spacing:-.02em; }
+.app-header .sub{ font-size:12px; color:rgba(255,255,255,.7); display:block; }
+.app-header .ver-badge{ display:inline-block; font-family:var(--mono); font-size:11px; font-weight:500; background:rgba(255,255,255,.16); color:#fff; padding:2px 8px; border-radius:20px; margin-left:8px; vertical-align:middle; }
+.app-header .h-actions{ display:flex; align-items:center; gap:8px; }
+.app-header .back-link{ display:inline-flex; align-items:center; gap:5px; font-size:12px; color:rgba(255,255,255,.85); text-decoration:none; border:1px solid rgba(255,255,255,.28); padding:6px 12px; border-radius:6px; white-space:nowrap; transition:all .15s; }
+.app-header .back-link:hover{ border-color:#fff; color:#fff; }
+
+
+.brand-wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand { font-size: 22px; font-weight: 700; color: var(--brand); letter-spacing: -0.02em; }
+.brand-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.08em; }
+.dept-badge { font-size: 11px; font-weight: 700; font-family: var(--mono); background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.ghost-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all .15s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+
+.intro { font-size: 13px; color: var(--text2); margin: 0 0 8px; line-height: 1.65; }
+.intro .src { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.section-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.12em; margin: 26px 0 12px; display: flex; align-items: center; gap: 10px; }
+.section-title::before { content: ''; width: 3px; height: 13px; background: var(--accent); border-radius: 2px; display: block; }
+.wx-list { display: flex; flex-direction: column; gap: 10px; }
+.wx-row { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.wx-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wx-name { font-size: 15px; font-weight: 600; color: var(--brand); }
+.wx-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.03em; }
+.wx-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { font-family: var(--sans); font-size: 12.5px; font-weight: 500; padding: 8px 14px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+.btn-ghost { background: var(--surface); color: var(--accent); border-color: var(--border2); }
+.btn-ghost:hover { border-color: var(--accent); background: var(--accent-dim); }
+.btn-ghost.copied { color: var(--green); border-color: var(--green); background: var(--green-dim); }
+.note { margin-top: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+.note h3 { font-size: 12px; color: var(--brand); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; font-weight: 700; }
+.note h3::before { content: ''; width: 3px; height: 12px; background: var(--gold); border-radius: 2px; }
+.note p { font-size: 12px; color: var(--text2); line-height: 1.7; }
+.note code { font-family: var(--mono); background: var(--surface3); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+.footer-tip { text-align: center; color: var(--text3); font-size: 11px; margin-top: 44px; font-family: var(--mono); letter-spacing: 0.06em; }
+.toast { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px); background: var(--brand); color: var(--surface); padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; }
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 560px) {
+  .wx-row { flex-direction: column; align-items: stretch; }
+  .wx-actions { justify-content: stretch; }
+  .wx-actions .btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="h-left">
+      <div>
+        <h1>리조트 날씨 <span class="ver-badge">v1.0</span></h1>
+        <span class="sub">MERITTOUR · 리조트별 현지 날씨 예보 + 손님 안내문</span>
+      </div>
+    </div>
+    <div class="h-actions">
+      <a class="back-link" href="../../sales/">← 영업 도구</a>
+    </div>
+  </header>
+<div class="container">
+
+  <p class="intro">
+    리조트별 현지 <strong>3시간 단위 날씨 예보</strong>를 바로 확인하고, 손님께 보낼 안내문을 한 번에 복사합니다.<br>
+    <span class="src">출처: golfweather.info · 새 탭에서 열림</span>
+  </p>
+
+  <div id="wxRoot"></div>
+
+  <div class="note">
+    <h3>안내문 형식</h3>
+    <p>"안내문 복사"를 누르면 아래 형식이 클립보드에 복사됩니다. 카카오톡에 바로 붙여넣으세요.<br>
+    형식을 바꾸고 싶으시면 말씀해 주세요.</p>
+  </div>
+
+  <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+</div>
+
+<div class="toast" id="toast">복사되었습니다</div>
+
+<script>
+// ── 데이터: 권역 → 골프장 → golfweather.info ID ──
+const COURSES = [
+  { region: '구마모토', name: '아소 야마나미 리조트', id: 1936 },
+  { region: '구마모토', name: '구주고원 골프클럽',     id: 2231 },
+  { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072 },
+  { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865 },
+  { region: '이바라키', name: '시로사토 CC',           id: 376  },
+  { region: '이바라키', name: '후쿠로다노타키 CC',     id: 318  },
+  { region: '미야자키', name: '미야자키 국제공항 CC',  id: 1873 },
+  { region: '나가노',   name: '스가다이라 그린 CC',    id: 2283 },
+];
+
+const wxUrl = id => `https://www.golfweather.info/tenki/${id}/3hours`;
+
+// 손님 안내문 템플릿
+const buildMsg = (name, id) =>
+`안녕하세요, 메리트투어입니다.
+${name} 현지 날씨 예보를 안내드립니다.
+${wxUrl(id)}
+즐거운 라운딩 되시길 바랍니다.`;
+
+// ── 렌더 ──
+const root = document.getElementById('wxRoot');
+const regions = [...new Set(COURSES.map(c => c.region))];
+regions.forEach(region => {
+  const title = document.createElement('div');
+  title.className = 'section-title';
+  title.textContent = region;
+  root.appendChild(title);
+
+  const list = document.createElement('div');
+  list.className = 'wx-list';
+  COURSES.filter(c => c.region === region).forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'wx-row';
+    row.innerHTML = `
+      <div class="wx-info">
+        <div class="wx-name"></div>
+        <div class="wx-meta">golfweather · ID ${c.id}</div>
+      </div>
+      <div class="wx-actions">
+        <a class="btn btn-primary" target="_blank" rel="noopener">🌤️ 날씨 보기</a>
+        <button class="btn btn-ghost" type="button">📋 안내문 복사</button>
+      </div>`;
+    row.querySelector('.wx-name').textContent = c.name;
+    row.querySelector('a.btn-primary').href = wxUrl(c.id);
+    const copyBtn = row.querySelector('button.btn-ghost');
+    copyBtn.addEventListener('click', () => copyMsg(c, copyBtn));
+    list.appendChild(row);
+  });
+  root.appendChild(list);
+});
+
+// ── 복사 ──
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+async function copyMsg(c, btn) {
+  const text = buildMsg(c.name, c.id);
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e2) { ok = false; }
+  }
+  if (ok) {
+    const orig = btn.innerHTML;
+    btn.classList.add('copied'); btn.innerHTML = '✓ 복사됨';
+    showToast(c.name + ' 안내문 복사 완료');
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1600);
+  } else {
+    showToast('복사에 실패했습니다. 수동으로 복사해 주세요');
+  }
+}
+</script>
+</body>
+</html>
