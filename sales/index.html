@@ -24,19 +24,6 @@
   --shadow: 0 2px 12px rgba(26, 35, 50, 0.06);
   --shadow-lg: 0 8px 28px rgba(26, 35, 50, 0.12);
 }
-body.dark {
-  --bg: #0C0F1A; --surface: #12172A; --surface2: #181E30; --surface3: #1E253A; --surface4: #252E48;
-  --border: #263050; --border2: #3A4870;
-  --brand: #FFFFFF; --brand2: #DDE3F0;
-  --accent: #60A5FA; --accent2: #93C5FD; --accent-dim: #172040;
-  --gold: #D4B07A; --gold-dim: #2A2118;
-  --green: #10B981; --green-dim: #0A2A1E;
-  --amber: #F59E0B; --amber-dim: #2D2000;
-  --red: #EF4444; --red-dim: #2A0A0A;
-  --wine: #C97262;
-  --text: #DDE3F0; --text2: #7B87A8; --text3: #4A5268;
-  --shadow: 0 2px 12px rgba(0,0,0,.25); --shadow-lg: 0 8px 28px rgba(0,0,0,.4);
-}
 body, body * { transition: background-color .25s, border-color .25s, color .15s; }
 .hidden { display: none !important; }
 html, body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
@@ -50,8 +37,6 @@ html, body { font-family: var(--sans); background: var(--bg); color: var(--text)
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .user-info { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; font-size: 12px; color: var(--text2); }
 .user-info img { width: 24px; height: 24px; border-radius: 50%; }
-.theme-toggle { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: 8px; cursor: pointer; font-size: 16px; }
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .ghost-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all .15s; }
 .ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
 .section-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.12em; margin: 28px 0 14px; display: flex; align-items: center; gap: 10px; }
@@ -72,7 +57,6 @@ html, body { font-family: var(--sans); background: var(--bg); color: var(--text)
 .badge.team { background: var(--green-dim); color: var(--green); border-color: var(--green); }
 .badge.team.ops { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
 .badge.team.guest { background: #DBEAFE; color: #2563EB; border-color: #2563EB; }
-body.dark .badge.team.guest { background: #1E3A8A; color: #93C5FD; border-color: #93C5FD; }
 .empty-area { background: var(--surface); border: 1px dashed var(--border2); border-radius: 12px; padding: 36px 20px; text-align: center; color: var(--text3); font-size: 13px; line-height: 1.7; }
 .empty-area strong { display: block; color: var(--text2); font-size: 14px; margin-bottom: 6px; }
 .notes-section { margin-top: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); }
@@ -102,9 +86,6 @@ body.dark .badge.team.guest { background: #1E3A8A; color: #93C5FD; border-color:
         <img id="userPhoto" src="" alt="">
         <span id="userName"></span>
       </div>
-      <button class="theme-toggle" id="themeToggle" title="다크/라이트 모드">
-        <span id="themeIcon">🌙</span>
-      </button>
       <button class="ghost-btn hidden" id="logoutBtn">로그아웃</button>
     </div>
   </div>
@@ -227,15 +208,6 @@ body.dark .badge.team.guest { background: #1E3A8A; color: #93C5FD; border-color:
 <!-- <script src="../auth.js"></script> -->
 
 <script>
-const themeToggle = document.getElementById('themeToggle');
-const themeIcon = document.getElementById('themeIcon');
-if (localStorage.getItem('mt_theme') === 'dark') { document.body.classList.add('dark'); themeIcon.textContent = '☀️'; }
-themeToggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  const d = document.body.classList.contains('dark');
-  themeIcon.textContent = d ? '☀️' : '🌙';
-  localStorage.setItem('mt_theme', d ? 'dark' : 'light');
-});
 
 window.MERITTOUR_AUTH = {
   onSignIn: (p) => {
