@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>대기예약 전환 점검 · MERITTOUR</title>
+<meta name="robots" content="noindex, nofollow" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F5F7; --surface:#FFFFFF; --surface2:#FAFAFA;
+  --brand:#1a2332; --navy:#1a2332;
+  --accent:#2563EB; --accent2:#3B82F6; --accent-dim:#DBEAFE;
+  --gold:#B8935A;
+  --ok:#059669; --ok-dim:#D1FAE5; --warn:#D97706; --warn-dim:#FEF3C7;
+  --danger:#DC2626; --danger-dim:#FEE2E2;
+  --border:#E5E7EB; --border2:#D1D5DB;
+  --text:#1E2A45; --text2:#4A5A80; --muted:#6B7280;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Pretendard','Malgun Gothic',system-ui,sans-serif;
+  --radius:10px; --shadow:0 2px 12px rgba(26,35,50,.06); --shadow-lg:0 8px 28px rgba(26,35,50,.12);
+}
+body.dark{
+  --bg:#0C0F1A; --surface:#12172A; --surface2:#181E30;
+  --brand:#FFFFFF; --navy:#12172A;
+  --accent:#60A5FA; --accent2:#93C5FD; --accent-dim:#172040;
+  --gold:#D4B07A;
+  --ok:#10B981; --ok-dim:#0A2A1E; --warn:#F59E0B; --warn-dim:#2D2000;
+  --danger:#F87171; --danger-dim:#2A0A0A;
+  --border:#263050; --border2:#3A4870;
+  --text:#DDE3F0; --text2:#7B87A8; --muted:#8A97B8;
+  --shadow:0 2px 12px rgba(0,0,0,.25); --shadow-lg:0 8px 28px rgba(0,0,0,.4);
+}
+body,body *{transition:background-color .25s,border-color .25s,color .15s}
+html,body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;min-height:100vh}
+header{background:var(--navy);padding:18px 32px;display:flex;align-items:center;gap:14px}
+header .h-left{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+header .logo{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700}
+body.dark header .logo{color:#0C0F1A}
+header h1{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .ver-badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:500;background:rgba(255,255,255,.16);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+header span.sub{font-size:12px;color:rgba(255,255,255,.7);display:block}
+header .h-actions{display:flex;align-items:center;gap:8px}
+header .back-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.28);padding:6px 12px;border-radius:6px;white-space:nowrap}
+header .back-link:hover{border-color:#fff;color:#fff}
+header .theme-toggle{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:8px;cursor:pointer;font-size:15px}
+header .theme-toggle:hover{border-color:#fff}
+main{max-width:1100px;margin:0 auto;padding:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.card-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.step-badge{width:26px;height:26px;border-radius:7px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+body.dark .step-badge{color:#0C0F1A}
+.card-head h2{font-size:14px;font-weight:600;color:var(--brand)}
+.card-body{padding:18px}
+.uploads{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.uploads{grid-template-columns:1fr}}
+.drop{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-dim)}
+.drop.loaded{border-style:solid;border-color:var(--ok);background:var(--ok-dim)}
+.drop .ico{font-size:26px;margin-bottom:6px}
+.drop .t{font-weight:600;font-size:13px;color:var(--brand)}
+.drop .sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.drop .fname{font-size:12px;color:var(--ok);margin-top:8px;font-weight:600;word-break:break-all}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;padding:9px 16px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px)}
+body.dark .btn.primary{color:#0C0F1A}
+.btn.ghost{background:var(--surface);color:var(--accent);border-color:var(--border2)}
+.btn.ghost:hover:not(:disabled){border-color:var(--accent);background:var(--accent-dim)}
+.btn.sm{padding:6px 12px;font-size:12px}
+.muted{color:var(--muted);font-size:12px}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.stat{flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.stat .v{font-size:22px;font-weight:700;color:var(--brand)}
+.stat .v.ok{color:var(--ok)} .stat .v.warn{color:var(--warn)} .stat .v.danger{color:var(--danger)}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+.group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 8px;padding:8px 12px;background:var(--accent-dim);border-radius:8px}
+.group-head .d{font-weight:700;color:var(--brand);font-size:13px}
+.group-head .c{font-size:12px;color:var(--text2);font-family:var(--mono)}
+table.wl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+table.wl th,table.wl td{padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid var(--border)}
+table.wl th{background:var(--surface2);font-weight:600;color:var(--text2);font-size:11.5px}
+table.wl tr:last-child td{border-bottom:none}
+table.wl td.center,table.wl th.center{text-align:center}
+.pool-name{font-family:var(--mono);font-size:11.5px;color:var(--text2)}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;font-family:var(--mono)}
+.badge.ok{background:var(--ok-dim);color:var(--ok)}
+.badge.warn{background:var(--warn-dim);color:var(--warn)}
+.badge.danger{background:var(--danger-dim);color:var(--danger)}
+.badge.gray{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.sel-cell{width:34px}
+input.sel-wl{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+input.sel-wl:disabled{opacity:.4;cursor:not-allowed}
+.sel-bar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px;padding:12px 16px;background:var(--brand);color:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+body.dark .sel-bar{background:var(--accent-dim);color:var(--text);border:1px solid var(--border)}
+.sel-bar.empty{background:var(--muted)}
+.sel-bar .c{font-weight:700;font-size:14px}
+.sel-bar .n{font-size:11.5px;opacity:.85}
+.msg-box{margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.msg-box h3{font-size:12px;color:var(--brand);margin-bottom:8px;font-weight:700}
+.msg-box textarea{width:100%;min-height:170px;font-family:var(--mono);font-size:12px;line-height:1.6;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface);color:var(--text);resize:vertical}
+.note{background:var(--warn-dim);border:1px solid var(--warn);border-radius:8px;padding:11px 14px;font-size:12px;color:var(--text);margin-bottom:14px}
+.note b{color:var(--warn)}
+.hidden{display:none}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:var(--brand);color:var(--surface);padding:11px 20px;border-radius:24px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all .2s;z-index:50}
+body.dark .toast{color:#0C0F1A}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.footer-tip{text-align:center;color:var(--muted);font-size:11px;margin:40px 0 10px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <div class="logo">M</div>
+    <div>
+      <h1>대기예약 전환 점검 <span class="ver-badge">v1.0</span></h1>
+      <span class="sub">MERITTOUR · 잔여 객실 ↔ 대기예약 대조 → 전환 가능 후보 + 안내문</span>
+    </div>
+  </div>
+  <div class="h-actions">
+    <a class="back-link" href="../../sales/">← 영업 도구</a>
+    <button class="theme-toggle" id="themeToggle" type="button" title="다크/라이트 모드"><span id="themeIcon">🌙</span></button>
+  </div>
+</header>
+
+<main>
+  <div class="note">
+    <b>대조 방식</b> — 두 엑셀을 출발일·상품(풀)로 묶어, 같은 조건의 <b>잔여 ≥ 대기팀 인원</b>이면 "전환 가능"으로 표시합니다.
+    자리가 났다는 최종 판단·엠클릭 대기→확정 처리는 실무자가 직접 진행하며, 이 도구는 후보를 추려주는 용도입니다.
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-head"><div class="step-badge">1</div><h2>엑셀 2개 업로드</h2></div>
+    <div class="card-body">
+      <div class="uploads">
+        <div class="drop" id="dropBlock">
+          <div class="ico">🏨</div>
+          <div class="t">잔여 객실 (블록조회)</div>
+          <div class="sub">엠클릭 호텔블록및요금조회.xlsx</div>
+          <div class="fname" id="fnameBlock"></div>
+          <input type="file" id="fiBlock" accept=".xlsx,.xls" class="hidden">
+        </div>
+        <div class="drop" id="dropList">
+          <div class="ico">⏳</div>
+          <div class="t">예약 리스트 (대기 포함)</div>
+          <div class="sub">엠클릭 예약리스트.xlsx · 구분=대기 자동 추출</div>
+          <div class="fname" id="fnameList"></div>
+          <input type="file" id="fiList" accept=".xlsx,.xls" class="hidden">
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="runBtn" disabled>대조 시작</button>
+        <span class="muted" id="loadInfo"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card hidden" id="resultCard">
+    <div class="card-head"><div class="step-badge">2</div><h2>전환 점검 결과</h2></div>
+    <div class="card-body">
+      <div class="stat-row" id="statRow"></div>
+      <div id="resultBody"></div>
+      <div class="sel-bar empty" id="selBar">
+        <span class="c" id="selCount">0건 선택</span>
+        <span class="n">선택한 대기팀의 전환 안내문을 아래에서 생성합니다</span>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="genMsgBtn">선택 건 안내문 생성</button>
+        <button class="btn ghost" id="dlBtn">결과 엑셀 다운로드</button>
+      </div>
+      <div class="msg-box hidden" id="msgBox">
+        <h3>전환 안내문 (실무자 검토 후 발송)</h3>
+        <textarea id="msgArea" readonly></textarea>
+        <div class="row">
+          <button class="btn ghost sm" id="copyMsgBtn">📋 전체 복사</button>
+          <span class="muted">팀별 개별 안내문이 구분선으로 이어집니다</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════ 유틸 ════════ */
+function parseLocalDate(v){
+  if(v==null||v==='') return null;
+  if(v instanceof Date) return new Date(v.getFullYear(),v.getMonth(),v.getDate());
+  if(typeof v==='number'){ // Excel serial
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());
+  }
+  const s=String(v).trim();
+  const m=s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  const d=new Date(s); return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function ymd(d){ return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:''; }
+function fmtD(d){ if(!d)return''; const w=['일','월','화','수','목','금','토'][d.getDay()]; return `${d.getMonth()+1}/${d.getDate()}(${w})`; }
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1800);}
+
+/* ════════ 풀 매핑 (inquiry 도구와 동일 개념) ════════ */
+// 야마나미는 룸 통합 capacity 풀, 그 외는 룸별 잔여 기반.
+const YAMANAMI_CAP = 114;
+function detectPool(productName, hotelName){
+  const n=(productName||'')+' '+(hotelName||'');
+  if(n.includes('야마나미')||n.includes('아소')){
+    return {group:'야마나미', cap:YAMANAMI_CAP, key:'야마나미'}; // 통합 정원
+  }
+  if(n.includes('포틴힐즈')||n.toLowerCase().includes('14hills')){
+    return {group:'포틴힐즈', cap:null, key:'포틴힐즈'};
+  }
+  if(n.includes('시즈노야도')) return {group:'시즈노야도', cap:null, key:'시즈노야도'};
+  if(n.includes('스가다이라')) return {group:'스가다이라', cap:null, key:'스가다이라'};
+  if(n.includes('시로사토')) return {group:'시로사토', cap:null, key:'시로사토'};
+  if(n.includes('후쿠로다')) return {group:'후쿠로다노타키', cap:null, key:'후쿠로다'};
+  if(n.includes('미야자키')) return {group:'미야자키', cap:null, key:'미야자키'};
+  if(n.includes('닐라이')) return {group:'닐라이', cap:null, key:'닐라이'};
+  return {group:'기타', cap:null, key:'기타'};
+}
+
+/* ════════ 파일 로딩 ════════ */
+let blockRows=null, listRows=null;
+function readXlsx(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      res(XLSX.utils.sheet_to_json(ws,{defval:null}));
+    }catch(err){rej(err);}};
+    r.onerror=rej; r.readAsArrayBuffer(file);
+  });
+}
+function setupDrop(dropId,inputId,fnameId,onload){
+  const drop=document.getElementById(dropId), inp=document.getElementById(inputId), fn=document.getElementById(fnameId);
+  drop.addEventListener('click',()=>inp.click());
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0])handle(e.dataTransfer.files[0]);});
+  inp.addEventListener('change',()=>{if(inp.files[0])handle(inp.files[0]);});
+  async function handle(file){
+    try{ const rows=await readXlsx(file); onload(rows); drop.classList.add('loaded'); fn.textContent='✓ '+file.name; checkReady(); }
+    catch(err){ showToast('읽기 실패: '+file.name); }
+  }
+}
+function checkReady(){ document.getElementById('runBtn').disabled=!(blockRows&&listRows); }
+setupDrop('dropBlock','fiBlock','fnameBlock',rows=>blockRows=rows);
+setupDrop('dropList','fiList','fnameList',rows=>listRows=rows);
+
+/* ════════ 잔여 인덱스 구성 (블록조회) ════════ */
+// 컬럼명이 회사 양식마다 다를 수 있어 유연 매핑.
+function pick(row,cands){ for(const c of cands){ if(row[c]!=null&&row[c]!=='') return row[c]; } return null; }
+function buildRemainIndex(rows){
+  // key: poolKey|YYYY-MM-DD  → 잔여 합계 (capacity 있으면 cap - 사용합)
+  const used={}, remain={}, capUsed={};
+  rows.forEach(r=>{
+    const hotel=pick(r,['호텔명','호텔','hotel']);
+    const date=parseLocalDate(pick(r,['블록일자','일자','날짜','출발일자','date']));
+    const blk=Number(pick(r,['블록수','블록','block']))||0;
+    const use=Number(pick(r,['사용수','사용','use']))||0;
+    const rem=pick(r,['잔여수','잔여','remain']);
+    if(!date) return;
+    const pool=detectPool(hotel,hotel);
+    const dk=pool.key+'|'+ymd(date);
+    if(pool.cap!=null){ capUsed[dk]=(capUsed[dk]||0)+use; }
+    else { remain[dk]=(remain[dk]||0)+(rem!=null?Number(rem)||0:Math.max(0,blk-use)); }
+  });
+  return {remain, capUsed};
+}
+function getRemain(idx,pool,dateStr){
+  const dk=pool.key+'|'+dateStr;
+  if(pool.cap!=null){ return pool.cap-(idx.capUsed[dk]||0); }
+  return idx.remain[dk]!=null?idx.remain[dk]:null; // null = 블록 데이터 없음
+}
+
+/* ════════ 대조 ════════ */
+let waitTeams=[];
+const SELECTED=new Set();
+function run(){
+  const idx=buildRemainIndex(blockRows);
+  // 예약리스트에서 구분=대기 추출
+  waitTeams=[];
+  let id=0;
+  listRows.forEach(r=>{
+    const gubun=String(pick(r,['구분','진행구분'])||'').trim();
+    if(gubun!=='대기') return;
+    const dep=parseLocalDate(pick(r,['출발일자','출발일']));
+    const product=pick(r,['상품명','행사명'])||'';
+    const hotel=pick(r,['호텔','호텔명'])||'';
+    const pax=Number(pick(r,['예약','인원','예약인원']))||0;
+    const pool=detectPool(product,hotel);
+    const dateStr=ymd(dep);
+    const remain=getRemain(idx,pool,dateStr);
+    let status;
+    if(remain==null) status='unknown';        // 잔여 데이터 없음 → 확인 필요
+    else if(remain>=pax && pax>0) status='ok'; // 전환 가능
+    else status='full';                        // 자리 부족
+    waitTeams.push({
+      id:'w'+(id++),
+      eventNo:pick(r,['행사번호'])||'',
+      name:pick(r,['대표고객','예약자명'])||'',
+      member:pick(r,['회원권구분'])||'',
+      dep, dateStr, product, pax,
+      depFrom:pick(r,['출발지'])||'', air:pick(r,['항공'])||'',
+      pool:pool.group, remain, status,
+    });
+  });
+  renderResult();
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+document.getElementById('runBtn').addEventListener('click',run);
+
+function renderResult(){
+  const body=document.getElementById('resultBody');
+  body.innerHTML='';
+  SELECTED.clear();
+  // 통계
+  const okN=waitTeams.filter(t=>t.status==='ok').length;
+  const fullN=waitTeams.filter(t=>t.status==='full').length;
+  const unkN=waitTeams.filter(t=>t.status==='unknown').length;
+  document.getElementById('statRow').innerHTML=`
+    <div class="stat"><div class="v">${waitTeams.length}</div><div class="l">대기 건 전체</div></div>
+    <div class="stat"><div class="v ok">${okN}</div><div class="l">전환 가능 (잔여≥인원)</div></div>
+    <div class="stat"><div class="v danger">${fullN}</div><div class="l">자리 부족</div></div>
+    <div class="stat"><div class="v warn">${unkN}</div><div class="l">잔여 데이터 없음(확인 필요)</div></div>`;
+  // 출발일 그룹
+  const groups={};
+  waitTeams.forEach(t=>{ (groups[t.dateStr]=groups[t.dateStr]||[]).push(t); });
+  Object.keys(groups).sort().forEach(dk=>{
+    const ts=groups[dk];
+    const gh=document.createElement('div');
+    gh.className='group-head';
+    gh.innerHTML=`<span class="d">📅 ${fmtD(ts[0].dep)} 출발</span><span class="c">${ts.length}건</span>`;
+    body.appendChild(gh);
+    const tbl=document.createElement('table');
+    tbl.className='wl';
+    tbl.innerHTML=`<thead><tr>
+      <th class="center sel-cell"></th><th>행사번호</th><th>대표고객</th><th>회원권</th>
+      <th>상품(풀)</th><th class="center">인원</th><th class="center">잔여</th><th class="center">판정</th>
+    </tr></thead><tbody></tbody>`;
+    const tb=tbl.querySelector('tbody');
+    ts.forEach(t=>{
+      const badge = t.status==='ok'?'<span class="badge ok">전환 가능</span>'
+                  : t.status==='full'?'<span class="badge danger">자리 부족</span>'
+                  : '<span class="badge warn">확인 필요</span>';
+      const remainTxt = t.remain==null?'—':t.remain;
+      const selectable = t.status==='ok';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="center sel-cell"><input type="checkbox" class="sel-wl" data-id="${t.id}" ${selectable?'':'disabled title="전환 가능 건만 선택"'}></td>
+        <td class="pool-name">${t.eventNo}</td>
+        <td>${t.name}</td>
+        <td>${t.member||'-'}</td>
+        <td>${t.product||'-'}<br><span class="pool-name">${t.pool}</span></td>
+        <td class="center">${t.pax}</td>
+        <td class="center">${remainTxt}</td>
+        <td class="center">${badge}</td>`;
+      tb.appendChild(tr);
+    });
+    body.appendChild(tbl);
+  });
+  // 체크 이벤트
+  body.querySelectorAll('input.sel-wl:not([disabled])').forEach(cb=>{
+    cb.addEventListener('change',()=>{ if(cb.checked)SELECTED.add(cb.dataset.id); else SELECTED.delete(cb.dataset.id); syncSel(); });
+  });
+  syncSel();
+}
+function syncSel(){
+  const bar=document.getElementById('selBar');
+  document.getElementById('selCount').textContent=SELECTED.size+'건 선택';
+  bar.classList.toggle('empty',SELECTED.size===0);
+}
+
+/* ════════ 전환 안내문 ════════ */
+function buildMsg(t){
+  return `[메리트투어] 예약 가능 안내
+
+${t.name} 고객님, 안녕하세요.
+대기로 접수해 주신 아래 일정에 자리가 확보되어 예약이 가능해졌습니다.
+
+▶ 상품 : ${t.product}
+▶ 출발 : ${ymd(t.dep)}
+▶ 인원 : ${t.pax}명
+
+예약 진행을 위해 예약금과 동행자 명단을 보내주시면
+순서대로 예약을 확정해 드리겠습니다.
+좌석/객실 사정에 따라 조기 마감될 수 있는 점 양해 부탁드립니다.
+
+문의 : 02-365-9800
+MERITTOUR 회원골프예약센터`;
+}
+document.getElementById('genMsgBtn').addEventListener('click',()=>{
+  const sel=waitTeams.filter(t=>SELECTED.has(t.id));
+  if(sel.length===0){ showToast('선택된 전환 가능 건이 없습니다'); return; }
+  const txt=sel.map(buildMsg).join('\n\n─────────────────\n\n');
+  document.getElementById('msgArea').value=txt;
+  document.getElementById('msgBox').classList.remove('hidden');
+  document.getElementById('msgBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+document.getElementById('copyMsgBtn').addEventListener('click',async()=>{
+  const ta=document.getElementById('msgArea');
+  try{ await navigator.clipboard.writeText(ta.value); }
+  catch(e){ ta.removeAttribute('readonly'); ta.select(); document.execCommand('copy'); ta.setAttribute('readonly',''); }
+  showToast('안내문 복사 완료');
+});
+
+/* ════════ 결과 엑셀 ════════ */
+document.getElementById('dlBtn').addEventListener('click',()=>{
+  if(waitTeams.length===0) return;
+  const aoa=[['출발일','행사번호','대표고객','회원권','상품(풀)','인원','잔여','판정']];
+  waitTeams.forEach(t=>aoa.push([
+    t.dateStr,t.eventNo,t.name,t.member,t.product+' / '+t.pool,t.pax,
+    t.remain==null?'데이터없음':t.remain,
+    t.status==='ok'?'전환 가능':t.status==='full'?'자리 부족':'확인 필요'
+  ]));
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:12},{wch:14},{wch:10},{wch:12},{wch:46},{wch:6},{wch:6},{wch:10}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'대기전환_점검');
+  const d=new Date();
+  XLSX.writeFile(wb,`대기전환_점검_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.xlsx`);
+  showToast('다운로드 완료');
+});
+
+/* ════════ 다크 토글 ════════ */
+(function(){
+  const tg=document.getElementById('themeToggle'),ic=document.getElementById('themeIcon');
+  try{ if(localStorage.getItem('mt_theme')==='dark'){document.body.classList.add('dark');ic.textContent='☀️';} }catch(e){}
+  tg.addEventListener('click',()=>{document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');ic.textContent=d?'☀️':'🌙';try{localStorage.setItem('mt_theme',d?'dark':'light');}catch(e){}});
+})();
+</script>
+</body>
+</html>
