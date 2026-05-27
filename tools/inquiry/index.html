@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>메리트투어 예약가능일자 안내 도구 v1.1 | MERITTOUR</title>
+<link rel="stylesheet" href="../../shared/core.css">
 <!--
   ============================================================
   메리트투어 예약가능일자 안내 도구 v1.1
@@ -55,29 +56,29 @@
 })();
 </script>
 <style>
-  :root {
-    --navy: #1a2332;
-    --navy-2: #2a3548;
-    --cream: #F4F5F7;
-    --paper: #FFFFFF;
-    --gold: #B8935A;
-    --gold-2: #C9A876;
-    --accent: #2563EB;
-    --accent-2: #3B82F6;
-    --wine: #8B3A2F;
-    --green: #34D399;
-    --green-d: #065F46;
-    --orange: #FBBF24;
-    --orange-d: #92400E;
-    --red: #DC2626;
-    --red-l: #FCA5A5;
-    --gray-1: #f5f5f5;
-    --gray-2: #e5e5e5;
-    --gray-3: #9ca3af;
-    --gray-4: #4b5563;
-    --text: #1f2937;
-    --shadow: 0 2px 8px rgba(26,35,50,0.08);
-    --shadow-lg: 0 8px 24px rgba(26,35,50,0.12);
+    :root {
+    --navy: var(--mt-brand);
+    --navy-2: var(--mt-brand2);
+    --cream: var(--mt-bg);
+    --paper: var(--mt-surface);
+    --gold: var(--mt-point);
+    --gold-2: var(--mt-point2);
+    --accent: var(--mt-accent);
+    --accent-2: var(--mt-accent2);
+    --wine: var(--mt-red);
+    --green: var(--mt-green);
+    --green-d: var(--mt-green);
+    --orange: var(--mt-amber);
+    --orange-d: var(--mt-amber);
+    --red: var(--mt-red);
+    --red-l: var(--mt-red-dim);
+    --gray-1: var(--mt-surface3);
+    --gray-2: var(--mt-surface4);
+    --gray-3: var(--mt-text3);
+    --gray-4: var(--mt-text2);
+    --text: var(--mt-text);
+    --shadow: var(--mt-shadow);
+    --shadow-lg: var(--mt-shadow-lg);
   }
   * { box-sizing: border-box; }
   html, body {
@@ -146,7 +147,7 @@
   /* 카드 */
   .card {
     background: var(--paper);
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 8px;
     margin-bottom: 18px;
     box-shadow: var(--shadow);
@@ -154,7 +155,7 @@
   }
   .card-head {
     background: linear-gradient(180deg, #FFFFFF 0%, var(--paper) 100%);
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--mt-border);
     padding: 14px 20px;
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px;
@@ -181,8 +182,8 @@
   }
   .card-body { padding: 18px 20px; }
   .card-foot {
-    background: #FAFAFA;
-    border-top: 1px solid #E5E7EB;
+    background: var(--mt-surface2);
+    border-top: 1px solid var(--mt-border);
     padding: 10px 20px;
     font-size: 12px;
     color: var(--gray-4);
@@ -194,18 +195,18 @@
     border-radius: 8px;
     padding: 28px 20px;
     text-align: center;
-    background: #FAFAFA;
+    background: var(--mt-surface2);
     cursor: pointer;
     transition: background .15s, border-color .15s;
   }
-  .dropzone:hover { background: #F3F4F6; }
-  .dropzone.dragover { background: #FEF3C7; border-color: var(--wine); }
+  .dropzone:hover { background: var(--mt-surface3); }
+  .dropzone.dragover { background: var(--mt-amber-dim); border-color: var(--wine); }
   .dropzone .dz-icon { font-size: 32px; margin-bottom: 8px; }
   .dropzone .dz-title { font-weight: 600; color: var(--navy); margin-bottom: 4px; }
   .dropzone .dz-sub { font-size: 13px; color: var(--gray-4); }
   .dropzone.has-file {
     border-style: solid;
-    background: #f0f9eb;
+    background: var(--mt-green-dim);
     border-color: var(--green-d);
   }
   .dropzone.has-file .dz-title { color: var(--green-d); }
@@ -223,7 +224,7 @@
   @media (max-width: 720px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
   .summary-cell {
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 6px;
     padding: 12px 14px;
   }
@@ -239,13 +240,13 @@
 
   /* 알림 */
   .map-alert {
-    background: #fffbe6;
-    border: 1px solid #f5e090;
+    background: var(--mt-amber-dim);
+    border: 1px solid var(--mt-amber-dim);
     border-radius: 6px;
     padding: 10px 14px;
     margin-top: 12px;
     font-size: 13px;
-    color: #6b5210;
+    color: var(--mt-amber);
     display: none;
   }
   .map-alert.show { display: block; }
@@ -320,7 +321,7 @@
     gap: 8px;
     margin-bottom: 8px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #F0F0F0;
+    border-bottom: 1px solid var(--mt-surface3);
     align-items: center;
   }
   .pool-picker-tools .btn-mini {
@@ -334,7 +335,7 @@
     color: var(--navy);
   }
   .pool-picker-tools .btn-mini:hover {
-    background: #FAFAFA;
+    background: var(--mt-surface2);
     border-color: var(--gold);
   }
   .region-group {
@@ -366,14 +367,14 @@
     color: var(--text);
     user-select: none;
   }
-  .pool-cb:hover { background: #FAFAFA; }
+  .pool-cb:hover { background: var(--mt-surface2); }
   .pool-cb input[type="checkbox"] {
     accent-color: var(--gold);
     margin: 0;
     cursor: pointer;
   }
   .pool-cb.checked {
-    background: #f0fdf4;
+    background: var(--mt-green-dim);
     color: var(--green-d);
     font-weight: 500;
   }
@@ -400,7 +401,7 @@
   .pool-section {
     margin-bottom: 24px;
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -444,7 +445,7 @@
   /* 풀 정보 카드 */
   .pool-info {
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 6px;
     padding: 12px 16px;
     margin: 14px 0;
@@ -489,7 +490,7 @@
   }
   .dep-pattern-block {
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 6px;
     margin-bottom: 10px;
     overflow: hidden;
@@ -521,14 +522,14 @@
   }
   .dep-item {
     padding: 10px 14px;
-    border-right: 1px solid #F0F0F0;
-    border-bottom: 1px solid #F0F0F0;
+    border-right: 1px solid var(--mt-surface3);
+    border-bottom: 1px solid var(--mt-surface3);
     background: white;
     display: flex; flex-direction: column; gap: 4px;
   }
-  .dep-item.green { background: #f0fdf4; }
-  .dep-item.orange { background: #fffbeb; }
-  .dep-item.red { background: #fef2f2; opacity: .7; }
+  .dep-item.green { background: var(--mt-green-dim); }
+  .dep-item.orange { background: var(--mt-amber-dim); }
+  .dep-item.red { background: var(--mt-red-dim); opacity: .7; }
   .dep-item .dep-date {
     font-weight: 600;
     font-size: 15px;
@@ -556,7 +557,7 @@
   .stock-line {
     margin-top: 18px;
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 6px;
     padding: 14px 16px;
     overflow-x: auto;
@@ -580,25 +581,25 @@
     min-width: 100%;
   }
   .stock-line th, .stock-line td {
-    border: 1px solid #eee;
+    border: 1px solid var(--mt-border);
     padding: 5px 4px;
     text-align: center;
     min-width: 32px;
   }
   .stock-line th {
-    background: #fafafa;
+    background: var(--mt-surface2);
     color: var(--gray-4);
     font-weight: 500;
   }
-  .stock-line th.dow-sat { color: #2563eb; }
+  .stock-line th.dow-sat { color: var(--mt-accent); }
   .stock-line th.dow-sun { color: var(--red); }
-  .stock-line td.s-zero { background: #fef2f2; color: var(--red); font-weight: 600; }
-  .stock-line td.s-low { background: #fffbeb; color: var(--orange-d); font-weight: 600; }
+  .stock-line td.s-zero { background: var(--mt-red-dim); color: var(--red); font-weight: 600; }
+  .stock-line td.s-low { background: var(--mt-amber-dim); color: var(--orange-d); font-weight: 600; }
   .stock-line td.s-ok { color: var(--text); }
-  .stock-line td.s-empty { background: #fafafa; color: var(--gray-3); }
+  .stock-line td.s-empty { background: var(--mt-surface2); color: var(--gray-3); }
   .stock-line .row-label {
     text-align: left;
-    background: #FAFAFA;
+    background: var(--mt-surface2);
     font-weight: 600;
     color: var(--navy);
     padding-left: 10px;
@@ -607,7 +608,7 @@
     min-width: 140px;
   }
   .stock-line .row-pool {
-    background: #1a2332;
+    background: var(--mt-brand);
     color: var(--paper);
   }
 
@@ -693,7 +694,7 @@
     border-radius: 8px;
     border: 1px solid var(--gray-2);
   }
-  .stock-card-head .sc-meta.cap { background: #DBEAFE; color: #0C447C; border-color: #B5D4F4; }
+  .stock-card-head .sc-meta.cap { background: var(--mt-accent-dim); color: var(--mt-accent); border-color: var(--mt-accent-dim); }
 
   /* 일자 행 (단일 풀) */
   .stock-row {
@@ -718,10 +719,10 @@
     border-radius: 20px;
     white-space: nowrap;
   }
-  .stock-status.ok { background: #EAF3DE; color: #3B6D11; }
-  .stock-status.warn { background: #FAEEDA; color: #854F0B; }
-  .stock-status.full { background: #FCEBEB; color: #A32D2D; }
-  .stock-row.is-full { background: #fffafa; }
+  .stock-status.ok { background: var(--mt-green-dim); color: var(--mt-green); }
+  .stock-status.warn { background: var(--mt-amber-dim); color: var(--mt-amber); }
+  .stock-status.full { background: var(--mt-red-dim); color: var(--mt-red); }
+  .stock-row.is-full { background: var(--mt-red-dim); }
 
   /* 통합 풀 룸별 배지 */
   .stock-row.integrated { grid-template-columns: 92px 1fr auto; }
@@ -737,10 +738,10 @@
     white-space: nowrap;
   }
   .room-badge b { color: var(--navy); }
-  .room-badge.neg { background: #FCEBEB; border-color: #F7C1C1; color: #A32D2D; }
-  .room-badge.neg b { color: #A32D2D; }
-  .room-badge.low { background: #FAEEDA; border-color: #FAC775; color: #854F0B; }
-  .room-badge.low b { color: #854F0B; }
+  .room-badge.neg { background: var(--mt-red-dim); border-color: var(--mt-red-dim); color: var(--mt-red); }
+  .room-badge.neg b { color: var(--mt-red); }
+  .room-badge.low { background: var(--mt-amber-dim); border-color: var(--mt-amber-dim); color: var(--mt-amber); }
+  .room-badge.low b { color: var(--mt-amber); }
 
   .stock-empty { padding: 20px 16px; text-align: center; color: var(--gray-3); font-size: 13px; }
 
@@ -748,7 +749,7 @@
   .msg-tabs {
     display: flex;
     gap: 0;
-    border-bottom: 2px solid #E5E7EB;
+    border-bottom: 2px solid var(--mt-border);
     margin-bottom: 14px;
   }
   .msg-tab {
@@ -770,7 +771,7 @@
   }
   .msg-preview {
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 8px;
     padding: 22px 24px;
     font-size: 19px;
@@ -783,8 +784,8 @@
   }
   .msg-preview.sms {
     font-size: 16px;
-    background: #f7fbff;
-    border-color: #d4e5f7;
+    background: var(--mt-accent-dim);
+    border-color: var(--mt-accent-dim);
     color: var(--navy);
   }
   .msg-actions {
@@ -804,7 +805,7 @@
     font-weight: 500;
     cursor: pointer;
   }
-  .btn:hover { background: #F3F4F6; }
+  .btn:hover { background: var(--mt-surface3); }
   .btn-primary {
     background: var(--navy);
     color: var(--paper);
@@ -828,8 +829,8 @@
     gap: 16px;
     flex-wrap: wrap;
     padding: 12px 16px;
-    background: #FAFAFA;
-    border: 1px solid #E5E7EB;
+    background: var(--mt-surface2);
+    border: 1px solid var(--mt-border);
     border-radius: 6px;
     margin-bottom: 12px;
     font-size: 13px;
@@ -892,15 +893,15 @@
 
   .pool-card {
     background: white;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--mt-border);
     border-radius: 8px;
     margin-bottom: 12px;
     overflow: hidden;
   }
   .pool-card-head {
-    background: linear-gradient(180deg, #FFFFFF, #FAFAFA);
+    background: linear-gradient(180deg, #FFFFFF, var(--mt-surface2));
     padding: 10px 14px;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--mt-border);
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px;
   }
@@ -946,8 +947,8 @@
   }
   .pool-card-body .members {
     grid-column: 1 / -1;
-    background: #FAFAFA;
-    border: 1px solid #E5E7EB;
+    background: var(--mt-surface2);
+    border: 1px solid var(--mt-border);
     border-radius: 4px;
     padding: 8px 10px;
     font-size: 11px;
@@ -962,8 +963,8 @@
   .unassigned-section {
     margin-top: 18px;
     padding: 12px 14px;
-    background: #FFF7ED;
-    border: 1px solid #FED7AA;
+    background: var(--mt-amber-dim);
+    border: 1px solid var(--mt-amber-dim);
     border-radius: 6px;
   }
   .unassigned-section h3 {
@@ -996,12 +997,12 @@
     border-radius: 4px;
   }
   details.help summary { cursor: pointer; font-weight: 500; color: var(--navy); }
-  details.help code { background: #f5f5f5; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+  details.help code { background: var(--mt-surface3); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
 
   .modal-foot {
     padding: 14px 22px;
-    border-top: 1px solid #E5E7EB;
-    background: #FAFAFA;
+    border-top: 1px solid var(--mt-border);
+    background: var(--mt-surface2);
     display: flex; justify-content: space-between; gap: 8px;
     position: sticky; bottom: 0;
   }
@@ -1057,7 +1058,7 @@
     letter-spacing: 0.02em;
   }
   .hdr-help {
-    background: var(--paper); border: 1px solid #E5E7EB; border-left: 3px solid var(--gold);
+    background: var(--paper); border: 1px solid var(--mt-border); border-left: 3px solid var(--gold);
     border-radius: 8px; padding: 0 16px; margin-bottom: 20px; box-shadow: var(--shadow);
   }
   .hdr-help summary {
@@ -1075,22 +1076,22 @@
   .hdr-help li::before { content: '·'; position: absolute; left: 2px; color: var(--gold); font-weight: 700; }
   .hdr-help li b { color: var(--navy); font-weight: 600; }
   .wait-stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .wait-stat { font-size:12px; background:#FAFAFA; border:1px solid #E5E7EB; border-radius:8px; padding:7px 12px; color:var(--gray-4); }
+  .wait-stat { font-size:12px; background:var(--mt-surface2); border:1px solid var(--mt-border); border-radius:8px; padding:7px 12px; color:var(--gray-4); }
   .wait-stat b { color:var(--navy); font-size:15px; margin-left:3px; }
-  .wait-stat.ok b { color:#3b6d11; } .wait-stat.full b { color:#a32d2d; } .wait-stat.unk b { color:#854f0b; }
-  .wait-group { font-weight:700; color:var(--navy); font-size:13px; background:#dbeafe; border-radius:6px; padding:7px 11px; margin:14px 0 6px; }
-  table.wait-tbl { width:100%; border-collapse:collapse; background:var(--paper); border:1px solid #E5E7EB; border-radius:8px; overflow:hidden; margin-bottom:8px; }
-  table.wait-tbl th, table.wait-tbl td { padding:8px 10px; text-align:left; font-size:12.5px; border-bottom:1px solid #F0F0F0; }
-  table.wait-tbl th { background:#FAFAFA; font-weight:600; color:var(--gray-4); font-size:11.5px; }
+  .wait-stat.ok b { color:var(--mt-green); } .wait-stat.full b { color:var(--mt-red); } .wait-stat.unk b { color:var(--mt-amber); }
+  .wait-group { font-weight:700; color:var(--navy); font-size:13px; background:var(--mt-accent-dim); border-radius:6px; padding:7px 11px; margin:14px 0 6px; }
+  table.wait-tbl { width:100%; border-collapse:collapse; background:var(--paper); border:1px solid var(--mt-border); border-radius:8px; overflow:hidden; margin-bottom:8px; }
+  table.wait-tbl th, table.wait-tbl td { padding:8px 10px; text-align:left; font-size:12.5px; border-bottom:1px solid var(--mt-surface3); }
+  table.wait-tbl th { background:var(--mt-surface2); font-weight:600; color:var(--gray-4); font-size:11.5px; }
   table.wait-tbl tr:last-child td { border-bottom:none; }
   .wbadge { display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; }
-  .wbadge.ok { background:#f0fdf4; color:#3b6d11; } .wbadge.full { background:#fef2f2; color:#a32d2d; } .wbadge.unk { background:#fffbeb; color:#854f0b; }
+  .wbadge.ok { background:var(--mt-green-dim); color:var(--mt-green); } .wbadge.full { background:var(--mt-red-dim); color:var(--mt-red); } .wbadge.unk { background:var(--mt-amber-dim); color:var(--mt-amber); }
   .wait-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
   .wait-cb:disabled { opacity:.35; cursor:not-allowed; }
   .dz-files { margin-top:10px; }
-  .wait-chip { display:inline-flex; align-items:center; gap:6px; background:var(--paper); border:1px solid #3b6d11; color:#3b6d11; border-radius:16px; padding:3px 10px; margin:3px; font-size:11.5px; font-weight:500; }
+  .wait-chip { display:inline-flex; align-items:center; gap:6px; background:var(--paper); border:1px solid var(--mt-green); color:var(--mt-green); border-radius:16px; padding:3px 10px; margin:3px; font-size:11.5px; font-weight:500; }
   .wait-chip-x { cursor:pointer; color:var(--gray-4); font-weight:700; }
-  .wait-chip-x:hover { color:#a32d2d; }
+  .wait-chip-x:hover { color:var(--mt-red); }
 </style>
 </head>
 <body>
@@ -1199,9 +1200,9 @@
 
       <div id="viewDeparture">
         <div class="legend">
-          <span class="legend-item"><span class="legend-sw" style="background:#f0fdf4;border-color:var(--green);"></span>잔여 여유</span>
-          <span class="legend-item"><span class="legend-sw" style="background:#fffbeb;border-color:var(--orange);"></span>잔여 임박 (1~2실)</span>
-          <span class="legend-item"><span class="legend-sw" style="background:#fef2f2;border-color:var(--red);"></span>마감</span>
+          <span class="legend-item"><span class="legend-sw" style="background:var(--mt-green-dim);border-color:var(--green);"></span>잔여 여유</span>
+          <span class="legend-item"><span class="legend-sw" style="background:var(--mt-amber-dim);border-color:var(--orange);"></span>잔여 임박 (1~2실)</span>
+          <span class="legend-item"><span class="legend-sw" style="background:var(--mt-red-dim);border-color:var(--red);"></span>마감</span>
           <span class="legend-item" style="margin-left:auto;color:var(--gray-3);">출발일~귀국일 중 최소 잔여 기준</span>
         </div>
 
@@ -1295,7 +1296,7 @@
           <button class="header-btn" id="btnWaitMsg" style="border-color:var(--accent);color:var(--accent)">📝 선택 건 전환 안내문</button>
           <span style="font-size:12px;color:var(--gray-4)" id="waitSelInfo">0건 선택</span>
         </div>
-        <textarea id="waitMsgArea" readonly style="width:100%;min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.6;border:1px solid #E5E7EB;border-radius:8px;padding:10px;background:var(--paper);color:var(--text);resize:vertical"></textarea>
+        <textarea id="waitMsgArea" readonly style="width:100%;min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.6;border:1px solid var(--mt-border);border-radius:8px;padding:10px;background:var(--paper);color:var(--text);resize:vertical"></textarea>
         <div style="margin-top:8px"><button class="header-btn" id="btnWaitCopy">📋 안내문 복사</button></div>
       </div>
     </div>
@@ -2116,7 +2117,7 @@ function renderStockLine() {
     // 총 블록 정보 계산 (헤더 표시용)
     let capInfo = '';
     if (p.capacity != null) {
-      capInfo = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:#DBEAFE;color:#0C447C;padding:2px 9px;border-radius:6px;margin-left:8px;">CAP ${p.capacity}</span>`;
+      capInfo = `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--mt-accent-dim);color:var(--mt-accent);padding:2px 9px;border-radius:6px;margin-left:8px;">CAP ${p.capacity}</span>`;
     } else {
       // 단일/합산 풀: 블록수 집계 (날짜별 blockSum의 대표값)
       const idx = poolIndex[p.id] || {};
@@ -2150,11 +2151,11 @@ function renderStockLine() {
       for (let d = 1; d <= lastDay; d++) {
         const key = y + '-' + pad2(mo) + '-' + pad2(d);
         const s = getPoolStock(p.id, key);
-        if (s === null) poolRow += '<td style="background:#2a3548;color:var(--gray-3);">·</td>';
+        if (s === null) poolRow += '<td style="background:var(--mt-brand2);color:var(--gray-3);">·</td>';
         else {
-          if (s === 0) poolRow += `<td style="background:#fef2f2;color:var(--red);font-weight:600;">${s}</td>`;
-          else if (s <= 2) poolRow += `<td style="background:#fffbeb;color:var(--orange-d);font-weight:600;">${s}</td>`;
-          else poolRow += `<td style="background:#2a3548;color:var(--paper);font-weight:600;">${s}</td>`;
+          if (s === 0) poolRow += `<td style="background:var(--mt-red-dim);color:var(--red);font-weight:600;">${s}</td>`;
+          else if (s <= 2) poolRow += `<td style="background:var(--mt-amber-dim);color:var(--orange-d);font-weight:600;">${s}</td>`;
+          else poolRow += `<td style="background:var(--mt-brand2);color:var(--paper);font-weight:600;">${s}</td>`;
         }
       }
       poolRow += '</tr>';
