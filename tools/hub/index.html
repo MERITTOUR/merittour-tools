@@ -2,67 +2,91 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>MERITTOUR · 통합 점검</title>
 <link rel="stylesheet" href="../../shared/core.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  body { background: var(--mt-bg); margin: 0; }
-  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 24px 80px; }
-
-  .intro { font-size: 13px; color: var(--mt-text2); margin: 4px 0 18px; line-height: 1.6; }
-  .intro .src { color: var(--mt-text3); font-size: 12px; }
-
-  /* 업로드 인식 칩 */
-  .recog { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
-  .recog-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-family: var(--mt-mono);
-    background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px; padding: 6px 11px; color: var(--mt-text2); }
-  .recog-chip b { color: var(--mt-brand); font-weight: 600; }
-  .recog-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mt-green); }
-  .recog-chip.off { opacity: .5; }
-  .recog-chip.off .dot { background: var(--mt-text3); }
-
-  /* KPI */
-  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 4px 0 20px; }
-  .kpi { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--mt-shadow); }
-  .kpi .k-label { font-size: 11px; color: var(--mt-text3); letter-spacing: .04em; }
-  .kpi .k-val { font-size: 20px; font-weight: 700; color: var(--mt-brand); font-family: var(--mt-mono); margin-top: 4px; }
-  .kpi .k-sub { font-size: 11px; color: var(--mt-text2); margin-top: 2px; }
-  .kpi.warn .k-val { color: var(--mt-amber-dark); }
-  .kpi.danger .k-val { color: var(--mt-red-dark); }
-
-  /* 컨트롤 바 */
-  .ctrl { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 12px; }
-  .ctrl .sp { margin-left: auto; }
-  .ctrl select, .ctrl input[type=text] { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--mt-border);
-    border-radius: 8px; background: var(--mt-surface); color: var(--mt-text); }
-  .ctrl label { font-size: 12px; color: var(--mt-text2); display: inline-flex; align-items: center; gap: 6px; }
-
-  /* 테이블 */
-  .tbl-wrap { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 12px; overflow: auto; box-shadow: var(--mt-shadow); }
-  table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.data th { position: sticky; top: 0; background: var(--mt-surface2); color: var(--mt-text2); font-weight: 600;
-    text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--mt-border); white-space: nowrap; font-size: 12px; }
-  table.data td { padding: 9px 12px; border-bottom: 1px solid var(--mt-surface3); white-space: nowrap; color: var(--mt-text); }
-  table.data tr:last-child td { border-bottom: none; }
-  table.data td.num { text-align: right; font-family: var(--mt-mono); }
-  table.data tr.low { background: var(--mt-amber-dim); }
-  table.data tr.low td.rate { color: var(--mt-amber-dark); font-weight: 600; }
-  table.data tr.neg { background: var(--mt-red-dim); }
-  table.data tr.neg td.rate, table.data tr.neg td.margin { color: var(--mt-red-dark); font-weight: 600; }
-  table.data .nm { max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
-
-  .pill { display: inline-block; font-size: 11px; font-family: var(--mt-mono); padding: 2px 8px; border-radius: 10px; }
-  .pill.closed { background: var(--mt-accent-dim); color: var(--mt-accent); }
-  .pill.open { background: var(--mt-surface3); color: var(--mt-text2); }
-
-  /* 보조 집계 */
-  .grp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-  @media (max-width: 900px){ .grp-grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(3,1fr); } }
-
-  .empty { text-align: center; padding: 60px 20px; color: var(--mt-text3); font-size: 14px; }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  body{background:var(--mt-bg);margin:0}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 24px 80px}
+  .intro{font-size:13px;color:var(--mt-text2);margin:4px 0 18px;line-height:1.6}
+  .intro .src{color:var(--mt-text3);font-size:12px}
+  .recog{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+  .recog-chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-family:var(--mt-mono);background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:8px;padding:6px 11px;color:var(--mt-text2)}
+  .recog-chip b{color:var(--mt-brand);font-weight:600}
+  .recog-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--mt-green)}
+  .recog-chip.off{opacity:.5}.recog-chip.off .dot{background:var(--mt-text3)}
+  .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:4px 0 20px}
+  .kpi{background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:12px;padding:14px 16px;box-shadow:var(--mt-shadow)}
+  .kpi .k-label{font-size:11px;color:var(--mt-text3);letter-spacing:.04em}
+  .kpi .k-val{font-size:20px;font-weight:700;color:var(--mt-brand);font-family:var(--mt-mono);margin-top:4px}
+  .kpi .k-sub{font-size:11px;color:var(--mt-text2);margin-top:2px}
+  .kpi.warn .k-val{color:var(--mt-amber-dark)}.kpi.danger .k-val{color:var(--mt-red-dark)}
+  .ctrl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 12px}
+  .ctrl .sp{margin-left:auto}
+  .ctrl select,.ctrl input[type=text],.ctrl input[type=search]{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);color:var(--mt-text);min-width:140px}
+  .ctrl input[type=search]{min-width:240px}
+  .ctrl label{font-size:12px;color:var(--mt-text2);display:inline-flex;align-items:center;gap:6px}
+  .alert-bar{display:flex;flex-wrap:wrap;gap:8px;background:var(--mt-surface);border:1px solid var(--mt-border);border-left:3px solid var(--mt-amber);border-radius:10px;padding:10px 14px;margin:0 0 14px;align-items:center}
+  .alert-bar .lbl{font-size:12px;color:var(--mt-text2);margin-right:6px}
+  .alert-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-family:var(--mt-mono);padding:4px 9px;border-radius:999px;background:var(--mt-surface3);color:var(--mt-text);cursor:pointer;user-select:none}
+  .alert-pill b{font-weight:700}
+  .alert-pill.danger{background:var(--mt-red-dim);color:var(--mt-red-dark)}
+  .alert-pill.warn{background:var(--mt-amber-dim);color:var(--mt-amber-dark)}
+  .alert-pill.active{outline:2px solid var(--mt-brand);outline-offset:1px}
+  .tbl-wrap{background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:12px;overflow:auto;box-shadow:var(--mt-shadow)}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th{position:sticky;top:0;background:var(--mt-surface2);color:var(--mt-text2);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--mt-border);white-space:nowrap;font-size:12px;z-index:1}
+  table.data td{padding:9px 12px;border-bottom:1px solid var(--mt-surface3);color:var(--mt-text);vertical-align:top}
+  table.data tr:last-child td{border-bottom:none}
+  table.data td.num{text-align:right;font-family:var(--mt-mono);white-space:nowrap}
+  table.data tr.low{background:var(--mt-amber-dim)}.table.data tr.low td.rate{color:var(--mt-amber-dark);font-weight:600}
+  table.data tr.neg{background:var(--mt-red-dim)}
+  table.data tr.neg td.rate,table.data tr.neg td.margin{color:var(--mt-red-dark);font-weight:600}
+  table.data .nm{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  table.data tr.row-clickable{cursor:pointer}
+  table.data tr.row-clickable:hover{background:var(--mt-accent-dim)}
+  .pill{display:inline-block;font-size:11px;font-family:var(--mt-mono);padding:2px 8px;border-radius:10px}
+  .pill.closed{background:var(--mt-accent-dim);color:var(--mt-accent)}
+  .pill.open{background:var(--mt-surface3);color:var(--mt-text2)}
+  .bd{display:inline-flex;align-items:center;font-size:11px;font-family:var(--mt-mono);padding:2px 7px;border-radius:10px;margin:1px 3px 1px 0;line-height:1.5;white-space:nowrap}
+  .bd-ok{background:var(--mt-green-dim);color:var(--mt-green-dark)}
+  .bd-warn{background:var(--mt-amber-dim);color:var(--mt-amber-dark)}
+  .bd-danger{background:var(--mt-red-dim);color:var(--mt-red-dark)}
+  .bd-mute{background:var(--mt-surface3);color:var(--mt-text3)}
+  .bd-info{background:var(--mt-accent-dim);color:var(--mt-accent)}
+  .chk-row{display:inline-flex;flex-wrap:wrap;gap:5px}
+  .chk{font-size:11px;font-family:var(--mt-mono);padding:3px 8px;border-radius:10px;background:var(--mt-surface3);color:var(--mt-text3);border:1px solid transparent;cursor:pointer;user-select:none;white-space:nowrap}
+  .chk.on{background:var(--mt-green-dim);color:var(--mt-green-dark)}
+  .chk:hover{border-color:var(--mt-border2)}
+  .lbl-sel{font:inherit;font-size:11px;font-family:var(--mt-mono);padding:2px 6px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);color:var(--mt-text);max-width:120px}
+  .lbl-sel.set{background:var(--mt-point-dim);color:var(--mt-point2);border-color:var(--mt-point)}
+  .grp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  @media(max-width:900px){.grp-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+  .empty{text-align:center;padding:60px 20px;color:var(--mt-text3);font-size:14px}
+  .tab-panel{display:none}.tab-panel.active{display:block}
+  .mt-modal-backdrop{position:fixed;inset:0;background:rgba(42,47,57,.42);display:none;z-index:50;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+  .mt-modal-backdrop.show{display:flex}
+  .mt-modal{background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:14px;max-width:980px;width:100%;box-shadow:var(--mt-shadow-lg);overflow:hidden}
+  .mt-modal-head{padding:16px 22px;border-bottom:1px solid var(--mt-border);display:flex;align-items:center;gap:12px;background:var(--mt-surface2)}
+  .mt-modal-head h3{margin:0;font-size:15px;color:var(--mt-brand);flex:1}
+  .mt-modal-head .sub{font-size:12px;color:var(--mt-text2);font-family:var(--mt-mono)}
+  .mt-modal-body{padding:18px 22px;max-height:calc(100vh - 160px);overflow-y:auto}
+  .mt-modal-foot{padding:12px 22px;border-top:1px solid var(--mt-border);display:flex;justify-content:flex-end;gap:8px;background:var(--mt-surface2)}
+  .close-x{cursor:pointer;color:var(--mt-text3);font-size:22px;line-height:1;padding:4px 8px;border-radius:6px}
+  .close-x:hover{background:var(--mt-surface3);color:var(--mt-text)}
+  .mt-modal h4{margin:18px 0 8px;font-size:13px;color:var(--mt-brand);border-left:3px solid var(--mt-point);padding-left:9px}
+  .mt-modal h4:first-child{margin-top:0}
+  .field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px}
+  .field-grid .field{display:flex;flex-direction:column;gap:3px;font-size:12px}
+  .field-grid .field b{color:var(--mt-text2);font-weight:600;font-size:11px}
+  textarea.memo{width:100%;min-height:60px;font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);color:var(--mt-text);resize:vertical;box-sizing:border-box}
+  textarea.memo:focus{outline:none;border-color:var(--mt-brand)}
+  .roster-tbl{font-size:12px}.roster-tbl th,.roster-tbl td{padding:6px 9px}
+  .roster-tbl input[type=checkbox]{cursor:pointer}
+  .roster-tbl td.miss{color:var(--mt-red-dark);font-weight:600}
+  .memo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:760px){.memo-grid{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -81,307 +105,604 @@
   </div>
 
   <p class="intro">
-    엠클릭 엑셀들을 한 번에 올리면 <strong>행사번호</strong>로 묶어 손익·미수를 한눈에 점검합니다.
+    엠클릭 엑셀들을 한 번에 올리면 <strong>행사번호</strong>로 묶어 손익·미수·운영 점검을 한눈에 봅니다.
     여러 파일·분할 파일 모두 가능합니다.<br>
-    <span class="src">손익은 마감/정산현황, 미수·취소는 예약리스트 기준입니다. 데이터는 브라우저 안에서만 처리되고 어디에도 저장·전송되지 않습니다.</span>
+    <span class="src">손익은 마감/정산현황, 미수·취소는 예약리스트, 명단·여권은 일행별예약 기준입니다. OP 입력 메모는 이 PC에 저장됩니다.</span>
   </p>
 
   <div class="mt-dropzone" id="drop">
     <div style="font-size:30px">📁</div>
-    <div style="font-weight:600; margin-top:6px">파일을 끌어다 놓거나 클릭해서 선택</div>
-    <div style="font-size:12px; color:var(--mt-text3); margin-top:4px">예약리스트 · 행사별마감현황(또는 정산현황) · APIS · 일행별예약 · 현지도착</div>
+    <div style="font-weight:600;margin-top:6px">파일을 끌어다 놓거나 클릭해서 선택</div>
+    <div style="font-size:12px;color:var(--mt-text3);margin-top:4px">예약리스트 · 행사별마감현황 · APIS · 일행별예약 · 현지도착</div>
     <input type="file" id="file" accept=".xlsx,.xls" multiple hidden>
   </div>
 
   <div class="recog" id="recog"></div>
 
-  <div class="mt-tabs" id="tabs" style="margin-top:22px; display:none">
-    <button class="mt-tab active" data-tab="pnl">💰 손익 점검</button>
+  <div class="mt-tabs" id="tabs" style="margin-top:22px;display:none">
+    <button class="mt-tab active" data-tab="ops">📋 예약 운영</button>
+    <button class="mt-tab" data-tab="pnl">💰 손익 점검</button>
     <button class="mt-tab" data-tab="unpaid">🧾 미수 · 취소 위약금</button>
   </div>
 
-  <!-- 손익 -->
-  <div class="tab-panel active" id="panel-pnl">
+  <div class="tab-panel active" id="panel-ops">
+    <div id="ops-body"><div class="empty">엑셀을 올리면 예약 운영 점검이 표시됩니다.</div></div>
+  </div>
+  <div class="tab-panel" id="panel-pnl">
     <div id="pnl-body"><div class="empty">엑셀을 올리면 손익이 표시됩니다. (마감현황 또는 정산현황 필요)</div></div>
   </div>
-
-  <!-- 미수/취소 -->
   <div class="tab-panel" id="panel-unpaid">
     <div id="unpaid-body"><div class="empty">엑셀을 올리면 미수·취소 위약금이 표시됩니다. (예약리스트 필요)</div></div>
   </div>
 
 </div>
 
+<div class="mt-modal-backdrop" id="modal"></div>
 <div class="mt-toast-host" id="toastHost"></div>
 
 <script>
-const STORE = { settle:[], resv:[], apis:[], roster:[], local:[] };
-const TYPE_LABEL = { settle:'손익(마감/정산)', resv:'예약리스트', apis:'APIS', roster:'일행목록', local:'현지도착' };
+const STORE={settle:[],resv:[],apis:[],roster:[],local:[]};
+const TYPE_LABEL={settle:'손익(마감/정산)',resv:'예약리스트',apis:'APIS',roster:'일행목록',local:'현지도착'};
+const OPS_KEY='mt_ops_v1';
 
-function num(v){ if(v==null) return 0; const s=String(v).replace(/,/g,'').replace(/원/g,'').trim(); const n=parseFloat(s); return isNaN(n)?0:n; }
-function txt(v){ return v==null?'':String(v).trim(); }
-function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
-function dShort(v){ const s=txt(v); return s.length>=10 ? s.slice(0,10) : s; }
+function num(v){if(v==null)return 0;const s=String(v).replace(/,/g,'').replace(/원/g,'').trim();const n=parseFloat(s);return isNaN(n)?0:n}
+function txt(v){return v==null?'':String(v).trim()}
+function fmt(n){return Math.round(n).toLocaleString('ko-KR')}
+function dShort(v){const s=txt(v);return s.length>=10?s.slice(0,10):s}
+function parseDate(v){if(!v)return null;const s=txt(v).slice(0,10);const m=s.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);if(!m)return null;const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d}
+function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
 
-function detectType(headers){
-  const H = headers.map(x=>String(x||'').trim());
-  const has = n => H.includes(n);
-  if (has('알선수수료') && has('마감')) return 'settle';
-  if (has('구분') && has('미수금액')) return 'resv';
-  if (has('PNR')) return 'apis';
-  if (has('여권번호') && has('거래처')) return 'roster';
-  if (has('현지도착일')) return 'local';
-  return null;
-}
+function detectType(headers){const H=headers.map(x=>String(x||'').trim());const has=n=>H.includes(n);
+  if(has('알선수수료')&&has('마감'))return 'settle';
+  if(has('구분')&&has('미수금액'))return 'resv';
+  if(has('PNR'))return 'apis';
+  if(has('여권번호')&&has('거래처'))return 'roster';
+  if(has('현지도착일'))return 'local';
+  return null}
 
-function aoaToObjects(aoa){
-  const h = aoa[0].map(x=>String(x==null?'':x).trim());
-  const out=[];
-  for(let i=1;i<aoa.length;i++){
-    const r=aoa[i];
-    if(!r || !r.some(c=>c!=null && String(c).trim()!=='')) continue;
-    const o={}; h.forEach((k,j)=>{ o[k]=r[j]; }); out.push(o);
-  }
-  return out;
-}
+function aoaToObjects(aoa){const h=aoa[0].map(x=>String(x==null?'':x).trim());const out=[];
+  for(let i=1;i<aoa.length;i++){const r=aoa[i];if(!r||!r.some(c=>c!=null&&String(c).trim()!==''))continue;const o={};h.forEach((k,j)=>{o[k]=r[j]});out.push(o)}return out}
 
-async function handleFiles(files){
-  let added=0, skipped=0;
-  for(const f of files){
-    try{
-      const buf = await f.arrayBuffer();
-      const wb = XLSX.read(buf, { cellDates:false });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:false });
-      if(!aoa.length){ skipped++; continue; }
-      const type = detectType(aoa[0].map(x=>String(x||'').trim()));
-      if(!type){ skipped++; continue; }
-      STORE[type] = STORE[type].concat(aoaToObjects(aoa));
-      added++;
-    }catch(e){ console.error(e); skipped++; }
-  }
+async function handleFiles(files){let added=0,skipped=0;
+  for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{cellDates:false});
+    const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    if(!aoa.length){skipped++;continue}
+    const type=detectType(aoa[0].map(x=>String(x||'').trim()));if(!type){skipped++;continue}
+    STORE[type]=STORE[type].concat(aoaToObjects(aoa));added++}catch(e){console.error(e);skipped++}}
   toast(`${added}개 인식${skipped?` · ${skipped}개 건너뜀`:''}`);
-  renderRecog();
-  document.getElementById('tabs').style.display='flex';
-  renderPnL(); renderUnpaid();
+  renderRecog();document.getElementById('tabs').style.display='flex';
+  buildIndex();renderOps();renderPnL();renderUnpaid()}
+
+function renderRecog(){const el=document.getElementById('recog');
+  el.innerHTML=Object.keys(TYPE_LABEL).map(t=>{
+    const rows=STORE[t].filter(r=>!txt(r['행사명']).includes('합계')&&!txt(r['상품명']).includes('합계'));
+    const n=rows.length;
+    return `<span class="recog-chip ${n?'':'off'}"><span class="dot"></span>${TYPE_LABEL[t]} <b>${n?n.toLocaleString():'—'}</b></span>`}).join('')}
+
+const IDX={resv:{},settle:{},apis:{},roster:{},local:{}};
+function buildIndex(){
+  for(const k of Object.keys(IDX))IDX[k]={};
+  for(const r of STORE.resv){const ev=txt(r['행사번호']);if(ev&&!txt(r['행사명']).includes('합계')&&!txt(r['상품명']).includes('합계'))IDX.resv[ev]=r}
+  for(const r of STORE.settle){const ev=txt(r['행사번호']);if(ev&&!txt(r['행사명']).includes('합계'))IDX.settle[ev]=r}
+  for(const k of ['apis','roster','local']){IDX[k]={};
+    for(const r of STORE[k]){const ev=txt(r['행사번호']);if(!ev)continue;(IDX[k][ev]=IDX[k][ev]||[]).push(r)}}
+  // local 은 행사번호 1행이 보통이라 객체로
+  const loc={};for(const ev of Object.keys(IDX.local)){loc[ev]=IDX.local[ev][0]}IDX.local=loc;
 }
 
-function renderRecog(){
-  const el=document.getElementById('recog');
-  el.innerHTML = Object.keys(TYPE_LABEL).map(t=>{
-    const rows = STORE[t].filter(r=>!txt(r['행사명']).includes('합계') && !txt(r['상품명']).includes('합계'));
-    const n = rows.length;
-    return `<span class="recog-chip ${n?'':'off'}"><span class="dot"></span>${TYPE_LABEL[t]} <b>${n?n.toLocaleString():'—'}</b></span>`;
-  }).join('');
-}
+function loadAllOps(){try{return JSON.parse(localStorage.getItem(OPS_KEY)||'{}')}catch{return{}}}
+function saveAllOps(d){try{localStorage.setItem(OPS_KEY,JSON.stringify(d))}catch(e){console.error(e)}}
+function getOps(ev){const a=loadAllOps();return a[ev]||{manual:{},label:'',memos:{int:'',air:'',loc:''},ops:{singles:{},rooms:'',golf:'',meal:'',room:'',golfNote:'',receipt:false}}}
+function setOps(ev,o){const a=loadAllOps();a[ev]=o;saveAllOps(a)}
 
-/* ── 손익 ── */
-function buildPnL(){
-  const resvByEv={};
-  for(const r of STORE.resv){ const ev=txt(r['행사번호']); if(ev) resvByEv[ev]=r; }
-  const rows=[];
-  for(const s of STORE.settle){
-    const ev=txt(s['행사번호']); if(!ev) continue;
-    if(txt(s['행사명']).includes('합계')) continue;
-    const sale=num(s['판매금액']);
-    const cost=num(s['항공료'])+num(s['지상비'])+num(s['호텔비'])+num(s['보험료'])+num(s['여행경비']);
-    const margin=num(s['알선수수료']);
-    const r=resvByEv[ev]||{};
-    rows.push({
-      ev, dep:dShort(s['출발일자']), name:txt(s['행사명'])||txt(r['상품명']),
-      dest:txt(r['출발지']), pax:num(s['인원']),
-      sale, cost, margin, rate: sale? margin/sale*100 : 0,
-      closed: txt(s['마감'])==='마감'
-    });
+function computeChecks(ev){
+  const r=IDX.resv[ev]||{},s=IDX.settle[ev]||{},api=IDX.apis[ev]||[],ros=IDX.roster[ev]||[],loc=IDX.local[ev]||{};
+  const pax=num(s['인원'])||num(r['예약'])||num(loc['인원'])||ros.length||api.length;
+  const dep=parseDate(s['출발일자']||r['출발일자']||loc['현지도착일']);
+  const rosterN=ros.length;
+  const rosterStatus=rosterN===0?'none':(rosterN<pax?'partial':(rosterN>pax?'over':'full'));
+  let missing=0,noNames=0,noPhone=0,expiryRisk=0;
+  for(const p of ros){
+    const hasName=txt(p['영문이름'])||txt(p['고객명']);
+    if(!hasName)noNames++;
+    const fields=[p['여권번호'],p['만료일'],p['휴대번호'],p['영문성']||p['영문이름']];
+    if(fields.some(f=>!txt(f)))missing++;
+    if(!txt(p['휴대번호']))noPhone++;
+    if(dep){const ex=parseDate(p['만료일']);if(ex){const m=(ex-dep)/(30.4*24*3600*1000);if(m<6)expiryRisk++}}
   }
-  // 중복 행사번호 제거 (정산+마감 동시 업로드 시): 행사번호 기준 마지막 우선
-  const seen={}; const dedup=[];
-  for(const x of rows){ seen[x.ev]=x; }
-  for(const k in seen) dedup.push(seen[k]);
-  return dedup;
+  const airfare=num(s['항공료']);
+  const airStatus=Object.keys(s).length?(airfare>0?'included':'individual'):'unknown';
+  const insurance=num(s['보험료']);
+  const insStatus=Object.keys(s).length?(insurance>0?'included':'no'):'unknown';
+  const apiN=api.length;
+  const seatedN=api.filter(p=>txt(p['사전좌석']).toUpperCase()==='Y').length;
+  const seatStatus=apiN===0?'unknown':(seatedN===apiN?'full':(seatedN===0?'none':'partial'));
+  const sentTalk=txt(r['톡']).toUpperCase()==='Y';
+  const sentSms=txt(r['문자']).toUpperCase()==='Y';
+  const closed=txt(s['마감'])==='마감';
+  const due=num(r['미수금액']);
+  const status=txt(r['구분']);
+  const sale=num(s['판매금액'])||num(r['판매금액']);
+  const margin=num(s['알선수수료']);
+  const cost=num(s['항공료'])+num(s['지상비'])+num(s['호텔비'])+num(s['보험료'])+num(s['여행경비']);
+  return{ev,pax,dep,r,s,api,ros,loc,rosterN,rosterStatus,missing,noNames,noPhone,expiryRisk,
+    airfare,airStatus,insurance,insStatus,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,sale,margin,cost}
 }
 
+function badgeHtml(c,opts){
+  opts=opts||{};
+  const showAnnounce=opts.showAnnounce!==false;
+  const b=[];
+  if(c.rosterStatus==='full'&&c.missing===0)b.push(['ok','명단 확정']);
+  else if(c.rosterStatus==='full'&&c.missing>0)b.push(['warn',`명단 미흡 ${c.missing}`]);
+  else if(c.rosterStatus==='partial')b.push(['warn',`명단 ${c.rosterN}/${c.pax}`]);
+  else if(c.rosterStatus==='over')b.push(['info',`명단 ${c.rosterN}/${c.pax}`]);
+  else if(c.pax>0)b.push(['danger','명단 없음']);
+  if(c.noNames>0)b.push(['danger',`무기명 ${c.noNames}`]);
+  if(c.noPhone>0)b.push(['warn',`연락처 ${c.noPhone}`]);
+  if(c.expiryRisk>0)b.push(['danger',`여권 ${c.expiryRisk}`]);
+  if(c.airStatus==='included')b.push(['ok','항공권']);
+  else if(c.airStatus==='individual')b.push(['mute','개별발권']);
+  if(c.insStatus==='included')b.push(['ok','보험']);
+  else if(c.insStatus==='no')b.push(['mute','보험X']);
+  if(c.seatStatus==='full')b.push(['ok','사전좌석']);
+  else if(c.seatStatus==='partial')b.push(['warn',`사전좌석 ${c.seatedN}/${c.apiN}`]);
+  else if(c.seatStatus==='none'&&c.airStatus==='included')b.push(['mute','사전좌석X']);
+  if(showAnnounce){
+    if(c.sentTalk)b.push(['ok','톡']);
+    if(c.sentSms)b.push(['ok','문자']);
+    if(!c.sentTalk&&!c.sentSms)b.push(['mute','안내X']);
+  }
+  if(c.closed)b.push(['info','마감']);
+  if(c.due!==0)b.push([c.due>0?'warn':'danger',`미수 ${fmt(c.due)}`]);
+  if(c.status==='취소')b.push(['danger','취소']);
+  return b.map(x=>`<span class="bd bd-${x[0]}">${escH(x[1])}</span>`).join('')
+}
+
+const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만'];
+const MANUAL_KEYS=[['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금○'],['receipt','현금영수증']];
+let opsFilter={q:'',dest:'',airline:'',flight:'',monthY:'',monthM:'',issue:'',label:'',sort:'dep'};
+
+function getEvents(){const evs=new Set();for(const k of Object.keys(IDX))for(const e of Object.keys(IDX[k]))evs.add(e);return [...evs]}
+
+function opsRows(){
+  const evs=getEvents().filter(e=>{const r=IDX.resv[e];if(r&&txt(r['구분'])==='견적')return false;return true});
+  return evs.map(computeChecks)
+}
+
+function buildFilters(rows){
+  const dests=new Set(),airlines=new Set(),flights=new Set();
+  rows.forEach(c=>{const r=c.r,api=c.api[0]||{};
+    if(txt(r['출발지']))dests.add(txt(r['출발지']));
+    if(txt(r['항공']))airlines.add(txt(r['항공']));
+    if(txt(api['항공사']))airlines.add(txt(api['항공사']));
+    if(txt(api['출발편']))flights.add(txt(api['출발편']))});
+  return{dests:[...dests].sort(),airlines:[...airlines].sort(),flights:[...flights].sort()}
+}
+
+function applyFilters(rows){
+  const F=opsFilter;
+  return rows.filter(c=>{
+    if(F.dest&&txt(c.r['출발지'])!==F.dest)return false;
+    if(F.airline){const al=txt(c.r['항공'])||txt((c.api[0]||{})['항공사']);if(al!==F.airline)return false}
+    if(F.flight){const fl=txt((c.api[0]||{})['출발편']);if(fl!==F.flight)return false}
+    if(F.monthY&&F.monthM){if(!c.dep||c.dep.getFullYear()!=F.monthY||(c.dep.getMonth()+1)!=F.monthM)return false}
+    if(F.label){const o=getOps(c.ev);if((o.label||'미정')!==F.label)return false}
+    if(F.issue){
+      if(F.issue==='noNames'&&c.noNames===0)return false;
+      if(F.issue==='noPhone'&&c.noPhone===0)return false;
+      if(F.issue==='expiry'&&c.expiryRisk===0)return false;
+      if(F.issue==='partial'&&!(c.rosterStatus==='partial'||(c.rosterStatus==='none'&&c.pax>0)))return false;
+      if(F.issue==='due'&&c.due===0)return false;
+      if(F.issue==='noAnnounce'&&(c.sentTalk||c.sentSms))return false;
+    }
+    if(F.q){const q=F.q.toLowerCase();
+      const blob=[c.ev,txt(c.r['상품명']),txt(c.s['행사명']),txt(c.r['대표고객']),txt(c.s['거래처']),
+        txt(c.r['출발지']),txt(c.r['항공']),txt((c.api[0]||{})['출발편']),txt((c.api[0]||{})['항공사']),
+        ...c.ros.map(p=>txt(p['고객명'])+' '+txt(p['영문성'])+' '+txt(p['영문이름'])+' '+txt(p['휴대번호']))
+      ].join(' ').toLowerCase();
+      if(!blob.includes(q))return false}
+    return true
+  })
+}
+
+function renderOps(){
+  const body=document.getElementById('ops-body');
+  let rows=opsRows();
+  if(!rows.length){body.innerHTML='<div class="empty">예약 운영 데이터가 없습니다. 엑셀을 올려주세요.</div>';return}
+
+  // 톡/문자 컬럼이 데이터에 실제로 있는지 (Y가 한 건이라도 있는지) 확인
+  const hasAnnounceData=rows.some(c=>c.sentTalk||c.sentSms);
+
+  const ag={noNames:0,noPhone:0,expiry:0,partial:0,due:0,noAnnounce:0};
+  for(const c of rows){
+    if(c.noNames>0)ag.noNames++;
+    if(c.noPhone>0)ag.noPhone++;
+    if(c.expiryRisk>0)ag.expiry++;
+    if(c.rosterStatus==='partial'||(c.rosterStatus==='none'&&c.pax>0))ag.partial++;
+    if(c.due!==0)ag.due++;
+    if(hasAnnounceData && !c.sentTalk && !c.sentSms)ag.noAnnounce++;
+  }
+  const alertPill=(k,t,cls)=>`<span class="alert-pill ${cls} ${opsFilter.issue===k?'active':''}" data-issue="${k}"><b>${ag[k]}</b> ${t}</span>`;
+  const alertBar=`<div class="alert-bar">
+    <span class="lbl">검수 알림</span>
+    ${alertPill('noNames','무기명','danger')}
+    ${alertPill('noPhone','연락처 누락','warn')}
+    ${alertPill('expiry','여권 6개월미만','danger')}
+    ${alertPill('partial','명단 미완','warn')}
+    ${alertPill('due','미수','warn')}
+    ${hasAnnounceData?alertPill('noAnnounce','안내 미발송','warn'):''}
+    <span class="sp" style="flex:1"></span>
+    ${opsFilter.issue?`<span class="alert-pill" data-issue=""><b>×</b> 알림 해제</span>`:''}
+  </div>`;
+
+  const {dests,airlines,flights}=buildFilters(rows);
+  const months=[...new Set(rows.filter(c=>c.dep).map(c=>`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`))].sort();
+
+  const ctrl=`<div class="ctrl">
+    <input type="search" id="opsQ" placeholder="행사번호·이름·영문명·상품·항공편·거래처 검색" value="${escH(opsFilter.q)}">
+    <select id="opsDest"><option value="">출발지 전체</option>${dests.map(d=>`<option ${opsFilter.dest===d?'selected':''}>${escH(d)}</option>`).join('')}</select>
+    <select id="opsAirline"><option value="">항공사 전체</option>${airlines.map(a=>`<option ${opsFilter.airline===a?'selected':''}>${escH(a)}</option>`).join('')}</select>
+    <select id="opsFlight"><option value="">항공편 전체</option>${flights.map(f=>`<option ${opsFilter.flight===f?'selected':''}>${escH(f)}</option>`).join('')}</select>
+    <select id="opsMonth"><option value="">출발월 전체</option>${months.map(m=>{const sel=(opsFilter.monthY+'-'+String(opsFilter.monthM).padStart(2,'0'))===m;return `<option value="${m}" ${sel?'selected':''}>${m}</option>`}).join('')}</select>
+    <select id="opsLabel"><option value="">발권라벨 전체</option>${TICKET_LABELS.map(l=>`<option ${opsFilter.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>
+    <span class="sp"></span>
+    <label>정렬<select id="opsSort">
+      <option value="dep" ${opsFilter.sort==='dep'?'selected':''}>출발일순</option>
+      <option value="issue" ${opsFilter.sort==='issue'?'selected':''}>점검 시급순</option>
+      <option value="pax" ${opsFilter.sort==='pax'?'selected':''}>인원순</option>
+    </select></label>
+    <button class="mt-btn" id="opsExport">📥 엑셀 출력</button>
+  </div>`;
+
+  let shown=applyFilters(rows);
+  if(opsFilter.sort==='dep')shown.sort((a,b)=>{const da=a.dep?+a.dep:1e15,db=b.dep?+b.dep:1e15;return da-db});
+  else if(opsFilter.sort==='issue')shown.sort((a,b)=>{
+    const sc=c=>c.noNames*100+c.noPhone*10+c.expiryRisk*50+(c.rosterStatus==='partial'?30:0)+(c.due!==0?5:0)+(!c.sentTalk&&!c.sentSms?3:0);
+    return sc(b)-sc(a)});
+  else if(opsFilter.sort==='pax')shown.sort((a,b)=>b.pax-a.pax);
+
+  const summary=`<div style="font-size:12px;color:var(--mt-text2);margin:0 0 10px">${shown.length} / ${rows.length}건 표시</div>`;
+
+  const trs=shown.map(c=>{
+    const o=getOps(c.ev);
+    const manualHtml=MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ');
+    const labelHtml=`<select class="lbl-sel ${o.label&&o.label!=='미정'?'set':''}" data-ev="${c.ev}" data-act="label">${TICKET_LABELS.map(l=>`<option ${o.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
+    return `<tr class="row-clickable" data-ev="${c.ev}">
+      <td>${c.dep?c.dep.toISOString().slice(0,10):''}</td>
+      <td class="nm" title="${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}">${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}</td>
+      <td>${escH(txt(c.r['출발지']))}</td>
+      <td>${escH(txt((c.api[0]||{})['출발편'])||txt(c.r['항공']))}</td>
+      <td class="num">${c.pax||''}</td>
+      <td>${escH(txt(c.r['대표고객']))}</td>
+      <td>${escH(txt(c.s['거래처']))}</td>
+      <td>${badgeHtml(c,{showAnnounce:hasAnnounceData})}</td>
+      <td onclick="event.stopPropagation()"><div class="chk-row">${manualHtml}</div></td>
+      <td onclick="event.stopPropagation()">${labelHtml}</td>
+    </tr>`}).join('');
+
+  body.innerHTML=alertBar+ctrl+summary+`<div class="tbl-wrap"><table class="data">
+    <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>항공편</th><th>인원</th><th>대표</th><th>거래처</th><th>자동 점검</th><th>OP 체크</th><th>발권 라벨</th></tr></thead>
+    <tbody>${trs||'<tr><td colspan="10" class="empty">조건에 맞는 행사가 없습니다.</td></tr>'}</tbody></table></div>`;
+
+  document.querySelectorAll('.alert-pill').forEach(p=>p.onclick=()=>{opsFilter.issue=p.dataset.issue;renderOps()});
+  const qel=document.getElementById('opsQ');
+  qel.addEventListener('input',e=>{opsFilter.q=e.target.value;renderOps();const n=document.getElementById('opsQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)});
+  document.getElementById('opsDest').onchange=e=>{opsFilter.dest=e.target.value;renderOps()};
+  document.getElementById('opsAirline').onchange=e=>{opsFilter.airline=e.target.value;renderOps()};
+  document.getElementById('opsFlight').onchange=e=>{opsFilter.flight=e.target.value;renderOps()};
+  document.getElementById('opsMonth').onchange=e=>{const v=e.target.value;if(v){const [y,m]=v.split('-');opsFilter.monthY=+y;opsFilter.monthM=+m}else{opsFilter.monthY='';opsFilter.monthM=''}renderOps()};
+  document.getElementById('opsLabel').onchange=e=>{opsFilter.label=e.target.value;renderOps()};
+  document.getElementById('opsSort').onchange=e=>{opsFilter.sort=e.target.value;renderOps()};
+  document.getElementById('opsExport').onclick=()=>exportOps(shown);
+  document.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const ev=el.dataset.ev,mk=el.dataset.mk;const o=getOps(ev);o.manual[mk]=!o.manual[mk];if(o.manual[mk])o.manual[mk+'_ts']=Date.now();setOps(ev,o);renderOps()});
+  document.querySelectorAll('select.lbl-sel').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.label=el.value;setOps(el.dataset.ev,o);renderOps()});
+  document.querySelectorAll('tr.row-clickable').forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.ev));
+}
+
+function openDetail(ev){
+  const c=computeChecks(ev);const o=getOps(ev);
+  const r=c.r,s=c.s,api=c.api,ros=c.ros,loc=c.loc;
+  const flightInfo=api[0]||{};
+  const head=`<div class="mt-modal-head">
+    <h3>${escH(txt(s['행사명'])||txt(r['상품명'])||'(상품명 없음)')}</h3>
+    <span class="sub">${escH(ev)}</span>
+    <span class="close-x" onclick="closeModal()">×</span>
+  </div>`;
+
+  const fieldsHtml=`<div class="field-grid">
+    <div class="field"><b>출발일</b><span>${c.dep?c.dep.toISOString().slice(0,10):''} ${escH(txt(s['요일']||r['요일']))}</span></div>
+    <div class="field"><b>도착일</b><span>${escH(dShort(s['도착일자']||r['도착일자']))}</span></div>
+    <div class="field"><b>출발지</b><span>${escH(txt(r['출발지']))}</span></div>
+    <div class="field"><b>항공</b><span>${escH(txt(flightInfo['항공사'])||txt(r['항공']))} ${escH(txt(flightInfo['출발편']))} / ${escH(txt(flightInfo['귀국편']))}</span></div>
+    <div class="field"><b>대표고객</b><span>${escH(txt(r['대표고객']))} ${escH(txt(r['예약자명']))}</span></div>
+    <div class="field"><b>거래처</b><span>${escH(txt(s['거래처']))}</span></div>
+    <div class="field"><b>회원권</b><span>${escH(txt(r['회원권구분']))}</span></div>
+    <div class="field"><b>인원</b><span>${c.pax} (등록 ${c.rosterN})</span></div>
+    <div class="field"><b>판매</b><span>${fmt(c.sale)}</span></div>
+    <div class="field"><b>미수</b><span style="color:${c.due!==0?'var(--mt-red-dark)':'inherit'}">${fmt(c.due)}</span></div>
+    <div class="field"><b>마진</b><span>${c.margin?fmt(c.margin)+' ('+(c.sale?(c.margin/c.sale*100).toFixed(1):'0')+'%)':'—'}</span></div>
+    <div class="field"><b>담당</b><span>${escH(txt(loc['담당사원']||r['판매자']||s['담당사원']))}</span></div>
+  </div>
+  <div style="margin-top:10px">${badgeHtml(c)}</div>`;
+
+  const manualHtml=MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ');
+  const labelHtml=`<select class="lbl-sel ${o.label&&o.label!=='미정'?'set':''}" id="dlgLabel">${TICKET_LABELS.map(l=>`<option ${o.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
+  const checkBlock=`<h4>OP 체크 · 발권 라벨</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+      <div class="chk-row">${manualHtml}</div>
+      <div style="display:flex;align-items:center;gap:8px">발권 ${labelHtml}</div>
+    </div>`;
+
+  const rosterTr=ros.map((p,i)=>{
+    const expiry=parseDate(p['만료일']);
+    const expiryRisk=c.dep&&expiry&&((expiry-c.dep)/(30.4*24*3600*1000))<6;
+    const isSingle=o.ops.singles[i]?'checked':'';
+    return `<tr>
+      <td><input type="checkbox" data-single="${i}" ${isSingle}></td>
+      <td>${escH(txt(p['고객명']))}</td>
+      <td>${escH(txt(p['영문성']))} ${escH(txt(p['영문이름']))}</td>
+      <td class="${txt(p['휴대번호'])?'':'miss'}">${escH(txt(p['휴대번호'])||'없음')}</td>
+      <td class="${txt(p['여권번호'])?'':'miss'}">${escH(txt(p['여권번호'])||'없음')}</td>
+      <td class="${txt(p['만료일'])?(expiryRisk?'miss':''):'miss'}">${escH(dShort(p['만료일'])||'없음')}</td>
+      <td>${escH(dShort(p['생년월일']))}</td>
+    </tr>`}).join('') || `<tr><td colspan="7" style="color:var(--mt-text3);text-align:center;padding:14px">일행 명단이 아직 없습니다.</td></tr>`;
+  const rosterBlock=`<h4>승객 명단 <span style="font-weight:400;color:var(--mt-text3);font-size:11px">· 좌측 체크 = 싱글룸</span></h4>
+    <div class="tbl-wrap"><table class="data roster-tbl">
+      <thead><tr><th>싱글</th><th>고객명</th><th>영문명</th><th>휴대전화</th><th>여권번호</th><th>만료일</th><th>생년월일</th></tr></thead>
+      <tbody>${rosterTr}</tbody></table></div>`;
+
+  const memoBlock=`<h4>비고 (3분류)</h4>
+    <div style="font-size:11px;color:var(--mt-text3);margin-bottom:6px">엠클릭 통합 비고: ${escH(txt(r['비고']||(ros[0]||{})['비고'])||'(없음)')}</div>
+    <div class="memo-grid">
+      <div><b style="font-size:11px;color:var(--mt-text2)">내부 공용</b><textarea class="memo" data-memo="int">${escH(o.memos.int||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">항공팀</b><textarea class="memo" data-memo="air">${escH(o.memos.air||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">현지 전달</b><textarea class="memo" data-memo="loc">${escH(o.memos.loc||'')}</textarea></div>
+    </div>`;
+
+  const opsInputs=`<h4>운영 입력</h4>
+    <div class="memo-grid">
+      <div><b style="font-size:11px;color:var(--mt-text2)">방 배정 (트윈 짝)</b><textarea class="memo" data-ops="rooms" placeholder="예) 김○○ - 박○○ / 이○○ - 최○○">${escH(o.ops.rooms||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">첫날 골프 조편성</b><textarea class="memo" data-ops="golf" placeholder="예) 1조: 김○○ 박○○ 이○○ 최○○">${escH(o.ops.golf||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">현금영수증 발행</b>
+        <label style="font-size:13px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);cursor:pointer">
+          <input type="checkbox" data-ops="receipt" ${o.ops.receipt?'checked':''}> 발행 요청 받음
+        </label>
+      </div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">식사 특이사항</b><textarea class="memo" data-ops="meal" placeholder="알레르기, 채식 등">${escH(o.ops.meal||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">골프 특이사항</b><textarea class="memo" data-ops="golfNote" placeholder="좌타, 캐디 요청 등">${escH(o.ops.golfNote||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">룸 특이사항</b><textarea class="memo" data-ops="room" placeholder="금연실, 1층, 인접실 등">${escH(o.ops.room||'')}</textarea></div>
+    </div>`;
+
+  const respBtn=`<h4>손님 응답표</h4>
+    <div style="font-size:12px;color:var(--mt-text2);margin-bottom:8px">팀 정보가 채워진 출국 전 확인표를 새 창에 띄워 인쇄·PDF 저장하거나 캡처해 손님께 전달하실 수 있습니다. 손님 회신은 위 운영 입력에 직접 채우시면 됩니다.</div>
+    <button class="mt-btn" id="genResp">📄 응답표 생성 (새 창)</button>`;
+
+  const foot=`<div class="mt-modal-foot">
+    <span style="font-size:11px;color:var(--mt-text3);margin-right:auto">변경은 자동 저장됩니다.</span>
+    <button class="mt-btn mt-btn-ghost" onclick="closeModal()">닫기</button>
+  </div>`;
+
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="mt-modal" onclick="event.stopPropagation()">${head}
+    <div class="mt-modal-body">${fieldsHtml}${checkBlock}${rosterBlock}${memoBlock}${opsInputs}${respBtn}</div>
+    ${foot}</div>`;
+  m.classList.add('show');
+  m.onclick=closeModal;
+
+  m.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const k=el.dataset.mk;o.manual[k]=!o.manual[k];if(o.manual[k])o.manual[k+'_ts']=Date.now();setOps(ev,o);el.classList.toggle('on',o.manual[k]);el.textContent=MANUAL_KEYS.find(x=>x[0]===k)[1]+(o.manual[k]?' ✓':'');renderOps()});
+  m.querySelector('#dlgLabel').onchange=e=>{o.label=e.target.value;setOps(ev,o);renderOps();e.target.classList.toggle('set',o.label&&o.label!=='미정')};
+  m.querySelectorAll('textarea[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
+  m.querySelectorAll('textarea[data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
+  m.querySelectorAll('input[data-ops="receipt"]').forEach(t=>t.onchange=()=>{o.ops.receipt=t.checked;setOps(ev,o)});
+  m.querySelectorAll('input[data-single]').forEach(t=>t.onchange=()=>{const i=t.dataset.single;if(t.checked)o.ops.singles[i]=true;else delete o.ops.singles[i];setOps(ev,o)});
+  m.querySelector('#genResp').onclick=()=>generateResponseSheet(c,o);
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');document.getElementById('modal').innerHTML=''}
+
+function generateResponseSheet(c,o){
+  const r=c.r,s=c.s,api=c.api,ros=c.ros;
+  const flightInfo=api[0]||{};
+  const rosterTr=ros.map((p,i)=>`<tr>
+    <td>${i+1}</td><td>${escH(txt(p['고객명']))}</td>
+    <td>${escH(txt(p['영문성']))} ${escH(txt(p['영문이름']))}</td>
+    <td style="text-align:center">${o.ops.singles[i]?'☑':'☐'}</td>
+    <td></td><td></td><td></td>
+  </tr>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>출국 전 확인표</title>
+  <style>
+    body{font-family:'Noto Sans KR',sans-serif;max-width:760px;margin:20px auto;padding:20px;color:#2A2F39}
+    h1{font-size:18px;margin:0 0 4px;color:#353C48}
+    h2{font-size:13px;color:#6E6F4B;margin:18px 0 6px;border-left:3px solid #6E6F4B;padding-left:8px}
+    .meta{font-size:12px;color:#5A6472;margin-bottom:14px}
+    .meta div{margin:2px 0}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+    th,td{border:1px solid #CDD1D8;padding:6px 8px;text-align:left}
+    th{background:#F2F3F6;font-size:11px}
+    .ask{background:#FEF3C7;padding:10px 12px;border-radius:6px;margin-top:8px;font-size:12px;color:#92400E}
+    .sig{margin-top:30px;font-size:12px;color:#5A6472}
+    @media print{body{margin:0}.noprint{display:none}}
+    .noprint{margin-top:20px;text-align:right}
+    .btn{padding:6px 14px;font-size:13px;cursor:pointer;border:1px solid #CDD1D8;background:#fff;border-radius:6px}
+  </style></head><body>
+  <h1>출국 전 확인표</h1>
+  <div class="meta">
+    <div><b>행사명</b> ${escH(txt(s['행사명'])||txt(r['상품명']))}</div>
+    <div><b>출발 / 도착</b> ${escH(dShort(s['출발일자']||r['출발일자']))} ~ ${escH(dShort(s['도착일자']||r['도착일자']))}</div>
+    <div><b>항공</b> ${escH(txt(flightInfo['항공사'])||txt(r['항공']))} ${escH(txt(flightInfo['출발편']))} / ${escH(txt(flightInfo['귀국편']))}</div>
+    <div><b>대표고객</b> ${escH(txt(r['대표고객']))} · 인원 ${c.pax}명</div>
+  </div>
+  <h2>일행 명단 · 싱글룸 · 방 배정 (체크 부탁드립니다)</h2>
+  <table><thead><tr>
+    <th>No</th><th>고객명</th><th>영문명</th><th>싱글룸</th><th>같은 방 (트윈)</th><th>식사 알레르기</th><th>특이사항</th>
+  </tr></thead><tbody>${rosterTr}</tbody></table>
+  <h2>골프 조편성 (첫날)</h2>
+  <table><thead><tr><th style="width:60px">조</th><th>1번</th><th>2번</th><th>3번</th><th>4번</th></tr></thead>
+  <tbody><tr><td>1조</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>2조</td><td></td><td></td><td></td><td></td></tr></tbody></table>
+  <h2>요청 사항</h2>
+  <div class="ask">
+    · 좌타 / 캐디 요청 / 룸 위치(금연·1층·인접실) / 식사 제한 등 미리 말씀해 주실 사항을 자유롭게 적어주세요.<br>
+    <textarea style="width:100%;min-height:80px;margin-top:8px;border:1px solid #CDD1D8;border-radius:4px;padding:6px;font:inherit;font-size:12px"></textarea>
+  </div>
+  <div class="sig">작성자 ____________________  /  연락처 ____________________  /  작성일 ____________________</div>
+  <div class="noprint"><button class="btn" onclick="window.print()">🖨 인쇄 · PDF 저장</button></div>
+  </body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close()
+}
+
+function exportOps(rows){
+  const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','인원','회원권','담당',
+    '판매','미수','마진','마진율',
+    '명단상태','명단미흡','무기명','연락처누락','여권만료위험','항공권','보험','사전좌석','톡','문자','마감',
+    '확정서','견적서','예약금요청','예약금입금','현금영수증',
+    '발권라벨','내부메모','항공메모','현지메모','방배정','골프조편성','식사특이','골프특이','룸특이']];
+  const stat=v=>{if(v==='full')return '확정';if(v==='partial')return '미완';if(v==='over')return '초과';if(v==='none')return '없음';return ''};
+  for(const c of rows){
+    const o=getOps(c.ev);const flightInfo=c.api[0]||{};
+    aoa.push([c.ev,c.dep?c.dep.toISOString().slice(0,10):'',dShort(c.s['도착일자']||c.r['도착일자']),
+      txt(c.s['행사명'])||txt(c.r['상품명']),txt(c.s['거래처']),txt(c.r['대표고객']),txt(c.r['출발지']),
+      txt(flightInfo['항공사'])||txt(c.r['항공']),txt(flightInfo['출발편']),txt(flightInfo['귀국편']),
+      c.pax,txt(c.r['회원권구분']),txt(c.loc['담당사원']||c.r['판매자']),
+      c.sale,c.due,c.margin,c.sale?+(c.margin/c.sale*100).toFixed(1):0,
+      stat(c.rosterStatus),c.missing,c.noNames,c.noPhone,c.expiryRisk,
+      c.airStatus==='included'?'포함':(c.airStatus==='individual'?'개별발권':''),
+      c.insStatus==='included'?'포함':'',
+      c.seatStatus==='full'?'완료':(c.seatStatus==='partial'?`${c.seatedN}/${c.apiN}`:''),
+      c.sentTalk?'Y':'',c.sentSms?'Y':'',c.closed?'마감':'',
+      o.manual.conf?'Y':'',o.manual.quote?'Y':'',o.manual.depReq?'Y':'',o.manual.depPaid?'Y':'',o.manual.receipt?'Y':'',
+      o.label||'',o.memos.int||'',o.memos.air||'',o.memos.loc||'',
+      o.ops.rooms||'',o.ops.golf||'',o.ops.meal||'',o.ops.golfNote||'',o.ops.room||''])
+  }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:14},{wch:11},{wch:11},{wch:34},{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:6},{wch:12},{wch:10},{wch:11},{wch:11},{wch:11},{wch:7},{wch:7},{wch:7},{wch:7},{wch:8},{wch:9},{wch:8},{wch:6},{wch:9},{wch:5},{wch:5},{wch:7},{wch:6},{wch:6},{wch:9},{wch:9},{wch:9},{wch:11},{wch:18},{wch:18},{wch:18},{wch:20},{wch:20},{wch:14},{wch:14},{wch:14}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'예약 운영');
+  const today=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`MERITTOUR_예약운영_${today}.xlsx`);
+  toast('엑셀 저장 완료')
+}
+
+function buildPnL(){
+  const rows=[];
+  for(const ev of Object.keys(IDX.settle)){
+    const s=IDX.settle[ev],r=IDX.resv[ev]||{};
+    if(txt(s['행사명']).includes('합계'))continue;
+    const sale=num(s['판매금액']),cost=num(s['항공료'])+num(s['지상비'])+num(s['호텔비'])+num(s['보험료'])+num(s['여행경비']),margin=num(s['알선수수료']);
+    rows.push({ev,dep:dShort(s['출발일자']),name:txt(s['행사명'])||txt(r['상품명']),dest:txt(r['출발지']),pax:num(s['인원']),sale,cost,margin,rate:sale?margin/sale*100:0,closed:txt(s['마감'])==='마감'})
+  }
+  return rows
+}
 let pnlSort='rate';
 function renderPnL(){
   const body=document.getElementById('pnl-body');
   let rows=buildPnL();
-  if(!rows.length){ body.innerHTML='<div class="empty">손익 데이터가 없습니다. 마감현황 또는 정산현황 엑셀을 올려주세요.</div>'; return; }
-
-  const filledRows = rows.filter(r=>r.cost>0);
-  const totSale=filledRows.reduce((a,b)=>a+b.sale,0);
-  const totCost=filledRows.reduce((a,b)=>a+b.cost,0);
-  const totMargin=filledRows.reduce((a,b)=>a+b.margin,0);
-  const avgRate= totSale? totMargin/totSale*100 : 0;
-  const lowN=filledRows.filter(r=>r.sale>0 && r.rate>0 && r.rate<5).length;
-  const negN=filledRows.filter(r=>r.margin<=0 && r.sale>0).length;
+  if(!rows.length){body.innerHTML='<div class="empty">손익 데이터가 없습니다. 마감현황 또는 정산현황 엑셀을 올려주세요.</div>';return}
+  const filled=rows.filter(r=>r.cost>0);
+  const totSale=filled.reduce((a,b)=>a+b.sale,0),totCost=filled.reduce((a,b)=>a+b.cost,0),totMargin=filled.reduce((a,b)=>a+b.margin,0);
+  const avg=totSale?totMargin/totSale*100:0;
+  const lowN=filled.filter(r=>r.sale>0&&r.rate>0&&r.rate<5).length;
+  const negN=filled.filter(r=>r.margin<=0&&r.sale>0).length;
   const closedN=rows.filter(r=>r.closed).length;
-
-  // 정렬
-  if(pnlSort==='rate') rows.sort((a,b)=>a.rate-b.rate);
-  else if(pnlSort==='margin') rows.sort((a,b)=>a.margin-b.margin);
-  else if(pnlSort==='dep') rows.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
-  else if(pnlSort==='sale') rows.sort((a,b)=>b.sale-a.sale);
-
-  // 출발지별 집계
+  if(pnlSort==='rate')rows.sort((a,b)=>a.rate-b.rate);
+  else if(pnlSort==='margin')rows.sort((a,b)=>a.margin-b.margin);
+  else if(pnlSort==='dep')rows.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
+  else if(pnlSort==='sale')rows.sort((a,b)=>b.sale-a.sale);
   const byDest={};
-  for(const r of filledRows){ const d=r.dest||'(미상)'; (byDest[d]=byDest[d]||{sale:0,margin:0,n:0}); byDest[d].sale+=r.sale; byDest[d].margin+=r.margin; byDest[d].n++; }
-
-  const kpis = `
-    <div class="kpi-grid">
-      <div class="kpi"><div class="k-label">행사 건수</div><div class="k-val">${rows.length}</div><div class="k-sub">원가 입력 ${filledRows.length} · 마감 ${closedN}</div></div>
-      <div class="kpi"><div class="k-label">판매 합계</div><div class="k-val">${fmt(totSale)}</div><div class="k-sub">원</div></div>
-      <div class="kpi"><div class="k-label">원가 합계</div><div class="k-val">${fmt(totCost)}</div><div class="k-sub">항공+지상+호텔+보험+여행</div></div>
-      <div class="kpi"><div class="k-label">마진 합계</div><div class="k-val">${fmt(totMargin)}</div><div class="k-sub">알선수수료</div></div>
-      <div class="kpi"><div class="k-label">평균 마진율</div><div class="k-val">${avgRate.toFixed(1)}%</div><div class="k-sub">마진 ÷ 판매</div></div>
-      <div class="kpi ${negN?'danger':(lowN?'warn':'')}"><div class="k-label">점검 대상</div><div class="k-val">${lowN+negN}</div><div class="k-sub">저마진 ${lowN} · 역마진 ${negN}</div></div>
-    </div>`;
-
-  const ctrl = `
-    <div class="ctrl">
-      <label>정렬
-        <select id="pnlSortSel">
-          <option value="rate"${pnlSort==='rate'?' selected':''}>마진율 낮은순(점검)</option>
-          <option value="margin"${pnlSort==='margin'?' selected':''}>마진액 낮은순</option>
-          <option value="sale"${pnlSort==='sale'?' selected':''}>판매액 큰순</option>
-          <option value="dep"${pnlSort==='dep'?' selected':''}>출발일순</option>
-        </select>
-      </label>
-      <span class="sp"></span>
-      <label><input type="checkbox" id="onlyIssue"> 저마진·역마진만</label>
-    </div>`;
-
-  const onlyIssue = document.getElementById('onlyIssue')?.checked;
-  let showRows = rows;
-  if(onlyIssue) showRows = rows.filter(r=>r.sale>0 && (r.margin<=0 || (r.rate>0 && r.rate<5)));
-
-  const trs = showRows.map(r=>{
-    const cls = (r.sale>0 && r.margin<=0) ? 'neg' : (r.sale>0 && r.rate>0 && r.rate<5 ? 'low' : '');
+  for(const r of filled){const d=r.dest||'(미상)';(byDest[d]=byDest[d]||{sale:0,margin:0,n:0});byDest[d].sale+=r.sale;byDest[d].margin+=r.margin;byDest[d].n++}
+  const kpis=`<div class="kpi-grid">
+    <div class="kpi"><div class="k-label">행사 건수</div><div class="k-val">${rows.length}</div><div class="k-sub">원가 입력 ${filled.length} · 마감 ${closedN}</div></div>
+    <div class="kpi"><div class="k-label">판매 합계</div><div class="k-val">${fmt(totSale)}</div><div class="k-sub">원</div></div>
+    <div class="kpi"><div class="k-label">원가 합계</div><div class="k-val">${fmt(totCost)}</div><div class="k-sub">항공+지상+호텔+보험+여행</div></div>
+    <div class="kpi"><div class="k-label">마진 합계</div><div class="k-val">${fmt(totMargin)}</div><div class="k-sub">알선수수료</div></div>
+    <div class="kpi"><div class="k-label">평균 마진율</div><div class="k-val">${avg.toFixed(1)}%</div><div class="k-sub">마진 ÷ 판매</div></div>
+    <div class="kpi ${negN?'danger':(lowN?'warn':'')}"><div class="k-label">점검 대상</div><div class="k-val">${lowN+negN}</div><div class="k-sub">저마진 ${lowN} · 역마진 ${negN}</div></div>
+  </div>`;
+  const ctrl=`<div class="ctrl">
+    <label>정렬<select id="pnlSortSel">
+      <option value="rate"${pnlSort==='rate'?' selected':''}>마진율 낮은순(점검)</option>
+      <option value="margin"${pnlSort==='margin'?' selected':''}>마진액 낮은순</option>
+      <option value="sale"${pnlSort==='sale'?' selected':''}>판매액 큰순</option>
+      <option value="dep"${pnlSort==='dep'?' selected':''}>출발일순</option>
+    </select></label>
+    <span class="sp"></span>
+    <label><input type="checkbox" id="onlyIssue"> 저마진·역마진만</label>
+  </div>`;
+  const onlyIssue=document.getElementById('onlyIssue')?.checked;
+  let showRows=rows;
+  if(onlyIssue)showRows=rows.filter(r=>r.sale>0&&(r.margin<=0||(r.rate>0&&r.rate<5)));
+  const trs=showRows.map(r=>{
+    const cls=(r.sale>0&&r.margin<=0)?'neg':(r.sale>0&&r.rate>0&&r.rate<5?'low':'');
     return `<tr class="${cls}">
-      <td>${r.dep||''}</td>
-      <td class="nm" title="${(r.name||'').replace(/"/g,'')}">${r.name||''}</td>
-      <td>${r.dest||''}</td>
-      <td class="num">${r.pax||''}</td>
-      <td class="num">${fmt(r.sale)}</td>
-      <td class="num">${fmt(r.cost)}</td>
-      <td class="num margin">${fmt(r.margin)}</td>
-      <td class="num rate">${r.sale?r.rate.toFixed(1)+'%':'—'}</td>
+      <td>${r.dep||''}</td><td class="nm" title="${escH(r.name||'')}">${escH(r.name||'')}</td>
+      <td>${escH(r.dest||'')}</td><td class="num">${r.pax||''}</td>
+      <td class="num">${fmt(r.sale)}</td><td class="num">${fmt(r.cost)}</td>
+      <td class="num margin">${fmt(r.margin)}</td><td class="num rate">${r.sale?r.rate.toFixed(1)+'%':'—'}</td>
       <td><span class="pill ${r.closed?'closed':'open'}">${r.closed?'마감':'진행중'}</span></td>
-    </tr>`;
-  }).join('');
-
-  const table = `
-    <div class="tbl-wrap">
-      <table class="data">
-        <thead><tr>
-          <th>출발일</th><th>행사명</th><th>출발지</th><th>인원</th>
-          <th>판매</th><th>원가</th><th>마진</th><th>마진율</th><th>상태</th>
-        </tr></thead>
-        <tbody>${trs}</tbody>
-      </table>
-    </div>`;
-
-  const destRows = Object.entries(byDest).sort((a,b)=>b[1].sale-a[1].sale).map(([d,v])=>`
-    <tr><td>${d}</td><td class="num">${v.n}</td><td class="num">${fmt(v.sale)}</td>
+    </tr>`}).join('');
+  const destRows=Object.entries(byDest).sort((a,b)=>b[1].sale-a[1].sale).map(([d,v])=>`
+    <tr><td>${escH(d)}</td><td class="num">${v.n}</td><td class="num">${fmt(v.sale)}</td>
     <td class="num">${fmt(v.margin)}</td><td class="num">${v.sale?(v.margin/v.sale*100).toFixed(1):'0'}%</td></tr>`).join('');
-
-  const groups = `
+  body.innerHTML=kpis+ctrl+`<div class="tbl-wrap"><table class="data">
+    <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>인원</th><th>판매</th><th>원가</th><th>마진</th><th>마진율</th><th>상태</th></tr></thead>
+    <tbody>${trs}</tbody></table></div>
     <div class="grp-grid">
-      <div>
-        <div class="mt-section-title point">출발지별 손익</div>
-        <div class="tbl-wrap"><table class="data">
-          <thead><tr><th>출발지</th><th>건수</th><th>판매</th><th>마진</th><th>마진율</th></tr></thead>
-          <tbody>${destRows}</tbody></table></div>
-      </div>
-      <div>
-        <div class="mt-section-title">참고</div>
-        <p class="intro" style="margin-top:8px">
-          마진율 5% 미만은 <b style="color:var(--mt-amber-dark)">노란색</b>, 역마진(마진 0 이하)은 <b style="color:var(--mt-red-dark)">빨간색</b>으로 표시됩니다.
-          상태가 <b>진행중</b>인 건은 관리팀 마감 전이라 환율·원가가 더 바뀔 수 있습니다.
-          엑셀의 원가는 엠클릭 기준 환율이 반영된 값이라, 우리 안내 환율(출발 2개월 전 1일)과 다를 수 있으니 참고용으로 보세요.
-        </p>
-      </div>
+      <div><div class="mt-section-title point">출발지별 손익</div>
+        <div class="tbl-wrap"><table class="data"><thead><tr><th>출발지</th><th>건수</th><th>판매</th><th>마진</th><th>마진율</th></tr></thead><tbody>${destRows}</tbody></table></div></div>
+      <div><div class="mt-section-title">참고</div>
+        <p class="intro" style="margin-top:8px">마진율 5% 미만은 <b style="color:var(--mt-amber-dark)">노란색</b>, 역마진은 <b style="color:var(--mt-red-dark)">빨간색</b>입니다. 마감 전 건은 환율·원가가 변동 가능합니다.</p></div>
     </div>`;
-
-  body.innerHTML = kpis + ctrl + table + groups;
-  document.getElementById('pnlSortSel').onchange = e=>{ pnlSort=e.target.value; renderPnL(); };
-  document.getElementById('onlyIssue').onchange = ()=> renderPnL();
+  document.getElementById('pnlSortSel').onchange=e=>{pnlSort=e.target.value;renderPnL()};
+  document.getElementById('onlyIssue').onchange=()=>renderPnL();
 }
 
-/* ── 미수 / 취소 위약금 ── */
 function renderUnpaid(){
   const body=document.getElementById('unpaid-body');
   const resv=STORE.resv.filter(r=>!txt(r['구분']).includes('합계'));
-  if(!resv.length){ body.innerHTML='<div class="empty">미수·취소 데이터가 없습니다. 예약리스트 엑셀을 올려주세요.</div>'; return; }
-
-  const unpaid=[], cancelFee=[];
+  if(!resv.length){body.innerHTML='<div class="empty">미수·취소 데이터가 없습니다. 예약리스트 엑셀을 올려주세요.</div>';return}
+  const unpaid=[],cancelFee=[];
   for(const r of resv){
-    const due=num(r['미수금액']); const sale=num(r['판매금액']); const g=txt(r['구분']);
-    const base={ dep:dShort(r['출발일자']), name:txt(r['상품명']), dest:txt(r['출발지']),
-      who:txt(r['대표고객']), sale, due, g };
-    if(due!==0) unpaid.push(base);
-    if(g==='취소' && sale>0) cancelFee.push(base);
+    const due=num(r['미수금액']),sale=num(r['판매금액']),g=txt(r['구분']);
+    const base={dep:dShort(r['출발일자']),name:txt(r['상품명']),dest:txt(r['출발지']),who:txt(r['대표고객']),sale,due,g};
+    if(due!==0)unpaid.push(base);
+    if(g==='취소'&&sale>0)cancelFee.push(base)
   }
   unpaid.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
   cancelFee.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
-
-  const dueSum=unpaid.reduce((a,b)=>a+b.due,0);
-  const feeSum=cancelFee.reduce((a,b)=>a+b.sale,0);
-
-  const kpis=`
-    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-      <div class="kpi ${unpaid.length?'warn':''}"><div class="k-label">미수 발생 건</div><div class="k-val">${unpaid.length}</div><div class="k-sub">미수금액 ≠ 0</div></div>
-      <div class="kpi"><div class="k-label">미수 합계</div><div class="k-val">${fmt(dueSum)}</div><div class="k-sub">원 (음수=환불대기)</div></div>
-      <div class="kpi"><div class="k-label">취소 위약 건</div><div class="k-val">${cancelFee.length}</div><div class="k-sub">취소인데 금액 남음</div></div>
-      <div class="kpi"><div class="k-label">취소 위약 합계</div><div class="k-val">${fmt(feeSum)}</div><div class="k-sub">원</div></div>
-    </div>`;
-
+  const dueSum=unpaid.reduce((a,b)=>a+b.due,0),feeSum=cancelFee.reduce((a,b)=>a+b.sale,0);
+  const kpis=`<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi ${unpaid.length?'warn':''}"><div class="k-label">미수 발생 건</div><div class="k-val">${unpaid.length}</div><div class="k-sub">미수금액 ≠ 0</div></div>
+    <div class="kpi"><div class="k-label">미수 합계</div><div class="k-val">${fmt(dueSum)}</div><div class="k-sub">원 (음수=환불대기)</div></div>
+    <div class="kpi"><div class="k-label">취소 위약 건</div><div class="k-val">${cancelFee.length}</div><div class="k-sub">취소인데 금액 남음</div></div>
+    <div class="kpi"><div class="k-label">취소 위약 합계</div><div class="k-val">${fmt(feeSum)}</div><div class="k-sub">원</div></div></div>`;
   const uTrs=unpaid.map(r=>`<tr class="${r.due<0?'neg':'low'}">
-    <td>${r.dep||''}</td><td class="nm" title="${(r.name||'').replace(/"/g,'')}">${r.name||''}</td>
-    <td>${r.dest||''}</td><td>${r.who||''}</td><td>${r.g}</td>
+    <td>${r.dep||''}</td><td class="nm" title="${escH(r.name||'')}">${escH(r.name||'')}</td>
+    <td>${escH(r.dest||'')}</td><td>${escH(r.who||'')}</td><td>${escH(r.g)}</td>
     <td class="num">${fmt(r.sale)}</td><td class="num rate">${fmt(r.due)}</td></tr>`).join('') || '<tr><td colspan="7" style="color:var(--mt-text3)">미수 없음</td></tr>';
-
   const cTrs=cancelFee.map(r=>`<tr>
-    <td>${r.dep||''}</td><td class="nm" title="${(r.name||'').replace(/"/g,'')}">${r.name||''}</td>
-    <td>${r.dest||''}</td><td>${r.who||''}</td><td class="num">${fmt(r.sale)}</td>
+    <td>${r.dep||''}</td><td class="nm" title="${escH(r.name||'')}">${escH(r.name||'')}</td>
+    <td>${escH(r.dest||'')}</td><td>${escH(r.who||'')}</td><td class="num">${fmt(r.sale)}</td>
     <td class="num">${r.due?fmt(r.due):'0'}</td></tr>`).join('') || '<tr><td colspan="6" style="color:var(--mt-text3)">취소 위약금 없음</td></tr>';
-
-  body.innerHTML = kpis + `
-    <div class="mt-section-title point">미수 발생 (출발일순)</div>
-    <div class="tbl-wrap"><table class="data">
-      <thead><tr><th>출발일</th><th>상품명</th><th>출발지</th><th>대표고객</th><th>구분</th><th>판매</th><th>미수</th></tr></thead>
-      <tbody>${uTrs}</tbody></table></div>
-    <div class="mt-section-title point" style="margin-top:24px">취소 위약금 (취소인데 금액이 남은 건)</div>
-    <div class="tbl-wrap"><table class="data">
-      <thead><tr><th>출발일</th><th>상품명</th><th>출발지</th><th>대표고객</th><th>위약 판매금액</th><th>미수</th></tr></thead>
-      <tbody>${cTrs}</tbody></table></div>`;
+  body.innerHTML=kpis+`<div class="mt-section-title point">미수 발생 (출발일순)</div>
+    <div class="tbl-wrap"><table class="data"><thead><tr><th>출발일</th><th>상품명</th><th>출발지</th><th>대표고객</th><th>구분</th><th>판매</th><th>미수</th></tr></thead><tbody>${uTrs}</tbody></table></div>
+    <div class="mt-section-title point" style="margin-top:24px">취소 위약금</div>
+    <div class="tbl-wrap"><table class="data"><thead><tr><th>출발일</th><th>상품명</th><th>출발지</th><th>대표고객</th><th>위약 판매</th><th>미수</th></tr></thead><tbody>${cTrs}</tbody></table></div>`
 }
 
-/* ── 토스트 ── */
 let toastTimer=null;
-function toast(msg){
-  let host=document.getElementById('toastHost');
-  host.innerHTML=`<div class="mt-toast show">${msg}</div>`;
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{ host.innerHTML=''; }, 2400);
-}
+function toast(msg){const host=document.getElementById('toastHost');host.innerHTML=`<div class="mt-toast show">${msg}</div>`;if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{host.innerHTML=''},2400)}
 
-/* ── 업로드 바인딩 ── */
-const drop=document.getElementById('drop'), fileInput=document.getElementById('file');
-drop.addEventListener('click', ()=>fileInput.click());
-drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('active'); });
-drop.addEventListener('dragleave', ()=>drop.classList.remove('active'));
-drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('active'); handleFiles([...e.dataTransfer.files]); });
-fileInput.addEventListener('change', e=>{ handleFiles([...e.target.files]); e.target.value=''; });
+const drop=document.getElementById('drop'),fileInput=document.getElementById('file');
+drop.addEventListener('click',()=>fileInput.click());
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('active')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('active'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('active');handleFiles([...e.dataTransfer.files])});
+fileInput.addEventListener('change',e=>{handleFiles([...e.target.files]);e.target.value=''});
 
-/* ── 탭 ── */
-document.querySelectorAll('.mt-tab').forEach(t=>{
-  t.addEventListener('click', ()=>{
-    document.querySelectorAll('.mt-tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
-  });
-});
+document.querySelectorAll('.mt-tab').forEach(t=>{t.addEventListener('click',()=>{
+  document.querySelectorAll('.mt-tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');document.getElementById('panel-'+t.dataset.tab).classList.add('active')})});
 </script>
 </body>
 </html>
