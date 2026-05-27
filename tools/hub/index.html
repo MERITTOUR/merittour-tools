@@ -27,6 +27,25 @@
   .ctrl select,.ctrl input[type=text],.ctrl input[type=search]{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);color:var(--mt-text);min-width:140px}
   .ctrl input[type=search]{min-width:240px}
   .ctrl label{font-size:12px;color:var(--mt-text2);display:inline-flex;align-items:center;gap:6px}
+
+  /* 멀티 선택 드롭다운 */
+  .ms{position:relative;display:inline-block}
+  .ms-btn{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--mt-border);border-radius:8px;
+    background:var(--mt-surface);color:var(--mt-text);cursor:pointer;min-width:130px;text-align:left;
+    display:inline-flex;align-items:center;justify-content:space-between;gap:6px}
+  .ms-btn:hover{border-color:var(--mt-accent)}
+  .ms-btn.has-sel{background:var(--mt-accent-dim);color:var(--mt-accent);border-color:var(--mt-accent)}
+  .ms-btn .ms-caret{font-size:10px;color:var(--mt-text3)}
+  .ms-pop{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:180px;max-width:280px;max-height:300px;
+    overflow-y:auto;background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:8px;
+    box-shadow:var(--mt-shadow-lg);padding:6px 4px;display:none}
+  .ms.open .ms-pop{display:block}
+  .ms-pop label{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;cursor:pointer;
+    font-size:12px;color:var(--mt-text);user-select:none;white-space:nowrap}
+  .ms-pop label:hover{background:var(--mt-surface3)}
+  .ms-pop label input{cursor:pointer;margin:0}
+  .ms-pop .ms-clear{font-size:11px;color:var(--mt-text3);padding:5px 10px;cursor:pointer;border-top:1px solid var(--mt-surface3);margin-top:4px}
+  .ms-pop .ms-clear:hover{color:var(--mt-red-dark)}
   .alert-bar{display:flex;flex-wrap:wrap;gap:8px;background:var(--mt-surface);border:1px solid var(--mt-border);border-left:3px solid var(--mt-amber);border-radius:10px;padding:10px 14px;margin:0 0 14px;align-items:center}
   .alert-bar .lbl{font-size:12px;color:var(--mt-text2);margin-right:6px}
   .alert-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-family:var(--mt-mono);padding:4px 9px;border-radius:999px;background:var(--mt-surface3);color:var(--mt-text);cursor:pointer;user-select:none}
@@ -319,7 +338,7 @@ function badgeHtml(c,opts){
 
 const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만','항공대기'];
 const MANUAL_KEYS=[['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금○'],['receipt','현금영수증']];
-let opsFilter={q:'',dest:'',airline:'',flight:'',monthY:'',monthM:'',issue:'',label:'',sort:'dep'};
+let opsFilter={q:'',dest:[],airline:[],flight:[],month:[],label:[],issue:[],sort:'dep'};
 
 function getEvents(){const evs=new Set();for(const k of Object.keys(IDX))for(const e of Object.keys(IDX[k]))evs.add(e);return [...evs]}
 
@@ -340,19 +359,23 @@ function buildFilters(rows){
 
 function applyFilters(rows){
   const F=opsFilter;
+  const ev_month=c=>c.dep?`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`:'';
   return rows.filter(c=>{
-    if(F.dest&&txt(c.r['출발지'])!==F.dest)return false;
-    if(F.airline){const al=txt(c.r['항공'])||txt((c.api[0]||{})['항공사']);if(al!==F.airline)return false}
-    if(F.flight){const fl=txt((c.api[0]||{})['출발편']);if(fl!==F.flight)return false}
-    if(F.monthY&&F.monthM){if(!c.dep||c.dep.getFullYear()!=F.monthY||(c.dep.getMonth()+1)!=F.monthM)return false}
-    if(F.label){const o=getOps(c.ev);const eff=o.label||c.autoLabel||'미정';if(eff!==F.label)return false}
-    if(F.issue){
-      if(F.issue==='noNames'&&c.noNames===0)return false;
-      if(F.issue==='noPhone'&&c.noPhone===0)return false;
-      if(F.issue==='expiry'&&c.expiryRisk===0)return false;
-      if(F.issue==='partial'&&!(c.rosterStatus==='partial'||(c.rosterStatus==='none'&&c.pax>0)))return false;
-      if(F.issue==='due'&&c.due===0)return false;
-      if(F.issue==='noAnnounce'&&(c.sentTalk||c.sentSms))return false;
+    if(F.dest.length && !F.dest.includes(txt(c.r['출발지'])))return false;
+    if(F.airline.length){const al=txt(c.r['항공'])||txt((c.api[0]||{})['항공사']);if(!F.airline.includes(al))return false}
+    if(F.flight.length){const fl=txt((c.api[0]||{})['출발편']);if(!F.flight.includes(fl))return false}
+    if(F.month.length && !F.month.includes(ev_month(c)))return false;
+    if(F.label.length){const o=getOps(c.ev);const eff=o.label||c.autoLabel||'미정';if(!F.label.includes(eff))return false}
+    if(F.issue.length){
+      // 선택된 issue 중 하나라도 해당되면 OK (OR)
+      const hits=[];
+      if(c.noNames>0)hits.push('noNames');
+      if(c.noPhone>0)hits.push('noPhone');
+      if(c.expiryRisk>0)hits.push('expiry');
+      if(c.rosterStatus==='partial'||(c.rosterStatus==='none'&&c.pax>0))hits.push('partial');
+      if(c.due!==0)hits.push('due');
+      if(!c.sentTalk&&!c.sentSms)hits.push('noAnnounce');
+      if(!F.issue.some(k=>hits.includes(k)))return false;
     }
     if(F.q){const q=F.q.toLowerCase();
       const blob=[c.ev,txt(c.r['상품명']),txt(c.s['행사명']),txt(c.r['대표고객']),txt(c.s['거래처']),
@@ -382,7 +405,7 @@ function renderOps(){
     if(c.due!==0)ag.due++;
     if(hasAnnounceData && !c.sentTalk && !c.sentSms)ag.noAnnounce++;
   }
-  const alertPill=(k,t,cls)=>`<span class="alert-pill ${cls} ${opsFilter.issue===k?'active':''}" data-issue="${k}"><b>${ag[k]}</b> ${t}</span>`;
+  const alertPill=(k,t,cls)=>`<span class="alert-pill ${cls} ${opsFilter.issue.includes(k)?'active':''}" data-issue="${k}"><b>${ag[k]}</b> ${t}</span>`;
   const alertBar=`<div class="alert-bar">
     <span class="lbl">검수 알림</span>
     ${alertPill('noNames','무기명','danger')}
@@ -392,19 +415,29 @@ function renderOps(){
     ${alertPill('due','미수','warn')}
     ${hasAnnounceData?alertPill('noAnnounce','안내 미발송','warn'):''}
     <span class="sp" style="flex:1"></span>
-    ${opsFilter.issue?`<span class="alert-pill" data-issue=""><b>×</b> 알림 해제</span>`:''}
+    ${opsFilter.issue.length?`<span class="alert-pill" data-clear-issue="1"><b>×</b> 알림 ${opsFilter.issue.length}건 해제</span>`:''}
   </div>`;
 
   const {dests,airlines,flights}=buildFilters(rows);
   const months=[...new Set(rows.filter(c=>c.dep).map(c=>`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`))].sort();
 
+  const msBtn=(key,label,sel)=>{
+    const n=sel.length;
+    return `<div class="ms" data-ms="${key}">
+      <button class="ms-btn ${n?'has-sel':''}" data-ms-toggle="${key}">
+        <span>${label}${n?` <b style="font-family:var(--mt-mono)">${n}</b>`:''}</span>
+        <span class="ms-caret">▾</span>
+      </button>
+    </div>`;
+  };
+
   const ctrl=`<div class="ctrl">
-    <input type="search" id="opsQ" placeholder="행사번호·이름·영문명·상품·항공편·거래처 검색" value="${escH(opsFilter.q)}">
-    <select id="opsDest"><option value="">출발지 전체</option>${dests.map(d=>`<option ${opsFilter.dest===d?'selected':''}>${escH(d)}</option>`).join('')}</select>
-    <select id="opsAirline"><option value="">항공사 전체</option>${airlines.map(a=>`<option ${opsFilter.airline===a?'selected':''}>${escH(a)}</option>`).join('')}</select>
-    <select id="opsFlight"><option value="">항공편 전체</option>${flights.map(f=>`<option ${opsFilter.flight===f?'selected':''}>${escH(f)}</option>`).join('')}</select>
-    <select id="opsMonth"><option value="">출발월 전체</option>${months.map(m=>{const sel=(opsFilter.monthY+'-'+String(opsFilter.monthM).padStart(2,'0'))===m;return `<option value="${m}" ${sel?'selected':''}>${m}</option>`}).join('')}</select>
-    <select id="opsLabel"><option value="">발권라벨 전체</option>${TICKET_LABELS.map(l=>`<option ${opsFilter.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>
+    <input type="search" id="opsQ" placeholder="행사번호·이름·영문명·상품·항공편·거래처·PNR 검색" value="${escH(opsFilter.q)}">
+    ${msBtn('dest','출발지',opsFilter.dest)}
+    ${msBtn('airline','항공사',opsFilter.airline)}
+    ${msBtn('flight','항공편',opsFilter.flight)}
+    ${msBtn('month','출발월',opsFilter.month)}
+    ${msBtn('label','발권라벨',opsFilter.label)}
     <span class="sp"></span>
     <label>정렬<select id="opsSort">
       <option value="dep" ${opsFilter.sort==='dep'?'selected':''}>출발일순</option>
@@ -413,6 +446,12 @@ function renderOps(){
     </select></label>
     <button class="mt-btn" id="opsExport">📥 엑셀 출력</button>
   </div>`;
+
+  // 각 ms 드롭다운의 옵션 목록 (필요할 때 동적으로 채움)
+  const MS_OPTS={
+    dest: dests, airline: airlines, flight: flights, month: months, label: TICKET_LABELS
+  };
+  const MS_LABEL={dest:'출발지',airline:'항공사',flight:'항공편',month:'출발월',label:'발권라벨'};
 
   let shown=applyFilters(rows);
   if(opsFilter.sort==='dep')shown.sort((a,b)=>{const da=a.dep?+a.dep:1e15,db=b.dep?+b.dep:1e15;return da-db});
@@ -446,14 +485,62 @@ function renderOps(){
     <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>항공편</th><th>PNR</th><th>인원</th><th>대표</th><th>거래처</th><th>자동 점검</th><th>OP 체크</th><th>발권 라벨</th></tr></thead>
     <tbody>${trs||'<tr><td colspan="11" class="empty">조건에 맞는 행사가 없습니다.</td></tr>'}</tbody></table></div>`;
 
-  document.querySelectorAll('.alert-pill').forEach(p=>p.onclick=()=>{opsFilter.issue=p.dataset.issue;renderOps()});
+  // 검수 알림 토글
+  document.querySelectorAll('.alert-pill[data-issue]').forEach(p=>p.onclick=()=>{
+    const k=p.dataset.issue;
+    if(opsFilter.issue.includes(k))opsFilter.issue=opsFilter.issue.filter(x=>x!==k);
+    else opsFilter.issue=[...opsFilter.issue,k];
+    renderOps();
+  });
+  const clrIssue=document.querySelector('[data-clear-issue]');
+  if(clrIssue)clrIssue.onclick=()=>{opsFilter.issue=[];renderOps()};
+
+  // 검색
   const qel=document.getElementById('opsQ');
   qel.addEventListener('input',e=>{opsFilter.q=e.target.value;renderOps();const n=document.getElementById('opsQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)});
-  document.getElementById('opsDest').onchange=e=>{opsFilter.dest=e.target.value;renderOps()};
-  document.getElementById('opsAirline').onchange=e=>{opsFilter.airline=e.target.value;renderOps()};
-  document.getElementById('opsFlight').onchange=e=>{opsFilter.flight=e.target.value;renderOps()};
-  document.getElementById('opsMonth').onchange=e=>{const v=e.target.value;if(v){const [y,m]=v.split('-');opsFilter.monthY=+y;opsFilter.monthM=+m}else{opsFilter.monthY='';opsFilter.monthM=''}renderOps()};
-  document.getElementById('opsLabel').onchange=e=>{opsFilter.label=e.target.value;renderOps()};
+
+  // ms 드롭다운 열기/닫기
+  function openMs(key){
+    document.querySelectorAll('.ms.open').forEach(o=>o.classList.remove('open'));
+    const ms=document.querySelector(`.ms[data-ms="${key}"]`);
+    if(!ms)return;
+    const opts=MS_OPTS[key]||[];
+    const sel=opsFilter[key];
+    let pop=ms.querySelector('.ms-pop');
+    if(!pop){pop=document.createElement('div');pop.className='ms-pop';ms.appendChild(pop)}
+    pop.innerHTML=opts.map(o=>`<label><input type="checkbox" data-ms-opt="${escH(o)}" ${sel.includes(o)?'checked':''}><span>${escH(o)||'(빈칸)'}</span></label>`).join('')
+      +(sel.length?`<div class="ms-clear" data-ms-clear>모두 해제</div>`:'');
+    pop.querySelectorAll('input[data-ms-opt]').forEach(cb=>cb.onchange=()=>{
+      const v=cb.dataset.msOpt;
+      if(cb.checked)opsFilter[key]=[...opsFilter[key],v];
+      else opsFilter[key]=opsFilter[key].filter(x=>x!==v);
+      opsFilter._open=key;
+      renderOps();
+    });
+    const clr=pop.querySelector('[data-ms-clear]');
+    if(clr)clr.onclick=()=>{opsFilter[key]=[];opsFilter._open=key;renderOps()};
+    ms.classList.add('open');
+    opsFilter._open=key;
+  }
+  function closeMs(){
+    document.querySelectorAll('.ms.open').forEach(o=>o.classList.remove('open'));
+    opsFilter._open=null;
+  }
+  document.querySelectorAll('.ms-btn[data-ms-toggle]').forEach(btn=>btn.onclick=e=>{
+    e.stopPropagation();
+    const key=btn.dataset.msToggle;
+    if(opsFilter._open===key){closeMs();return}
+    openMs(key);
+  });
+  // 외부 클릭 닫기 (한 번만 바인딩)
+  if(!window._msOutsideBound){
+    window._msOutsideBound=true;
+    document.addEventListener('click',e=>{if(!e.target.closest('.ms'))closeMs()});
+  }
+  // 렌더 후 이전 상태 복원
+  if(opsFilter._open)openMs(opsFilter._open);
+
+  // 정렬 / 엑셀 출력
   document.getElementById('opsSort').onchange=e=>{opsFilter.sort=e.target.value;renderOps()};
   document.getElementById('opsExport').onclick=()=>exportOps(shown);
   document.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const ev=el.dataset.ev,mk=el.dataset.mk;const o=getOps(ev);o.manual[mk]=!o.manual[mk];if(o.manual[mk])o.manual[mk+'_ts']=Date.now();setOps(ev,o);renderOps()});
