@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 보험코드매칭</title>
+<link rel="stylesheet" href="../../shared/core.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  /* shared 토큰 + 원본 도구가 인라인으로 쓰는 변수명 호환 alias */
+  :root {
+    --text-faint: var(--mt-text3);
+    --text-dim:   var(--mt-text2);
+    --text:       var(--mt-text);
+    --card:       var(--mt-surface);
+    --card-2:     var(--mt-surface2);
+    --border:     var(--mt-border);
+    --warn:       var(--mt-red-dark);
+    --ok:         var(--mt-green);
+  }
+
+  body { background: var(--mt-bg); margin: 0; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+  .intro { font-size: 13px; color: var(--mt-text2); margin: 4px 0 18px; line-height: 1.6; }
+  .intro .src { color: var(--mt-text3); font-size: 12px; }
+
+  h2 { font-size: 13px; font-weight: 700; color: var(--mt-text2); text-transform: uppercase;
+    letter-spacing: .12em; margin: 22px 0 10px; padding-left: 9px; border-left: 3px solid var(--mt-point); }
+
+  /* 입력 드롭존 */
+  .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 20px; }
+  @media(max-width:720px){ .inputs { grid-template-columns: 1fr; } }
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: var(--mt-surface); border: 2px dashed var(--mt-border2); border-radius: var(--mt-radius-lg);
+    padding: 28px 20px; text-align: center; color: var(--mt-text3); cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover { border-color: var(--mt-accent); }
+  .drop.active, .drop.filled { border-color: var(--mt-green); background: var(--mt-green-dim); }
+  .drop-icon { font-size: 11px; font-family: var(--mt-mono); color: var(--mt-point2); letter-spacing: .08em; }
+  .drop-title { font-size: 15px; font-weight: 600; color: var(--mt-brand); margin-top: 2px; }
+  .drop-hint { font-size: 12px; color: var(--mt-text3); }
+  .drop-files { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; justify-content: center; max-width: 100%; }
+  .drop-files .file-chip {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-family: var(--mt-mono);
+    background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px;
+    padding: 3px 8px; color: var(--mt-text2);
+  }
+  .drop-files .file-chip .x { color: var(--mt-text3); cursor: pointer; padding-left: 4px; }
+  .drop-files .file-chip .x:hover { color: var(--mt-red); }
+  .drop input[type=file] { display: none; }
+
+  /* 실행 컨트롤 */
+  .actions { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .actions button { font-family: var(--mt-sans); font-size: 13px; font-weight: 500; padding: 8px 16px;
+    border-radius: var(--mt-radius); cursor: pointer; border: 1px solid var(--mt-accent);
+    background: var(--mt-accent); color: #fff; transition: all .15s; }
+  .actions button:hover:not(:disabled){ background: var(--mt-accent2); border-color: var(--mt-accent2); }
+  .actions button.secondary { background: var(--mt-surface); color: var(--mt-text2); border-color: var(--mt-border2); }
+  .actions button.secondary:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+  .actions button:disabled { opacity: .45; cursor: not-allowed; }
+  .status { font-size: 12px; color: var(--mt-text3); margin-left: 6px; }
+
+  /* 결과 영역 */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  /* 요약 카드 */
+  .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 4px 0 18px; }
+  @media(max-width:900px){ .summary { grid-template-columns: repeat(3, 1fr); } }
+  @media(max-width:600px){ .summary { grid-template-columns: 1fr 1fr; } }
+  .stat-card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg);
+    padding: 12px 14px; box-shadow: var(--mt-shadow); }
+  .stat-card.ok { border-left: 3px solid var(--mt-green); }
+  .stat-card.warn { border-left: 3px solid var(--mt-amber); }
+  .stat-label { font-size: 11px; color: var(--mt-text3); letter-spacing: .04em; }
+  .stat-value { font-size: 20px; font-weight: 700; color: var(--mt-brand); font-family: var(--mt-mono); margin-top: 4px; }
+  .codes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+  /* 경고 박스 */
+  .warn-box { background: var(--mt-amber-dim); border-left: 3px solid var(--mt-amber); border-radius: var(--mt-radius);
+    padding: 12px 14px; margin: 8px 0; }
+  .warn-box h3 { font-size: 13px; color: var(--mt-amber-dark); margin: 0 0 6px; font-weight: 600; }
+  .warn-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: var(--mt-text2); line-height: 1.7; }
+
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 10px; flex-wrap: wrap; gap: 8px; }
+  .section-header h2 { font-size: 13px; }
+
+  /* 행사번호별 그룹 */
+  .group {
+    background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg);
+    margin-bottom: 10px; overflow: hidden; box-shadow: var(--mt-shadow);
+  }
+  .group-head {
+    padding: 10px 16px; background: var(--mt-surface2); border-bottom: 1px solid var(--mt-border);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px;
+  }
+  .group-no   { font-family: var(--mt-mono); color: var(--mt-brand); font-weight: 600; }
+  .group-name { color: var(--mt-text); flex: 1; min-width: 200px; }
+  .group-codes{ display: flex; gap: 4px; flex-wrap: wrap; }
+  .group-meta { display: flex; gap: 12px; margin-left: auto; align-items: center; }
+  .group-count{ font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); }
+  .group-amount{ font-family: var(--mt-mono); color: var(--mt-point2); font-weight: 600; font-size: 13px; }
+
+  .group table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .group th { background: var(--mt-surface3); color: var(--mt-text2); font-weight: 600; text-align: left;
+    padding: 7px 12px; border-bottom: 1px solid var(--mt-border); white-space: nowrap; font-size: 11px; }
+  .group td { padding: 6px 12px; border-bottom: 1px solid var(--mt-surface3); color: var(--mt-text); }
+  .group tr:last-child td { border-bottom: none; }
+  .group td.no   { font-family: var(--mt-mono); color: var(--mt-text3); width: 40px; }
+  .group td.name { font-weight: 500; }
+  .group td.bd   { font-family: var(--mt-mono); color: var(--mt-text2); }
+  .group td.dep  { font-family: var(--mt-mono); color: var(--mt-text2); font-size: 11px; }
+  .group td.prem { font-family: var(--mt-mono); text-align: right; }
+  .group td.code { text-align: center; }
+
+  /* 플랜 배지 */
+  .badge { display: inline-block; font-size: 10px; font-family: var(--mt-mono); padding: 2px 7px;
+    border-radius: 10px; margin: 0 2px; letter-spacing: .04em; }
+  .badge.B05 { background: var(--mt-red-dim);   color: var(--mt-red-dark); }
+  .badge.B06 { background: var(--mt-green-dim); color: var(--mt-green-dark); }
+  .badge.B07 { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
+  .badge.B08 { background: var(--mt-accent-dim); color: var(--mt-accent); }
+
+  /* 시스템 입력용 출력 */
+  .outputs { margin-top: 22px; }
+  .output-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--mt-border); margin-bottom: 0; }
+  .output-tabs .tab { padding: 0 16px; height: 38px; display: flex; align-items: center; font-size: 12px;
+    font-weight: 500; color: var(--mt-text3); cursor: pointer; border-bottom: 2px solid transparent;
+    background: none; border-top: none; border-left: none; border-right: none; font-family: var(--mt-sans); }
+  .output-tabs .tab:hover { color: var(--mt-text2); }
+  .output-tabs .tab.active { color: var(--mt-accent); border-bottom-color: var(--mt-accent); }
+  .output-area { background: var(--mt-surface2); border: 1px solid var(--mt-border); border-top: none;
+    border-radius: 0 0 var(--mt-radius) var(--mt-radius); padding: 14px; font-family: var(--mt-mono);
+    font-size: 12px; color: var(--mt-text); white-space: pre; overflow-x: auto; max-height: 320px; overflow-y: auto; }
+  .output-controls { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .output-controls button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: var(--mt-radius);
+    cursor: pointer; background: var(--mt-accent); color: #fff; border: 1px solid var(--mt-accent); }
+  .output-controls button.secondary { background: var(--mt-surface); color: var(--mt-text2); border-color: var(--mt-border2); }
+  .output-controls button:hover:not(.secondary){ background: var(--mt-accent2); }
+
+  /* 진단 패널 */
+  .diag { margin-top: 20px; background: var(--mt-surface); border: 1px solid var(--mt-border);
+    border-radius: var(--mt-radius-lg); padding: 12px 16px; }
+  .diag summary { cursor: pointer; font-size: 12px; color: var(--mt-text2); font-weight: 500; list-style: none; }
+  .diag summary::-webkit-details-marker { display: none; }
+  .diag summary:hover { color: var(--mt-brand); }
+  .diag-content { margin-top: 12px; font-size: 12px; }
+  .diag-pdf { padding: 8px 0; border-bottom: 1px solid var(--mt-surface3); }
+  .diag-pdf:last-child { border-bottom: none; }
+  .diag-pdf.warn { background: var(--mt-amber-dim); padding-left: 10px; border-radius: 6px;
+    margin: 4px 0; border-bottom: none; }
+  .diag-pdf-name { font-family: var(--mt-mono); color: var(--mt-text2); font-size: 11px; }
+  .diag-pdf-info { color: var(--mt-text); margin-top: 3px; font-size: 12px; }
+  .diag-pdf-rows { margin-top: 4px; color: var(--mt-text3); font-size: 11px; line-height: 1.6; padding-left: 12px; }
+  .diag-tag { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-family: var(--mt-mono);
+    margin-right: 6px; letter-spacing: .04em; }
+  .diag-tag.list  { background: var(--mt-green-dim); color: var(--mt-green-dark); }
+  .diag-tag.cert  { background: var(--mt-accent-dim); color: var(--mt-accent); }
+  .diag-tag.empty { background: var(--mt-red-dim); color: var(--mt-red-dark); }
+
+  /* 푸터 */
+  footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--mt-border);
+    font-size: 11px; color: var(--mt-text3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  /* 토스트 */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--mt-brand); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 24px;
+    box-shadow: var(--mt-shadow-lg); z-index: 9999; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast.error { background: var(--mt-red-dark); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <div class="mt-brand">MERITTOUR</div>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">보험코드매칭</span>
+    </div>
+    <div class="mt-header-actions">
+      <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
+    </div>
+  </div>
+
+  <p class="intro">
+    DB손보 가입증명서 PDF와 일행별예약 엑셀을 매칭해 행사별 보험료를 산출합니다.
+    결과 엑셀은 <strong>통합 점검</strong> 도구에서도 자동 인식됩니다.<br>
+    <span class="src">매칭키: 한글이름 + 생년월일(YYMMDD). 단일가입자 PDF는 생년월일만으로 fallback 매칭됩니다.</span>
+  </p>
+
+  <h2>입력 파일</h2>
+  <div class="inputs">
+    <label class="drop" id="dropExcel">
+      <span class="drop-icon">[ STEP 1 / XLSX ]</span>
+      <span class="drop-title">일행별예약 엑셀</span>
+      <span class="drop-hint">여러 날짜 한 번에 드롭 가능 · 추가 드롭 시 누적</span>
+      <span class="drop-files" id="filesExcel"></span>
+      <input type="file" accept=".xlsx,.xls" id="inputExcel" multiple />
+    </label>
+    <label class="drop" id="dropPdf">
+      <span class="drop-icon">[ STEP 2 / PDF ]</span>
+      <span class="drop-title">DB손보 가입증명서 PDF</span>
+      <span class="drop-hint">여러 파일 한 번에 드래그 가능 · 추가 드롭 시 누적</span>
+      <span class="drop-files" id="filesPdf"></span>
+      <input type="file" accept=".pdf" id="inputPdf" multiple />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button id="btnMatch" disabled>매칭 실행</button>
+    <button class="secondary" id="btnReset">초기화</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <section class="results" id="results">
+    <h2>요약</h2>
+    <div class="summary" id="summary"></div>
+
+    <div id="warnings"></div>
+
+    <div class="section-header">
+      <h2 style="margin:0;border:none;padding:0">행사번호별 결과</h2>
+      <button class="secondary" id="btnDownloadTop" type="button" style="font-family:var(--mt-sans);font-size:12.5px;padding:7px 14px;border-radius:8px;cursor:pointer;background:var(--mt-surface);color:var(--mt-text2);border:1px solid var(--mt-border2)">⬇ 전체 결과 .xlsx 다운로드</button>
+    </div>
+    <div id="groups"></div>
+
+    <div class="outputs">
+      <h2 style="margin-bottom:8px">시스템 입력용 출력</h2>
+      <div class="output-tabs" id="outputTabs">
+        <button class="tab active" data-fmt="namecode">이름 / 생년월일 / 보험료 / 코드</button>
+        <button class="tab" data-fmt="excel">엑셀 표 (탭 구분 · 보험료·도착일 포함)</button>
+      </div>
+      <div class="output-area" id="outputArea"></div>
+      <div class="output-controls">
+        <button id="btnCopy">📋 클립보드 복사</button>
+        <button class="secondary" id="btnDownload">⬇ 전체 결과 .xlsx 다운로드</button>
+      </div>
+    </div>
+
+    <details class="diag" id="diagPanel">
+      <summary>🔍 파싱 진단 (펼쳐서 PDF별 추출 결과 확인)</summary>
+      <div id="diagContent"></div>
+    </details>
+  </section>
+
+  <footer>
+    <span>DB손보 PLAN:
+      <span class="badge B08">B08</span> 0–14세
+      <span class="badge B06">B06</span> 15–69세
+      <span class="badge B07">B07</span> 70–79세
+      <span class="badge B05">B05</span> 80–99세
+    </span>
+    <span>매칭키: 한글이름 + 생년월일(YYMMDD)</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// PDF.js worker 설정 - 워커 로드 실패 시 fake worker 자동 폴백 (그래도 동작은 함)
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+
+const state = {
+  excelFiles: [],
+  pdfFiles: [],
+  excelRows: [],
+  pdfRows: [],
+  pdfDiag: [],
+  matched: [],
+  onlyExcel: [],
+  onlyPdf: [],
+};
+
+// ---------- Drop zones ----------
+function setupDrop(zoneId, inputId, multiple, onFiles) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files);
+    onFiles(files);
+  });
+  input.addEventListener('change', e => onFiles(Array.from(e.target.files)));
+}
+
+setupDrop('dropExcel', 'inputExcel', true, files => {
+  const xlsxs = files.filter(f => /\.xlsx?$/i.test(f.name));
+  if (!xlsxs.length) { showToast('xlsx 파일이 아니에요', true); return; }
+  // 누적 (이름+크기로 중복 방지)
+  const existing = new Set(state.excelFiles.map(f => f.name + ':' + f.size));
+  for (const f of xlsxs) {
+    if (!existing.has(f.name + ':' + f.size)) state.excelFiles.push(f);
+  }
+  document.getElementById('dropExcel').classList.add('has-file');
+  document.getElementById('filesExcel').textContent = '✓ ' + state.excelFiles.length + '개: ' + state.excelFiles.map(f => f.name).join(', ');
+  updateMatchButton();
+});
+
+setupDrop('dropPdf', 'inputPdf', true, files => {
+  const pdfs = files.filter(f => /\.pdf$/i.test(f.name));
+  if (!pdfs.length) { showToast('PDF 파일이 아니에요', true); return; }
+  // 누적
+  const existing = new Set(state.pdfFiles.map(f => f.name + ':' + f.size));
+  for (const f of pdfs) {
+    if (!existing.has(f.name + ':' + f.size)) state.pdfFiles.push(f);
+  }
+  document.getElementById('dropPdf').classList.add('has-file');
+  document.getElementById('filesPdf').textContent = '✓ ' + state.pdfFiles.length + '개: ' + state.pdfFiles.map(f => f.name).join(', ');
+  updateMatchButton();
+});
+
+function updateMatchButton() {
+  document.getElementById('btnMatch').disabled = !(state.excelFiles.length && state.pdfFiles.length);
+}
+
+document.getElementById('btnReset').onclick = () => location.reload();
+
+// ---------- Helpers ----------
+function normalizeDate(v) {
+  if (v === null || v === undefined || v === '') return '';
+  if (v instanceof Date && !isNaN(v)) {
+    const y = v.getFullYear();
+    const mo = String(v.getMonth() + 1).padStart(2, '0');
+    const d = String(v.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${d}`;
+  }
+  return v.toString().trim();
+}
+
+// ---------- Excel parsing ----------
+async function parseExcel(file) {
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data, { type: 'array', cellDates: true });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
+  if (!rows.length) throw new Error('엑셀이 비어있어요');
+  const header = rows[0].map(h => (h || '').toString().trim());
+  const idx = name => header.indexOf(name);
+  const cols = {
+    no: idx('No'),
+    departure: idx('출발일자'),
+    arrival: idx('도착일자'),
+    eventNo: idx('행사번호'),
+    eventName: idx('행사명'),
+    booker: idx('예약자명'),
+    customer: idx('고객명'),
+    birth: idx('생년월일'),
+    gender: header.indexOf('성별'),  // 첫번째 성별 컬럼
+  };
+  if (cols.customer < 0 || cols.birth < 0 || cols.eventNo < 0) {
+    throw new Error('엑셀 헤더에서 고객명/생년월일/행사번호 컬럼을 못 찾았어요');
+  }
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[cols.customer]) continue;
+    const name = (r[cols.customer] || '').toString().trim();
+    const birth = normalizeDate(r[cols.birth]);
+    if (!name || !birth) continue;
+    // 생년월일 → YYMMDD
+    let bd6 = '';
+    const m = birth.match(/(\d{2,4})[-./]?(\d{2})[-./]?(\d{2})/);
+    if (m) {
+      const y = m[1].length === 4 ? m[1].slice(2) : m[1];
+      bd6 = y + m[2] + m[3];
+    }
+    out.push({
+      no: r[cols.no],
+      name, birth, bd6,
+      department: normalizeDate(r[cols.departure]),
+      arrival: cols.arrival >= 0 ? normalizeDate(r[cols.arrival]) : '',
+      eventNo: r[cols.eventNo],
+      eventName: r[cols.eventName],
+      booker: r[cols.booker],
+      excelFile: file.name,
+    });
+  }
+  return out;
+}
+
+// ---------- PDF parsing ----------
+async function parsePdf(file) {
+  const data = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    const items = tc.items.filter(it => it.str.trim());
+    // Y 좌표(소수점 1자리 정도)로 그룹핑 — PDF.js의 미세한 좌표 차이 허용
+    const lines = {};
+    for (const it of items) {
+      const y = Math.round(it.transform[5]);
+      if (!lines[y]) lines[y] = [];
+      lines[y].push({ x: it.transform[4], s: it.str });
+    }
+    const sortedYs = Object.keys(lines).map(Number).sort((a, b) => b - a);
+    for (const y of sortedYs) {
+      const line = lines[y].sort((a, b) => a.x - b.x).map(o => o.s).join(' ');
+      fullText += line + '\n';
+    }
+    fullText += '\n';
+  }
+
+  // PDF.js가 한국어를 글자별로 쪼개는 경우 대비:
+  // 한글과 한글 사이의 공백 제거 ("심 희 정" → "심희정")
+  fullText = fullText.replace(/([가-힣])\s+(?=[가-힣])/g, '$1');
+
+  const out = [];
+  // 명세 리스트 행 패턴 (한글 이름 양쪽엔 숫자/특수기호라 \s+ 유지)
+  const rowRegex = /(\d+)\s+([가-힣]{2,6})\s+(\d{6})\s*-\s*(\d)\*+\s+([\d,]+)\s+(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(B0\d)/g;
+  let m;
+  while ((m = rowRegex.exec(fullText)) !== null) {
+    out.push({
+      name: m[2],
+      bd6: m[3],
+      gender: m[4],
+      premium: m[5],   // 인별보험료
+      plan: m[8],
+      pdfFile: file.name,
+      source: 'list',
+    });
+  }
+
+  // 명세 리스트가 없으면 단일 가입자로 처리
+  if (out.length === 0) {
+    const rrnMatch = fullText.match(/(\d{6})\s*-\s*(\d)\*+/);
+    const planMatches = fullText.match(/\bB0\d\b/g);
+    if (rrnMatch && planMatches) {
+      const uniquePlans = [...new Set(planMatches)];
+      if (uniquePlans.length === 1) {
+        // 이름은 best-effort: "성명 NN" 패턴, 단 "법정상속인" 같은 stop word 제외
+        const STOP = ['법정상속인', '피보험자', '수익자', '계약자'];
+        let name = null;
+        const reAllNames = /성명\s*([가-힣]{2,5})/g;
+        let nm;
+        while ((nm = reAllNames.exec(fullText)) !== null) {
+          if (!STOP.includes(nm[1])) { name = nm[1]; break; }
+        }
+        // 단일 가입자 보험료: "총보험료 TOTAL PREMIUM ₩ 4,520" 형태에서 추출
+        const premiumMatch = fullText.match(/총\s*보험료[^\d]+([\d,]+)/);
+        const premium = premiumMatch ? premiumMatch[1] : null;
+        out.push({
+          name,
+          bd6: rrnMatch[1],
+          gender: rrnMatch[2],
+          premium,
+          plan: uniquePlans[0],
+          pdfFile: file.name,
+          source: 'cert',
+        });
+      } else {
+        console.warn('[PDF 파싱 주의]', file.name, '명세 미발견 + 다중 플랜 감지', uniquePlans);
+      }
+    }
+  }
+  return out;
+}
+
+// ---------- Match logic ----------
+function matchAll() {
+  // 1단계: 이름+생년6 매칭 (보통 케이스)
+  const pdfByKey = {};
+  for (const r of state.pdfRows) {
+    if (!r.name) continue;  // 이름 없는 행은 1단계 스킵
+    const k = r.name + '|' + r.bd6;
+    if (!pdfByKey[k]) pdfByKey[k] = [];
+    pdfByKey[k].push(r);
+  }
+  const matched = [], firstPassMissed = [];
+  const usedPdfRows = new Set();
+  for (const er of state.excelRows) {
+    const k = er.name + '|' + er.bd6;
+    const cands = pdfByKey[k];
+    if (cands && cands.length) {
+      const target = cands.find(c => !usedPdfRows.has(c)) || cands[0];
+      usedPdfRows.add(target);
+      matched.push({ ...er, plan: target.plan, gender: target.gender, premium: target.premium, pdfFile: target.pdfFile });
+    } else {
+      firstPassMissed.push(er);
+    }
+  }
+
+  // 2단계: 이름 없는 단일가입자 PDF 또는 1단계 실패 건은 생년월일만으로 매칭
+  // (단일가입자 PDF는 행사도 1인이라 동일 생년월일 충돌 가능성 낮음)
+  const pdfByBd6 = {};
+  for (const r of state.pdfRows) {
+    if (usedPdfRows.has(r)) continue;
+    pdfByBd6[r.bd6] = pdfByBd6[r.bd6] || [];
+    pdfByBd6[r.bd6].push(r);
+  }
+  const onlyExcel = [];
+  for (const er of firstPassMissed) {
+    const cands = pdfByBd6[er.bd6];
+    // 단일가입자 PDF(source:'cert')만 fallback 허용
+    const target = cands && cands.find(c => !usedPdfRows.has(c) && c.source === 'cert');
+    if (target) {
+      usedPdfRows.add(target);
+      matched.push({ ...er, plan: target.plan, gender: target.gender, premium: target.premium, pdfFile: target.pdfFile, fallback: true });
+    } else {
+      onlyExcel.push(er);
+    }
+  }
+
+  state.matched = matched;
+  state.onlyExcel = onlyExcel;
+  state.onlyPdf = state.pdfRows.filter(r => !usedPdfRows.has(r));
+}
+
+// ---------- Render ----------
+function renderResults() {
+  const sumEl = document.getElementById('summary');
+  const planCount = {};
+  let totalPremium = 0;
+  for (const m of state.matched) {
+    planCount[m.plan] = (planCount[m.plan] || 0) + 1;
+    if (m.premium) {
+      const n = parseInt(m.premium.replace(/,/g, ''), 10);
+      if (!isNaN(n)) totalPremium += n;
+    }
+  }
+  const codeBadges = Object.keys(planCount).sort().map(p => `<span class="badge ${p}">${p}·${planCount[p]}</span>`).join('');
+
+  sumEl.innerHTML = `
+    <div class="stat-card ok">
+      <div class="stat-label">매칭 OK</div>
+      <div class="stat-value">${state.matched.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
+    </div>
+    <div class="stat-card ${state.onlyExcel.length ? 'warn' : ''}">
+      <div class="stat-label">엑셀에만</div>
+      <div class="stat-value">${state.onlyExcel.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
+    </div>
+    <div class="stat-card ${state.onlyPdf.length ? 'warn' : ''}">
+      <div class="stat-label">PDF에만</div>
+      <div class="stat-value">${state.onlyPdf.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">보험료 합계</div>
+      <div class="stat-value">₩${totalPremium.toLocaleString()}</div>
+    </div>
+    <div class="stat-card plan">
+      <div class="stat-label">플랜 분포</div>
+      <div class="codes">${codeBadges || '<span style="color:var(--text-faint);">—</span>'}</div>
+    </div>
+  `;
+
+  // 경고 박스
+  const warnEl = document.getElementById('warnings');
+  warnEl.innerHTML = '';
+  if (state.onlyExcel.length) {
+    const list = state.onlyExcel.map(x =>
+      `<li>· ${x.name} (${x.birth}) — 행사 ${x.eventNo}</li>`).join('');
+    warnEl.innerHTML += `<div class="warn-box">
+      <h3>⚠️ 엑셀에 있는데 PDF에서 못 찾은 사람</h3>
+      <ul class="warn-list">${list}</ul>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">→ 보험 미가입이거나, 해당 PDF가 아직 업로드되지 않았을 수 있어요</div>
+    </div>`;
+  }
+  if (state.onlyPdf.length) {
+    const list = state.onlyPdf.map(x =>
+      `<li>· ${x.name} (${x.bd6}) — ${x.plan} · ${x.pdfFile}</li>`).join('');
+    warnEl.innerHTML += `<div class="warn-box">
+      <h3>⚠️ PDF에 있는데 엑셀 명단에 없는 사람</h3>
+      <ul class="warn-list">${list}</ul>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">→ 이름 오타 가능성, 또는 다른 행사 PDF일 수 있어요</div>
+    </div>`;
+  }
+
+  // 행사번호별 그룹
+  const groups = {};
+  for (const m of state.matched) {
+    const k = m.eventNo || '(미상)';
+    if (!groups[k]) groups[k] = { rows: [], eventName: m.eventName, booker: m.booker, department: m.department };
+    groups[k].rows.push(m);
+  }
+  const groupsEl = document.getElementById('groups');
+  groupsEl.innerHTML = '';
+  // 출발일 → 행사번호 순 정렬
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    const da = groups[a].department || '';
+    const db = groups[b].department || '';
+    if (da !== db) return da < db ? -1 : 1;
+    return a < b ? -1 : 1;
+  });
+  for (const k of sortedKeys) {
+    const g = groups[k];
+    const planMap = {};
+    let groupPremium = 0;
+    for (const r of g.rows) {
+      planMap[r.plan] = (planMap[r.plan] || 0) + 1;
+      if (r.premium) {
+        const n = parseInt(r.premium.replace(/,/g, ''), 10);
+        if (!isNaN(n)) groupPremium += n;
+      }
+    }
+    const codes = Object.keys(planMap).sort().map(p => `<span class="badge ${p}">${p}·${planMap[p]}</span>`).join('');
+    const rowsHtml = g.rows.map((r, i) => `
+      <tr>
+        <td class="no">${i + 1}</td>
+        <td class="name">${r.name}${r.fallback ? ' <span style="color:var(--text-faint);font-size:10px;">※</span>' : ''}</td>
+        <td class="bd">${r.birth}</td>
+        <td class="dep">${r.department || ''}</td>
+        <td class="prem">${r.premium ? '₩' + r.premium : '—'}</td>
+        <td class="code"><span class="badge ${r.plan}">${r.plan}</span></td>
+      </tr>
+    `).join('');
+    groupsEl.innerHTML += `
+      <div class="group">
+        <div class="group-head">
+          <span class="group-no">${k}</span>
+          <span class="group-name">${g.eventName || ''} ${g.booker ? '· ' + g.booker : ''}</span>
+          <div class="group-codes">${codes}</div>
+          <div class="group-meta">
+            <span class="group-count">${g.rows.length}명</span>
+            <span class="group-amount">₩${groupPremium.toLocaleString()}</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>No</th><th class="col-name">고객명</th><th>생년월일</th><th>출발일</th><th>인별보험료</th><th>코드</th></tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  renderOutput('namecode');
+  renderDiag();
+  document.getElementById('results').classList.add('show');
+}
+
+function renderDiag() {
+  const el = document.getElementById('diagContent');
+  if (!el) return;
+  const html = ['<div class="diag-content">'];
+  // PDF별
+  if (state.pdfDiag.length === 0) {
+    html.push('<div style="color:var(--text-faint);">PDF 없음</div>');
+  } else {
+    for (const d of state.pdfDiag) {
+      const isWarn = d.rows.length === 0 || d.nameMissing > 0;
+      const tagClass = d.source === 'list' ? 'list' : (d.source === 'cert' ? 'cert' : 'empty');
+      const tagLabel = d.source === 'list' ? '명세표' : (d.source === 'cert' ? '단일가입자' : '추출 실패');
+      const sample = d.rows.slice(0, 5).map(r =>
+        `${r.name || '(이름없음)'} · ${r.bd6} · ${r.plan}${r.source === 'cert' ? ' · cert' : ''}`
+      ).join('<br>');
+      const more = d.rows.length > 5 ? `<br>… 외 ${d.rows.length - 5}명` : '';
+      html.push(`
+        <div class="diag-pdf ${isWarn ? 'warn' : ''}">
+          <div class="diag-pdf-name">${d.fileName}</div>
+          <div class="diag-pdf-info">
+            <span class="diag-tag ${tagClass}">${tagLabel}</span>
+            추출 ${d.rows.length}명${d.nameMissing ? ` · <span style="color:var(--warn);">이름 미추출 ${d.nameMissing}명</span>` : ''}
+          </div>
+          ${d.rows.length ? `<div class="diag-pdf-rows">${sample}${more}</div>` : ''}
+        </div>
+      `);
+    }
+  }
+  // Fallback 매칭 안내
+  const fallbacks = state.matched.filter(m => m.fallback);
+  if (fallbacks.length) {
+    html.push(`<div style="margin-top:10px;padding:8px 12px;background:var(--card-2);border-radius:6px;font-size:11px;color:var(--text-dim);">
+      ※ 생년월일만으로 fallback 매칭된 건: ${fallbacks.length}명
+      (${fallbacks.map(f => f.name).join(', ')})
+    </div>`);
+  }
+  html.push('</div>');
+  el.innerHTML = html.join('');
+}
+
+// ---------- Output formats ----------
+function renderOutput(fmt) {
+  const ms = state.matched;
+  let txt = '';
+  if (fmt === 'namecode') {
+    txt = ms.map(m => `${m.name}\t${m.birth}\t${m.premium || ''}\t${m.plan}`).join('\n');
+  } else if (fmt === 'excel') {
+    txt = ['행사번호\t고객명\t생년월일\t출발일\t도착일\t인별보험료\t코드'].concat(
+      ms.map(m => `${m.eventNo}\t${m.name}\t${m.birth}\t${m.department || ''}\t${m.arrival || ''}\t${m.premium || ''}\t${m.plan}`)
+    ).join('\n');
+  }
+  document.getElementById('outputArea').textContent = txt;
+}
+
+document.getElementById('outputTabs').addEventListener('click', e => {
+  if (!e.target.classList.contains('tab')) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.target.classList.add('active');
+  renderOutput(e.target.dataset.fmt);
+});
+
+document.getElementById('btnCopy').onclick = async () => {
+  const txt = document.getElementById('outputArea').textContent;
+  try {
+    await navigator.clipboard.writeText(txt);
+    showToast('클립보드에 복사됐어요');
+  } catch {
+    showToast('복사 실패. 텍스트를 직접 선택해주세요', true);
+  }
+};
+
+function downloadXlsx() {
+  const wb = XLSX.utils.book_new();
+
+  // 행사번호별 그룹핑 (출발일 → 행사번호 순)
+  const groups = {};
+  const groupOrder = [];
+  for (const m of state.matched) {
+    const k = m.eventNo || '(미상)';
+    if (!groups[k]) {
+      groups[k] = { rows: [], eventName: m.eventName, booker: m.booker, department: m.department, arrival: m.arrival };
+      groupOrder.push(k);
+    }
+    groups[k].rows.push(m);
+  }
+  groupOrder.sort((a, b) => {
+    const da = groups[a].department || '';
+    const db = groups[b].department || '';
+    if (da !== db) return da < db ? -1 : 1;
+    return a < b ? -1 : 1;
+  });
+
+  const matchedHeader = ['No', '출발일', '도착일', '행사번호', '행사명', '예약자', '고객명', '생년월일', '인별보험료', '코드', '엑셀파일', 'PDF파일'];
+  const matchedData = [];
+  let runningNo = 0;
+  let grandTotal = 0;
+  let grandCount = 0;
+  const subtotalRowIdxs = [];   // 소계 행 위치 (스타일링용)
+
+  for (const k of groupOrder) {
+    const g = groups[k];
+    let groupTotal = 0;
+    for (const m of g.rows) {
+      runningNo++;
+      const prem = m.premium ? parseInt(m.premium.replace(/,/g, ''), 10) : null;
+      if (prem) groupTotal += prem;
+      matchedData.push([
+        runningNo, m.department, m.arrival, m.eventNo, m.eventName, m.booker, m.name, m.birth,
+        prem, m.plan, m.excelFile, m.pdfFile,
+      ]);
+    }
+    // 소계 행
+    matchedData.push([
+      '', '', '', '', `↳ ${k} 소계 (${g.rows.length}명)`, '', '', '',
+      groupTotal, '', '', ''
+    ]);
+    subtotalRowIdxs.push(matchedData.length);
+    grandTotal += groupTotal;
+    grandCount += g.rows.length;
+  }
+  // 전체 합계 행
+  matchedData.push([
+    '', '', '', '', `■ 전체 합계 (${grandCount}명)`, '', '', '',
+    grandTotal, '', '', ''
+  ]);
+  const grandTotalRowIdx = matchedData.length;
+
+  const ws1 = XLSX.utils.aoa_to_sheet([matchedHeader, ...matchedData]);
+  ws1['!cols'] = [
+    {wch:5},{wch:12},{wch:12},{wch:14},{wch:30},{wch:10},{wch:10},{wch:12},
+    {wch:12},{wch:6},{wch:24},{wch:30}
+  ];
+
+  // 인별보험료(I열) 숫자 포맷 + 소계/합계 행 강조
+  for (let i = 2; i <= matchedData.length + 1; i++) {
+    const cell = ws1[`I${i}`];
+    if (cell && typeof cell.v === 'number') cell.z = '#,##0';
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws1, '매칭결과');
+
+  // 행사번호별 요약 시트
+  const summaryHeader = ['출발일', '도착일', '행사번호', '행사명', '예약자', '인원', '보험료 소계'];
+  const summaryData = groupOrder.map(k => {
+    const g = groups[k];
+    const total = g.rows.reduce((s, r) => s + (r.premium ? parseInt(r.premium.replace(/,/g, ''), 10) : 0), 0);
+    return [g.department, g.arrival, k, g.eventName, g.booker, g.rows.length, total];
+  });
+  summaryData.push(['', '', '', '■ 전체 합계', '', grandCount, grandTotal]);
+  const ws2 = XLSX.utils.aoa_to_sheet([summaryHeader, ...summaryData]);
+  ws2['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:32},{wch:10},{wch:6},{wch:14}];
+  for (let i = 2; i <= summaryData.length + 1; i++) {
+    const c = ws2[`G${i}`];
+    if (c && typeof c.v === 'number') c.z = '#,##0';
+  }
+  XLSX.utils.book_append_sheet(wb, ws2, '행사별요약');
+
+  if (state.onlyExcel.length) {
+    const data = [['고객명', '생년월일', '출발일', '도착일', '행사번호', '행사명', '엑셀파일']].concat(
+      state.onlyExcel.map(x => [x.name, x.birth, x.department, x.arrival, x.eventNo, x.eventName, x.excelFile])
+    );
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), '엑셀에만');
+  }
+  if (state.onlyPdf.length) {
+    const data = [['이름', '생년월일6', '인별보험료', '플랜', 'PDF파일']].concat(
+      state.onlyPdf.map(x => [x.name, x.bd6, x.premium || '', x.plan, x.pdfFile])
+    );
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'PDF에만');
+  }
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  XLSX.writeFile(wb, `보험코드매칭_${today}.xlsx`);
+  showToast('엑셀 다운로드 완료');
+}
+
+document.getElementById('btnDownload').onclick = downloadXlsx;
+document.getElementById('btnDownloadTop').onclick = downloadXlsx;
+
+// ---------- Match button ----------
+document.getElementById('btnMatch').onclick = async () => {
+  const btn = document.getElementById('btnMatch');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = '엑셀 읽는 중…';
+  try {
+    state.excelRows = [];
+    for (const f of state.excelFiles) {
+      const rows = await parseExcel(f);
+      state.excelRows.push(...rows);
+      status.textContent = `엑셀 파싱 중 (${state.excelRows.length}명)…`;
+    }
+    state.pdfRows = [];
+    state.pdfDiag = [];
+    for (const f of state.pdfFiles) {
+      const rows = await parsePdf(f);
+      state.pdfRows.push(...rows);
+      state.pdfDiag.push({
+        fileName: f.name,
+        rows,
+        source: rows.length ? rows[0].source : 'empty',
+        nameMissing: rows.filter(r => !r.name).length,
+      });
+      console.log(`[PDF 파싱] ${f.name}: ${rows.length}명 추출`);
+      console.log('   →', JSON.stringify(rows.slice(0, 3)) + (rows.length > 3 ? ` ...외 ${rows.length-3}명` : ''));
+      status.textContent = `PDF 파싱 중 (${state.pdfRows.length}명)…`;
+    }
+    matchAll();
+    status.textContent = `완료 · 엑셀 ${state.excelFiles.length}개(${state.excelRows.length}명), PDF ${state.pdfFiles.length}개(${state.pdfRows.length}명), 매칭 ${state.matched.length}명`;
+    renderResults();
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    console.error(e);
+    status.textContent = '오류: ' + e.message;
+    showToast('파싱 중 오류가 났어요. 콘솔(F12) 확인 부탁해요', true);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ---------- Toast ----------
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = isError ? 'var(--warn)' : 'var(--ok)';
+  t.style.color = isError ? 'var(--warn)' : 'var(--ok)';
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}</script>
+
+</body>
+</html>

@@ -114,7 +114,7 @@
   <div class="mt-dropzone" id="drop">
     <div style="font-size:30px">📁</div>
     <div style="font-weight:600;margin-top:6px">파일을 끌어다 놓거나 클릭해서 선택</div>
-    <div style="font-size:12px;color:var(--mt-text3);margin-top:4px">예약리스트 · 행사별마감현황 · APIS · 일행별예약 · 현지도착</div>
+    <div style="font-size:12px;color:var(--mt-text3);margin-top:4px">예약리스트 · 행사별마감현황 · APIS · 일행별예약 · 현지도착 · 보험 매칭 결과</div>
     <input type="file" id="file" accept=".xlsx,.xls" multiple hidden>
   </div>
 
@@ -142,8 +142,8 @@
 <div class="mt-toast-host" id="toastHost"></div>
 
 <script>
-const STORE={settle:[],resv:[],apis:[],roster:[],local:[]};
-const TYPE_LABEL={settle:'손익(마감/정산)',resv:'예약리스트',apis:'APIS',roster:'일행목록',local:'현지도착'};
+const STORE={settle:[],resv:[],apis:[],roster:[],local:[],insurance:[]};
+const TYPE_LABEL={settle:'손익(마감/정산)',resv:'예약리스트',apis:'APIS',roster:'일행목록',local:'현지도착',insurance:'보험 매칭'};
 const OPS_KEY='mt_ops_v1';
 
 function num(v){if(v==null)return 0;const s=String(v).replace(/,/g,'').replace(/원/g,'').trim();const n=parseFloat(s);return isNaN(n)?0:n}
@@ -159,6 +159,7 @@ function detectType(headers){const H=headers.map(x=>String(x||'').trim());const 
   if(has('PNR'))return 'apis';
   if(has('여권번호')&&has('거래처'))return 'roster';
   if(has('현지도착일'))return 'local';
+  if(has('보험료 소계')&&has('행사번호'))return 'insurance';
   return null}
 
 function aoaToObjects(aoa){const h=aoa[0].map(x=>String(x==null?'':x).trim());const out=[];
@@ -166,10 +167,18 @@ function aoaToObjects(aoa){const h=aoa[0].map(x=>String(x==null?'':x).trim());co
 
 async function handleFiles(files){let added=0,skipped=0;
   for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{cellDates:false});
-    const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
-    if(!aoa.length){skipped++;continue}
-    const type=detectType(aoa[0].map(x=>String(x||'').trim()));if(!type){skipped++;continue}
-    STORE[type]=STORE[type].concat(aoaToObjects(aoa));added++}catch(e){console.error(e);skipped++}}
+    let recognizedHere=0;
+    for(const sheetName of wb.SheetNames){
+      const ws=wb.Sheets[sheetName];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+      if(!aoa.length)continue;
+      const type=detectType(aoa[0].map(x=>String(x||'').trim()));
+      if(!type)continue;
+      STORE[type]=STORE[type].concat(aoaToObjects(aoa));
+      recognizedHere++;
+    }
+    if(recognizedHere>0)added++;else skipped++;
+  }catch(e){console.error(e);skipped++}}
   toast(`${added}개 인식${skipped?` · ${skipped}개 건너뜀`:''}`);
   renderRecog();document.getElementById('tabs').style.display='flex';
   buildIndex();renderOps();renderPnL();renderUnpaid()}
@@ -180,15 +189,16 @@ function renderRecog(){const el=document.getElementById('recog');
     const n=rows.length;
     return `<span class="recog-chip ${n?'':'off'}"><span class="dot"></span>${TYPE_LABEL[t]} <b>${n?n.toLocaleString():'—'}</b></span>`}).join('')}
 
-const IDX={resv:{},settle:{},apis:{},roster:{},local:{}};
+const IDX={resv:{},settle:{},apis:{},roster:{},local:{},insurance:{}};
 function buildIndex(){
   for(const k of Object.keys(IDX))IDX[k]={};
   for(const r of STORE.resv){const ev=txt(r['행사번호']);if(ev&&!txt(r['행사명']).includes('합계')&&!txt(r['상품명']).includes('합계'))IDX.resv[ev]=r}
   for(const r of STORE.settle){const ev=txt(r['행사번호']);if(ev&&!txt(r['행사명']).includes('합계'))IDX.settle[ev]=r}
   for(const k of ['apis','roster','local']){IDX[k]={};
     for(const r of STORE[k]){const ev=txt(r['행사번호']);if(!ev)continue;(IDX[k][ev]=IDX[k][ev]||[]).push(r)}}
-  // local 은 행사번호 1행이 보통이라 객체로
   const loc={};for(const ev of Object.keys(IDX.local)){loc[ev]=IDX.local[ev][0]}IDX.local=loc;
+  // 보험: 행사번호 기준, '전체 합계' 등 제외
+  for(const r of STORE.insurance){const ev=txt(r['행사번호']);if(ev&&!ev.includes('합계'))IDX.insurance[ev]=r}
 }
 
 function loadAllOps(){try{return JSON.parse(localStorage.getItem(OPS_KEY)||'{}')}catch{return{}}}
@@ -213,6 +223,8 @@ function matchDefault(productName){
 
 function computeChecks(ev){
   const r=IDX.resv[ev]||{},s=IDX.settle[ev]||{},api=IDX.apis[ev]||[],ros=IDX.roster[ev]||[],loc=IDX.local[ev]||{};
+  const ins=IDX.insurance[ev]||{};
+  const insSubtotal=num(ins['보험료 소계']);
   const pax=num(s['인원'])||num(r['예약'])||num(loc['인원'])||ros.length||api.length;
   const dep=parseDate(s['출발일자']||r['출발일자']||loc['현지도착일']);
   const rosterN=ros.length;
@@ -261,7 +273,7 @@ function computeChecks(ev){
   const sale=num(s['판매금액'])||num(r['판매금액']);
   const margin=num(s['알선수수료']);
   return{ev,pax,dep,r,s,api,ros,loc,rosterN,rosterStatus,missing,noNames,noPhone,expiryRisk,
-    airfare,airStatus,insurance,insStatus,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,resvType,autoLabel,firstPnr,sale,margin,cost,hasSettle,hasCost,defApplied}
+    airfare,airStatus,insurance,insStatus,insSubtotal,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,resvType,autoLabel,firstPnr,sale,margin,cost,hasSettle,hasCost,defApplied}
 }
 
 function badgeHtml(c,opts){
@@ -293,6 +305,7 @@ function badgeHtml(c,opts){
   }
   if(c.seatStatus==='full')b.push(['ok','사전좌석']);
   else if(c.seatStatus==='partial')b.push(['warn',`사전좌석 ${c.seatedN}/${c.apiN}`]);
+  if(c.insSubtotal>0)b.push(['info',`보험료 ${fmt(c.insSubtotal)}`]);
   if(showAnnounce){
     if(c.sentTalk)b.push(['ok','톡']);
     if(c.sentSms)b.push(['ok','문자']);
@@ -524,9 +537,10 @@ function openDetail(ev){
       <div><b style="font-size:11px;color:var(--mt-text2)">식사 특이사항</b><textarea class="memo" data-ops="meal" placeholder="알레르기, 채식 등">${escH(o.ops.meal||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">골프 특이사항</b><textarea class="memo" data-ops="golfNote" placeholder="좌타, 캐디 요청 등">${escH(o.ops.golfNote||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">룸 특이사항</b><textarea class="memo" data-ops="room" placeholder="금연실, 1층, 인접실 등">${escH(o.ops.room||'')}</textarea></div>
-      <div style="grid-column:1 / -1"><b style="font-size:11px;color:var(--mt-text2)">보험료 (계산기 결과 입력)</b>
-        <input type="text" class="memo" data-ops="insuranceFee" placeholder="예) 1인 12,000원 × 4명 = 48,000원" value="${escH(o.ops.insuranceFee||'')}" style="min-height:auto;padding:8px 10px">
-        <div style="font-size:11px;color:var(--mt-text3);margin-top:4px">보험료 계산기(PDF 검수 도구)로 산출된 금액을 적어두세요. 향후 정산 도구와 연계됩니다.</div>
+      <div style="grid-column:1 / -1"><b style="font-size:11px;color:var(--mt-text2)">보험료</b>
+        ${c.insSubtotal>0?`<div style="padding:8px 10px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-green-dim);color:var(--mt-green-dark);font-family:var(--mt-mono);margin-bottom:6px">자동 ₩${fmt(c.insSubtotal)} <span style="font-size:11px;color:var(--mt-text3);font-family:inherit">· 보험 매칭 결과에서 가져옴</span></div>`:''}
+        <input type="text" class="memo" data-ops="insuranceFee" placeholder="${c.insSubtotal>0?'추가 메모 (선택)':'예) 1인 12,000원 × 4명 = 48,000원'}" value="${escH(o.ops.insuranceFee||'')}" style="min-height:auto;padding:8px 10px">
+        <div style="font-size:11px;color:var(--mt-text3);margin-top:4px">${c.insSubtotal>0?'자동값이 있으면 수동 메모는 선택입니다.':'보험료 계산기(PDF 검수)의 결과 엑셀을 드롭존에 추가하면 여기에 자동 표시됩니다.'}</div>
       </div>
     </div>`;
 
@@ -611,7 +625,7 @@ function generateResponseSheet(c,o){
 
 function exportOps(rows){
   const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','PNR','예약구분','인원','회원권','담당',
-    '판매','미수','마진','마진율',
+    '판매','미수','마진','마진율','보험료(자동)',
     '명단상태','명단미흡','무기명','연락처누락','여권만료위험','항공권','보험','사전좌석','톡','문자','마감',
     '확정서','견적서','예약금요청','예약금입금','현금영수증',
     '자동발권라벨','수동발권라벨','내부메모','항공메모','현지메모','방배정','골프조편성','식사특이','골프특이','룸특이','보험료메모']];
@@ -622,7 +636,7 @@ function exportOps(rows){
       txt(c.s['행사명'])||txt(c.r['상품명']),txt(c.s['거래처']),txt(c.r['대표고객']),txt(c.r['출발지']),
       txt(flightInfo['항공사'])||txt(c.r['항공']),txt(flightInfo['출발편']),txt(flightInfo['귀국편']),
       c.firstPnr,c.resvType,c.pax,txt(c.r['회원권구분']),txt(c.loc['담당사원']||c.r['판매자']),
-      c.sale,c.due,c.margin,c.sale?+(c.margin/c.sale*100).toFixed(1):0,
+      c.sale,c.due,c.margin,c.sale?+(c.margin/c.sale*100).toFixed(1):0,c.insSubtotal||'',
       stat(c.rosterStatus),c.missing,c.noNames,c.noPhone,c.expiryRisk,
       c.airStatus==='included'?'포함':(c.airStatus==='individual'?'개별발권':''),
       c.insStatus==='included'?'포함':'',
