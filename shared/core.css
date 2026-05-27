@@ -1,0 +1,204 @@
+/* ════════════════════════════════════════════════════════════════
+   MERITTOUR 사내 도구함 — 공통 디자인 엔진  (shared/core.css)
+   라이트 전용 · 다크모드 없음
+   톤 기준: SaiZen 운영 화면 (그레이블루 #F7F8FA + 네이비 + 파랑 액센트)
+   사용법: 각 도구 HTML <head> 에
+     <link rel="stylesheet" href="../../shared/core.css">
+   한 줄만 넣으면 폰트·토큰·공통 컴포넌트가 모두 적용됩니다.
+   ════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── 표면 (화이트/그레이 · 베이지 금지) ── */
+  --mt-bg:        #F7F8FA;   /* 페이지 배경 (화면 실측) */
+  --mt-surface:   #FFFFFF;   /* 카드 */
+  --mt-surface2:  #F2F3F6;   /* 보조 표면 */
+  --mt-surface3:  #ECEEF1;   /* 입력/연한 강조 */
+  --mt-surface4:  #E3E5EA;
+
+  /* ── 테두리 ── */
+  --mt-border:    #E3E5EA;
+  --mt-border2:   #CDD1D8;
+
+  /* ── 브랜드 네이비 ── */
+  --mt-brand:     #353C48;
+  --mt-brand2:    #2A2F39;
+
+  /* ── 메인 액센트 (파랑) ── */
+  --mt-accent:     #353C48;
+  --mt-accent2:    #454D5C;
+  --mt-accent-dim: #ECEEF1;
+
+  /* ── 포인트 강조 (카키 — 기존 골드 자리) ── */
+  --mt-point:      #6E6F4B;
+  --mt-point2:     #565738;
+  --mt-point-dim:  #EFEFE4;
+
+  /* ── 상태색 ── */
+  --mt-green:     #16A34A;  --mt-green-dim: #E3F2DF;  /* 드롭존/성공 (실측) */
+  --mt-amber:     #D97706;  --mt-amber-dim: #FEF3C7;  /* 주의 */
+  --mt-red:       #DC2626;  --mt-red-dim:   #FEE2E2;  /* 오류 */
+
+  /* ── 텍스트 ── */
+  --mt-text:   #2A2F39;
+  --mt-text2:  #5A6472;
+  --mt-text3:  #97A0AE;
+
+  /* ── 타이포 ── */
+  --mt-sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', sans-serif;
+  --mt-mono: 'JetBrains Mono', monospace;
+
+  /* ── 효과 ── */
+  --mt-shadow:    0 2px 12px rgba(26,35,50,.06);
+  --mt-shadow-lg: 0 8px 28px rgba(26,35,50,.12);
+  --mt-radius:    8px;
+  --mt-radius-lg: 12px;
+}
+
+/* ── 리셋 & 베이스 ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: var(--mt-sans);
+  background: var(--mt-bg);
+  color: var(--mt-text);
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mt-hidden { display: none !important; }
+.mt-mono { font-family: var(--mt-mono); }
+.mt-container { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
+
+/* ── 헤더 ───────────────────────────────────────────────────── */
+.mt-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-bottom: 20px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--mt-border);
+}
+.mt-brand-wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.mt-brand { font-size: 22px; font-weight: 700; color: var(--mt-brand); letter-spacing: -.02em; }
+.mt-brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: .08em; }
+.mt-dept-badge {
+  font-size: 11px; font-weight: 700; font-family: var(--mt-mono);
+  background: var(--mt-accent-dim); color: var(--mt-accent);
+  border: 1px solid var(--mt-accent); padding: 3px 10px; border-radius: 20px; letter-spacing: .08em;
+}
+.mt-header-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── 탭 네비게이션 (SaiZen 스타일) ──────────────────────────── */
+.mt-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--mt-border); overflow-x: auto; }
+.mt-tab {
+  box-sizing: border-box; padding: 0 18px; height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  font-size: 12px; font-weight: 500; line-height: 1; color: var(--mt-text3);
+  cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+  transition: color .2s, border-color .2s; background: none; border-top: none;
+  border-left: none; border-right: none; font-family: var(--mt-sans);
+}
+.mt-tab:hover { color: var(--mt-text2); }
+.mt-tab.active { color: var(--mt-accent); border-bottom-color: var(--mt-accent); }
+.mt-tab.locked { opacity: .4; cursor: not-allowed; }
+.mt-tab .mt-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--mt-text3); }
+.mt-tab.active .mt-dot { background: var(--mt-accent); }
+
+/* ── 세션 칩 ────────────────────────────────────────────────── */
+.mt-session-bar { display: flex; align-items: center; gap: 8px; padding: 14px 0; flex-wrap: wrap; }
+.mt-session-label { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: .06em; }
+.mt-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-family: var(--mt-mono); color: var(--mt-text2);
+  background: var(--mt-surface3); border: 1px solid var(--mt-border);
+  padding: 4px 10px; border-radius: 20px; cursor: pointer;
+}
+.mt-chip.active { background: var(--mt-accent-dim); color: var(--mt-accent); border-color: var(--mt-accent); }
+.mt-chip .mt-chip-x { color: var(--mt-text3); cursor: pointer; font-size: 13px; }
+.mt-chip .mt-chip-x:hover { color: var(--mt-red); }
+
+/* ── 카드 ───────────────────────────────────────────────────── */
+.mt-card {
+  background: var(--mt-surface); border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-lg); padding: 18px 20px; box-shadow: var(--mt-shadow);
+}
+.mt-section-title {
+  font-size: 11px; font-weight: 700; color: var(--mt-text2);
+  text-transform: uppercase; letter-spacing: .12em; margin: 24px 0 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.mt-section-title::before { content: ''; width: 3px; height: 13px; background: var(--mt-accent); border-radius: 2px; }
+.mt-section-title.point::before { background: var(--mt-point); }
+
+/* ── 드롭존 ─────────────────────────────────────────────────── */
+.mt-dropzone {
+  background: var(--mt-surface); border: 2px dashed var(--mt-border2);
+  border-radius: var(--mt-radius-lg); padding: 32px 20px; text-align: center;
+  color: var(--mt-text3); cursor: pointer; transition: border-color .15s, background .15s;
+}
+.mt-dropzone:hover { border-color: var(--mt-accent); }
+.mt-dropzone.active, .mt-dropzone.filled { border-color: var(--mt-green); background: var(--mt-green-dim); }
+.mt-dropzone .mt-dz-title { font-size: 15px; font-weight: 600; color: var(--mt-brand); margin: 8px 0 4px; }
+.mt-dropzone .mt-dz-hint { font-size: 12px; color: var(--mt-text3); }
+
+/* ── 버튼 ───────────────────────────────────────────────────── */
+.mt-btn {
+  font-family: var(--mt-sans); font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: var(--mt-radius); cursor: pointer;
+  background: var(--mt-surface); border: 1px solid var(--mt-border2); color: var(--mt-text2);
+  transition: all .15s;
+}
+.mt-btn:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+.mt-btn-primary { background: var(--mt-accent); border-color: var(--mt-accent); color: #fff; }
+.mt-btn-primary:hover { background: var(--mt-accent2); border-color: var(--mt-accent2); color: #fff; }
+.mt-btn-ghost { background: transparent; border-color: var(--mt-border); }
+.mt-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── 배지 ───────────────────────────────────────────────────── */
+.mt-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: var(--mt-mono);
+  background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-accent); letter-spacing: .04em;
+}
+.mt-badge.ver   { background: var(--mt-surface3); color: var(--mt-text3); border-color: var(--mt-border); }
+.mt-badge.point { background: var(--mt-point-dim); color: var(--mt-point2); border-color: var(--mt-point); }
+.mt-badge.ok    { background: var(--mt-green-dim); color: var(--mt-green); border-color: var(--mt-green); }
+.mt-badge.warn  { background: var(--mt-amber-dim); color: var(--mt-amber); border-color: var(--mt-amber); }
+.mt-badge.danger{ background: var(--mt-red-dim);   color: var(--mt-red);   border-color: var(--mt-red); }
+
+/* ── 안내 박스 (팁) ─────────────────────────────────────────── */
+.mt-tip {
+  background: var(--mt-amber-dim); border: 1px solid var(--mt-amber);
+  border-radius: var(--mt-radius); padding: 12px 16px; font-size: 12.5px; color: var(--mt-text2); line-height: 1.6;
+}
+.mt-tip.info { background: var(--mt-accent-dim); border-color: var(--mt-accent); }
+
+/* ── 테이블 ─────────────────────────────────────────────────── */
+.mt-table-wrap { overflow-x: auto; border: 1px solid var(--mt-border); border-radius: var(--mt-radius); }
+.mt-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mt-table th {
+  background: var(--mt-surface3); color: var(--mt-text2); font-weight: 600;
+  text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--mt-border); white-space: nowrap;
+}
+.mt-table td { padding: 8px 12px; border-bottom: 1px solid var(--mt-border); color: var(--mt-text); }
+.mt-table tr:last-child td { border-bottom: none; }
+.mt-table tr:hover td { background: var(--mt-surface2); }
+
+/* ── 토스트 (util.js showToast 연동) ───────────────────────── */
+.mt-toast-host { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.mt-toast {
+  background: var(--mt-brand); color: #fff; font-size: 13px;
+  padding: 10px 18px; border-radius: 24px; box-shadow: var(--mt-shadow-lg);
+  opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s;
+}
+.mt-toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── 로딩 ───────────────────────────────────────────────────── */
+.mt-loading { display: none; align-items: center; justify-content: center; gap: 10px; padding: 24px; color: var(--mt-text2); font-size: 13px; }
+.mt-loading.show { display: flex; }
+.mt-spinner { width: 18px; height: 18px; border: 2px solid var(--mt-border2); border-top-color: var(--mt-accent); border-radius: 50%; animation: mt-spin .7s linear infinite; }
+@keyframes mt-spin { to { transform: rotate(360deg); } }
+
+/* ── 반응형 ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .mt-container { padding: 20px 14px 60px; }
+  .mt-header { flex-direction: column; align-items: flex-start; }
+}
