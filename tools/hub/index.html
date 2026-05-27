@@ -100,6 +100,7 @@
       <span class="mt-dept-badge">통합 점검</span>
     </div>
     <div class="mt-header-actions">
+      <button class="mt-btn mt-btn-ghost" id="btnDefaults">⚙ 상품 기본값</button>
       <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
     </div>
   </div>
@@ -195,6 +196,21 @@ function saveAllOps(d){try{localStorage.setItem(OPS_KEY,JSON.stringify(d))}catch
 function getOps(ev){const a=loadAllOps();return a[ev]||{manual:{},label:'',memos:{int:'',air:'',loc:''},ops:{singles:{},rooms:'',golf:'',meal:'',room:'',golfNote:'',receipt:false}}}
 function setOps(ev,o){const a=loadAllOps();a[ev]=o;saveAllOps(a)}
 
+/* ==================== 상품 기본값 ==================== */
+const DEFAULTS_KEY='mt_product_defaults_v1';
+function loadDefaults(){try{return JSON.parse(localStorage.getItem(DEFAULTS_KEY)||'[]')}catch{return[]}}
+function saveDefaults(arr){try{localStorage.setItem(DEFAULTS_KEY,JSON.stringify(arr))}catch(e){console.error(e)}}
+// 매칭: 상품명에 keyword가 포함되면 적용 (먼저 매칭된 룰이 우선)
+function matchDefault(productName){
+  const n=txt(productName); if(!n)return null;
+  const defs=loadDefaults();
+  for(const d of defs){
+    const kw=txt(d.keyword); if(!kw)continue;
+    if(n.includes(kw))return d;
+  }
+  return null;
+}
+
 function computeChecks(ev){
   const r=IDX.resv[ev]||{},s=IDX.settle[ev]||{},api=IDX.apis[ev]||[],ros=IDX.roster[ev]||[],loc=IDX.local[ev]||{};
   const pax=num(s['인원'])||num(r['예약'])||num(loc['인원'])||ros.length||api.length;
@@ -210,10 +226,25 @@ function computeChecks(ev){
     if(!txt(p['휴대번호']))noPhone++;
     if(dep){const ex=parseDate(p['만료일']);if(ex){const m=(ex-dep)/(30.4*24*3600*1000);if(m<6)expiryRisk++}}
   }
+  const hasSettle=Object.keys(s).length>0;
+  const cost=num(s['항공료'])+num(s['지상비'])+num(s['호텔비'])+num(s['보험료'])+num(s['여행경비']);
+  const hasCost=hasSettle&&cost>0;
   const airfare=num(s['항공료']);
-  const airStatus=Object.keys(s).length?(airfare>0?'included':'individual'):'unknown';
+  const productName=txt(s['행사명'])||txt(r['상품명']);
+  const def=hasCost?null:matchDefault(productName);
+  let airStatus,insStatus,defApplied=false;
+  if(hasCost){
+    airStatus=airfare>0?'included':'individual';
+    insStatus=num(s['보험료'])>0?'included':'no';
+  } else if(def){
+    airStatus=def.air||'pending';
+    insStatus=def.ins||'pending';
+    defApplied=true;
+  } else {
+    airStatus='pending';
+    insStatus='pending';
+  }
   const insurance=num(s['보험료']);
-  const insStatus=Object.keys(s).length?(insurance>0?'included':'no'):'unknown';
   const apiN=api.length;
   const seatedN=api.filter(p=>txt(p['사전좌석']).toUpperCase()==='Y').length;
   const seatStatus=apiN===0?'unknown':(seatedN===apiN?'full':(seatedN===0?'none':'partial'));
@@ -222,11 +253,15 @@ function computeChecks(ev){
   const closed=txt(s['마감'])==='마감';
   const due=num(r['미수금액']);
   const status=txt(r['구분']);
+  const resvType=txt(r['예약구분']);
+  const autoLabelMap={'.':'그룹발권','IND발권':'INDV발권','부분AIR':'일부개별','AIR별도':'항공만','항공대기':'항공대기'};
+  const autoLabel=autoLabelMap[resvType]||(def&&def.label)||'';
+  const pnrRaw=txt((api[0]||{})['PNR']);
+  const firstPnr=pnrRaw?pnrRaw.split(',')[0].trim():'';
   const sale=num(s['판매금액'])||num(r['판매금액']);
   const margin=num(s['알선수수료']);
-  const cost=num(s['항공료'])+num(s['지상비'])+num(s['호텔비'])+num(s['보험료'])+num(s['여행경비']);
   return{ev,pax,dep,r,s,api,ros,loc,rosterN,rosterStatus,missing,noNames,noPhone,expiryRisk,
-    airfare,airStatus,insurance,insStatus,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,sale,margin,cost}
+    airfare,airStatus,insurance,insStatus,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,resvType,autoLabel,firstPnr,sale,margin,cost,hasSettle,hasCost,defApplied}
 }
 
 function badgeHtml(c,opts){
@@ -241,13 +276,23 @@ function badgeHtml(c,opts){
   if(c.noNames>0)b.push(['danger',`무기명 ${c.noNames}`]);
   if(c.noPhone>0)b.push(['warn',`연락처 ${c.noPhone}`]);
   if(c.expiryRisk>0)b.push(['danger',`여권 ${c.expiryRisk}`]);
-  if(c.airStatus==='included')b.push(['ok','항공권']);
-  else if(c.airStatus==='individual')b.push(['mute','개별발권']);
-  if(c.insStatus==='included')b.push(['ok','보험']);
-  else if(c.insStatus==='no')b.push(['mute','보험X']);
+  if(!c.hasCost){
+    if(c.defApplied){
+      if(c.airStatus==='included')b.push(['info','항공권(기본값)']);
+      else if(c.airStatus==='individual')b.push(['mute','개별발권(기본값)']);
+      if(c.insStatus==='included')b.push(['info','보험(기본값)']);
+      else if(c.insStatus==='no')b.push(['mute','보험X(기본값)']);
+    } else {
+      b.push(['mute','원가 미정']);
+    }
+  } else {
+    if(c.airStatus==='included')b.push(['ok','항공권']);
+    else if(c.airStatus==='individual')b.push(['mute','개별발권']);
+    if(c.insStatus==='included')b.push(['ok','보험']);
+    else if(c.insStatus==='no')b.push(['mute','보험X']);
+  }
   if(c.seatStatus==='full')b.push(['ok','사전좌석']);
   else if(c.seatStatus==='partial')b.push(['warn',`사전좌석 ${c.seatedN}/${c.apiN}`]);
-  else if(c.seatStatus==='none'&&c.airStatus==='included')b.push(['mute','사전좌석X']);
   if(showAnnounce){
     if(c.sentTalk)b.push(['ok','톡']);
     if(c.sentSms)b.push(['ok','문자']);
@@ -259,7 +304,7 @@ function badgeHtml(c,opts){
   return b.map(x=>`<span class="bd bd-${x[0]}">${escH(x[1])}</span>`).join('')
 }
 
-const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만'];
+const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만','항공대기'];
 const MANUAL_KEYS=[['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금○'],['receipt','현금영수증']];
 let opsFilter={q:'',dest:'',airline:'',flight:'',monthY:'',monthM:'',issue:'',label:'',sort:'dep'};
 
@@ -287,7 +332,7 @@ function applyFilters(rows){
     if(F.airline){const al=txt(c.r['항공'])||txt((c.api[0]||{})['항공사']);if(al!==F.airline)return false}
     if(F.flight){const fl=txt((c.api[0]||{})['출발편']);if(fl!==F.flight)return false}
     if(F.monthY&&F.monthM){if(!c.dep||c.dep.getFullYear()!=F.monthY||(c.dep.getMonth()+1)!=F.monthM)return false}
-    if(F.label){const o=getOps(c.ev);if((o.label||'미정')!==F.label)return false}
+    if(F.label){const o=getOps(c.ev);const eff=o.label||c.autoLabel||'미정';if(eff!==F.label)return false}
     if(F.issue){
       if(F.issue==='noNames'&&c.noNames===0)return false;
       if(F.issue==='noPhone'&&c.noPhone===0)return false;
@@ -299,6 +344,7 @@ function applyFilters(rows){
     if(F.q){const q=F.q.toLowerCase();
       const blob=[c.ev,txt(c.r['상품명']),txt(c.s['행사명']),txt(c.r['대표고객']),txt(c.s['거래처']),
         txt(c.r['출발지']),txt(c.r['항공']),txt((c.api[0]||{})['출발편']),txt((c.api[0]||{})['항공사']),
+        c.firstPnr,c.resvType,
         ...c.ros.map(p=>txt(p['고객명'])+' '+txt(p['영문성'])+' '+txt(p['영문이름'])+' '+txt(p['휴대번호']))
       ].join(' ').toLowerCase();
       if(!blob.includes(q))return false}
@@ -367,12 +413,14 @@ function renderOps(){
   const trs=shown.map(c=>{
     const o=getOps(c.ev);
     const manualHtml=MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ');
-    const labelHtml=`<select class="lbl-sel ${o.label&&o.label!=='미정'?'set':''}" data-ev="${c.ev}" data-act="label">${TICKET_LABELS.map(l=>`<option ${o.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
+    const effectiveLabel=o.label||c.autoLabel||'';
+    const labelHtml=`<select class="lbl-sel ${effectiveLabel&&effectiveLabel!=='미정'?'set':''}" data-ev="${c.ev}" data-act="label" title="${o.label?'수동 설정':(c.autoLabel?'예약구분 자동':'')}">${TICKET_LABELS.map(l=>`<option ${effectiveLabel===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
     return `<tr class="row-clickable" data-ev="${c.ev}">
       <td>${c.dep?c.dep.toISOString().slice(0,10):''}</td>
       <td class="nm" title="${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}">${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}</td>
       <td>${escH(txt(c.r['출발지']))}</td>
       <td>${escH(txt((c.api[0]||{})['출발편'])||txt(c.r['항공']))}</td>
+      <td style="font-family:var(--mt-mono);font-size:12px">${escH(c.firstPnr)}</td>
       <td class="num">${c.pax||''}</td>
       <td>${escH(txt(c.r['대표고객']))}</td>
       <td>${escH(txt(c.s['거래처']))}</td>
@@ -382,8 +430,8 @@ function renderOps(){
     </tr>`}).join('');
 
   body.innerHTML=alertBar+ctrl+summary+`<div class="tbl-wrap"><table class="data">
-    <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>항공편</th><th>인원</th><th>대표</th><th>거래처</th><th>자동 점검</th><th>OP 체크</th><th>발권 라벨</th></tr></thead>
-    <tbody>${trs||'<tr><td colspan="10" class="empty">조건에 맞는 행사가 없습니다.</td></tr>'}</tbody></table></div>`;
+    <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>항공편</th><th>PNR</th><th>인원</th><th>대표</th><th>거래처</th><th>자동 점검</th><th>OP 체크</th><th>발권 라벨</th></tr></thead>
+    <tbody>${trs||'<tr><td colspan="11" class="empty">조건에 맞는 행사가 없습니다.</td></tr>'}</tbody></table></div>`;
 
   document.querySelectorAll('.alert-pill').forEach(p=>p.onclick=()=>{opsFilter.issue=p.dataset.issue;renderOps()});
   const qel=document.getElementById('opsQ');
@@ -415,6 +463,8 @@ function openDetail(ev){
     <div class="field"><b>도착일</b><span>${escH(dShort(s['도착일자']||r['도착일자']))}</span></div>
     <div class="field"><b>출발지</b><span>${escH(txt(r['출발지']))}</span></div>
     <div class="field"><b>항공</b><span>${escH(txt(flightInfo['항공사'])||txt(r['항공']))} ${escH(txt(flightInfo['출발편']))} / ${escH(txt(flightInfo['귀국편']))}</span></div>
+    <div class="field"><b>PNR</b><span style="font-family:var(--mt-mono)">${escH(c.firstPnr)||'<span style=\"color:var(--mt-text3)\">없음</span>'}</span></div>
+    <div class="field"><b>예약구분</b><span>${escH(c.resvType)||'<span style=\"color:var(--mt-text3)\">―</span>'}</span></div>
     <div class="field"><b>대표고객</b><span>${escH(txt(r['대표고객']))} ${escH(txt(r['예약자명']))}</span></div>
     <div class="field"><b>거래처</b><span>${escH(txt(s['거래처']))}</span></div>
     <div class="field"><b>회원권</b><span>${escH(txt(r['회원권구분']))}</span></div>
@@ -427,11 +477,13 @@ function openDetail(ev){
   <div style="margin-top:10px">${badgeHtml(c)}</div>`;
 
   const manualHtml=MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ');
-  const labelHtml=`<select class="lbl-sel ${o.label&&o.label!=='미정'?'set':''}" id="dlgLabel">${TICKET_LABELS.map(l=>`<option ${o.label===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
+  const effLabel=o.label||c.autoLabel||'';
+  const labelHtml=`<select class="lbl-sel ${effLabel&&effLabel!=='미정'?'set':''}" id="dlgLabel">${TICKET_LABELS.map(l=>`<option ${effLabel===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
+  const labelHint=o.label?'<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">수동</span>':(c.autoLabel?`<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">예약구분 자동</span>`:'');
   const checkBlock=`<h4>OP 체크 · 발권 라벨</h4>
     <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
       <div class="chk-row">${manualHtml}</div>
-      <div style="display:flex;align-items:center;gap:8px">발권 ${labelHtml}</div>
+      <div style="display:flex;align-items:center;gap:8px">발권 ${labelHtml}${labelHint}</div>
     </div>`;
 
   const rosterTr=ros.map((p,i)=>{
@@ -472,6 +524,10 @@ function openDetail(ev){
       <div><b style="font-size:11px;color:var(--mt-text2)">식사 특이사항</b><textarea class="memo" data-ops="meal" placeholder="알레르기, 채식 등">${escH(o.ops.meal||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">골프 특이사항</b><textarea class="memo" data-ops="golfNote" placeholder="좌타, 캐디 요청 등">${escH(o.ops.golfNote||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">룸 특이사항</b><textarea class="memo" data-ops="room" placeholder="금연실, 1층, 인접실 등">${escH(o.ops.room||'')}</textarea></div>
+      <div style="grid-column:1 / -1"><b style="font-size:11px;color:var(--mt-text2)">보험료 (계산기 결과 입력)</b>
+        <input type="text" class="memo" data-ops="insuranceFee" placeholder="예) 1인 12,000원 × 4명 = 48,000원" value="${escH(o.ops.insuranceFee||'')}" style="min-height:auto;padding:8px 10px">
+        <div style="font-size:11px;color:var(--mt-text3);margin-top:4px">보험료 계산기(PDF 검수 도구)로 산출된 금액을 적어두세요. 향후 정산 도구와 연계됩니다.</div>
+      </div>
     </div>`;
 
   const respBtn=`<h4>손님 응답표</h4>
@@ -494,6 +550,7 @@ function openDetail(ev){
   m.querySelector('#dlgLabel').onchange=e=>{o.label=e.target.value;setOps(ev,o);renderOps();e.target.classList.toggle('set',o.label&&o.label!=='미정')};
   m.querySelectorAll('textarea[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
   m.querySelectorAll('textarea[data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
+  m.querySelectorAll('input[type=text][data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
   m.querySelectorAll('input[data-ops="receipt"]').forEach(t=>t.onchange=()=>{o.ops.receipt=t.checked;setOps(ev,o)});
   m.querySelectorAll('input[data-single]').forEach(t=>t.onchange=()=>{const i=t.dataset.single;if(t.checked)o.ops.singles[i]=true;else delete o.ops.singles[i];setOps(ev,o)});
   m.querySelector('#genResp').onclick=()=>generateResponseSheet(c,o);
@@ -553,18 +610,18 @@ function generateResponseSheet(c,o){
 }
 
 function exportOps(rows){
-  const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','인원','회원권','담당',
+  const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','PNR','예약구분','인원','회원권','담당',
     '판매','미수','마진','마진율',
     '명단상태','명단미흡','무기명','연락처누락','여권만료위험','항공권','보험','사전좌석','톡','문자','마감',
     '확정서','견적서','예약금요청','예약금입금','현금영수증',
-    '발권라벨','내부메모','항공메모','현지메모','방배정','골프조편성','식사특이','골프특이','룸특이']];
+    '자동발권라벨','수동발권라벨','내부메모','항공메모','현지메모','방배정','골프조편성','식사특이','골프특이','룸특이','보험료메모']];
   const stat=v=>{if(v==='full')return '확정';if(v==='partial')return '미완';if(v==='over')return '초과';if(v==='none')return '없음';return ''};
   for(const c of rows){
     const o=getOps(c.ev);const flightInfo=c.api[0]||{};
     aoa.push([c.ev,c.dep?c.dep.toISOString().slice(0,10):'',dShort(c.s['도착일자']||c.r['도착일자']),
       txt(c.s['행사명'])||txt(c.r['상품명']),txt(c.s['거래처']),txt(c.r['대표고객']),txt(c.r['출발지']),
       txt(flightInfo['항공사'])||txt(c.r['항공']),txt(flightInfo['출발편']),txt(flightInfo['귀국편']),
-      c.pax,txt(c.r['회원권구분']),txt(c.loc['담당사원']||c.r['판매자']),
+      c.firstPnr,c.resvType,c.pax,txt(c.r['회원권구분']),txt(c.loc['담당사원']||c.r['판매자']),
       c.sale,c.due,c.margin,c.sale?+(c.margin/c.sale*100).toFixed(1):0,
       stat(c.rosterStatus),c.missing,c.noNames,c.noPhone,c.expiryRisk,
       c.airStatus==='included'?'포함':(c.airStatus==='individual'?'개별발권':''),
@@ -572,11 +629,10 @@ function exportOps(rows){
       c.seatStatus==='full'?'완료':(c.seatStatus==='partial'?`${c.seatedN}/${c.apiN}`:''),
       c.sentTalk?'Y':'',c.sentSms?'Y':'',c.closed?'마감':'',
       o.manual.conf?'Y':'',o.manual.quote?'Y':'',o.manual.depReq?'Y':'',o.manual.depPaid?'Y':'',o.manual.receipt?'Y':'',
-      o.label||'',o.memos.int||'',o.memos.air||'',o.memos.loc||'',
-      o.ops.rooms||'',o.ops.golf||'',o.ops.meal||'',o.ops.golfNote||'',o.ops.room||''])
+      c.autoLabel||'',o.label||'',o.memos.int||'',o.memos.air||'',o.memos.loc||'',
+      o.ops.rooms||'',o.ops.golf||'',o.ops.meal||'',o.ops.golfNote||'',o.ops.room||'',o.ops.insuranceFee||''])
   }
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:14},{wch:11},{wch:11},{wch:34},{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:6},{wch:12},{wch:10},{wch:11},{wch:11},{wch:11},{wch:7},{wch:7},{wch:7},{wch:7},{wch:8},{wch:9},{wch:8},{wch:6},{wch:9},{wch:5},{wch:5},{wch:7},{wch:6},{wch:6},{wch:9},{wch:9},{wch:9},{wch:11},{wch:18},{wch:18},{wch:18},{wch:20},{wch:20},{wch:14},{wch:14},{wch:14}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'예약 운영');
   const today=new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb,`MERITTOUR_예약운영_${today}.xlsx`);
@@ -703,6 +759,138 @@ document.querySelectorAll('.mt-tab').forEach(t=>{t.addEventListener('click',()=>
   document.querySelectorAll('.mt-tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');document.getElementById('panel-'+t.dataset.tab).classList.add('active')})});
+
+/* ==================== 상품 기본값 모달 ==================== */
+const SUGGEST_KEYWORDS=['야마나미','쿠주힐즈','간지호텔','시즈노야도','스가다이라','포틴힐즈','14hills','후쿠로다노타키','아키바','셰익스피어','미야자키','국제공항','니라이스프링스','말레이시아','돔하우스','소보별장','아소별장'];
+function suggestProducts(){
+  // 상품명에서 키워드 자동 추출
+  const names=new Set();
+  for(const r of STORE.resv){const n=txt(r['상품명']);if(n)names.add(n)}
+  for(const r of STORE.settle){const n=txt(r['행사명']);if(n)names.add(n)}
+  const counts={};
+  for(const kw of SUGGEST_KEYWORDS){
+    let n=0;for(const name of names)if(name.includes(kw))n++;
+    if(n>0)counts[kw]=n;
+  }
+  return counts;
+}
+
+document.getElementById('btnDefaults').onclick=openDefaultsModal;
+
+function openDefaultsModal(){
+  const defs=loadDefaults();
+  const counts=suggestProducts();
+  const suggestHtml=Object.keys(counts).length?
+    `<div style="font-size:12px;color:var(--mt-text2);margin-bottom:8px">현재 데이터에서 인식되는 상품 키워드:</div>
+     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+       ${Object.entries(counts).map(([kw,n])=>`<button class="chk" data-add-kw="${escH(kw)}">${escH(kw)} <b style="opacity:.6">${n}</b></button>`).join('')}
+     </div>`:'';
+
+  const rowsHtml=defs.length?defs.map((d,i)=>`
+    <tr>
+      <td><input type="text" data-i="${i}" data-k="keyword" value="${escH(d.keyword||'')}" placeholder="예) 야마나미" style="width:120px"></td>
+      <td><select data-i="${i}" data-k="air">
+        <option value="">―</option>
+        <option value="included" ${d.air==='included'?'selected':''}>포함</option>
+        <option value="individual" ${d.air==='individual'?'selected':''}>개별발권</option>
+      </select></td>
+      <td><select data-i="${i}" data-k="ins">
+        <option value="">―</option>
+        <option value="included" ${d.ins==='included'?'selected':''}>포함</option>
+        <option value="no" ${d.ins==='no'?'selected':''}>미포함</option>
+      </select></td>
+      <td><input type="number" data-i="${i}" data-k="packagePrice" value="${d.packagePrice||''}" placeholder="₩" style="width:90px" title="1인 정액(원). 입력 시 1박당 단가 무시"></td>
+      <td><input type="number" data-i="${i}" data-k="stayPerNight" value="${d.stayPerNight||''}" placeholder="¥" style="width:70px"></td>
+      <td><input type="number" data-i="${i}" data-k="transport" value="${d.transport||''}" placeholder="¥" style="width:70px"></td>
+      <td><input type="number" data-i="${i}" data-k="profitPerNight" value="${d.profitPerNight||''}" placeholder="¥" style="width:70px"></td>
+      <td><input type="number" data-i="${i}" data-k="memberFee" value="${d.memberFee===''||d.memberFee==null?50000:d.memberFee}" placeholder="₩" style="width:80px" title="1인 회원관리비(원), 기본 50,000"></td>
+      <td><select data-i="${i}" data-k="label">
+        <option value="">―</option>
+        ${TICKET_LABELS.map(l=>`<option ${d.label===l?'selected':''}>${escH(l)}</option>`).join('')}
+      </select></td>
+      <td><button class="chk" data-del="${i}" style="background:var(--mt-red-dim);color:var(--mt-red-dark)">삭제</button></td>
+    </tr>`).join(''):`<tr><td colspan="10" style="color:var(--mt-text3);text-align:center;padding:20px">등록된 기본값이 없습니다. 위 키워드 칩을 누르거나 [+ 행 추가]로 시작하세요.</td></tr>`;
+
+  const html=`<div class="mt-modal" onclick="event.stopPropagation()" style="max-width:1080px">
+    <div class="mt-modal-head">
+      <h3>상품 기본값 관리</h3>
+      <span class="sub">마감현황에 원가가 없는 행사에 자동 적용됩니다</span>
+      <span class="close-x" onclick="closeModal()">×</span>
+    </div>
+    <div class="mt-modal-body">
+      <p class="intro" style="margin:0 0 12px">
+        상품명에 <b>키워드</b>가 포함된 행사에 기본값이 적용됩니다. 위에서부터 매칭되는 첫 룰이 우선이라, 더 구체적인 키워드를 위쪽에 두세요.<br>
+        <span class="src">단가는 1인 1박 기준 ¥(엔)으로 입력하세요. 향후 정산 도구에서 자동 계산에 사용됩니다.</span>
+      </p>
+      ${suggestHtml}
+      <div class="tbl-wrap"><table class="data" style="font-size:12px">
+        <thead><tr>
+          <th>키워드</th><th>항공권</th><th>보험</th><th>패키지가 ₩</th><th>1박 체재¥</th><th>송영 ¥</th><th>1박 수익¥</th><th>회원관리 ₩</th><th>기본 발권</th><th></th>
+        </tr></thead>
+        <tbody id="defsBody">${rowsHtml}</tbody>
+      </table></div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="mt-btn mt-btn-ghost" id="addDef">+ 행 추가</button>
+        <button class="mt-btn mt-btn-ghost" id="exportDefs">📥 JSON 내보내기</button>
+        <label class="mt-btn mt-btn-ghost" style="cursor:pointer">📤 JSON 불러오기<input type="file" id="importDefs" accept=".json" hidden></label>
+      </div>
+    </div>
+    <div class="mt-modal-foot">
+      <span style="font-size:11px;color:var(--mt-text3);margin-right:auto">변경은 즉시 저장됩니다.</span>
+      <button class="mt-btn" onclick="closeModal()">완료</button>
+    </div>
+  </div>`;
+
+  const m=document.getElementById('modal');
+  m.innerHTML=html; m.classList.add('show'); m.onclick=closeModal;
+  bindDefaultsModal();
+}
+
+function bindDefaultsModal(){
+  const m=document.getElementById('modal');
+  // 키워드 칩 클릭 → 행 추가
+  m.querySelectorAll('[data-add-kw]').forEach(b=>b.onclick=()=>{
+    const defs=loadDefaults();
+    if(defs.find(d=>d.keyword===b.dataset.addKw)){toast('이미 등록된 키워드입니다');return}
+    defs.push({keyword:b.dataset.addKw,air:'included',ins:'included',packagePrice:'',stayPerNight:'',transport:'',profitPerNight:'',memberFee:50000,label:''});
+    saveDefaults(defs);openDefaultsModal();
+  });
+  // input/select 변경
+  m.querySelectorAll('[data-i]').forEach(el=>{
+    el.onchange=el.oninput=()=>{
+      const defs=loadDefaults(); const i=+el.dataset.i; const k=el.dataset.k;
+      if(!defs[i])return;
+      defs[i][k]= (el.type==='number')?(el.value===''?'':+el.value):el.value;
+      saveDefaults(defs);
+      // air/ins 변경은 즉시 운영 탭 리렌더
+      if(k==='air'||k==='ins'||k==='keyword')renderOps();
+    };
+  });
+  // 삭제
+  m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const defs=loadDefaults(); defs.splice(+b.dataset.del,1); saveDefaults(defs);
+    openDefaultsModal();renderOps();
+  });
+  // 행 추가
+  m.querySelector('#addDef').onclick=()=>{
+    const defs=loadDefaults();
+    defs.push({keyword:'',air:'',ins:'',packagePrice:'',stayPerNight:'',transport:'',profitPerNight:'',memberFee:50000,label:''});
+    saveDefaults(defs);openDefaultsModal();
+  };
+  // JSON 내보내기
+  m.querySelector('#exportDefs').onclick=()=>{
+    const blob=new Blob([JSON.stringify(loadDefaults(),null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`MERITTOUR_상품기본값_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  };
+  // JSON 불러오기
+  m.querySelector('#importDefs').onchange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    try{const txt=await f.text();const arr=JSON.parse(txt);
+      if(Array.isArray(arr)){saveDefaults(arr);openDefaultsModal();renderOps();toast(`${arr.length}개 룰 불러옴`)}
+      else toast('형식 오류')}catch(err){toast('JSON 파싱 실패')}
+  };
+}
 </script>
 </body>
 </html>
