@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR · 이미지 통합 툴킷</title>
+<link rel="stylesheet" href="../../shared/core.css">
 <script>window.__libErrors = [];</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
         onerror="window.__libErrors.push('JSZip')"></script>
@@ -12,55 +13,33 @@
 <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"
         onerror="window.__libErrors.push('UTIF.js')"></script>
 <style>
-  :root {
-    --bg: #F4F5F7;
-    --surface: #FFFFFF;
-    --surface2: #FAFAFA;
-    --navy: var(--navy);
-    --navy-mid: #2d3a4f;
-    --navy-soft: #4a5a73;
-    --brand: var(--navy);
-    --accent: #2563EB;
-    --accent2: #3B82F6;
-    --accent-dim: #DBEAFE;
-    --border: #E5E7EB;
-    --border-hover: #D1D5DB;
-    --text-primary: var(--navy);
-    --text-secondary: #6B7280;
-    --text-tertiary: #9CA3AF;
-    --accent-soft: #EEF0F4;
-    --ok: #059669;
-    --ok-dim: #D1FAE5;
-    --ok-soft: #ECFDF5;
-    --danger-soft: #FEF2F2;
-    --danger: #991B1B;
-    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    --shadow: 0 2px 12px rgba(26,35,50,.06);
-    --shadow-lg: 0 8px 28px rgba(26,35,50,.12);
+    :root {
+    --bg: var(--mt-bg);
+    --surface: var(--mt-surface);
+    --surface2: var(--mt-surface2);
+    --navy: var(--mt-brand);
+    --navy-mid: var(--mt-brand2);
+    --navy-soft: var(--mt-text2);
+    --brand: var(--mt-brand);
+    --accent: var(--mt-accent);
+    --accent2: var(--mt-accent2);
+    --accent-dim: var(--mt-accent-dim);
+    --border: var(--mt-border);
+    --border-hover: var(--mt-border2);
+    --text-primary: var(--mt-text);
+    --text-secondary: var(--mt-text2);
+    --text-tertiary: var(--mt-text3);
+    --accent-soft: var(--mt-surface3);
+    --ok: var(--mt-green);
+    --ok-dim: var(--mt-green-dim);
+    --ok-soft: var(--mt-green-dim);
+    --danger-soft: var(--mt-red-dim);
+    --danger: var(--mt-red);
+    --mono: var(--mt-mono);
+    --shadow: var(--mt-shadow);
+    --shadow-lg: var(--mt-shadow-lg);
   }
-  body.dark {
-    --bg: #0C0F1A;
-    --surface: #12172A;
-    --surface2: #181E30;
-    --navy: #FFFFFF;
-    --navy-mid: #DDE3F0;
-    --navy-soft: #9aa6c4;
-    --brand: #FFFFFF;
-    --accent: #60A5FA;
-    --accent2: #93C5FD;
-    --accent-dim: #172040;
-    --border: #263050;
-    --border-hover: #3A4870;
-    --text-primary: #DDE3F0;
-    --text-secondary: #8A97B8;
-    --text-tertiary: #5A6486;
-    --accent-soft: #1A2236;
-    --ok: #10B981;
-    --ok-dim: #0A2A1E;
-    --ok-soft: #0A2A1E;
-    --danger-soft: #2A0A0A;
-    --danger: #F87171;
-  }
+  
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -159,7 +138,7 @@
   }
   .success-sub {
     font-size: 12px;
-    color: #5A8A2E;
+    color: var(--mt-green);
   }
 
   .upload-icon {
@@ -328,10 +307,10 @@
   }
   .quality-hint.ok .hint-icon { color: var(--ok); }
   .quality-hint.warn {
-    background: #FEF3C7;
-    color: #78350F;
+    background: var(--mt-amber-dim);
+    color: var(--mt-amber);
   }
-  .quality-hint.warn .hint-icon { color: #B45309; }
+  .quality-hint.warn .hint-icon { color: var(--mt-amber); }
   .quality-hint.info {
     background: var(--accent-soft);
     color: var(--text-secondary);
@@ -607,7 +586,7 @@
     vertical-align: 1px;
   }
   .range-indicator.ok { background: var(--ok-dim); color: var(--ok); }
-  .range-indicator.warn { background: #FEF3C7; color: #92400E; }
+  .range-indicator.warn { background: var(--mt-amber-dim); color: var(--mt-amber); }
   .range-indicator.over { background: #FCE8E8; color: #991B1B; }
   .saving-badge {
     font-size: 11px; font-weight: 600;
@@ -758,7 +737,7 @@
 <div class="container">
   <div class="topbar">
     <a class="back-link" href="../../sales/">← 영업 도구</a>
-    <button class="theme-toggle" id="themeToggle" type="button" title="다크/라이트 모드"><span id="themeIcon">🌙</span></button>
+    
   </div>
   <header>
     <span class="tag">MERITTOUR INTERNAL TOOL</span>
@@ -767,10 +746,10 @@
   </header>
 
   <!-- 라이브러리 로딩 실패 배너 (있을 때만 표시) -->
-  <div id="lib-warning" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:1.25rem;font-size:13px;color:#78350F">
+  <div id="lib-warning" style="display:none;background:var(--mt-amber-dim);border:1px solid var(--mt-amber);border-radius:10px;padding:12px 16px;margin-bottom:1.25rem;font-size:13px;color:var(--mt-amber)">
     <strong>⚠️ 일부 라이브러리 로딩 실패</strong>
     <div id="lib-warning-detail" style="margin-top:4px;font-size:12px"></div>
-    <div style="margin-top:6px;font-size:11px;color:#92400E">
+    <div style="margin-top:6px;font-size:11px;color:var(--mt-amber)">
       인터넷 연결을 확인하거나 페이지를 새로고침해 주세요. 영향받지 않은 파일 형식은 계속 사용 가능합니다.
     </div>
   </div>
@@ -1737,18 +1716,7 @@ updateRenamePreview();
 updateQualityHint();
 checkLibraries();
 
-/* ── 다크/라이트 토글 ── */
-(function(){
-  var tg = document.getElementById('themeToggle');
-  var ic = document.getElementById('themeIcon');
-  try { if (localStorage.getItem('mt_theme') === 'dark') { document.body.classList.add('dark'); ic.textContent = '☀️'; } } catch(e){}
-  tg.addEventListener('click', function(){
-    document.body.classList.toggle('dark');
-    var d = document.body.classList.contains('dark');
-    ic.textContent = d ? '☀️' : '🌙';
-    try { localStorage.setItem('mt_theme', d ? 'dark' : 'light'); } catch(e){}
-  });
-})();
+
 </script>
 </body>
 </html>

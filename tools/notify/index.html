@@ -4,57 +4,35 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>고객 안내 발송 · MERITTOUR</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../shared/core.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #F4F5F7;
-    --surface: #FFFFFF;
+    :root {
+    --bg: var(--mt-bg);
+    --surface: var(--mt-surface);
     --white: #FFFFFF;
-    --navy: #1a2332;
-    --navy-light: #2d3a4f;
-    --brand: #1a2332;
-    --accent: #2563EB;
-    --accent2: #3B82F6;
-    --accent-light: #DBEAFE;
-    --warn: #D97706;
-    --warn-bg: #FEF3C7;
-    --danger: #DC2626;
-    --danger-bg: #FEE2E2;
-    --success: #059669;
-    --success-bg: #D1FAE5;
-    --info: #2563EB;
-    --border: #E5E7EB;
-    --text: #1E2A45;
-    --muted: #6B7280;
-    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --navy: var(--mt-brand);
+    --navy-light: var(--mt-brand2);
+    --brand: var(--mt-brand);
+    --accent: var(--mt-accent);
+    --accent2: var(--mt-accent2);
+    --accent-light: var(--mt-accent-dim);
+    --warn: var(--mt-amber);
+    --warn-bg: var(--mt-amber-dim);
+    --danger: var(--mt-red);
+    --danger-bg: var(--mt-red-dim);
+    --success: var(--mt-green);
+    --success-bg: var(--mt-green-dim);
+    --info: var(--mt-accent);
+    --border: var(--mt-border);
+    --text: var(--mt-text);
+    --muted: var(--mt-text2);
+    --mono: var(--mt-mono);
     --radius: 10px;
-    --shadow: 0 2px 12px rgba(26,35,50,0.06);
-    --shadow-lg: 0 8px 28px rgba(26,35,50,0.12);
+    --shadow: var(--mt-shadow);
+    --shadow-lg: var(--mt-shadow-lg);
   }
-  body.dark {
-    --bg: #0C0F1A;
-    --surface: #12172A;
-    --white: #12172A;
-    --navy: #12172A;
-    --navy-light: #1E253A;
-    --brand: #FFFFFF;
-    --accent: #60A5FA;
-    --accent2: #93C5FD;
-    --accent-light: #172040;
-    --warn: #F59E0B;
-    --warn-bg: #2D2000;
-    --danger: #F87171;
-    --danger-bg: #2A0A0A;
-    --success: #10B981;
-    --success-bg: #0A2A1E;
-    --info: #60A5FA;
-    --border: #263050;
-    --text: #DDE3F0;
-    --muted: #8A97B8;
-    --shadow: 0 2px 12px rgba(0,0,0,.25);
-    --shadow-lg: 0 8px 28px rgba(0,0,0,.4);
-  }
+  
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', system-ui, sans-serif;
@@ -141,7 +119,7 @@
     text-align: center;
     cursor: pointer;
     transition: all .2s;
-    background: #fafbfd;
+    background: var(--mt-surface2);
   }
   .drop:hover, .drop.over {
     border-color: var(--accent);
@@ -189,7 +167,7 @@
   .filter-row .hint { color: var(--muted); font-size: 12px; }
   .filter-row .switch {
     display: flex; align-items: center; gap: 6px;
-    background: #f0f4f8; padding: 4px 10px;
+    background: var(--mt-surface3); padding: 4px 10px;
     border-radius: 20px; font-size: 12px;
   }
   .filter-row .switch input { cursor: pointer; }
@@ -231,7 +209,7 @@
     margin-bottom: 16px;
   }
   .stat-box {
-    background: #f7fafc;
+    background: var(--mt-surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 14px;
@@ -273,7 +251,7 @@
   }
   .team-head {
     padding: 10px 14px;
-    background: #f7fafc;
+    background: var(--mt-surface2);
     border-bottom: 1px solid var(--border);
     display: flex; flex-wrap: wrap; gap: 8px;
     align-items: center;
@@ -316,10 +294,10 @@
   }
   .members th, .members td {
     padding: 5px 8px; text-align: left;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--mt-surface3);
   }
   .members th {
-    background: #fafbfd; color: var(--muted);
+    background: var(--mt-surface2); color: var(--muted);
     font-weight: 500; font-size: 11px;
   }
   .members td.center { text-align: center; }
@@ -341,7 +319,7 @@
   .badge.danger { background: var(--danger-bg); color: var(--danger); }
   .badge.ok { background: var(--success-bg); color: var(--success); }
   .badge.info { background: var(--accent-light); color: var(--accent); }
-  .badge.gray { background: #f0f2f5; color: var(--muted); }
+  .badge.gray { background: var(--mt-surface3); color: var(--muted); }
 
   /* 액션 버튼 */
   .team-actions {
@@ -407,7 +385,7 @@
     font-weight: 600;
   }
   .modal-content {
-    background: #f7fafc;
+    background: var(--mt-surface2);
     border-radius: 6px;
     padding: 12px;
     font-size: 13px;
@@ -432,7 +410,7 @@
   .modal-foot {
     padding: 12px 18px;
     border-top: 1px solid var(--border);
-    background: #fafbfd;
+    background: var(--mt-surface2);
     display: flex; gap: 8px; justify-content: flex-end;
   }
 
@@ -498,7 +476,7 @@
   background:var(--surface); color:var(--text); border:1px solid var(--border); transition:all .15s; }
 .smb-btn:hover{ border-color:var(--accent); color:var(--accent); }
 .smb-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
-body.dark .smb-btn.active{ color:#0C0F1A; }
+
 .smb-quick{ display:flex; gap:6px; }
 .smb-mini{ font:inherit; font-size:12px; padding:5px 10px; border-radius:6px; cursor:pointer;
   background:transparent; color:var(--muted); border:1px solid var(--border); transition:all .15s; }
@@ -511,9 +489,9 @@ input.sel-member:disabled{ cursor:not-allowed; opacity:.4; }
 tr.no-phone{ opacity:.62; }
 .sel-bar{ position:sticky; bottom:0; z-index:5; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
   margin-top:16px; padding:12px 16px; background:var(--brand); color:#fff; border-radius:var(--radius); box-shadow:var(--shadow-lg); }
-body.dark .sel-bar{ background:var(--accent-light); color:var(--text); border:1px solid var(--border); }
+
 .sel-bar.empty{ background:var(--muted); }
-body.dark .sel-bar.empty{ background:var(--surface); }
+
 .sel-bar-count{ font-weight:700; font-size:14px; }
 .sel-bar-note{ font-size:11.5px; opacity:.85; }
 
@@ -525,7 +503,7 @@ body.dark .sel-bar.empty{ background:var(--surface); }
   background:var(--surface); color:var(--text); border:1px solid var(--border); transition:all .15s; text-decoration:none; display:inline-flex; align-items:center; }
 .sc-tab:hover{ border-color:var(--accent); color:var(--accent); }
 .sc-tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
-body.dark .sc-tab.active{ color:#0C0F1A; }
+
 .sc-tab.link{ border-style:dashed; }
 .sc-hint{ font-size:11px; color:var(--muted); margin-left:auto; }
 </style>
@@ -542,7 +520,7 @@ body.dark .sc-tab.active{ color:#0C0F1A; }
   </div>
   <div class="h-actions">
     <a class="back-link" href="../../sales/">← 영업 도구</a>
-    <button class="theme-toggle" id="themeToggle" type="button" title="다크/라이트 모드"><span id="themeIcon">🌙</span></button>
+    
   </div>
 </header>
 
@@ -1871,18 +1849,7 @@ document.getElementById('dlReport').onclick = () => {
 };
 
 
-/* ── 다크/라이트 토글 ── */
-(function(){
-  var tg=document.getElementById('themeToggle'), ic=document.getElementById('themeIcon');
-  if(!tg) return;
-  try{ if(localStorage.getItem('mt_theme')==='dark'){ document.body.classList.add('dark'); ic.textContent='☀️'; } }catch(e){}
-  tg.addEventListener('click',function(){
-    document.body.classList.toggle('dark');
-    var d=document.body.classList.contains('dark');
-    ic.textContent=d?'☀️':'🌙';
-    try{ localStorage.setItem('mt_theme', d?'dark':'light'); }catch(e){}
-  });
-})();
+
 
 /* ── 발송 대상 모드/빠른선택 버튼 ── */
 (function(){
