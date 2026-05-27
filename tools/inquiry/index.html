@@ -1107,7 +1107,7 @@
     </div>
     <div class="mt-header-actions">
       <button class="mt-btn" id="btnMapping">⚙ 풀 설정</button>
-      <button class="mt-btn" id="btnReset">🗑 초기화</button>
+      <button class="mt-btn" id="btnReset">🗑 데이터 초기화</button>
       <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
     </div>
   </div>
@@ -1116,7 +1116,7 @@
     <summary>❓ 상단 버튼 설명 — 풀 설정 · 초기화</summary>
     <ul>
       <li><b>⚙ 풀 설정</b> — 호텔·룸을 하나의 “풀”로 묶고 정원(예: 야마나미 통합 정원)을 정합니다. 잔여 객실 계산의 기준이 되는 설정 창입니다. 어느 풀에도 속하지 않은 호텔이 있으면 여기서 표시됩니다.</li>
-      <li><b>🗑 초기화</b> — 입력한 데이터를 <b>모두 지우고</b> 처음 상태로 되돌립니다. 되돌릴 수 없으니 주의하세요.</li>
+      <li><b>🗑 데이터 초기화</b> — 업로드한 블록·수배·선택만 지웁니다. <b>풀 설정은 그대로 유지</b>됩니다. (풀 설정을 되돌리려면 [⚙ 풀 설정] 창 안의 "기본값으로 복원"을 누르세요.)</li>
     </ul>
   </details>
 
@@ -2854,9 +2854,10 @@ function importSnapshot(file) {
 }
 
 function resetAll() {
-  if (!confirm('모든 데이터(블록·수배·풀·선택)를 초기화하시겠어요?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  for (const k of LEGACY_KEYS) localStorage.removeItem(k);
+  if (!confirm('업로드한 데이터(블록·수배·선택)를 초기화합니다.\n풀 설정은 그대로 유지됩니다.')) return;
+  state.blocks = [];
+  state.selected = { poolIds: [], monthFrom: '', monthTo: '', minStock: 3, msgTab: 'long' };
+  saveState();
   location.reload();
 }
 
