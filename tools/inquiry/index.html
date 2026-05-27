@@ -246,7 +246,7 @@
     padding: 10px 14px;
     margin-top: 12px;
     font-size: 13px;
-    color: var(--mt-amber);
+    color: var(--mt-amber-dark);
     display: none;
   }
   .map-alert.show { display: block; }
@@ -375,7 +375,7 @@
   }
   .pool-cb.checked {
     background: var(--mt-green-dim);
-    color: var(--green-d);
+    color: var(--mt-green-dark);
     font-weight: 500;
   }
   .pool-cb.no-data {
@@ -391,7 +391,7 @@
     font-size: 10px;
     padding: 1px 5px;
     border-radius: 8px;
-    background: var(--green-d);
+    background: var(--mt-green-dark);
     color: white;
     margin-left: 4px;
     font-weight: 600;
@@ -593,10 +593,10 @@
   }
   .stock-line th.dow-sat { color: var(--mt-accent); }
   .stock-line th.dow-sun { color: var(--red); }
-  .stock-line td.s-zero { background: var(--mt-red-dim); color: var(--red); font-weight: 600; }
-  .stock-line td.s-low { background: var(--mt-amber-dim); color: var(--orange-d); font-weight: 600; }
+  .stock-line td.s-zero { background: var(--mt-red-dim); color: var(--mt-red-dark); font-weight: 600; }
+  .stock-line td.s-low { background: var(--mt-amber-dim); color: var(--mt-amber-dark); font-weight: 600; }
   .stock-line td.s-ok { color: var(--text); }
-  .stock-line td.s-empty { background: var(--mt-surface2); color: var(--gray-3); }
+  .stock-line td.s-empty { background: var(--mt-surface2); color: var(--mt-text2); }
   .stock-line .row-label {
     text-align: left;
     background: var(--mt-surface2);
@@ -719,9 +719,9 @@
     border-radius: 20px;
     white-space: nowrap;
   }
-  .stock-status.ok { background: var(--mt-green-dim); color: var(--mt-green); }
-  .stock-status.warn { background: var(--mt-amber-dim); color: var(--mt-amber); }
-  .stock-status.full { background: var(--mt-red-dim); color: var(--mt-red); }
+  .stock-status.ok { background: var(--mt-green-dim); color: var(--mt-green-dark); }
+  .stock-status.warn { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
+  .stock-status.full { background: var(--mt-red-dim); color: var(--mt-red-dark); }
   .stock-row.is-full { background: var(--mt-red-dim); }
 
   /* 통합 풀 룸별 배지 */
@@ -738,9 +738,9 @@
     white-space: nowrap;
   }
   .room-badge b { color: var(--navy); }
-  .room-badge.neg { background: var(--mt-red-dim); border-color: var(--mt-red-dim); color: var(--mt-red); }
+  .room-badge.neg { background: var(--mt-red-dim); border-color: var(--mt-red-dim); color: var(--mt-red-dark); }
   .room-badge.neg b { color: var(--mt-red); }
-  .room-badge.low { background: var(--mt-amber-dim); border-color: var(--mt-amber-dim); color: var(--mt-amber); }
+  .room-badge.low { background: var(--mt-amber-dim); border-color: var(--mt-amber-dim); color: var(--mt-amber-dark); }
   .room-badge.low b { color: var(--mt-amber); }
 
   .stock-empty { padding: 20px 16px; text-align: center; color: var(--gray-3); font-size: 13px; }
@@ -915,7 +915,7 @@
     font-size: 10px;
     padding: 2px 7px;
     border-radius: 8px;
-    background: var(--green-d);
+    background: var(--mt-green-dark);
     color: white;
     letter-spacing: 0.04em;
   }
@@ -1085,11 +1085,11 @@
   table.wait-tbl th { background:var(--mt-surface2); font-weight:600; color:var(--gray-4); font-size:11.5px; }
   table.wait-tbl tr:last-child td { border-bottom:none; }
   .wbadge { display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; }
-  .wbadge.ok { background:var(--mt-green-dim); color:var(--mt-green); } .wbadge.full { background:var(--mt-red-dim); color:var(--mt-red); } .wbadge.unk { background:var(--mt-amber-dim); color:var(--mt-amber); }
+  .wbadge.ok { background:var(--mt-green-dim); color: var(--mt-green-dark); } .wbadge.full { background:var(--mt-red-dim); color: var(--mt-red-dark); } .wbadge.unk { background:var(--mt-amber-dim); color: var(--mt-amber-dark); }
   .wait-cb { width:16px; height:16px; cursor:pointer; accent-color:var(--accent); }
   .wait-cb:disabled { opacity:.35; cursor:not-allowed; }
   .dz-files { margin-top:10px; }
-  .wait-chip { display:inline-flex; align-items:center; gap:6px; background:var(--paper); border:1px solid var(--mt-green); color:var(--mt-green); border-radius:16px; padding:3px 10px; margin:3px; font-size:11.5px; font-weight:500; }
+  .wait-chip { display:inline-flex; align-items:center; gap:6px; background:var(--paper); border:1px solid var(--mt-green); color: var(--mt-green-dark); border-radius:16px; padding:3px 10px; margin:3px; font-size:11.5px; font-weight:500; }
   .wait-chip-x { cursor:pointer; color:var(--gray-4); font-weight:700; }
   .wait-chip-x:hover { color:var(--mt-red); }
 </style>
@@ -1097,18 +1097,20 @@
 <body>
 
 
-<header class="app-header">
-    <div class="h-left">
-      <h1>예약가능일자 안내</h1>
-      <span class="sub">MERITTOUR · 일본 골프투어 운영자용 · v1.2</span>
-    </div>
-    <div class="h-actions">
-      <button class="header-btn" id="btnMapping">⚙ 풀 설정</button>
-      <button class="header-btn" id="btnReset">🗑 초기화</button>
-      <a class="back-link" href="../../sales/">← 영업 도구</a>
-    </div>
-  </header>
 <div class="container">
+
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <div class="mt-brand">MERITTOUR</div>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">예약가능일자</span>
+    </div>
+    <div class="mt-header-actions">
+      <button class="mt-btn" id="btnMapping">⚙ 풀 설정</button>
+      <button class="mt-btn" id="btnReset">🗑 초기화</button>
+      <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
+    </div>
+  </div>
 
   <details class="hdr-help">
     <summary>❓ 상단 버튼 설명 — 풀 설정 · 초기화</summary>
@@ -2153,8 +2155,8 @@ function renderStockLine() {
         const s = getPoolStock(p.id, key);
         if (s === null) poolRow += '<td style="background:var(--mt-brand2);color:var(--gray-3);">·</td>';
         else {
-          if (s === 0) poolRow += `<td style="background:var(--mt-red-dim);color:var(--red);font-weight:600;">${s}</td>`;
-          else if (s <= 2) poolRow += `<td style="background:var(--mt-amber-dim);color:var(--orange-d);font-weight:600;">${s}</td>`;
+          if (s === 0) poolRow += `<td style="background:var(--mt-red-dim);color: var(--mt-red-dark);font-weight:600;">${s}</td>`;
+          else if (s <= 2) poolRow += `<td style="background:var(--mt-amber-dim);color: var(--mt-amber-dark);font-weight:600;">${s}</td>`;
           else poolRow += `<td style="background:var(--mt-brand2);color:var(--paper);font-weight:600;">${s}</td>`;
         }
       }

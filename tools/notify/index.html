@@ -315,9 +315,9 @@
     font-weight: 600;
     margin-right: 3px;
   }
-  .badge.warn { background: var(--warn-bg); color: var(--warn); }
-  .badge.danger { background: var(--danger-bg); color: var(--danger); }
-  .badge.ok { background: var(--success-bg); color: var(--success); }
+  .badge.warn { background: var(--warn-bg); color: var(--mt-amber-dark); }
+  .badge.danger { background: var(--danger-bg); color: var(--mt-red-dark); }
+  .badge.ok { background: var(--success-bg); color: var(--mt-green-dark); }
   .badge.info { background: var(--accent-light); color: var(--accent); }
   .badge.gray { background: var(--mt-surface3); color: var(--muted); }
 
@@ -510,21 +510,18 @@ tr.no-phone{ opacity:.62; }
 </head>
 <body>
 
-<header>
-  <div class="h-left">
-    <div class="logo">M</div>
-    <div>
-      <h1>고객 안내 발송 <span class="ver-badge">v1.1</span></h1>
-      <span>MERITTOUR · 엠클릭 → 알리고 알림톡 일괄발송 · 시나리오 선택형</span>
+<main>
+
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <div class="mt-brand">MERITTOUR</div>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">고객 안내 발송</span>
+    </div>
+    <div class="mt-header-actions">
+      <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
     </div>
   </div>
-  <div class="h-actions">
-    <a class="back-link" href="../../sales/">← 영업 도구</a>
-    
-  </div>
-</header>
-
-<main>
 
   <div class="scenario-bar">
     <span class="sc-label">시나리오</span>

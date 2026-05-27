@@ -39,6 +39,7 @@
   --mt-green:     #16A34A;  --mt-green-dim: #E3F2DF;  /* 드롭존/성공 (실측) */
   --mt-amber:     #D97706;  --mt-amber-dim: #FEF3C7;  /* 주의 */
   --mt-red:       #DC2626;  --mt-red-dim:   #FEE2E2;  /* 오류 */
+  --mt-green-dark:#166534;  --mt-amber-dark:#92400E;  --mt-red-dark:  #991B1B;  /* 연한 배경 위 글자용 */
 
   /* ── 텍스트 ── */
   --mt-text:   #2A2F39;

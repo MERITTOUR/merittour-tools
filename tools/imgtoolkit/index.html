@@ -303,12 +303,12 @@
   }
   .quality-hint.ok {
     background: var(--ok-dim);
-    color: var(--ok);
+    color: var(--mt-green-dark);
   }
   .quality-hint.ok .hint-icon { color: var(--ok); }
   .quality-hint.warn {
     background: var(--mt-amber-dim);
-    color: var(--mt-amber);
+    color: var(--mt-amber-dark);
   }
   .quality-hint.warn .hint-icon { color: var(--mt-amber); }
   .quality-hint.info {
@@ -585,8 +585,8 @@
     font-weight: 600;
     vertical-align: 1px;
   }
-  .range-indicator.ok { background: var(--ok-dim); color: var(--ok); }
-  .range-indicator.warn { background: var(--mt-amber-dim); color: var(--mt-amber); }
+  .range-indicator.ok { background: var(--ok-dim); color: var(--mt-green-dark); }
+  .range-indicator.warn { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
   .range-indicator.over { background: #FCE8E8; color: #991B1B; }
   .saving-badge {
     font-size: 11px; font-weight: 600;
@@ -595,8 +595,8 @@
     white-space: nowrap;
   }
   .saving-badge.savings { background: var(--accent-soft); color: var(--navy); }
-  .saving-badge.pending { background: var(--bg); color: var(--text-tertiary); }
-  .saving-badge.bigger { background: var(--danger-soft); color: var(--danger); }
+  .saving-badge.pending { background: var(--bg); color: var(--mt-text2); }
+  .saving-badge.bigger { background: var(--danger-soft); color: var(--mt-red-dark); }
   .dl-btn, .rm-btn {
     font-size: 11px;
     padding: 5px 10px;
@@ -615,7 +615,7 @@
     border-color: var(--accent);
   }
   .rm-btn { color: var(--text-tertiary); padding: 5px 9px; }
-  .rm-btn:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+  .rm-btn:hover { background: var(--danger-soft); color: var(--mt-red-dark); border-color: var(--mt-red-dark); }
   .dl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .action-row {
@@ -735,9 +735,15 @@
 <body>
 
 <div class="container">
-  <div class="topbar">
-    <a class="back-link" href="../../sales/">← 영업 도구</a>
-    
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <div class="mt-brand">MERITTOUR</div>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">이미지 툴킷</span>
+    </div>
+    <div class="mt-header-actions">
+      <a class="mt-btn mt-btn-ghost" href="../../sales/">← 영업 도구</a>
+    </div>
   </div>
   <header>
     <span class="tag">MERITTOUR INTERNAL TOOL</span>
