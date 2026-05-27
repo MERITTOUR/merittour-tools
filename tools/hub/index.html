@@ -46,6 +46,31 @@
   .ms-pop label input{cursor:pointer;margin:0}
   .ms-pop .ms-clear{font-size:11px;color:var(--mt-text3);padding:5px 10px;cursor:pointer;border-top:1px solid var(--mt-surface3);margin-top:4px}
   .ms-pop .ms-clear:hover{color:var(--mt-red-dark)}
+
+  /* 월별 세션 바 (사이젠 패턴) */
+  .month-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 12px;
+    padding:8px 12px;background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:10px}
+  .month-bar .mb-label{font-size:11px;color:var(--mt-text3);font-family:var(--mt-mono);letter-spacing:.06em;margin-right:4px}
+  .mb-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:18px;cursor:pointer;
+    border:1px solid var(--mt-border);background:var(--mt-surface2);color:var(--mt-text2);font-size:12px;font-family:var(--mt-mono);
+    transition:all .15s;white-space:nowrap;user-select:none}
+  .mb-chip:hover{border-color:var(--mt-accent);color:var(--mt-accent)}
+  .mb-chip.active{background:var(--mt-accent-dim);border-color:var(--mt-accent);color:var(--mt-accent);font-weight:600}
+  .mb-chip .mb-n{font-size:11px;color:var(--mt-text3)}
+  .mb-chip.active .mb-n{color:var(--mt-accent)}
+  .mb-chip .mb-issue{font-size:10px;color:var(--mt-red-dark);background:var(--mt-red-dim);padding:1px 6px;border-radius:8px;font-weight:600}
+  .mb-chip .mb-pending{font-size:10px;color:var(--mt-text3);background:var(--mt-surface3);padding:1px 6px;border-radius:8px}
+
+  /* 출발지 색 점 (사이젠 숙소 컬러 패턴 변형) */
+  .ori-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;flex-shrink:0}
+  .ori-인천{background:#3B82F6}
+  .ori-김해{background:#F59E0B}
+  .ori-대구{background:#10B981}
+  .ori-부산{background:#3B82F6}  /* 김해와 같은 영남권으로 묶기보다 인천계열 */
+  .ori-청주{background:#8B5CF6}
+  .ori-제주{background:#EC4899}
+  .ori-무안{background:#06B6D4}
+  .ori-기타{background:#9CA3AF}
   .alert-bar{display:flex;flex-wrap:wrap;gap:8px;background:var(--mt-surface);border:1px solid var(--mt-border);border-left:3px solid var(--mt-amber);border-radius:10px;padding:10px 14px;margin:0 0 14px;align-items:center}
   .alert-bar .lbl{font-size:12px;color:var(--mt-text2);margin-right:6px}
   .alert-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-family:var(--mt-mono);padding:4px 9px;border-radius:999px;background:var(--mt-surface3);color:var(--mt-text);cursor:pointer;user-select:none}
@@ -418,6 +443,30 @@ function renderOps(){
     ${opsFilter.issue.length?`<span class="alert-pill" data-clear-issue="1"><b>×</b> 알림 ${opsFilter.issue.length}건 해제</span>`:''}
   </div>`;
 
+  // 월별 통계 (사이젠 세션 바 패턴 적용)
+  const monthStats={};
+  for(const c of rows){
+    if(!c.dep)continue;
+    const ym=`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`;
+    if(!monthStats[ym])monthStats[ym]={n:0,issue:0,pending:0};
+    monthStats[ym].n++;
+    if(c.noNames>0||c.noPhone>0||c.expiryRisk>0||(c.rosterStatus==='partial')||c.due!==0)monthStats[ym].issue++;
+    if(!c.hasCost && !c.defApplied)monthStats[ym].pending++;
+  }
+  const monthYms=Object.keys(monthStats).sort();
+  const monthBar=monthYms.length?`<div class="month-bar">
+    <span class="mb-label">출발월</span>
+    ${monthYms.map(ym=>{
+      const st=monthStats[ym];const active=opsFilter.month.includes(ym);
+      return `<span class="mb-chip ${active?'active':''}" data-mb="${ym}">
+        ${ym} <span class="mb-n">${st.n}건</span>
+        ${st.issue>0?`<span class="mb-issue">⚠ ${st.issue}</span>`:''}
+        ${st.pending>0?`<span class="mb-pending">원가미정 ${st.pending}</span>`:''}
+      </span>`;
+    }).join('')}
+    ${opsFilter.month.length?`<span class="mb-chip" data-mb-clear="1" style="background:var(--mt-red-dim);color:var(--mt-red-dark);border-color:var(--mt-red-dim)">× 해제</span>`:''}
+  </div>`:'';
+
   const {dests,airlines,flights}=buildFilters(rows);
   const months=[...new Set(rows.filter(c=>c.dep).map(c=>`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`))].sort();
 
@@ -470,7 +519,7 @@ function renderOps(){
     return `<tr class="row-clickable" data-ev="${c.ev}">
       <td>${c.dep?c.dep.toISOString().slice(0,10):''}</td>
       <td class="nm" title="${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}">${escH(txt(c.s['행사명'])||txt(c.r['상품명']))}</td>
-      <td>${escH(txt(c.r['출발지']))}</td>
+      <td><span class="ori-dot ori-${escH(txt(c.r['출발지'])||'기타')}"></span>${escH(txt(c.r['출발지']))}</td>
       <td>${escH(txt((c.api[0]||{})['출발편'])||txt(c.r['항공']))}</td>
       <td style="font-family:var(--mt-mono);font-size:12px">${escH(c.firstPnr)}</td>
       <td class="num">${c.pax||''}</td>
@@ -481,7 +530,7 @@ function renderOps(){
       <td onclick="event.stopPropagation()">${labelHtml}</td>
     </tr>`}).join('');
 
-  body.innerHTML=alertBar+ctrl+summary+`<div class="tbl-wrap"><table class="data">
+  body.innerHTML=alertBar+monthBar+ctrl+summary+`<div class="tbl-wrap"><table class="data">
     <thead><tr><th>출발일</th><th>행사명</th><th>출발지</th><th>항공편</th><th>PNR</th><th>인원</th><th>대표</th><th>거래처</th><th>자동 점검</th><th>OP 체크</th><th>발권 라벨</th></tr></thead>
     <tbody>${trs||'<tr><td colspan="11" class="empty">조건에 맞는 행사가 없습니다.</td></tr>'}</tbody></table></div>`;
 
@@ -494,6 +543,16 @@ function renderOps(){
   });
   const clrIssue=document.querySelector('[data-clear-issue]');
   if(clrIssue)clrIssue.onclick=()=>{opsFilter.issue=[];renderOps()};
+
+  // 월별 칩 클릭 → 출발월 필터 토글
+  document.querySelectorAll('.mb-chip[data-mb]').forEach(p=>p.onclick=()=>{
+    const ym=p.dataset.mb;
+    if(opsFilter.month.includes(ym))opsFilter.month=opsFilter.month.filter(x=>x!==ym);
+    else opsFilter.month=[...opsFilter.month,ym];
+    renderOps();
+  });
+  const clrMb=document.querySelector('[data-mb-clear]');
+  if(clrMb)clrMb.onclick=()=>{opsFilter.month=[];renderOps()};
 
   // 검색
   const qel=document.getElementById('opsQ');
