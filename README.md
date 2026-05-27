@@ -26,7 +26,9 @@ MERITTOUR/merittour-tools/
 │   └── util.js               ← 공통 유틸 함수 (날짜·전화 포맷, 토스트 등)
 │
 ├── tools/                    ← 실제 도구 파일 (공유 자산)
-│   ├── inquiry/index.html    ← 예약가능일자 안내 (v1.2) — Mclick 블록조회 → 출발 가능일 계산
+│   ├── hub/index.html        ← 통합 점검 — 엠클릭 엑셀 한 번에 올려 손익·미수·예약 운영 점검
+│   ├── insurance/index.html  ← 보험코드매칭 — DB손보 PDF + 예약 엑셀 → 행사별 보험료 산출
+│   ├── inquiry/index.html    ← 예약가능일자 안내 (v1.2)
 │   ├── notify/index.html     ← 고객 안내 발송 — APIS → 출국 1주일 전 알림톡 일괄발송
 │   ├── imgtoolkit/index.html ← 이미지 툴킷 — WebP 변환·리사이즈·압축
 │   └── weather/index.html    ← 리조트 날씨 — 현지 3시간 예보 + 안내문 복사
@@ -45,6 +47,16 @@ MERITTOUR/merittour-tools/
 | `https://merittour.github.io/merittour-tools/manage/` | 관리팀 | 관리팀 전용 (현재 빈 영역) |
 
 각 직원에게는 **자기 부서 URL만** 알려주면 됩니다. URL 모르면 들어갈 수 없으므로 사실상 분리 효과.
+
+---
+
+## 🔗 통합 점검 ↔ 보험코드매칭 연동
+
+**통합 점검(`tools/hub/`)**은 엠클릭에서 받은 엑셀 4~5개(예약리스트·행사별마감현황·일행별예약·현지도착·APIS)를 한 번에 드롭존에 던지면 행사번호로 묶어 손익·미수·예약 운영을 한 화면에서 점검합니다.
+
+**보험코드매칭(`tools/insurance/`)**으로 DB손보 PDF + 예약 엑셀을 매칭해 받은 결과 엑셀을 통합 점검 드롭존에 같이 던지면, 결과 안의 "행사별요약" 시트가 자동 인식돼 행사별 보험료가 통합 점검 화면에 자동으로 표시됩니다(별도 조작 없음).
+
+OP가 통합 점검 화면에서 입력하는 메모(확정서/견적서 체크, 비고 3분류, 방배정, 골프 조편성 등)는 브라우저(localStorage)에 저장되며, 향후 Firebase 단계에서 부서 간 실시간 공유로 확장됩니다.
 
 ---
 
@@ -76,7 +88,7 @@ MERITTOUR/merittour-tools/
 - [x] `merittour-tools` 저장소 생성 (Public)
 - [x] 부서별 페이지 4벌 배포 (admin/sales/air/manage)
 - [x] 루트 안내 페이지
-- [x] 도구 4종 배포 (예약가능일자 안내 · 고객 안내 발송 · 이미지 툴킷 · 리조트 날씨)
+- [x] 도구 6종 배포 (통합 점검 · 보험코드매칭 · 예약가능일자 안내 · 고객 안내 발송 · 이미지 툴킷 · 리조트 날씨)
 - [x] 공통 디자인 엔진 `shared/` 도입 (차콜·카키 톤 통일, 헤더 통일, 가독성 보정)
 - [x] GitHub Pages 활성화
 - [x] robots.txt로 검색엔진 차단
