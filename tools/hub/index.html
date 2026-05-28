@@ -327,6 +327,7 @@ function detectType(headers){const H=headers.map(x=>String(x||'').trim());const 
 function aoaToObjects(aoa){const h=aoa[0].map(x=>String(x==null?'':x).trim());const out=[];
   for(let i=1;i<aoa.length;i++){const r=aoa[i];if(!r||!r.some(c=>c!=null&&String(c).trim()!==''))continue;const o={};h.forEach((k,j)=>{o[k]=r[j]});out.push(o)}return out}
 
+let _resvHeaders=null; // 사이젠 내보내기용 원본 예약리스트 헤더 순서
 async function handleFiles(files){let added=0,skipped=0;
   for(const f of files){try{const buf=await f.arrayBuffer();const wb=XLSX.read(buf,{cellDates:false});
     let recognizedHere=0;
@@ -336,6 +337,7 @@ async function handleFiles(files){let added=0,skipped=0;
       if(!aoa.length)continue;
       const type=detectType(aoa[0].map(x=>String(x||'').trim()));
       if(!type)continue;
+      if(type==='resv'&&!_resvHeaders)_resvHeaders=aoa[0].map(x=>String(x==null?'':x).trim());
       STORE[type]=STORE[type].concat(aoaToObjects(aoa));
       recognizedHere++;
     }
@@ -369,9 +371,9 @@ function getOps(ev){const a=loadAllOps();const d=a[ev]||{};
   return{
     manual:d.manual||{},
     label:d.label||'',
-    memos:d.memos||{int:'',air:'',loc:''},
+    memos:Object.assign({int:'',air:'',loc:'',special:'',airInfo:''}, d.memos||{}),
     ops:Object.assign({singles:{},rooms:'',golf:'',meal:'',room:'',golfNote:'',receipt:false,insuranceFee:'',
-      sgl:'',twn:'',trp:'',qud:'',etc:''}, d.ops||{})
+      sgl:'',twn:'',trp:'',qud:'',etc:'',itin:null}, d.ops||{})
   }
 }
 function setOps(ev,o){const a=loadAllOps();a[ev]=o;saveAllOps(a)}
@@ -389,6 +391,81 @@ function matchDefault(productName){
     if(n.includes(kw))return d;
   }
   return null;
+}
+
+/* ==================== 운영 기본값 (송영·숙박·골프·식사) ==================== */
+// 상품별 운영 규칙. 키워드 매칭은 matchDefault와 동일 방식.
+const OPSDEF_KEY='mt_ops_defaults_v1';
+function loadOpsDefs(){try{return JSON.parse(localStorage.getItem(OPSDEF_KEY)||'[]')}catch{return[]}}
+function saveOpsDefs(arr){try{localStorage.setItem(OPSDEF_KEY,JSON.stringify(arr))}catch(e){console.error(e)}}
+function matchOpsDef(productName){
+  const n=txt(productName);if(!n)return null;
+  const defs=loadOpsDefs();
+  for(const d of defs){const kw=txt(d.keyword);if(kw&&n.includes(kw))return d}
+  return null;
+}
+// 운영 기본값 1건의 기본 형태
+function blankOpsDef(){
+  return {
+    keyword:'',
+    transport:true,   // 송영 기본 포함
+    stay:true,        // 숙박 기본 포함
+    golf:true,        // 골프 기본 포함
+    meal:true,        // 식사 기본 포함
+    insurance:true,   // 여행자보험 기본 포함
+    // 골프 홀수 규칙
+    golfWeekday:27,   // 평일 홀수
+    golfWeekend:18,   // 주말·일본 공휴일 홀수
+    golfFirstDay:false, // 출국일(첫날) 골프 여부
+    golfLastDay:false,  // 귀국일 골프 여부
+    golfCourse:'',    // 골프장명 (비우면 상품명에서 자동)
+    // 송영
+    pickup:true,      // 첫날 픽업
+    sending:true,     // 마지막날 샌딩
+    // 식사 패턴 (조·중·석) — 첫날/중간일/마지막일
+    mealFirst:{b:false,l:true,d:true},  // 출국일: 조식X, 중·석식O
+    mealMid:{b:true,l:true,d:true},     // 중간일: 전부
+    mealLast:{b:true,l:false,d:false},  // 귀국일: 조식만
+    // 숙박
+    roomType:'트윈'
+  };
+}
+
+// 행사의 날짜별 운영 일정 자동 생성
+function buildItinerary(c){
+  const def=matchOpsDef(txt(c.s['행사명'])||txt(c.r['상품명']))||blankOpsDef();
+  const dep=c.dep; if(!dep)return {def,days:[]};
+  const nights=c.nights||estimateNights(c)||0;
+  const total=nights+1; // 일수 = 박+1
+  const golfCourse=def.golfCourse||c.golfCourse||'';
+  const days=[];
+  for(let i=0;i<total;i++){
+    const d=new Date(dep.getTime()+i*86400000);
+    const iso=d.toISOString().slice(0,10);
+    const isFirst=i===0, isLast=i===total-1;
+    const dow=d.getDay(); // 0=일,6=토
+    const isHol=!!JP_HOLIDAYS_2026[iso];
+    const isWeekendOrHol=(dow===0||dow===6||isHol);
+    // 골프
+    let golfHoles=0;
+    if(def.golf){
+      const playToday=(!isFirst||def.golfFirstDay)&&(!isLast||def.golfLastDay);
+      if(playToday)golfHoles=isWeekendOrHol?def.golfWeekend:def.golfWeekday;
+    }
+    // 식사
+    const mealPat=isFirst?def.mealFirst:(isLast?def.mealLast:def.mealMid);
+    // 송영
+    const transfer=def.transport?((isFirst&&def.pickup)?'픽업':((isLast&&def.sending)?'샌딩':'')):'';
+    days.push({
+      date:iso, dow:['일','월','화','수','목','금','토'][dow], isHol, holName:JP_HOLIDAYS_2026[iso]||'',
+      isFirst, isLast,
+      golf:golfHoles, golfCourse:golfHoles?golfCourse:'',
+      meal:def.meal?{b:!!mealPat.b,l:!!mealPat.l,d:!!mealPat.d}:{b:false,l:false,d:false},
+      stay:(def.stay&&!isLast)?def.roomType:'', // 마지막날은 숙박 없음
+      transfer
+    });
+  }
+  return {def,days};
 }
 
 /* ==================== 일본 공휴일 (프론트 v13 동일 데이터) ==================== */
@@ -570,7 +647,7 @@ function badgeHtml(c,opts){
 }
 
 const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만','항공대기'];
-const MANUAL_KEYS=[['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금○'],['receipt','현금영수증']];
+const MANUAL_KEYS=[['nameUp','명단업로드'],['indv','INDV발권'],['airSep','AIR별도'],['seat','사전좌석'],['receipt','현금영수증'],['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금입금']];
 let opsFilter={q:'',dest:[],airline:[],flight:[],month:[],label:[],golf:[],issue:[],sort:'dep',team:'ops'};
 
 function getEvents(){const evs=new Set();for(const k of Object.keys(IDX))for(const e of Object.keys(IDX[k]))evs.add(e);return [...evs]}
@@ -677,7 +754,8 @@ function allColumns(hasAnnounceData){
     {g:'local',h:'현지 비고',cell:(c,o)=>`<td onclick="event.stopPropagation()"><input type="text" class="inline-memo" data-ev="${c.ev}" data-memo="loc" value="${escH(o.memos.loc||'')}" placeholder="현지"></td>`},
 
     // OP 체크
-    {g:'check',h:'OP 체크',cell:(c,o)=>`<td onclick="event.stopPropagation()"><div class="chk-row">${MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}" title="클릭으로 켜기/끄기">${t}${o.manual[k]?' ✓':''}</span>`).join(' ')}</div></td>`},
+    {g:'check',h:'OP 체크',cell:(c,o)=>{const KEY_CHECKS=[['conf','확정'],['depPaid','입금'],['receipt','영수증'],['nameUp','명단']];return `<td onclick="event.stopPropagation()"><div class="chk-row">${KEY_CHECKS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}" title="클릭으로 켜기/끄기">${t}${o.manual[k]?' ✓':''}</span>`).join(' ')}</div></td>`}},
+    {g:'check',h:'특이',cell:(c,o)=>`<td title="${escH(o.memos.special||'')}">${o.memos.special?'<span class="bd bd-pt">📌</span>':''}</td>`},
     {g:'check',h:'현금영수증',cell:(c,o)=>`<td onclick="event.stopPropagation()"><input type="checkbox" data-ev="${c.ev}" data-receipt="1" ${o.ops.receipt?'checked':''}></td>`},
     {g:'check',h:'공휴일',cell:c=>`<td>${c.holidays&&c.holidays.length?`<span class="bd bd-pt">🎌 ${escH([...new Set(c.holidays.map(h=>h.name))][0])}</span>`:''}</td>`},
 
@@ -881,6 +959,7 @@ function renderOps(){
     <button class="mt-btn" id="opsExport">📥 엑셀 출력</button>
     <button class="mt-btn mt-btn-ghost" id="sheetAir">✈ 항공 전달표</button>
     <button class="mt-btn mt-btn-ghost" id="sheetLocal">🏨 현지 전달표</button>
+    <button class="mt-btn mt-btn-ghost" id="exportSaizen" title="원본 예약리스트 형식 + 현지전달 컬럼">📤 사이젠용</button>
   </div>`;
 
   // 각 ms 드롭다운의 옵션 목록 (필요할 때 동적으로 채움)
@@ -988,6 +1067,7 @@ function renderOps(){
   document.getElementById('opsExport').onclick=()=>exportOps(shown);
   document.getElementById('sheetAir').onclick=()=>genTeamSheet('air',shown);
   document.getElementById('sheetLocal').onclick=()=>genTeamSheet('local',shown);
+  document.getElementById('exportSaizen').onclick=exportSaizen;
   document.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const ev=el.dataset.ev,mk=el.dataset.mk;const o=getOps(ev);o.manual[mk]=!o.manual[mk];if(o.manual[mk])o.manual[mk+'_ts']=Date.now();setOps(ev,o);renderOps()});
   document.querySelectorAll('select.lbl-sel').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.label=(el.value==='미정')?'':el.value;setOps(el.dataset.ev,o);renderOps()});
   // 인라인 메모 (항공/현지 비고)
@@ -1058,11 +1138,12 @@ function openDetail(ev){
   const effLabel=o.label||c.autoLabel||'';
   const labelHtml=`<select class="lbl-sel ${effLabel&&effLabel!=='미정'?'set':''}" id="dlgLabel">${TICKET_LABELS.map(l=>`<option ${effLabel===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
   const labelHint=o.label?'<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">수동</span>':(c.autoLabel?`<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">자동</span>`:'');
-  const checkBlock=`<h4>OP 체크 · 발권</h4>
-    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+  const checkBlock=`<h4>특이사항 · OP 체크 · 발권</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:8px">
       <div class="chk-row">${manualHtml}</div>
       <div style="display:flex;align-items:center;gap:8px">발권 ${labelHtml}${labelHint}</div>
-    </div>`;
+    </div>
+    <input type="text" class="memo" data-memo="special" placeholder="특이사항 메모 — 예) 김○○님 휠체어 / 전원 앞좌석 요청 / 대표자 변경 필요" value="${escH(o.memos.special||'')}" style="min-height:auto;padding:8px 10px;width:100%">`;
 
   const rosterTr=ros.map((p,i)=>{
     const expiry=parseDate(p['만료일']);
@@ -1081,13 +1162,43 @@ function openDetail(ev){
       <thead><tr><th>싱글</th><th>고객명</th><th>영문명</th><th>휴대전화</th><th>여권번호</th><th>만료일</th></tr></thead>
       <tbody>${rosterTr}</tbody></table></div>`;
 
-  const memoBlock=`<h4>비고 (3분류)</h4>
+  const memoBlock=`<h4>비고 (팀별)</h4>
     <div style="font-size:11px;color:var(--mt-text3);margin-bottom:6px">엠클릭 비고: ${escH(txt(r['비고']||(ros[0]||{})['비고'])||'(없음)')}</div>
     <div class="memo-grid" style="grid-template-columns:1fr 1fr 1fr">
       <div><b style="font-size:11px;color:var(--mt-text2)">내부 공용</b><textarea class="memo" data-memo="int">${escH(o.memos.int||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">항공팀</b><textarea class="memo" data-memo="air">${escH(o.memos.air||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">현지 전달</b><textarea class="memo" data-memo="loc">${escH(o.memos.loc||'')}</textarea></div>
-    </div>`;
+    </div>
+    <div style="margin-top:8px"><b style="font-size:11px;color:var(--mt-text2)">항공 정보</b>
+      <textarea class="memo" data-memo="airInfo" placeholder="항공 스케줄·발권 메모 등">${escH(o.memos.airInfo||'')}</textarea></div>`;
+
+  // 날짜별 자동 일정 (운영 기본값 기반)
+  const itin=buildItinerary(c);
+  const ovr=(o.ops.itin&&typeof o.ops.itin==='object')?o.ops.itin:{};
+  const mealTxt=mm=>{const a=[];if(mm.b)a.push('조');if(mm.l)a.push('중');if(mm.d)a.push('석');return a.length?a.join('·'):'—'};
+  const itinRows=itin.days.map((d)=>{
+    const ov=ovr[d.date]||{};
+    const golf=ov.golf!=null?ov.golf:d.golf;
+    const transfer=ov.transfer!=null?ov.transfer:d.transfer;
+    const dayBg=d.isHol?'background:var(--mt-red-dim)':((d.dow==='토'||d.dow==='일')?'background:var(--mt-amber-dim)':'');
+    return `<tr style="${dayBg}">
+      <td style="white-space:nowrap;font-size:11px">${d.date.slice(5)}(${d.dow})${d.isHol?`<br><span style="font-size:9px;color:var(--mt-red-dark)">${escH(d.holName)}</span>`:''}${d.isFirst?'<br><span style="font-size:9px;color:var(--mt-text3)">출국</span>':''}${d.isLast?'<br><span style="font-size:9px;color:var(--mt-text3)">귀국</span>':''}</td>
+      <td><input type="text" class="inline-num" data-itin="${d.date}" data-ik="golf" value="${golf||''}" style="width:40px" title="골프 홀수 (0=없음)"></td>
+      <td style="font-size:11px;white-space:nowrap">${escH(golf?(d.golfCourse||itin.def.golfCourse||c.golfCourse||''):'')}</td>
+      <td style="font-size:11px">${mealTxt(d.meal)}</td>
+      <td style="font-size:11px">${escH(d.stay||'—')}</td>
+      <td><select data-itin="${d.date}" data-ik="transfer" style="font-size:11px">
+        <option value="" ${transfer===''?'selected':''}>—</option>
+        <option ${transfer==='픽업'?'selected':''}>픽업</option>
+        <option ${transfer==='샌딩'?'selected':''}>샌딩</option>
+        <option ${transfer==='픽업+샌딩'?'selected':''}>픽업+샌딩</option>
+      </select></td>
+    </tr>`}).join('');
+  const itinBlock=itin.days.length?`<h4>날짜별 일정 <span style="font-weight:400;color:var(--mt-text3);font-size:11px">· 운영 기본값 자동 · 예외만 수정</span></h4>
+    <div class="tbl-wrap"><table class="data" style="font-size:12px">
+      <thead><tr><th>날짜</th><th>골프</th><th>골프장</th><th>식사</th><th>숙박</th><th>송영</th></tr></thead>
+      <tbody>${itinRows}</tbody></table></div>
+    <div style="font-size:11px;color:var(--mt-text3);margin-top:4px">${itin.def.keyword?`기본값 '${escH(itin.def.keyword)}' 적용`:'운영 기본값 미설정 — 마스터에서 상품별로 설정하세요'} · 보험 ${itin.def.insurance?'포함':'미포함'}</div>`:'';
 
   const opsInputs=`<h4>운영 입력</h4>
     <div class="memo-grid" style="grid-template-columns:1fr 1fr">
@@ -1123,7 +1234,7 @@ function openDetail(ev){
       <div style="margin:10px 0">${badgeHtml(c)}</div>
       ${checkBlock}
       <div class="dock-cols">
-        <div>${rosterBlock}</div>
+        <div>${rosterBlock}${itinBlock}</div>
         <div>${memoBlock}${opsInputs}</div>
       </div>
     </div>`;
@@ -1132,8 +1243,16 @@ function openDetail(ev){
 
   // 바인딩
   dock.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const k=el.dataset.mk;o.manual[k]=!o.manual[k];if(o.manual[k])o.manual[k+'_ts']=Date.now();setOps(ev,o);el.classList.toggle('on',o.manual[k]);el.textContent=MANUAL_KEYS.find(x=>x[0]===k)[1]+(o.manual[k]?' ✓':'');renderOps()});
+  // 날짜별 일정 오버라이드
+  dock.querySelectorAll('[data-itin]').forEach(el=>el.onchange=()=>{
+    if(!o.ops.itin||typeof o.ops.itin!=='object')o.ops.itin={};
+    const date=el.dataset.itin,k=el.dataset.ik;
+    if(!o.ops.itin[date])o.ops.itin[date]={};
+    o.ops.itin[date][k]=(k==='golf')?(el.value===''?0:+el.value):el.value;
+    setOps(ev,o);
+  });
   dock.querySelector('#dlgLabel').onchange=e=>{o.label=(e.target.value==='미정')?'':e.target.value;setOps(ev,o);renderOps()};
-  dock.querySelectorAll('textarea[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
+  dock.querySelectorAll('textarea[data-memo],input[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
   dock.querySelectorAll('textarea[data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
   dock.querySelectorAll('input[type=text][data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
   dock.querySelectorAll('input[data-ops="receipt"]').forEach(t=>t.onchange=()=>{o.ops.receipt=t.checked;setOps(ev,o)});
@@ -1272,13 +1391,53 @@ function genTeamSheet(kind,rows){
   </body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close()
 }
+function exportSaizen(){
+  if(!STORE.resv.length){toast('예약리스트가 없습니다');return}
+  // 원본 컬럼 순서 (없으면 첫 행 키 사용) + 현지전달 추가
+  const headers=(_resvHeaders&&_resvHeaders.length)?_resvHeaders.slice():Object.keys(STORE.resv[0]);
+  const outHeaders=headers.includes('현지전달')?headers.slice():[...headers,'현지전달'];
+  // 행사번호별 현지전달 메모 (대표행 1건에 들어감) + 일정 예외 요약
+  const locByEv={};
+  for(const ev of Object.keys(IDX.resv)){
+    const o=getOps(ev);
+    const parts=[];
+    if(o.memos&&o.memos.loc)parts.push(o.memos.loc);
+    // 일정 예외(기본값과 다른 날) 요약
+    try{
+      const c=computeChecks(ev);const itin=buildItinerary(c);
+      const ovr=(o.ops&&o.ops.itin)||{};
+      const exc=[];
+      itin.days.forEach(d=>{
+        const ov=ovr[d.date]||{};
+        if(ov.golf!=null&&ov.golf!==d.golf)exc.push(`${d.date.slice(5)} 골프 ${ov.golf}홀`);
+        if(ov.transfer!=null&&ov.transfer!==d.transfer)exc.push(`${d.date.slice(5)} 송영 ${ov.transfer||'없음'}`);
+      });
+      if(exc.length)parts.push('[일정예외] '+exc.join(', '));
+    }catch(e){}
+    if(parts.length)locByEv[ev]=parts.join(' / ');
+  }
+  const aoa=[outHeaders];
+  for(const r of STORE.resv){
+    const row=outHeaders.map(h=>{
+      if(h==='현지전달'){const ev=txt(r['행사번호']);return locByEv[ev]||''}
+      return r[h]==null?'':r[h];
+    });
+    aoa.push(row);
+  }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'예약리스트');
+  const today=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`예약리스트_사이젠용_${today}.xlsx`);
+  toast('사이젠용 예약리스트 저장 — 원본 형식 + 현지전달 컬럼');
+}
+
 function exportOps(rows){
   const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','PNR','예약구분','진행','결제','인원','회원권','담당',
     '판매','미수','마진','마진율','보험료(자동)','요금구분','일정중공휴일','골프장','팀구분',
     'SGL','TWN','TRP','QUD','ETC',
     '명단상태','명단미흡','무기명','연락처누락','여권만료위험','항공권','보험','사전좌석','톡','문자','마감',
     '확정서','견적서','예약금요청','예약금입금','현금영수증',
-    '자동발권라벨','수동발권라벨','내부메모','항공메모','현지메모','방배정','골프조편성','식사특이','골프특이','룸특이','보험료메모']];
+    '자동발권라벨','수동발권라벨','특이사항메모','내부메모','항공메모','현지메모','항공정보','방배정','골프조편성','식사특이','골프특이','룸특이','보험료메모']];
   const stat=v=>{if(v==='full')return '확정';if(v==='partial')return '미완';if(v==='over')return '초과';if(v==='none')return '없음';return ''};
   for(const c of rows){
     const o=getOps(c.ev);const flightInfo=c.api[0]||{};
@@ -1298,7 +1457,7 @@ function exportOps(rows){
       c.seatStatus==='full'?'완료':(c.seatStatus==='partial'?`${c.seatedN}/${c.apiN}`:''),
       c.sentTalk?'Y':'',c.sentSms?'Y':'',c.closed?'마감':'',
       o.manual.conf?'Y':'',o.manual.quote?'Y':'',o.manual.depReq?'Y':'',o.manual.depPaid?'Y':'',o.manual.receipt?'Y':'',
-      c.autoLabel||'',o.label||'',o.memos.int||'',o.memos.air||'',o.memos.loc||'',
+      c.autoLabel||'',o.label||'',o.memos.special||'',o.memos.int||'',o.memos.air||'',o.memos.loc||'',o.memos.airInfo||'',
       o.ops.rooms||'',o.ops.golf||'',o.ops.meal||'',o.ops.golfNote||'',o.ops.room||'',o.ops.insuranceFee||''])
   }
   const ws=XLSX.utils.aoa_to_sheet(aoa);
@@ -1612,6 +1771,60 @@ function suggestProducts(){
 
 const _btnDef=document.getElementById('btnDefaults');if(_btnDef)_btnDef.onclick=openDefaultsModal;
 
+function renderOpsDefsTable(){
+  const defs=loadOpsDefs();
+  const chk=(i,k,v)=>`<input type="checkbox" data-oi="${i}" data-ok="${k}" ${v?'checked':''}>`;
+  const rows=defs.length?defs.map((d,i)=>`
+    <tr style="border-bottom:1px solid var(--mt-border)">
+      <td><input type="text" data-oi="${i}" data-ok="keyword" value="${escH(d.keyword||'')}" placeholder="예) 야마나미" style="width:110px"></td>
+      <td style="text-align:center">${chk(i,'transport',d.transport)}</td>
+      <td style="text-align:center">${chk(i,'stay',d.stay)}</td>
+      <td style="text-align:center">${chk(i,'golf',d.golf)}</td>
+      <td style="text-align:center">${chk(i,'meal',d.meal)}</td>
+      <td style="text-align:center">${chk(i,'insurance',d.insurance)}</td>
+      <td><input type="number" data-oi="${i}" data-ok="golfWeekday" value="${d.golfWeekday||''}" style="width:48px" title="평일 홀수"></td>
+      <td><input type="number" data-oi="${i}" data-ok="golfWeekend" value="${d.golfWeekend||''}" style="width:48px" title="주말·공휴일 홀수"></td>
+      <td style="text-align:center" title="출국일(첫날) 골프">${chk(i,'golfFirstDay',d.golfFirstDay)}</td>
+      <td style="text-align:center" title="귀국일 골프">${chk(i,'golfLastDay',d.golfLastDay)}</td>
+      <td><input type="text" data-oi="${i}" data-ok="roomType" value="${escH(d.roomType||'')}" placeholder="트윈" style="width:56px"></td>
+      <td style="white-space:nowrap;font-size:10px">
+        출국 <label>조${chk2(i,'mealFirst','b',d)}</label><label>중${chk2(i,'mealFirst','l',d)}</label><label>석${chk2(i,'mealFirst','d',d)}</label><br>
+        중간 <label>조${chk2(i,'mealMid','b',d)}</label><label>중${chk2(i,'mealMid','l',d)}</label><label>석${chk2(i,'mealMid','d',d)}</label><br>
+        귀국 <label>조${chk2(i,'mealLast','b',d)}</label><label>중${chk2(i,'mealLast','l',d)}</label><label>석${chk2(i,'mealLast','d',d)}</label>
+      </td>
+      <td><button class="chk" data-odel="${i}" style="background:var(--mt-red-dim);color:var(--mt-red-dark)">삭제</button></td>
+    </tr>`).join(''):`<tr><td colspan="13" style="color:var(--mt-text3);text-align:center;padding:16px">운영 기본값이 없습니다. [+ 운영 기본값 추가]로 시작하세요.</td></tr>`;
+  return `<div class="tbl-wrap"><table class="data" style="font-size:11px">
+    <thead><tr>
+      <th>키워드</th><th>송영</th><th>숙박</th><th>골프</th><th>식사</th><th>보험</th>
+      <th>평일홀</th><th>주말홀</th><th>출국골프</th><th>귀국골프</th><th>룸</th><th>식사패턴(조·중·석)</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function chk2(i,grp,meal,d){
+  const v=(d[grp]||{})[meal];
+  return `<input type="checkbox" data-oi="${i}" data-omeal="${grp}.${meal}" ${v?'checked':''} style="margin:0 4px 0 1px">`;
+}
+function bindOpsDefs(){
+  const m=document.getElementById('modal');
+  const refresh=()=>{const b=m.querySelector('#opsDefsBody');if(b){b.innerHTML=renderOpsDefsTable();bindOpsDefs()}};
+  m.querySelectorAll('input[data-ok]').forEach(el=>el.onchange=()=>{
+    const defs=loadOpsDefs();const i=+el.dataset.oi,k=el.dataset.ok;
+    if(el.type==='checkbox')defs[i][k]=el.checked;
+    else if(el.type==='number')defs[i][k]=el.value===''?'':+el.value;
+    else defs[i][k]=el.value;
+    saveOpsDefs(defs);if(el.dataset.ok==='keyword')buildIndex();
+  });
+  m.querySelectorAll('input[data-omeal]').forEach(el=>el.onchange=()=>{
+    const defs=loadOpsDefs();const i=+el.dataset.oi;const[grp,meal]=el.dataset.omeal.split('.');
+    if(!defs[i][grp])defs[i][grp]={};defs[i][grp][meal]=el.checked;saveOpsDefs(defs);
+  });
+  m.querySelectorAll('[data-odel]').forEach(b=>b.onclick=()=>{
+    const defs=loadOpsDefs();defs.splice(+b.dataset.odel,1);saveOpsDefs(defs);refresh()
+  });
+  const add=m.querySelector('#addOpsDef');
+  if(add)add.onclick=()=>{const defs=loadOpsDefs();defs.push(blankOpsDef());saveOpsDefs(defs);refresh()};
+}
+
 function openDefaultsModal(){
   const defs=loadDefaults();
   const counts=suggestProducts();
@@ -1669,6 +1882,11 @@ function openDefaultsModal(){
         <button class="mt-btn mt-btn-ghost" id="exportDefs">📥 JSON 내보내기</button>
         <label class="mt-btn mt-btn-ghost" style="cursor:pointer">📤 JSON 불러오기<input type="file" id="importDefs" accept=".json" hidden></label>
       </div>
+
+      <h4 style="margin:24px 0 6px;color:var(--mt-brand);border-left:3px solid var(--mt-point);padding-left:9px">운영 기본값 (송영·숙박·골프·식사·보험)</h4>
+      <p class="intro" style="margin:0 0 12px"><span class="src">상품별로 기본 포함 항목과 골프 홀수·식사 패턴을 정해두면, 그 상품으로 예약된 행사는 날짜별 일정이 자동으로 채워집니다. 현지엔 예외만 전달됩니다.</span></p>
+      <div id="opsDefsBody">${renderOpsDefsTable()}</div>
+      <div style="margin-top:10px"><button class="mt-btn mt-btn-ghost" id="addOpsDef">+ 운영 기본값 추가</button></div>
     </div>
     <div class="mt-modal-foot">
       <span style="font-size:11px;color:var(--mt-text3);margin-right:auto">변경은 즉시 저장됩니다.</span>
@@ -1725,6 +1943,7 @@ function bindDefaultsModal(){
       if(Array.isArray(arr)){saveDefaults(arr);openDefaultsModal();renderOps();toast(`${arr.length}개 룰 불러옴`)}
       else toast('형식 오류')}catch(err){toast('JSON 파싱 실패')}
   };
+  bindOpsDefs();
 }
 </script>
 </body>
