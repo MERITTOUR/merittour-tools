@@ -119,6 +119,24 @@
   .cg-toggle.locked{background:var(--mt-surface3);color:var(--mt-text3)}
   .cg-toggle.locked.active{background:var(--mt-red-dim);border-color:var(--mt-red-dark);color:var(--mt-red-dark)}
 
+  /* 톱니바퀴 컬럼 설정 패널 */
+  .col-settings{display:none;background:var(--mt-surface);border:1px solid var(--mt-border);border-radius:10px;
+    padding:14px 16px;margin-bottom:14px;box-shadow:var(--mt-shadow)}
+  .col-settings.show{display:block}
+  .col-settings .cs-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .col-settings .cs-head h4{margin:0;font-size:13px;color:var(--mt-brand)}
+  .col-settings .cs-head .cs-hint{font-size:11px;color:var(--mt-text3)}
+  .col-settings .cs-head .cs-close{margin-left:auto;cursor:pointer;color:var(--mt-text3);font-size:16px}
+  .cs-group{margin-bottom:10px}
+  .cs-group .cs-g-label{font-size:11px;font-family:var(--mt-mono);color:var(--mt-point2);letter-spacing:.06em;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .cs-group .cs-g-all{font-size:10px;color:var(--mt-text3);cursor:pointer;border:1px solid var(--mt-border);border-radius:6px;padding:1px 6px}
+  .cs-group .cs-g-all:hover{border-color:var(--mt-accent);color:var(--mt-accent)}
+  .cs-cols{display:flex;flex-wrap:wrap;gap:5px}
+  .cs-col{font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--mt-border);background:var(--mt-surface2);
+    color:var(--mt-text2);cursor:pointer;user-select:none}
+  .cs-col.on{background:var(--mt-accent-dim);border-color:var(--mt-accent);color:var(--mt-accent);font-weight:600}
+  .cs-col.locked{opacity:.55}
+
   /* 룸타입 컬럼 컴팩트 */
   table.data td.room-cell{font-family:var(--mt-mono);text-align:center;padding:4px 6px}
   /* 진행구분 배지 */
@@ -128,6 +146,40 @@
   .proc.quote{background:var(--mt-surface3);color:var(--mt-text2)}
   .pay-ok{color:var(--mt-green-dark);font-size:11px}
   .pay-due{color:var(--mt-red-dark);font-size:11px;font-weight:600}
+  .team-badge{display:inline-block;font-size:10px;font-family:var(--mt-mono);background:var(--mt-point-dim);color:var(--mt-point2);
+    padding:1px 6px;border-radius:8px;margin-left:3px;white-space:nowrap}
+
+  /* 하단 상세 도크 (항상 펼침, 선택 연동) */
+  .detail-dock{position:fixed;left:0;right:0;bottom:0;z-index:45;background:var(--mt-surface);
+    border-top:2px solid var(--mt-brand);box-shadow:0 -6px 24px rgba(42,47,57,.16);
+    height:40vh;min-height:280px;max-height:46vh;overflow-y:auto;display:none}
+  .detail-dock.show{display:block}
+  .detail-dock.collapsed{height:auto;min-height:0;max-height:none}
+  .detail-dock.collapsed .dock-body{display:none}
+  .dock-head{position:sticky;top:0;background:var(--mt-surface2);border-bottom:1px solid var(--mt-border);
+    padding:9px 18px;display:flex;align-items:center;gap:12px;z-index:2}
+  .dock-head h3{margin:0;font-size:14px;color:var(--mt-brand)}
+  .dock-head .sub{font-size:11px;color:var(--mt-text2);font-family:var(--mt-mono)}
+  .dock-head .dock-nav{display:flex;gap:4px;margin-left:6px}
+  .dock-head .dock-nav button{font:inherit;font-size:12px;width:26px;height:24px;border:1px solid var(--mt-border);
+    background:var(--mt-surface);border-radius:6px;cursor:pointer;color:var(--mt-text2)}
+  .dock-head .dock-nav button:hover{border-color:var(--mt-accent);color:var(--mt-accent)}
+  .dock-head .dock-actions{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .dock-warn{display:flex;flex-wrap:wrap;gap:6px;padding:8px 18px;background:var(--mt-red-dim);border-bottom:1px solid var(--mt-border)}
+  .dock-warn .w-pill{font-size:11px;color:var(--mt-red-dark);background:var(--mt-surface);border:1px solid var(--mt-red-dark);
+    border-radius:10px;padding:2px 9px;font-weight:600}
+  .dock-warn .w-ok{font-size:11px;color:var(--mt-green-dark)}
+  .dock-body{padding:14px 18px 28px}
+  /* 도크용 컴팩트 그리드 */
+  .dock-body .field-grid{grid-template-columns:repeat(5,1fr);gap:8px 14px}
+  .dock-body .memo-grid{gap:8px}
+  .dock-body .memo{min-height:42px}
+  .dock-cols{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+  @media(max-width:900px){.dock-cols{grid-template-columns:1fr}.dock-body .field-grid{grid-template-columns:repeat(3,1fr)}}
+  /* 목록이 도크에 안 가리도록 하단 여백 */
+  body.dock-open{padding-bottom:42vh}
+  /* 선택된 행 강조 (도크용) */
+  table.data tr.row-active{outline:2px solid var(--mt-accent);outline-offset:-2px;background:var(--mt-accent-dim)!important}
 
   /* 선택된 행 */
   table.data tr.row-sel{background:var(--mt-accent-dim)!important}
@@ -221,16 +273,19 @@
 
   <div id="tabs" style="margin-top:22px;display:none">
     <div class="colgroup-bar">
-      <span class="cg-label">표시 컬럼</span>
-      <button class="cg-toggle active" data-cg="base">기본</button>
-      <button class="cg-toggle" data-cg="roster">명단·여권</button>
-      <button class="cg-toggle" data-cg="air">항공</button>
-      <button class="cg-toggle" data-cg="local">현지·룸타입</button>
-      <button class="cg-toggle" data-cg="check">OP 체크</button>
+      <span class="cg-label">화면</span>
+      <button class="cg-toggle" data-preset="영업">영업</button>
+      <button class="cg-toggle" data-preset="항공">항공</button>
+      <button class="cg-toggle" data-preset="현지">현지</button>
+      <button class="cg-toggle" data-preset="명단검수">명단검수</button>
+      <button class="cg-toggle" data-preset="전체">전체</button>
       <span class="cg-sp"></span>
-      <button class="cg-toggle locked" data-cg="pnl" id="cgPnl">🔒 손익</button>
+      <button class="cg-toggle locked" id="cgPnl">🔒 손익</button>
+      <button class="cg-toggle" id="colGear" title="표시 컬럼 직접 설정">⚙ 컬럼</button>
     </div>
   </div>
+
+  <div class="col-settings" id="colSettings"></div>
 
   <div class="tab-panel active" id="panel-ops">
     <div id="ops-body"><div class="empty">엑셀을 올리면 통합 점검 화면이 표시됩니다.</div></div>
@@ -245,6 +300,7 @@
 </div>
 
 <div class="mt-modal-backdrop" id="modal"></div>
+<div class="detail-dock" id="detailDock"></div>
 <div class="mt-toast-host" id="toastHost"></div>
 
 <script>
@@ -370,6 +426,28 @@ function estimateNights(c){
   return m?+m[1]:0;
 }
 
+// 상품명에서 골프장 추출
+const GOLF_COURSES=['야마나미CC','포틴힐즈CC','포틴힐즈','스가다이라 그린CC','스가다이라','구주고원','간지호텔','시즈노야도','쿠주힐즈','아키바','후쿠로다','닐라이스프링스','니라이','미야자키'];
+function extractGolfCourse(name){
+  const n=txt(name);
+  for(const g of GOLF_COURSES){if(n.includes(g))return g.replace('CC','').replace(' 그린','')}
+  return '';
+}
+// 비고에서 팀 구분 파싱 — "A팀+B팀", "A팀(4) + B팀(4)", "A + B 팀" 등
+function parseTeams(remark){
+  const src=txt(remark);
+  if(!src)return [];
+  if(!src.includes('팀'))return [];
+  // 패턴1: "이름팀" 반복 — "김석진팀+정희채팀", "고용준팀(4) + 박상빈팀(4)"
+  const teams=[];let m;const re1=/([가-힣]{2,4})\s*팀\s*(?:\((\d+)\))?/g;
+  while((m=re1.exec(src))){teams.push({name:m[1],pax:m[2]?+m[2]:null})}
+  if(teams.length>=2)return teams;
+  // 패턴2: "A + B 팀" (이름 둘이 공통 '팀' 공유, 첫 이름엔 팀 없음) — "김영희 + 김영기 팀"
+  const m2=src.match(/([가-힣]{2,4})\s*\+\s*([가-힣]{2,4})\s*팀/);
+  if(m2 && !new RegExp(m2[1]+'\\s*팀').test(src))return [{name:m2[1],pax:null},{name:m2[2],pax:null}];
+  return teams; // 단일팀(1개)이면 그대로
+}
+
 function computeChecks(ev){
   const r=IDX.resv[ev]||{},s=IDX.settle[ev]||{},api=IDX.apis[ev]||[],ros=IDX.roster[ev]||[],loc=IDX.local[ev]||{};
   const ins=IDX.insurance[ev]||{};
@@ -436,9 +514,13 @@ function computeChecks(ev){
   const mtMatch=(ev+' '+txt(r['비고'])).match(/MT\d{8,}/);
   const frontResNo=mtMatch?mtMatch[0]:'';
 
+  // 골프장 / 팀 구분
+  const golfCourse=extractGolfCourse(pname);
+  const teams=parseTeams(txt(r['비고']));
+
   return{ev,pax,dep,r,s,api,ros,loc,rosterN,rosterStatus,missing,noNames,noPhone,expiryRisk,
     airfare,airStatus,insurance,insStatus,insSubtotal,apiN,seatedN,seatStatus,sentTalk,sentSms,closed,due,status,resvType,autoLabel,firstPnr,sale,margin,cost,hasSettle,hasCost,defApplied,
-    nights,holidays,pkgType,frontResNo}
+    nights,holidays,pkgType,frontResNo,golfCourse,teams}
 }
 
 function badgeHtml(c,opts){
@@ -489,7 +571,7 @@ function badgeHtml(c,opts){
 
 const TICKET_LABELS=['미정','그룹발권','INDV발권','일부개별','개별발권','항공만','항공대기'];
 const MANUAL_KEYS=[['conf','확정서'],['quote','견적서'],['depReq','예약금요청'],['depPaid','예약금○'],['receipt','현금영수증']];
-let opsFilter={q:'',dest:[],airline:[],flight:[],month:[],label:[],issue:[],sort:'dep',team:'ops'};
+let opsFilter={q:'',dest:[],airline:[],flight:[],month:[],label:[],golf:[],issue:[],sort:'dep',team:'ops'};
 
 function getEvents(){const evs=new Set();for(const k of Object.keys(IDX))for(const e of Object.keys(IDX[k]))evs.add(e);return [...evs]}
 
@@ -499,13 +581,14 @@ function opsRows(){
 }
 
 function buildFilters(rows){
-  const dests=new Set(),airlines=new Set(),flights=new Set();
+  const dests=new Set(),airlines=new Set(),flights=new Set(),golfs=new Set();
   rows.forEach(c=>{const r=c.r,api=c.api[0]||{};
     if(txt(r['출발지']))dests.add(txt(r['출발지']));
     if(txt(r['항공']))airlines.add(txt(r['항공']));
     if(txt(api['항공사']))airlines.add(txt(api['항공사']));
-    if(txt(api['출발편']))flights.add(txt(api['출발편']))});
-  return{dests:[...dests].sort(),airlines:[...airlines].sort(),flights:[...flights].sort()}
+    if(txt(api['출발편']))flights.add(txt(api['출발편']));
+    if(c.golfCourse)golfs.add(c.golfCourse)});
+  return{dests:[...dests].sort(),airlines:[...airlines].sort(),flights:[...flights].sort(),golfs:[...golfs].sort()}
 }
 
 function applyFilters(rows){
@@ -515,6 +598,7 @@ function applyFilters(rows){
     if(F.dest.length && !F.dest.includes(txt(c.r['출발지'])))return false;
     if(F.airline.length){const al=txt(c.r['항공'])||txt((c.api[0]||{})['항공사']);if(!F.airline.includes(al))return false}
     if(F.flight.length){const fl=txt((c.api[0]||{})['출발편']);if(!F.flight.includes(fl))return false}
+    if(F.golf.length && !F.golf.includes(c.golfCourse))return false;
     if(F.month.length && !F.month.includes(ev_month(c)))return false;
     if(F.label.length){const o=getOps(c.ev);const eff=o.label||c.autoLabel||'미정';if(!F.label.includes(eff))return false}
     if(F.issue.length){
@@ -552,7 +636,12 @@ function allColumns(hasAnnounceData){
     {g:'base',h:'출발지',cell:c=>`<td><span class="ori-dot ori-${escH(txt(c.r['출발지'])||'기타')}"></span>${escH(txt(c.r['출발지']))}</td>`},
     {g:'base',h:'패키지',cell:c=>`<td>${c.pkgType==='package'?'<span class="bd bd-ok">확정</span> ':''}${escH(txt(c.r['회원권구분']))}</td>`},
     {g:'base',h:'인원',cell:c=>`<td class="num">${c.pax||''}</td>`},
-    {g:'base',h:'대표',cell:c=>`<td>${escH(txt(c.r['대표고객']))}</td>`},
+    {g:'base',h:'대표',cell:c=>{
+      let teamHtml='';
+      if(c.teams&&c.teams.length){
+        teamHtml=' '+c.teams.map(t=>`<span class="team-badge">${escH(t.name)}팀${t.pax?`·${t.pax}`:''}</span>`).join('');
+      }
+      return `<td>${escH(txt(c.r['대표고객']))}${teamHtml}</td>`}},
     {g:'base',h:'진행',cell:c=>{const st=txt(c.r['구분']);const cls=st==='확정'?'confirm':(st==='정산'?'settle':'quote');return `<td><span class="proc ${cls}">${escH(st||'—')}</span></td>`}},
     {g:'base',h:'결제',cell:c=>`<td>${c.due===0?'<span class="pay-ok">완납</span>':`<span class="pay-due">미수 ${fmt(c.due)}</span>`}</td>`},
 
@@ -588,7 +677,7 @@ function allColumns(hasAnnounceData){
     {g:'local',h:'현지 비고',cell:(c,o)=>`<td onclick="event.stopPropagation()"><input type="text" class="inline-memo" data-ev="${c.ev}" data-memo="loc" value="${escH(o.memos.loc||'')}" placeholder="현지"></td>`},
 
     // OP 체크
-    {g:'check',h:'OP 체크',cell:(c,o)=>`<td onclick="event.stopPropagation()"><div class="chk-row">${MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ')}</div></td>`},
+    {g:'check',h:'OP 체크',cell:(c,o)=>`<td onclick="event.stopPropagation()"><div class="chk-row">${MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-ev="${c.ev}" data-mk="${k}" title="클릭으로 켜기/끄기">${t}${o.manual[k]?' ✓':''}</span>`).join(' ')}</div></td>`},
     {g:'check',h:'현금영수증',cell:(c,o)=>`<td onclick="event.stopPropagation()"><input type="checkbox" data-ev="${c.ev}" data-receipt="1" ${o.ops.receipt?'checked':''}></td>`},
     {g:'check',h:'공휴일',cell:c=>`<td>${c.holidays&&c.holidays.length?`<span class="bd bd-pt">🎌 ${escH([...new Set(c.holidays.map(h=>h.name))][0])}</span>`:''}</td>`},
 
@@ -597,8 +686,40 @@ function allColumns(hasAnnounceData){
     {g:'pnl',h:'원가',cell:c=>`<td class="num">${c.cost?fmt(c.cost):''}</td>`},
     {g:'pnl',h:'마진',cell:c=>`<td class="num">${c.margin?fmt(c.margin):''}</td>`},
     {g:'pnl',h:'마진율',cell:c=>{const r=c.sale?c.margin/c.sale*100:0;const cls=(c.sale>0&&c.margin<=0)?'color:var(--mt-red-dark);font-weight:600':(c.sale>0&&r>0&&r<5?'color:var(--mt-amber-dark);font-weight:600':'');return `<td class="num" style="${cls}">${c.sale?r.toFixed(1)+'%':'—'}</td>`}}
-  ];
+  ].map((col,i)=>({...col,id:col.g+'_'+i}));
 }
+
+// 컬럼 그룹 메타 (톱니바퀴 설정 표시용)
+const COL_GROUPS=[
+  {g:'base',label:'기본'},
+  {g:'roster',label:'명단·여권'},
+  {g:'air',label:'항공'},
+  {g:'local',label:'현지·룸타입'},
+  {g:'check',label:'OP 체크'},
+  {g:'pnl',label:'🔒 손익',locked:true}
+];
+// 프리셋: 표시할 그룹 조합
+const COL_PRESETS={
+  '영업':['base','check'],
+  '항공':['base','air'],
+  '현지':['base','local'],
+  '명단검수':['base','roster'],
+  '전체':['base','roster','air','local','check']
+};
+const COLS_KEY='mt_visible_cols_v1';
+function defaultVisibleCols(){
+  // 기본 프리셋 = 영업 (기본+OP체크)
+  const ids=[];
+  allColumns(true).forEach(col=>{if(col.g==='base'||col.g==='check')ids.push(col.id)});
+  return new Set(ids);
+}
+function loadVisibleCols(){
+  try{const d=localStorage.getItem(COLS_KEY);if(d)return new Set(JSON.parse(d))}catch(e){}
+  return defaultVisibleCols();
+}
+function saveVisibleCols(){try{localStorage.setItem(COLS_KEY,JSON.stringify([...visibleCols]))}catch(e){}}
+let visibleCols=loadVisibleCols();
+let pnlUnlocked=false; // 손익 잠금 해제 여부
 
 let activeCols={base:true,roster:false,air:false,local:false,check:false,pnl:false};
 const bulkSel=new Set();
@@ -675,6 +796,7 @@ function bindBulkBar(){
 function renderOps(){
   const body=document.getElementById('ops-body');
   if(!body)return;
+  const _scrollY=window.scrollY; // 재렌더 시 스크롤 위치 보존
   let rows=opsRows();
   if(!rows.length){body.innerHTML='<div class="empty">데이터가 없습니다. 엑셀을 올려주세요.</div>';return}
 
@@ -729,7 +851,7 @@ function renderOps(){
     ${opsFilter.month.length?`<span class="mb-chip" data-mb-clear="1" style="background:var(--mt-red-dim);color:var(--mt-red-dark);border-color:var(--mt-red-dim)">× 해제</span>`:''}
   </div>`:'';
 
-  const {dests,airlines,flights}=buildFilters(rows);
+  const {dests,airlines,flights,golfs}=buildFilters(rows);
   const months=[...new Set(rows.filter(c=>c.dep).map(c=>`${c.dep.getFullYear()}-${String(c.dep.getMonth()+1).padStart(2,'0')}`))].sort();
 
   const msBtn=(key,label,sel)=>{
@@ -747,6 +869,7 @@ function renderOps(){
     ${msBtn('dest','출발지',opsFilter.dest)}
     ${msBtn('airline','항공사',opsFilter.airline)}
     ${msBtn('flight','항공편',opsFilter.flight)}
+    ${msBtn('golf','골프장',opsFilter.golf)}
     ${msBtn('month','출발월',opsFilter.month)}
     ${msBtn('label','발권라벨',opsFilter.label)}
     <span class="sp"></span>
@@ -756,13 +879,15 @@ function renderOps(){
       <option value="pax" ${opsFilter.sort==='pax'?'selected':''}>인원순</option>
     </select></label>
     <button class="mt-btn" id="opsExport">📥 엑셀 출력</button>
+    <button class="mt-btn mt-btn-ghost" id="sheetAir">✈ 항공 전달표</button>
+    <button class="mt-btn mt-btn-ghost" id="sheetLocal">🏨 현지 전달표</button>
   </div>`;
 
   // 각 ms 드롭다운의 옵션 목록 (필요할 때 동적으로 채움)
   const MS_OPTS={
-    dest: dests, airline: airlines, flight: flights, month: months, label: TICKET_LABELS
+    dest: dests, airline: airlines, flight: flights, golf: golfs, month: months, label: TICKET_LABELS
   };
-  const MS_LABEL={dest:'출발지',airline:'항공사',flight:'항공편',month:'출발월',label:'발권라벨'};
+  const MS_LABEL={dest:'출발지',airline:'항공사',flight:'항공편',golf:'골프장',month:'출발월',label:'발권라벨'};
 
   let shown=applyFilters(rows);
   if(opsFilter.sort==='dep')shown.sort((a,b)=>{const da=a.dep?+a.dep:1e15,db=b.dep?+b.dep:1e15;return da-db});
@@ -773,8 +898,12 @@ function renderOps(){
 
   const summary=`<div style="font-size:12px;color:var(--mt-text2);margin:0 0 10px">${shown.length} / ${rows.length}건 표시</div>`;
 
-  const COLS=allColumns(hasAnnounceData).filter(col=>activeCols[col.g]);
+  const COLS=allColumns(hasAnnounceData).filter(col=>{
+    if(col.g==='pnl'&&!pnlUnlocked)return false;
+    return visibleCols.has(col.id);
+  });
   const shownEvs=shown.map(c=>c.ev);
+  _dockList=shownEvs;
   const allSel=shownEvs.length>0 && shownEvs.every(e=>bulkSel.has(e));
   const headHtml=`<th style="width:30px"><input type="checkbox" id="bulkAll" ${allSel?'checked':''}></th>`+COLS.map(col=>`<th>${col.h}</th>`).join('');
   const trs=shown.map(c=>{
@@ -857,8 +986,10 @@ function renderOps(){
   // 정렬 / 엑셀 출력
   document.getElementById('opsSort').onchange=e=>{opsFilter.sort=e.target.value;renderOps()};
   document.getElementById('opsExport').onclick=()=>exportOps(shown);
+  document.getElementById('sheetAir').onclick=()=>genTeamSheet('air',shown);
+  document.getElementById('sheetLocal').onclick=()=>genTeamSheet('local',shown);
   document.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const ev=el.dataset.ev,mk=el.dataset.mk;const o=getOps(ev);o.manual[mk]=!o.manual[mk];if(o.manual[mk])o.manual[mk+'_ts']=Date.now();setOps(ev,o);renderOps()});
-  document.querySelectorAll('select.lbl-sel').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.label=el.value;setOps(el.dataset.ev,o);renderOps()});
+  document.querySelectorAll('select.lbl-sel').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.label=(el.value==='미정')?'':el.value;setOps(el.dataset.ev,o);renderOps()});
   // 인라인 메모 (항공/현지 비고)
   document.querySelectorAll('input.inline-memo[data-memo]').forEach(el=>el.oninput=()=>{const o=getOps(el.dataset.ev);o.memos[el.dataset.memo]=el.value;setOps(el.dataset.ev,o)});
   document.querySelectorAll('input.inline-memo[data-ops]').forEach(el=>el.oninput=()=>{const o=getOps(el.dataset.ev);o.ops[el.dataset.ops]=el.value;setOps(el.dataset.ev,o)});
@@ -868,43 +999,66 @@ function renderOps(){
   document.querySelectorAll('input[data-receipt]').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.ops.receipt=el.checked;setOps(el.dataset.ev,o)});
   bindBulkBar();
   document.querySelectorAll('tr.row-clickable').forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.ev));
+  // 도크 열린 상태면 선택 행 다시 강조
+  if(_dockEv){const at=document.querySelector(`tr.row-clickable[data-ev="${CSS.escape(_dockEv)}"]`);if(at)at.classList.add('row-active')}
+  try{window.scrollTo(0,_scrollY)}catch(e){}
 }
 
+let _dockEv=null, _dockList=[];
 function openDetail(ev){
+  _dockEv=ev;
   const c=computeChecks(ev);const o=getOps(ev);
   const r=c.r,s=c.s,api=c.api,ros=c.ros,loc=c.loc;
   const flightInfo=api[0]||{};
-  const head=`<div class="mt-modal-head">
-    <h3>${escH(txt(s['행사명'])||txt(r['상품명'])||'(상품명 없음)')}</h3>
-    <span class="sub">${escH(ev)}</span>
-    <span class="close-x" onclick="closeModal()">×</span>
+
+  // 선택 행 강조
+  document.querySelectorAll('tr.row-active').forEach(t=>t.classList.remove('row-active'));
+  const activeTr=document.querySelector(`tr.row-clickable[data-ev="${CSS.escape(ev)}"]`);
+  if(activeTr)activeTr.classList.add('row-active');
+
+  // 경고 요약 (실수 검출)
+  const warns=[];
+  if(c.noNames>0)warns.push(`무기명 ${c.noNames}명`);
+  if(c.noPhone>0)warns.push(`연락처 누락 ${c.noPhone}명`);
+  if(c.expiryRisk>0)warns.push(`여권 6개월 미만 ${c.expiryRisk}명`);
+  if(c.rosterStatus==='partial')warns.push(`명단 미완 (${c.rosterN}/${c.pax})`);
+  else if(c.pax>0&&c.rosterN===0)warns.push('명단 없음');
+  if(c.due!==0)warns.push(`미수 ${fmt(c.due)}`);
+  if(c.seatStatus==='partial')warns.push(`사전좌석 ${c.seatedN}/${c.apiN}`);
+  const warnHtml=warns.length
+    ? `<div class="dock-warn">${warns.map(w=>`<span class="w-pill">${escH(w)}</span>`).join('')}</div>`
+    : `<div class="dock-warn" style="background:var(--mt-green-dim)"><span class="w-ok">✓ 검출된 문제 없음</span></div>`;
+
+  // 현재 목록에서의 위치 (이전/다음 네비)
+  const idx=_dockList.indexOf(ev);
+  const navHtml=`<div class="dock-nav">
+    <button id="dockPrev" title="이전 (↑)" ${idx<=0?'disabled':''}>↑</button>
+    <button id="dockNext" title="다음 (↓)" ${idx<0||idx>=_dockList.length-1?'disabled':''}>↓</button>
   </div>`;
 
   const fieldsHtml=`<div class="field-grid">
     <div class="field"><b>출발일</b><span>${c.dep?c.dep.toISOString().slice(0,10):''} ${escH(txt(s['요일']||r['요일']))}</span></div>
     <div class="field"><b>도착일</b><span>${escH(dShort(s['도착일자']||r['도착일자']))}</span></div>
     <div class="field"><b>출발지</b><span>${escH(txt(r['출발지']))}</span></div>
-    <div class="field"><b>항공</b><span>${escH(txt(flightInfo['항공사'])||txt(r['항공']))} ${escH(txt(flightInfo['출발편']))} / ${escH(txt(flightInfo['귀국편']))}</span></div>
+    <div class="field"><b>항공</b><span>${escH(txt(flightInfo['항공사'])||txt(r['항공']))} ${escH(txt(flightInfo['출발편']))}</span></div>
     <div class="field"><b>PNR</b><span style="font-family:var(--mt-mono)">${escH(c.firstPnr)||'<span style=\"color:var(--mt-text3)\">없음</span>'}</span></div>
-    <div class="field"><b>예약구분</b><span>${escH(c.resvType)||'<span style=\"color:var(--mt-text3)\">―</span>'}</span></div>
-    <div class="field"><b>요금 구분</b><span>${c.pkgType==='package'?'확정 패키지 (원화 정액)':(c.pkgType==='variable'?'변동 요금 (항공료 별도)':'<span style=\"color:var(--mt-text3)\">미정</span>')}</span></div>
-    <div class="field"><b>일정 중 공휴일</b><span>${c.holidays&&c.holidays.length?escH([...new Set(c.holidays.map(h=>h.name))].join(', ')):'<span style=\"color:var(--mt-text3)\">없음</span>'}</span></div>
-    <div class="field"><b>대표고객</b><span>${escH(txt(r['대표고객']))} ${escH(txt(r['예약자명']))}</span></div>
-    <div class="field"><b>거래처</b><span>${escH(txt(s['거래처']))}</span></div>
+    <div class="field"><b>골프장</b><span>${c.golfCourse?escH(c.golfCourse):'―'}</span></div>
+    <div class="field"><b>팀 구분</b><span>${c.teams&&c.teams.length?c.teams.map(t=>`${escH(t.name)}팀${t.pax?`(${t.pax})`:''}`).join(' · '):'단일팀'}</span></div>
+    <div class="field"><b>요금</b><span>${c.pkgType==='package'?'확정 패키지':(c.pkgType==='variable'?'변동 요금':'미정')}</span></div>
+    <div class="field"><b>공휴일</b><span>${c.holidays&&c.holidays.length?escH([...new Set(c.holidays.map(h=>h.name))].join(', ')):'없음'}</span></div>
+    <div class="field"><b>대표</b><span>${escH(txt(r['대표고객']))}</span></div>
     <div class="field"><b>회원권</b><span>${escH(txt(r['회원권구분']))}</span></div>
     <div class="field"><b>인원</b><span>${c.pax} (등록 ${c.rosterN})</span></div>
+    <div class="field"><b>거래처</b><span>${escH(txt(s['거래처']))}</span></div>
     <div class="field"><b>판매</b><span>${fmt(c.sale)}</span></div>
     <div class="field"><b>미수</b><span style="color:${c.due!==0?'var(--mt-red-dark)':'inherit'}">${fmt(c.due)}</span></div>
-    <div class="field"><b>마진</b><span>${c.margin?fmt(c.margin)+' ('+(c.sale?(c.margin/c.sale*100).toFixed(1):'0')+'%)':'—'}</span></div>
-    <div class="field"><b>담당</b><span>${escH(txt(loc['담당사원']||r['판매자']||s['담당사원']))}</span></div>
-  </div>
-  <div style="margin-top:10px">${badgeHtml(c)}</div>`;
+  </div>`;
 
   const manualHtml=MANUAL_KEYS.map(([k,t])=>`<span class="chk ${o.manual[k]?'on':''}" data-mk="${k}">${t}${o.manual[k]?' ✓':''}</span>`).join(' ');
   const effLabel=o.label||c.autoLabel||'';
   const labelHtml=`<select class="lbl-sel ${effLabel&&effLabel!=='미정'?'set':''}" id="dlgLabel">${TICKET_LABELS.map(l=>`<option ${effLabel===l?'selected':''}>${escH(l)}</option>`).join('')}</select>`;
-  const labelHint=o.label?'<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">수동</span>':(c.autoLabel?`<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">예약구분 자동</span>`:'');
-  const checkBlock=`<h4>OP 체크 · 발권 라벨</h4>
+  const labelHint=o.label?'<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">수동</span>':(c.autoLabel?`<span style="font-size:11px;color:var(--mt-text3);margin-left:6px">자동</span>`:'');
+  const checkBlock=`<h4>OP 체크 · 발권</h4>
     <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
       <div class="chk-row">${manualHtml}</div>
       <div style="display:flex;align-items:center;gap:8px">발권 ${labelHtml}${labelHint}</div>
@@ -921,65 +1075,96 @@ function openDetail(ev){
       <td class="${txt(p['휴대번호'])?'':'miss'}">${escH(txt(p['휴대번호'])||'없음')}</td>
       <td class="${txt(p['여권번호'])?'':'miss'}">${escH(txt(p['여권번호'])||'없음')}</td>
       <td class="${txt(p['만료일'])?(expiryRisk?'miss':''):'miss'}">${escH(dShort(p['만료일'])||'없음')}</td>
-      <td>${escH(dShort(p['생년월일']))}</td>
-    </tr>`}).join('') || `<tr><td colspan="7" style="color:var(--mt-text3);text-align:center;padding:14px">일행 명단이 아직 없습니다.</td></tr>`;
+    </tr>`}).join('') || `<tr><td colspan="6" style="color:var(--mt-text3);text-align:center;padding:10px">일행 명단이 아직 없습니다.</td></tr>`;
   const rosterBlock=`<h4>승객 명단 <span style="font-weight:400;color:var(--mt-text3);font-size:11px">· 좌측 체크 = 싱글룸</span></h4>
     <div class="tbl-wrap"><table class="data roster-tbl">
-      <thead><tr><th>싱글</th><th>고객명</th><th>영문명</th><th>휴대전화</th><th>여권번호</th><th>만료일</th><th>생년월일</th></tr></thead>
+      <thead><tr><th>싱글</th><th>고객명</th><th>영문명</th><th>휴대전화</th><th>여권번호</th><th>만료일</th></tr></thead>
       <tbody>${rosterTr}</tbody></table></div>`;
 
   const memoBlock=`<h4>비고 (3분류)</h4>
-    <div style="font-size:11px;color:var(--mt-text3);margin-bottom:6px">엠클릭 통합 비고: ${escH(txt(r['비고']||(ros[0]||{})['비고'])||'(없음)')}</div>
-    <div class="memo-grid">
+    <div style="font-size:11px;color:var(--mt-text3);margin-bottom:6px">엠클릭 비고: ${escH(txt(r['비고']||(ros[0]||{})['비고'])||'(없음)')}</div>
+    <div class="memo-grid" style="grid-template-columns:1fr 1fr 1fr">
       <div><b style="font-size:11px;color:var(--mt-text2)">내부 공용</b><textarea class="memo" data-memo="int">${escH(o.memos.int||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">항공팀</b><textarea class="memo" data-memo="air">${escH(o.memos.air||'')}</textarea></div>
       <div><b style="font-size:11px;color:var(--mt-text2)">현지 전달</b><textarea class="memo" data-memo="loc">${escH(o.memos.loc||'')}</textarea></div>
     </div>`;
 
   const opsInputs=`<h4>운영 입력</h4>
-    <div class="memo-grid">
-      <div><b style="font-size:11px;color:var(--mt-text2)">방 배정 (트윈 짝)</b><textarea class="memo" data-ops="rooms" placeholder="예) 김○○ - 박○○ / 이○○ - 최○○">${escH(o.ops.rooms||'')}</textarea></div>
-      <div><b style="font-size:11px;color:var(--mt-text2)">첫날 골프 조편성</b><textarea class="memo" data-ops="golf" placeholder="예) 1조: 김○○ 박○○ 이○○ 최○○">${escH(o.ops.golf||'')}</textarea></div>
-      <div><b style="font-size:11px;color:var(--mt-text2)">현금영수증 발행</b>
+    <div class="memo-grid" style="grid-template-columns:1fr 1fr">
+      <div><b style="font-size:11px;color:var(--mt-text2)">방 배정</b><textarea class="memo" data-ops="rooms" placeholder="김○○ - 박○○ / 이○○ - 최○○">${escH(o.ops.rooms||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">첫날 골프 조편성</b><textarea class="memo" data-ops="golf" placeholder="1조: 김○○ 박○○ ...">${escH(o.ops.golf||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">식사 특이</b><textarea class="memo" data-ops="meal" placeholder="알레르기, 채식 등">${escH(o.ops.meal||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">골프 특이</b><textarea class="memo" data-ops="golfNote" placeholder="좌타, 캐디 요청 등">${escH(o.ops.golfNote||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">룸 특이</b><textarea class="memo" data-ops="room" placeholder="금연실, 1층 등">${escH(o.ops.room||'')}</textarea></div>
+      <div><b style="font-size:11px;color:var(--mt-text2)">현금영수증</b>
         <label style="font-size:13px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-surface);cursor:pointer">
-          <input type="checkbox" data-ops="receipt" ${o.ops.receipt?'checked':''}> 발행 요청 받음
-        </label>
+          <input type="checkbox" data-ops="receipt" ${o.ops.receipt?'checked':''}> 발행 요청 받음</label>
       </div>
-      <div><b style="font-size:11px;color:var(--mt-text2)">식사 특이사항</b><textarea class="memo" data-ops="meal" placeholder="알레르기, 채식 등">${escH(o.ops.meal||'')}</textarea></div>
-      <div><b style="font-size:11px;color:var(--mt-text2)">골프 특이사항</b><textarea class="memo" data-ops="golfNote" placeholder="좌타, 캐디 요청 등">${escH(o.ops.golfNote||'')}</textarea></div>
-      <div><b style="font-size:11px;color:var(--mt-text2)">룸 특이사항</b><textarea class="memo" data-ops="room" placeholder="금연실, 1층, 인접실 등">${escH(o.ops.room||'')}</textarea></div>
       <div style="grid-column:1 / -1"><b style="font-size:11px;color:var(--mt-text2)">보험료</b>
-        ${c.insSubtotal>0?`<div style="padding:8px 10px;border:1px solid var(--mt-border);border-radius:8px;background:var(--mt-green-dim);color:var(--mt-green-dark);font-family:var(--mt-mono);margin-bottom:6px">자동 ₩${fmt(c.insSubtotal)} <span style="font-size:11px;color:var(--mt-text3);font-family:inherit">· 보험 매칭 결과에서 가져옴</span></div>`:''}
-        <input type="text" class="memo" data-ops="insuranceFee" placeholder="${c.insSubtotal>0?'추가 메모 (선택)':'예) 1인 12,000원 × 4명 = 48,000원'}" value="${escH(o.ops.insuranceFee||'')}" style="min-height:auto;padding:8px 10px">
-        <div style="font-size:11px;color:var(--mt-text3);margin-top:4px">${c.insSubtotal>0?'자동값이 있으면 수동 메모는 선택입니다.':'보험료 계산기(PDF 검수)의 결과 엑셀을 드롭존에 추가하면 여기에 자동 표시됩니다.'}</div>
+        ${c.insSubtotal>0?`<div style="padding:6px 10px;border-radius:6px;background:var(--mt-green-dim);color:var(--mt-green-dark);font-family:var(--mt-mono);margin-bottom:4px;font-size:12px">자동 ₩${fmt(c.insSubtotal)} · 보험 매칭 결과</div>`:''}
+        <input type="text" class="memo" data-ops="insuranceFee" placeholder="${c.insSubtotal>0?'추가 메모 (선택)':'예) 1인 12,000 × 4명'}" value="${escH(o.ops.insuranceFee||'')}" style="min-height:auto;padding:8px 10px;width:100%">
+      </div>
+    </div>
+    <div style="margin-top:10px"><button class="mt-btn" id="genResp">📄 손님 응답표 (새 창)</button></div>`;
+
+  const dock=document.getElementById('detailDock');
+  dock.innerHTML=`<div class="dock-head">
+      <h3>${escH(txt(s['행사명'])||txt(r['상품명'])||'(상품명 없음)')}</h3>
+      <span class="sub">${escH(ev)}</span>
+      ${navHtml}
+      <div class="dock-actions">
+        <button class="mt-btn mt-btn-ghost" id="dockCollapse">접기</button>
+        <button class="mt-btn mt-btn-ghost" id="dockClose">×</button>
+      </div>
+    </div>
+    ${warnHtml}
+    <div class="dock-body">
+      ${fieldsHtml}
+      <div style="margin:10px 0">${badgeHtml(c)}</div>
+      ${checkBlock}
+      <div class="dock-cols">
+        <div>${rosterBlock}</div>
+        <div>${memoBlock}${opsInputs}</div>
       </div>
     </div>`;
+  dock.classList.add('show');dock.classList.remove('collapsed');
+  document.body.classList.add('dock-open');
 
-  const respBtn=`<h4>손님 응답표</h4>
-    <div style="font-size:12px;color:var(--mt-text2);margin-bottom:8px">팀 정보가 채워진 출국 전 확인표를 새 창에 띄워 인쇄·PDF 저장하거나 캡처해 손님께 전달하실 수 있습니다. 손님 회신은 위 운영 입력에 직접 채우시면 됩니다.</div>
-    <button class="mt-btn" id="genResp">📄 응답표 생성 (새 창)</button>`;
-
-  const foot=`<div class="mt-modal-foot">
-    <span style="font-size:11px;color:var(--mt-text3);margin-right:auto">변경은 자동 저장됩니다.</span>
-    <button class="mt-btn mt-btn-ghost" onclick="closeModal()">닫기</button>
-  </div>`;
-
-  const m=document.getElementById('modal');
-  m.innerHTML=`<div class="mt-modal" onclick="event.stopPropagation()">${head}
-    <div class="mt-modal-body">${fieldsHtml}${checkBlock}${rosterBlock}${memoBlock}${opsInputs}${respBtn}</div>
-    ${foot}</div>`;
-  m.classList.add('show');
-  m.onclick=closeModal;
-
-  m.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const k=el.dataset.mk;o.manual[k]=!o.manual[k];if(o.manual[k])o.manual[k+'_ts']=Date.now();setOps(ev,o);el.classList.toggle('on',o.manual[k]);el.textContent=MANUAL_KEYS.find(x=>x[0]===k)[1]+(o.manual[k]?' ✓':'');renderOps()});
-  m.querySelector('#dlgLabel').onchange=e=>{o.label=e.target.value;setOps(ev,o);renderOps();e.target.classList.toggle('set',o.label&&o.label!=='미정')};
-  m.querySelectorAll('textarea[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
-  m.querySelectorAll('textarea[data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
-  m.querySelectorAll('input[type=text][data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
-  m.querySelectorAll('input[data-ops="receipt"]').forEach(t=>t.onchange=()=>{o.ops.receipt=t.checked;setOps(ev,o)});
-  m.querySelectorAll('input[data-single]').forEach(t=>t.onchange=()=>{const i=t.dataset.single;if(t.checked)o.ops.singles[i]=true;else delete o.ops.singles[i];setOps(ev,o)});
-  m.querySelector('#genResp').onclick=()=>generateResponseSheet(c,o);
+  // 바인딩
+  dock.querySelectorAll('.chk[data-mk]').forEach(el=>el.onclick=()=>{const k=el.dataset.mk;o.manual[k]=!o.manual[k];if(o.manual[k])o.manual[k+'_ts']=Date.now();setOps(ev,o);el.classList.toggle('on',o.manual[k]);el.textContent=MANUAL_KEYS.find(x=>x[0]===k)[1]+(o.manual[k]?' ✓':'');renderOps()});
+  dock.querySelector('#dlgLabel').onchange=e=>{o.label=(e.target.value==='미정')?'':e.target.value;setOps(ev,o);renderOps()};
+  dock.querySelectorAll('textarea[data-memo]').forEach(t=>t.oninput=()=>{o.memos[t.dataset.memo]=t.value;setOps(ev,o)});
+  dock.querySelectorAll('textarea[data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
+  dock.querySelectorAll('input[type=text][data-ops]').forEach(t=>t.oninput=()=>{o.ops[t.dataset.ops]=t.value;setOps(ev,o)});
+  dock.querySelectorAll('input[data-ops="receipt"]').forEach(t=>t.onchange=()=>{o.ops.receipt=t.checked;setOps(ev,o)});
+  dock.querySelectorAll('input[data-single]').forEach(t=>t.onchange=()=>{const i=t.dataset.single;if(t.checked)o.ops.singles[i]=true;else delete o.ops.singles[i];setOps(ev,o)});
+  dock.querySelector('#genResp').onclick=()=>generateResponseSheet(c,o);
+  dock.querySelector('#dockClose').onclick=closeDock;
+  dock.querySelector('#dockCollapse').onclick=()=>{dock.classList.toggle('collapsed');dock.querySelector('#dockCollapse').textContent=dock.classList.contains('collapsed')?'펼치기':'접기'};
+  const pv=dock.querySelector('#dockPrev'),nx=dock.querySelector('#dockNext');
+  if(pv)pv.onclick=()=>{const i=_dockList.indexOf(ev);if(i>0)openDetail(_dockList[i-1])};
+  if(nx)nx.onclick=()=>{const i=_dockList.indexOf(ev);if(i<_dockList.length-1)openDetail(_dockList[i+1])};
 }
+function closeDock(){
+  _dockEv=null;
+  const dock=document.getElementById('detailDock');
+  dock.classList.remove('show');
+  document.body.classList.remove('dock-open');
+  document.querySelectorAll('tr.row-active').forEach(t=>t.classList.remove('row-active'));
+}
+window.closeDock=closeDock;
+// 키보드 ↑↓ 로 행 이동 (도크 열렸을 때, 입력 중이 아닐 때)
+document.addEventListener('keydown',e=>{
+  if(!_dockEv)return;
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select')return;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    const i=_dockList.indexOf(_dockEv);
+    if(e.key==='ArrowDown'&&i<_dockList.length-1)openDetail(_dockList[i+1]);
+    else if(e.key==='ArrowUp'&&i>0)openDetail(_dockList[i-1]);
+  }else if(e.key==='Escape'){closeDock()}
+});
 function closeModal(){document.getElementById('modal').classList.remove('show');document.getElementById('modal').innerHTML=''}
 
 function generateResponseSheet(c,o){
@@ -1034,9 +1219,62 @@ function generateResponseSheet(c,o){
   const w=window.open('','_blank');w.document.write(html);w.document.close()
 }
 
+/* ==================== 팀 전달표 (항공/현지 담당용) ==================== */
+function genTeamSheet(kind,rows){
+  if(!rows||!rows.length){toast('표시된 행사가 없습니다');return}
+  const today=new Date().toISOString().slice(0,10);
+  const isAir=kind==='air';
+  const title=isAir?'항공 전달표':'현지 전달표';
+  // 출발일순 정렬
+  const sorted=[...rows].sort((a,b)=>{const da=a.dep?+a.dep:1e15,db=b.dep?+b.dep:1e15;return da-db});
+
+  let cols,headRow,bodyRows;
+  if(isAir){
+    headRow=['출발일','행사명','그룹코드','출발지','인원','항공편','PNR','발권','사전좌석','항공 비고'];
+    bodyRows=sorted.map(c=>{
+      const o=getOps(c.ev);
+      const label=o.label||c.autoLabel||'';
+      const seat=c.apiN===0?'-':`${c.seatedN}/${c.apiN}`;
+      return [c.dep?c.dep.toISOString().slice(0,10):'',txt(c.s['행사명'])||txt(c.r['상품명']),txt(c.r['행사번호']),
+        txt(c.r['출발지']),c.pax||'',txt((c.api[0]||{})['출발편'])||txt(c.r['항공']),c.firstPnr||'',label,seat,o.memos.air||'']})
+  }else{
+    headRow=['출발일','귀국일','행사명','출발지','인원','대표/팀','SGL','TWN','TRP','QUD','ETC','방배정','골프조','보험료','현지 비고'];
+    bodyRows=sorted.map(c=>{
+      const o=getOps(c.ev);
+      const team=c.teams&&c.teams.length?c.teams.map(t=>t.name+'팀').join(' '):txt(c.r['대표고객']);
+      return [c.dep?c.dep.toISOString().slice(0,10):'',dShort(c.s['도착일자']||c.r['도착일자']),txt(c.s['행사명'])||txt(c.r['상품명']),
+        txt(c.r['출발지']),c.pax||'',team,o.ops.sgl||'',o.ops.twn||'',o.ops.trp||'',o.ops.qud||'',o.ops.etc||'',
+        o.ops.rooms||'',o.ops.golf||'',c.insSubtotal>0?fmt(c.insSubtotal):'',o.memos.loc||'']})
+  }
+
+  const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const thead='<tr>'+headRow.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const tbody=bodyRows.map(r=>'<tr>'+r.map((v,i)=>`<td${i>=(isAir?4:6)&&i<=(isAir?4:10)?' class="num"':''}>${esc(v)}</td>`).join('')+'</tr>').join('');
+
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${title} ${today}</title>
+  <style>
+    body{font-family:'Pretendard',-apple-system,sans-serif;margin:24px;color:#222}
+    h1{font-size:18px;margin:0 0 2px}
+    .sub{font-size:12px;color:#666;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse;font-size:11.5px}
+    th{background:#353C48;color:#fff;padding:6px 7px;text-align:left;white-space:nowrap;font-weight:600}
+    td{padding:5px 7px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+    td.num{text-align:center;font-family:'JetBrains Mono',monospace}
+    tr:nth-child(even) td{background:#F7F8FA}
+    .noprint{margin-top:16px}
+    .btn{padding:8px 16px;background:#353C48;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
+    @media print{.noprint{display:none}body{margin:0}}
+  </style></head><body>
+  <h1>MERITTOUR · ${title}</h1>
+  <div class="sub">생성일 ${today} · 총 ${sorted.length}건 · ${isAir?'발권·좌석 점검용':'방배정·골프조·룸타입 전달용'}</div>
+  <table><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+  <div class="noprint"><button class="btn" onclick="window.print()">🖨 인쇄 · PDF 저장</button></div>
+  </body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close()
+}
 function exportOps(rows){
   const aoa=[['행사번호','출발일','도착일','상품명','거래처','대표고객','출발지','항공사','출발편','귀국편','PNR','예약구분','진행','결제','인원','회원권','담당',
-    '판매','미수','마진','마진율','보험료(자동)','요금구분','일정중공휴일',
+    '판매','미수','마진','마진율','보험료(자동)','요금구분','일정중공휴일','골프장','팀구분',
     'SGL','TWN','TRP','QUD','ETC',
     '명단상태','명단미흡','무기명','연락처누락','여권만료위험','항공권','보험','사전좌석','톡','문자','마감',
     '확정서','견적서','예약금요청','예약금입금','현금영수증',
@@ -1051,6 +1289,8 @@ function exportOps(rows){
       c.sale,c.due,c.margin,c.sale?+(c.margin/c.sale*100).toFixed(1):0,c.insSubtotal||'',
       c.pkgType==='package'?'확정패키지':(c.pkgType==='variable'?'변동요금':''),
       c.holidays&&c.holidays.length?[...new Set(c.holidays.map(h=>h.name))].join(', '):'',
+      c.golfCourse||'',
+      c.teams&&c.teams.length?c.teams.map(t=>`${t.name}팀${t.pax?`(${t.pax})`:''}`).join(' '):'',
       o.ops.sgl||'',o.ops.twn||'',o.ops.trp||'',o.ops.qud||'',o.ops.etc||'',
       stat(c.rosterStatus),c.missing,c.noNames,c.noPhone,c.expiryRisk,
       c.airStatus==='included'?'포함':(c.airStatus==='individual'?'개별발권':''),
@@ -1264,25 +1504,70 @@ function renderMaster(){
   document.querySelectorAll('#master-table select.lbl-sel').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.label=el.value;setOps(el.dataset.ev,o);renderMaster()});
 }
 
-// 컬럼 묶음 토글
-document.querySelectorAll('.cg-toggle[data-cg]').forEach(btn=>{
-  if(btn.dataset.cg==='pnl')return; // 손익은 별도 핸들러
-  btn.addEventListener('click',()=>{
-    const g=btn.dataset.cg;
-    activeCols[g]=!activeCols[g];
-    btn.classList.toggle('active',activeCols[g]);
-    renderOps();
-  });
+// 프리셋 적용 (그룹 조합 → visibleCols)
+function applyPreset(name){
+  const groups=COL_PRESETS[name];if(!groups)return;
+  visibleCols=new Set();
+  allColumns(true).forEach(col=>{if(groups.includes(col.g))visibleCols.add(col.id)});
+  saveVisibleCols();
+  renderColSettings();renderOps();
+}
+document.querySelectorAll('.cg-toggle[data-preset]').forEach(btn=>{
+  btn.addEventListener('click',()=>applyPreset(btn.dataset.preset));
 });
+
 // 손익 잠금 토글 (비밀번호)
 const PNL_PW='9800'; // 회사 공용 (메리트투어 번호 끝자리)
 document.getElementById('cgPnl').addEventListener('click',function(){
-  if(activeCols.pnl){activeCols.pnl=false;this.classList.remove('active');renderOps();return}
+  if(pnlUnlocked){pnlUnlocked=false;this.classList.remove('active');renderColSettings();renderOps();return}
   const pw=prompt('손익 컬럼은 관리자 전용입니다. 비밀번호를 입력하세요.');
   if(pw===null)return;
-  if(pw===PNL_PW){activeCols.pnl=true;this.classList.add('active');renderOps()}
+  if(pw===PNL_PW){pnlUnlocked=true;this.classList.add('active');
+    // 손익 컬럼 표시 추가
+    allColumns(true).forEach(col=>{if(col.g==='pnl')visibleCols.add(col.id)});saveVisibleCols();
+    renderColSettings();renderOps()}
   else toast('비밀번호가 일치하지 않습니다');
 });
+
+// 톱니바퀴 — 컬럼 직접 설정 패널
+document.getElementById('colGear').addEventListener('click',function(){
+  const p=document.getElementById('colSettings');
+  if(p.classList.contains('show')){p.classList.remove('show');this.classList.remove('active')}
+  else{p.classList.add('show');this.classList.add('active');renderColSettings()}
+});
+function renderColSettings(){
+  const p=document.getElementById('colSettings');
+  if(!p.classList.contains('show'))return;
+  const cols=allColumns(true);
+  const groupsHtml=COL_GROUPS.map(grp=>{
+    if(grp.locked&&!pnlUnlocked)return ''; // 손익은 잠금해제 시에만 설정 노출
+    const gcols=cols.filter(c=>c.g===grp.g);
+    const chips=gcols.map(c=>`<span class="cs-col ${visibleCols.has(c.id)?'on':''}${grp.locked?' locked':''}" data-colid="${c.id}">${escH(c.h)}</span>`).join('');
+    return `<div class="cs-group">
+      <div class="cs-g-label">${escH(grp.label)} <span class="cs-g-all" data-gall="${grp.g}">모두 켜기/끄기</span></div>
+      <div class="cs-cols">${chips}</div>
+    </div>`;
+  }).join('');
+  p.innerHTML=`<div class="cs-head">
+      <h4>⚙ 표시 컬럼 설정</h4>
+      <span class="cs-hint">클릭해서 켜고 끄기 · 이 PC에 저장됩니다</span>
+      <span class="cs-close" id="csClose">×</span>
+    </div>${groupsHtml}`;
+  // 개별 컬럼 토글
+  p.querySelectorAll('.cs-col[data-colid]').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.colid;
+    if(visibleCols.has(id))visibleCols.delete(id);else visibleCols.add(id);
+    saveVisibleCols();el.classList.toggle('on',visibleCols.has(id));renderOps();
+  });
+  // 그룹 전체 켜기/끄기
+  p.querySelectorAll('[data-gall]').forEach(el=>el.onclick=()=>{
+    const g=el.dataset.gall;const gcols=cols.filter(c=>c.g===g);
+    const allOn=gcols.every(c=>visibleCols.has(c.id));
+    gcols.forEach(c=>{if(allOn)visibleCols.delete(c.id);else visibleCols.add(c.id)});
+    saveVisibleCols();renderColSettings();renderOps();
+  });
+  const cl=p.querySelector('#csClose');if(cl)cl.onclick=()=>{p.classList.remove('show');document.getElementById('colGear').classList.remove('active')};
+}
 // 관리 / 마스터 진입
 document.getElementById('btnManage').onclick=()=>{
   document.getElementById('panel-ops').classList.remove('active');document.getElementById('panel-ops').style.display='none';
