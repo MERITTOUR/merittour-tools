@@ -128,6 +128,30 @@
   .proc.quote{background:var(--mt-surface3);color:var(--mt-text2)}
   .pay-ok{color:var(--mt-green-dark);font-size:11px}
   .pay-due{color:var(--mt-red-dark);font-size:11px;font-weight:600}
+
+  /* 선택된 행 */
+  table.data tr.row-sel{background:var(--mt-accent-dim)!important}
+  table.data tr.row-sel:hover{background:var(--mt-accent-dim)!important}
+
+  /* 일괄처리 바 (하단 고정) */
+  .bulk-bar{position:sticky;bottom:0;z-index:40;margin-top:12px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+    background:var(--mt-brand);color:#fff;border-radius:12px;padding:12px 18px;box-shadow:var(--mt-shadow-lg)}
+  .bulk-bar .bulk-count{font-size:13px}
+  .bulk-bar .bulk-count b{font-size:16px;font-family:var(--mt-mono);color:var(--mt-point)}
+  .bulk-bar .bulk-sep{width:1px;height:22px;background:rgba(255,255,255,.25)}
+  .bulk-field{font-size:12px;display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.85)}
+  .bulk-field select,.bulk-field input{font:inherit;font-size:12px;padding:4px 8px;border:1px solid rgba(255,255,255,.3);
+    border-radius:6px;background:rgba(255,255,255,.95);color:var(--mt-text)}
+  .bulk-chk-group{display:inline-flex;flex-wrap:wrap;gap:5px}
+  .bulk-chk-btn{font:inherit;font-size:11px;padding:5px 9px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.3);
+    background:rgba(255,255,255,.12);color:#fff}
+  .bulk-chk-btn:hover{background:rgba(255,255,255,.25)}
+  .bulk-chk-btn.off{background:transparent;color:rgba(255,255,255,.7)}
+  .bulk-apply{font:inherit;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;border:none;
+    background:var(--mt-point);color:#fff;font-weight:600}
+  .bulk-clear{font:inherit;font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.3);
+    background:transparent;color:#fff;margin-left:auto}
+  .bulk-clear:hover{background:rgba(255,255,255,.15)}
   .chk-row{display:inline-flex;flex-wrap:wrap;gap:5px}
   .chk{font-size:11px;font-family:var(--mt-mono);padding:3px 8px;border-radius:10px;background:var(--mt-surface3);color:var(--mt-text3);border:1px solid transparent;cursor:pointer;user-select:none;white-space:nowrap}
   .chk.on{background:var(--mt-green-dim);color:var(--mt-green-dark)}
@@ -577,6 +601,76 @@ function allColumns(hasAnnounceData){
 }
 
 let activeCols={base:true,roster:false,air:false,local:false,check:false,pnl:false};
+const bulkSel=new Set();
+
+function bulkBarHtml(){
+  if(!bulkSel.size)return '';
+  return `<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-count"><b>${bulkSel.size}</b>건 선택</span>
+    <span class="bulk-sep"></span>
+    <label class="bulk-field">발권
+      <select id="bulkLabel"><option value="">―</option>${TICKET_LABELS.map(l=>`<option>${escH(l)}</option>`).join('')}</select>
+    </label>
+    <span class="bulk-chk-group">
+      ${MANUAL_KEYS.map(([k,t])=>`<button class="bulk-chk-btn" data-bulk-mk="${k}">${t} ✓</button>`).join('')}
+      <button class="bulk-chk-btn off" data-bulk-clear="1">체크 해제</button>
+    </span>
+    <label class="bulk-field">비고
+      <select id="bulkMemoTarget"><option value="int">내부</option><option value="air">항공</option><option value="loc">현지</option></select>
+      <input type="text" id="bulkMemo" placeholder="일괄 입력" style="width:130px">
+      <button class="bulk-apply" id="bulkMemoApply">적용</button>
+    </label>
+    <span class="bulk-sep"></span>
+    <button class="bulk-clear" id="bulkClear">선택 해제</button>
+  </div>`;
+}
+
+function bindBulkBar(){
+  // 행 체크박스
+  document.querySelectorAll('input.bulk-cb').forEach(cb=>cb.onchange=()=>{
+    if(cb.checked)bulkSel.add(cb.dataset.ev);else bulkSel.delete(cb.dataset.ev);
+    renderOps();
+  });
+  // 전체 선택
+  const all=document.getElementById('bulkAll');
+  if(all)all.onchange=()=>{
+    const shownEvs=[...document.querySelectorAll('input.bulk-cb')].map(cb=>cb.dataset.ev);
+    if(all.checked)shownEvs.forEach(e=>bulkSel.add(e));
+    else shownEvs.forEach(e=>bulkSel.delete(e));
+    renderOps();
+  };
+  if(!bulkSel.size)return;
+  // 발권 라벨 일괄
+  const bl=document.getElementById('bulkLabel');
+  if(bl)bl.onchange=()=>{
+    if(!bl.value)return;
+    bulkSel.forEach(ev=>{const o=getOps(ev);o.label=bl.value;setOps(ev,o)});
+    toast(`${bulkSel.size}건 발권 라벨 → ${bl.value}`);renderOps();
+  };
+  // OP 체크 일괄 켜기
+  document.querySelectorAll('[data-bulk-mk]').forEach(b=>b.onclick=()=>{
+    const mk=b.dataset.bulkMk;
+    bulkSel.forEach(ev=>{const o=getOps(ev);o.manual[mk]=true;o.manual[mk+'_ts']=Date.now();setOps(ev,o)});
+    toast(`${bulkSel.size}건 ${MANUAL_KEYS.find(x=>x[0]===mk)[1]} ✓`);renderOps();
+  });
+  // OP 체크 일괄 해제
+  const clr=document.querySelector('[data-bulk-clear]');
+  if(clr)clr.onclick=()=>{
+    bulkSel.forEach(ev=>{const o=getOps(ev);MANUAL_KEYS.forEach(([k])=>o.manual[k]=false);setOps(ev,o)});
+    toast(`${bulkSel.size}건 체크 해제`);renderOps();
+  };
+  // 비고 일괄 입력
+  const bma=document.getElementById('bulkMemoApply');
+  if(bma)bma.onclick=()=>{
+    const tgt=document.getElementById('bulkMemoTarget').value;
+    const val=document.getElementById('bulkMemo').value;
+    bulkSel.forEach(ev=>{const o=getOps(ev);o.memos[tgt]=val;setOps(ev,o)});
+    toast(`${bulkSel.size}건 ${tgt==='int'?'내부':(tgt==='air'?'항공':'현지')} 비고 입력`);renderOps();
+  };
+  // 선택 해제
+  const bc=document.getElementById('bulkClear');
+  if(bc)bc.onclick=()=>{bulkSel.clear();renderOps()};
+}
 
 function renderOps(){
   const body=document.getElementById('ops-body');
@@ -680,16 +774,20 @@ function renderOps(){
   const summary=`<div style="font-size:12px;color:var(--mt-text2);margin:0 0 10px">${shown.length} / ${rows.length}건 표시</div>`;
 
   const COLS=allColumns(hasAnnounceData).filter(col=>activeCols[col.g]);
-  const headHtml=COLS.map(col=>`<th>${col.h}</th>`).join('');
+  const shownEvs=shown.map(c=>c.ev);
+  const allSel=shownEvs.length>0 && shownEvs.every(e=>bulkSel.has(e));
+  const headHtml=`<th style="width:30px"><input type="checkbox" id="bulkAll" ${allSel?'checked':''}></th>`+COLS.map(col=>`<th>${col.h}</th>`).join('');
   const trs=shown.map(c=>{
     const o=getOps(c.ev);
     const tds=COLS.map(col=>col.cell(c,o)).join('');
-    return `<tr class="row-clickable" data-ev="${c.ev}">${tds}</tr>`;
+    const checked=bulkSel.has(c.ev)?'checked':'';
+    return `<tr class="row-clickable ${bulkSel.has(c.ev)?'row-sel':''}" data-ev="${c.ev}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="bulk-cb" data-ev="${c.ev}" ${checked}></td>${tds}</tr>`;
   }).join('');
 
   body.innerHTML=alertBar+monthBar+ctrl+summary+`<div class="tbl-wrap"><table class="data">
     <thead><tr>${headHtml}</tr></thead>
-    <tbody>${trs||`<tr><td colspan="${COLS.length}" class="empty">조건에 맞는 행사가 없습니다.</td></tr>`}</tbody></table></div>`;
+    <tbody>${trs||`<tr><td colspan="${COLS.length+1}" class="empty">조건에 맞는 행사가 없습니다.</td></tr>`}</tbody></table></div>`+bulkBarHtml();
 
   // 검수 알림 토글
   document.querySelectorAll('.alert-pill[data-issue]').forEach(p=>p.onclick=()=>{
@@ -768,6 +866,7 @@ function renderOps(){
   document.querySelectorAll('input.inline-num[data-room]').forEach(el=>el.oninput=()=>{const o=getOps(el.dataset.ev);o.ops[el.dataset.room]=el.value;setOps(el.dataset.ev,o)});
   // 현금영수증 체크
   document.querySelectorAll('input[data-receipt]').forEach(el=>el.onchange=()=>{const o=getOps(el.dataset.ev);o.ops.receipt=el.checked;setOps(el.dataset.ev,o)});
+  bindBulkBar();
   document.querySelectorAll('tr.row-clickable').forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.ev));
 }
 
