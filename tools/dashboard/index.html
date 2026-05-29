@@ -89,6 +89,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--surface3);color:var(--text2);font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{background:var(--surface4);color:var(--accent)}
+.air-team-row td{border-top:1.5px solid var(--border2);background:var(--surface)}
+.air-pax-row td{padding-top:3px;padding-bottom:3px;border-bottom:0.5px solid var(--surface3);background:var(--surface2)}
+.air-pax-row .pax-name{font-size:12px}
+.air-pax-row:hover td{background:var(--surface3)}
+.v-adj{width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);text-align:right;background:var(--surface2);color:var(--text)}
+.v-adj:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
 td{padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;vertical-align:middle}
 tr:hover td{background:#EEF3FA}
 .tr-section td{background:var(--surface4)!important;color:var(--text2);font-weight:700;font-size:11px}
@@ -226,6 +232,7 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> ⑥ 숙소 정보</div>
   <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
   <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
+  <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑨ 요금 검증</div>
 </div>
 
 <div class="wrap">
@@ -400,6 +407,24 @@ tr:hover td{background:#EEF3FA}
     <div class="card-head"><div><div class="card-title">⑧ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div></div>
     <div class="sum-grid" id="dinner-summary"></div>
     <div class="tbl-wrap"><table id="dinner-table"><thead id="dinner-thead"></thead><tbody id="dinner-tbody"></tbody></table></div>
+  </div>
+</div>
+<div class="section" id="sec-verify">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">⑨ 요금 검증</div><div class="card-sub">리조트 마스터 단가 × 월별 환율 + 항공요금으로 예상 판매금액을 산출해 실제와 대조</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="filterVerify('all')">전체</button>
+        <button class="btn-sm" onclick="filterVerify('diff')">차액 있음만</button>
+        <button class="btn-sm" onclick="filterVerify('big')">큰 차이만</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="verify-summary"></div>
+    <div class="note">
+      <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 적용환율 + 항공요금합 + 회원관리비합(₩50,000/인) + 원화기타.
+      환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.
+    </div>
+    <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
   </div>
 </div>
 
@@ -822,7 +847,7 @@ function analyze(){
   teams.forEach((t,i)=>t.no=i+1);
 
   // 탭 해제
-  ['booking','insurance','air','transfer','accom','golf','dinner'].forEach(s=>
+  ['booking','insurance','air','transfer','accom','golf','dinner','verify'].forEach(s=>
     document.getElementById('nav-'+s).classList.remove('locked'));
 
   // 세션 배지
@@ -837,6 +862,7 @@ function analyze(){
   renderAccom();
   renderGolf();
   renderDinner();
+  renderVerify();
   gotoSection('booking');
 }
 
@@ -934,7 +960,7 @@ function renderAir(){
     sortTh('출발일자','dep','air')+
     sortTh('도착일자','arr','air')+
     sortTh('사전좌석','seat','air')+
-    '<th>일행 명단 (영문·생년월일·여권·만료)</th>'+
+    '<th class="center">인원</th>'+
     sortTh('PNR','pnr','air')+
     '<th>발권완료</th>'+
     sortTh('출국 안내','dday','air')+'</tr>';
@@ -955,15 +981,6 @@ function renderAir(){
     <div class="sum-box"><div class="sum-label">발권완료 (수동)</div><div class="sum-val green">${ticketedCnt}/${teams.length}</div></div>`;
 
   document.getElementById('air-tbody').innerHTML = rows.map(t=>{
-    const paxHtml = t.pax_list.length
-      ? '<ul class="pax-list">'+t.pax_list.map(p=>{
-          const bd=p.birth?p.birth.slice(2).replace(/-/g,''):'';
-          const pass=p.passport?`<span class="muted">여권 ${p.passport}</span>`:'';
-          const exp=p.expiry?`<span class="muted">~${p.expiry.slice(2).replace(/-/g,'')}</span>`:'';
-          const seat=p.seat==='Y'?'<span class="pnr-tag" style="background:var(--amber-dim);color:var(--amber2);border-color:var(--amber)">좌석요청</span>':'';
-          return `<li class="${p.isRep?'rep':''}">${p.isRep?'★ ':''}${p.name}${p.engFull?` <span class="muted">${p.engFull}</span>`:''}${bd?` <span class="muted">${bd}</span>`:''}${p.gender?` ${p.gender}`:''} ${pass} ${exp} ${seat}</li>`;
-        }).join('')+'</ul>'
-      : '<span class="muted">명단 없음</span>';
     const pnrHtml = (t.pnrList&&t.pnrList.length)
       ? '<div class="pnr-cell">'+t.pnrList.map(p=>`<span class="pnr-tag">${p}</span>`).join('')+(t.pnrList.length>1?'<div class="muted" style="font-size:9px;margin-top:2px">발권 분리 '+t.pnrList.length+'건</div>':'')+'</div>'
       : '<span class="muted">미발권</span>';
@@ -977,7 +994,8 @@ function renderAir(){
       else notify=`<span class="muted">D-${d}</span>`;
     }
     const checked=ticketDone[t.eventSeq]?'checked':'';
-    return `<tr>
+    // 팀 헤더 행
+    const headRow=`<tr class="air-team-row">
       <td class="center"><input type="checkbox" class="chk sel-air" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
@@ -990,11 +1008,32 @@ function renderAir(){
       <td>${t.dep}</td>
       <td>${t.arr}</td>
       <td class="center">${seatCell}</td>
-      <td>${paxHtml}</td>
+      <td class="num">${t.pax}</td>
       <td>${pnrHtml}</td>
       <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleTicket('${t.eventSeq}',this.checked)"></td>
       <td class="center">${notify}</td>
     </tr>`;
+    // 일행 하위 행 (대표자 포함 전원, 들여쓰기)
+    const paxRows = t.pax_list.length
+      ? t.pax_list.map(p=>{
+          const bd=p.birth?p.birth.slice(2).replace(/-/g,''):'';
+          const pass=p.passport?p.passport:'<span class="muted">여권 미등록</span>';
+          const exp=p.expiry?`~${p.expiry.slice(2).replace(/-/g,'')}`:'';
+          const seat=p.seat==='Y'?'<span class="pnr-tag" style="background:var(--amber-dim);color:var(--amber2);border-color:var(--amber)">좌석요청</span>':'';
+          const cntry=(p.country&&p.country!=='KR')?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
+          return `<tr class="air-pax-row">
+            <td></td><td></td><td></td><td></td>
+            <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
+            <td colspan="2" style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
+            <td class="center" style="font-size:11px">${p.gender||''}</td>
+            <td class="center" style="font-family:var(--mono);font-size:11px">${bd}</td>
+            <td colspan="2" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span> ${cntry}</td>
+            <td class="center">${seat}</td>
+            <td colspan="4"></td>
+          </tr>`;
+        }).join('')
+      : `<tr class="air-pax-row"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+    return headRow+paxRows;
   }).join('');
 }
 function toggleTicket(seq,val){
@@ -1206,6 +1245,145 @@ function renderDinner(){
 }
 
 /* ════════════════════════════════════════════════════════════
+   ⑨ 요금 검증
+════════════════════════════════════════════════════════════ */
+let verifyFilter='all';
+function filterVerify(f){ verifyFilter=f; renderVerify(); }
+
+/* 숙소명 → 리조트 마스터 단가(체재비·송영비) 조회 */
+function resortUnitFor(accom){
+  // accom(parseProduct 결과) → resortMaster key 매핑
+  let key='';
+  if(/야마나미|쿠주|관내별장|돔하우스/.test(accom)){
+    if(/쿠주/.test(accom)) key='kuzu'; else key='yamanami';
+  }
+  else if(/간지/.test(accom)) key='ganji';
+  else if(/시즈노야도/.test(accom)) key='shizu';
+  else if(/스가다이라/.test(accom)) key='sugadaira';
+  const r = key && resortMaster.find(x=>x.key===key);
+  // 마스터에 없는 위탁 숙소는 야마나미 기본 단가로 (체재비만, 송영 동일)
+  if(!r){ const y=resortMaster.find(x=>x.key==='yamanami'); return {stay:y?y.stay:0, transfer:y?y.transfer:0, matched:false}; }
+  return {stay:r.stay, transfer:r.transfer, matched:true};
+}
+/* 출국월 환율 조회 */
+function rateForMonth(depDate){
+  if(!depDate) return commonMaster.rate||0;
+  const ym=depDate.slice(0,7);
+  const mr=commonMaster.monthlyRates||{};
+  return mr[ym]!=null ? mr[ym] : (commonMaster.rate||0);
+}
+/* 항공요금 조회 (월 × 출발지 × 도착지 × 박수) */
+function airfareFor(t){
+  const arr=commonMaster.airfares||[]; if(!arr.length) return null;
+  const ym=(t.dep||'').slice(0,7);
+  const origin=t.apisOrigin||t.origin||'';
+  const dest=t.apisDest||'';
+  const m=String(t.period).match(/(\d+)박/); const nights=m?parseInt(m[1]):t.nights;
+  // 정확 일치 → 도착지 무시 → 출발지만, 단계적 완화
+  let f=arr.find(a=>a.month===ym&&a.origin===origin&&a.dest===dest&&a.nights===nights);
+  if(!f) f=arr.find(a=>a.month===ym&&a.origin===origin&&a.nights===nights);
+  if(!f) f=arr.find(a=>a.month===ym&&a.origin===origin);
+  return f?f.fare:null;
+}
+/* 팀별 예상 판매금액 계산 */
+function calcExpected(t){
+  const m=String(t.period).match(/(\d+)박/); const nights=m?parseInt(m[1]):(t.nights||0);
+  const pax=t.pax||0;
+  const u=resortUnitFor(t.accom);
+  const stayTotal = u.stay*pax*nights;        // 체재비 합(엔)
+  const transferTotal = u.transfer*pax;        // 송영비 합(엔)
+  const yenEtc = vAdjust[t.eventSeq]?.yenEtc||0; // 엔화 기타(엔)
+  const yenSum = stayTotal+transferTotal+yenEtc;
+  const rate = rateForMonth(t.dep);
+  const yenKRW = Math.round(yenSum*rate/100);  // 100엔당 환율
+  const airfare = airfareFor(t);
+  const airTotal = airfare!=null ? airfare*pax : null;
+  const mgmtTotal = (commonMaster.mgmtKRW||0)*pax;
+  const krwEtc = vAdjust[t.eventSeq]?.krwEtc||0;
+  const expected = airTotal!=null ? (yenKRW+airTotal+mgmtTotal+krwEtc) : null;
+  return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,expected};
+}
+
+/* 팀별 검증 보정값 (엔화기타·원화기타) */
+let vAdjust={};
+const STORE_VADJ='mt_notify_vAdjust';
+
+const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','예상 판매금액','실제 판매금액','차액','상태'];
+function renderVerify(){
+  document.getElementById('verify-thead').innerHTML='<tr>'+VERIFY_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  let list=teams.filter(t=>t.accom).map(t=>({t, c:calcExpected(t)}));
+  // 상태 판정
+  list.forEach(x=>{
+    if(x.c.expected==null){ x.status='no-base'; x.diff=null; }
+    else { x.diff=x.t.sales - x.c.expected;
+      if(Math.abs(x.diff)<=1) x.status='match';
+      else if(Math.abs(x.diff)<=5000) x.status='minor';
+      else x.status='big';
+    }
+  });
+  if(verifyFilter==='diff') list=list.filter(x=>x.status==='minor'||x.status==='big');
+  if(verifyFilter==='big') list=list.filter(x=>x.status==='big');
+  // 차액 큰 순 정렬
+  list.sort((a,b)=>Math.abs(b.diff||0)-Math.abs(a.diff||0));
+
+  const matchCnt=teams.filter(t=>t.accom).map(t=>calcExpected(t)).filter((c,i)=>{ const t=teams.filter(x=>x.accom)[i]; return c.expected!=null && Math.abs(t.sales-c.expected)<=1; }).length;
+  const all=teams.filter(t=>t.accom);
+  const calced=all.map(t=>({t,c:calcExpected(t)}));
+  const okN=calced.filter(x=>x.c.expected!=null&&Math.abs(x.t.sales-x.c.expected)<=1).length;
+  const minorN=calced.filter(x=>x.c.expected!=null&&Math.abs(x.t.sales-x.c.expected)>1&&Math.abs(x.t.sales-x.c.expected)<=5000).length;
+  const bigN=calced.filter(x=>x.c.expected!=null&&Math.abs(x.t.sales-x.c.expected)>5000).length;
+  const noBaseN=calced.filter(x=>x.c.expected==null).length;
+  document.getElementById('verify-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">검증 대상</div><div class="sum-val">${all.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">일치</div><div class="sum-val green">${okN}건</div></div>
+    <div class="sum-box"><div class="sum-label">경미한 차이(±5천)</div><div class="sum-val ${minorN>0?'':''}" style="color:var(--amber2)">${minorN}건</div></div>
+    <div class="sum-box"><div class="sum-label">큰 차이</div><div class="sum-val ${bigN>0?'red':''}">${bigN}건</div></div>
+    <div class="sum-box"><div class="sum-label">기준 미등록</div><div class="sum-val muted">${noBaseN}건</div></div>`;
+
+  document.getElementById('verify-tbody').innerHTML = list.map(({t,c,status,diff})=>{
+    const ad=vAdjust[t.eventSeq]||{};
+    let statusCell, diffCell;
+    if(status==='no-base'){
+      statusCell='<span class="tag tag-excl">기준 미등록</span>';
+      diffCell='<span class="muted">-</span>';
+    } else {
+      const cls = status==='match'?'tag-status-정산':(status==='minor'?'tag-status-견적':'tag-status-취소');
+      const label = status==='match'?'일치':(status==='minor'?'경미':'큰 차이');
+      statusCell=`<span class="tag ${cls}">${label}</span>`;
+      const sign=diff>0?'+':'';
+      const color=status==='match'?'var(--green2)':(status==='minor'?'var(--amber2)':'var(--red)');
+      diffCell=`<span style="color:${color};font-weight:700">${sign}${won(diff)}</span>`;
+    }
+    return `<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td><b>${t.repName}</b></td>
+      <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''}</td>
+      <td class="center">${c.nights}박</td>
+      <td class="num">${c.pax}</td>
+      <td class="num">¥${c.stayTotal.toLocaleString()}</td>
+      <td class="num">¥${c.transferTotal.toLocaleString()}</td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.yenEtc?Number(ad.yenEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','yenEtc',this.value)"></td>
+      <td class="num">${c.rate?c.rate.toLocaleString():'<span class="muted">미등록</span>'}</td>
+      <td class="num">${c.rate?'₩'+c.yenKRW.toLocaleString():'-'}</td>
+      <td class="num">${c.airTotal!=null?'₩'+c.airTotal.toLocaleString():'<span class="muted">미등록</span>'}</td>
+      <td class="num">₩${c.mgmtTotal.toLocaleString()}</td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.krwEtc?Number(ad.krwEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','krwEtc',this.value)"></td>
+      <td class="num">${c.expected!=null?'<b>₩'+c.expected.toLocaleString()+'</b>':'<span class="muted">산출 불가</span>'}</td>
+      <td class="num">${won(t.sales)}</td>
+      <td class="num">${diffCell}</td>
+      <td class="center">${statusCell}</td>
+    </tr>`;
+  }).join('');
+}
+function setVAdj(seq, field, val){
+  vAdjust[seq]=vAdjust[seq]||{};
+  vAdjust[seq][field]=num(val);
+  try{ localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
+  renderVerify();
+}
+
+/* ════════════════════════════════════════════════════════════
    선택 관리 (알리고 발송용)
 ════════════════════════════════════════════════════════════ */
 function toggleSel(seq,val){
@@ -1395,7 +1573,7 @@ const STORE_COMMON='mt_notify_commonMaster';
 /* 기본값 — 알고 있는 메리트투어 요금 기준 (모두 수정 가능) */
 const RESORT_DEFAULTS=[
   {key:'yamanami', name:'아소 야마나미리조트', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   stay:15000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
    bfast:0, lunch:0, dinner:0, memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
    stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
@@ -1412,7 +1590,10 @@ const RESORT_DEFAULTS=[
 ];
 const COMMON_DEFAULTS={
   rate:0, rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
-  insCompany:'', insProduct:'', insFee:0, insCover:''
+  insCompany:'', insProduct:'', insFee:0, insCover:'',
+  mgmtKRW:50000,           // 회원관리비 (원화 고정)
+  monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원)
+  airfares:[]              // [{month, origin, dest, nights, fare}] 항공요금 테이블
 };
 
 let resortMaster=[], commonMaster={};
@@ -1511,8 +1692,86 @@ function renderResortMaster(){
         <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
           onchange="updateCommon('insCover',this.value,this)"></div>
     </div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">💰 회원관리비 (원화 고정)</div>
+    <div class="rm-row"><label>1인 회원관리비</label><div style="display:flex;align-items:center">
+      <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.mgmtKRW?Number(commonMaster.mgmtKRW).toLocaleString():''}" placeholder="50000"
+        onchange="updateCommon('mgmtKRW',this.value,this)"><span class="rm-unit">원</span></div></div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">📅 월별 환율 (출국월 기준 · 100엔당 원)</div>
+    <div id="monthly-rate-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <input class="rm-input" id="mr-month" type="month" style="width:130px;text-align:left;font-family:var(--sans)">
+      <input class="rm-input" id="mr-rate" type="text" inputmode="numeric" placeholder="환율" style="width:90px">
+      <button class="btn-sm" onclick="addMonthlyRate()">+ 추가</button>
+    </div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">✈️ 항공요금 테이블 (월 × 출발지→도착지 × 박수 · 원화/인)</div>
+    <div id="airfare-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
+      <input class="rm-input text" id="af-origin" placeholder="출발지(인천)" style="width:90px">
+      <input class="rm-input text" id="af-dest" placeholder="도착지(구마모토)" style="width:100px">
+      <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:60px">
+      <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="요금(원)" style="width:90px">
+      <button class="btn-sm" onclick="addAirfare()">+ 추가</button>
+    </div>
   </div>`;
+  renderMonthlyRates();
+  renderAirfares();
 }
+
+/* 월별 환율 테이블 렌더 */
+function renderMonthlyRates(){
+  const box=document.getElementById('monthly-rate-rows'); if(!box) return;
+  const ents=Object.entries(commonMaster.monthlyRates||{}).sort();
+  box.innerHTML = ents.length
+    ? ents.map(([m,r])=>`<div class="rm-row"><label>${m}</label><div style="display:flex;align-items:center;gap:6px">
+        <span style="font-family:var(--mono)">100엔 = ${Number(r).toLocaleString()}원</span>
+        <button class="btn-sm" style="padding:2px 8px;color:var(--red);border-color:var(--red)" onclick="delMonthlyRate('${m}')">삭제</button></div></div>`).join('')
+    : '<div class="muted" style="font-size:11px">등록된 월별 환율이 없습니다.</div>';
+}
+function addMonthlyRate(){
+  const m=document.getElementById('mr-month').value;
+  const r=num(document.getElementById('mr-rate').value);
+  if(!m||!r){ alert('출국월과 환율을 모두 입력해주세요.'); return; }
+  commonMaster.monthlyRates=commonMaster.monthlyRates||{};
+  commonMaster.monthlyRates[m]=r;
+  saveResortMaster(); renderMonthlyRates();
+  document.getElementById('mr-month').value=''; document.getElementById('mr-rate').value='';
+}
+function delMonthlyRate(m){ delete commonMaster.monthlyRates[m]; saveResortMaster(); renderMonthlyRates(); }
+
+/* 항공요금 테이블 렌더 */
+function renderAirfares(){
+  const box=document.getElementById('airfare-rows'); if(!box) return;
+  const arr=commonMaster.airfares||[];
+  box.innerHTML = arr.length
+    ? '<div class="tbl-wrap" style="max-height:200px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>월</th><th>출발지</th><th>도착지</th><th>박수</th><th>요금</th><th></th></tr></thead><tbody>'+
+      arr.map((a,i)=>`<tr><td>${a.month}</td><td>${a.origin}</td><td>${a.dest}</td><td class="center">${a.nights}박</td><td class="num">₩${Number(a.fare).toLocaleString()}</td>
+        <td class="center"><button class="btn-sm" style="padding:1px 7px;color:var(--red);border-color:var(--red)" onclick="delAirfare(${i})">×</button></td></tr>`).join('')+
+      '</tbody></table></div>'
+    : '<div class="muted" style="font-size:11px">등록된 항공요금이 없습니다.</div>';
+}
+function addAirfare(){
+  const month=document.getElementById('af-month').value;
+  const origin=document.getElementById('af-origin').value.trim();
+  const dest=document.getElementById('af-dest').value.trim();
+  const nights=num(document.getElementById('af-nights').value);
+  const fare=num(document.getElementById('af-fare').value);
+  if(!month||!origin||!dest||!nights||!fare){ alert('월·출발지·도착지·박수·요금을 모두 입력해주세요.'); return; }
+  commonMaster.airfares=commonMaster.airfares||[];
+  // 같은 키 있으면 덮어쓰기
+  const idx=commonMaster.airfares.findIndex(a=>a.month===month&&a.origin===origin&&a.dest===dest&&a.nights===nights);
+  if(idx>=0) commonMaster.airfares[idx].fare=fare;
+  else commonMaster.airfares.push({month,origin,dest,nights,fare});
+  saveResortMaster(); renderAirfares();
+  ['af-origin','af-dest','af-nights','af-fare'].forEach(id=>document.getElementById(id).value='');
+}
+function delAirfare(i){ commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares(); }
 
 function flashSaved(el, resortKey){
   if(resortKey){
@@ -1529,7 +1788,7 @@ function updateResort(key, field, val, el){
   if(field!=='memo' && el){ el.value = r[field]?Number(r[field]).toLocaleString():''; }
 }
 function updateCommon(field, val, el){
-  if(field==='rate'||field==='insFee'){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  if(field==='rate'||field==='insFee'||field==='mgmtKRW'){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
   saveResortMaster();
   if(field==='rate') renderResortMaster(); // 큰 숫자 표시 갱신
@@ -1542,7 +1801,7 @@ function savePersist(){
   try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); }catch(e){}
 }
 function loadPersist(){
-  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; }
+  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; vAdjust={}; }
 }
 
 /* ════════════════════════════════════════════════════════════
