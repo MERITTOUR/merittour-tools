@@ -14,8 +14,9 @@ body, body * { transition: background-color .25s, border-color .25s, color .15s;
 html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(--mt-text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
 .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; margin-bottom: 28px; border-bottom: 1px solid var(--mt-border); }
-.brand-wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .brand { font-size: 22px; font-weight: 700; color: var(--mt-brand); letter-spacing: -0.02em; }
+.brand-logo { height: 28px; width: auto; display: block; }
 .brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: 0.08em; }
 .dept-badge { font-size: 11px; font-weight: 700; font-family: var(--mt-mono); background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-accent); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; }
 .dept-badge.admin { background: var(--mt-point-dim); color: var(--mt-point); border-color: var(--mt-point); }
@@ -62,7 +63,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 <div class="container">
   <div class="header">
     <div class="brand-wrap">
-      <div class="brand">MERITTOUR</div>
+      <img src="../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="brand-logo">
       <div class="brand-sub">INTERNAL TOOLS</div>
       <span class="dept-badge ">영업팀</span>
     </div>
