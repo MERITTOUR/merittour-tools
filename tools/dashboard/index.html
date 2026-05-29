@@ -523,30 +523,59 @@ function num(v){ const n=Number(String(v||'').replace(/[, ]/g,'')); return isNaN
 function won(v){ return '₩'+num(v).toLocaleString(); }
 
 /* 상품명 → 숙소 분류 (사이젠 parseProduct 계승) */
+/* 상품명 → 숙소/룸타입/지역/골프장 분류 (호텔블록 mapProduct 기준 전체 이식) */
 function parseProduct(name){
   name=String(name||'');
-  let accom='', roomType='';
-  if(name.includes('야마나미')||name.includes('돔하우스')||name.includes('관내별장')||name.includes('소보별장')||name.includes('아소별장')){
-    accom='야마나미리조트';
-    if(name.includes('소형트윈')) roomType='호텔 소형트윈';
-    else if(name.includes('트윈')) roomType='호텔 트윈';
-    else if(name.includes('돔하우스')) roomType='돔하우스';
-    else if(name.includes('별장')) roomType='관내별장';
-    else roomType='호텔 트윈';
-  } else if(name.includes('쿠주힐즈')||name.includes('구주힐즈')||name.includes('久住ヒルズ')||name.includes('장기숙박')||name.includes('별장전용')){
-    accom='쿠주힐즈'; roomType='장기숙박전용';
-  } else if(name.includes('간지호텔')){
-    accom='간지호텔'; roomType='호텔';
-  } else if(name.includes('시즈노야도')||name.includes('료칸')){
-    accom='시즈노야도 료칸'; roomType='료칸';
+  let s=name.trim().replace(/^여행사\s*/,'').replace(/^\[[^\]]*\]\s*/,'');
+  const up=s.toUpperCase();
+  let accom='', roomType='', region='', golf='';
+  // 룸타입 사전 판정
+  let room='트윈';
+  if(s.indexOf('소형트윈')>=0) room='소형트윈';
+  else if(s.indexOf('패밀리룸')>=0) room='패밀리룸';
+
+  if(s.indexOf('야마나미')>=0||up.indexOf('14HILLS')>=0||s.indexOf('돔하우스')>=0||s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('소보별장')>=0||s.indexOf('아소별장')>=0){
+    region='구마모토'; golf='야마나미CC';
+    if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='야마나미 쿠주힐즈'; roomType='트윈'; }
+    else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('소보별장')>=0||s.indexOf('아소별장')>=0){ accom='아소 야마나미 관내별장'; roomType='별장'; }
+    else if(s.indexOf('돔하우스')>=0){ accom='아소 야마나미 돔하우스'; roomType='돔하우스'; }
+    else { accom='아소 야마나미 골프텔'; roomType=room; }
   }
+  else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='야마나미 쿠주힐즈'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
+  else if(s.indexOf('포틴힐즈')>=0){
+    region='구마모토'; golf='포틴힐즈CC';
+    if(s.indexOf('카라반')>=0){ accom='포틴힐즈CC 카라반'; roomType='트윈'; }
+    else if(s.indexOf('패밀리룸')>=0){ accom='포틴힐즈CC 골프텔'; roomType='패밀리룸'; }
+    else { accom='포틴힐즈CC 골프텔'; roomType='트윈'; }
+  }
+  else if(s.indexOf('아키바')>=0){ accom='아키바 리조트'; roomType='트윈'; region='벳푸'; golf='벳푸 아키바'; }
+  else if(s.indexOf('무츠키')>=0){ accom='무츠키 료칸'; roomType='트윈'; region='벳푸'; golf='벳푸'; }
+  else if(s.indexOf('시로사토')>=0){ accom='시로사토CC 골프텔'; roomType='트윈'; region='이바라키'; golf='시로사토CC'; }
+  else if(s.indexOf('후쿠로다노타키')>=0){ accom='후쿠로다노타키CC 골프텔'; roomType='트윈'; region='이바라키'; golf='후쿠로다노타키CC'; }
+  else if(s.indexOf('간지')>=0){ accom='간지호텔'; roomType='트윈'; region='구마모토'; golf='구주고원CC / 야마나미CC'; }
+  else if(s.indexOf('시즈노야도')>=0){ accom='시즈노야도 료칸'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
+  else if(s.indexOf('스가다이라')>=0){
+    region='나가노'; golf='스가다이라 그린CC';
+    if(s.indexOf('맨션')>=0){ accom='스가다이라 맨션'; roomType='맨션'; }
+    else { accom='스가다이라 고원 온천호텔'; roomType='온천호텔'; }
+  }
+  else if(s.indexOf('미야자키')>=0){ accom='미야자키 시내 호텔'; roomType='트윈'; region='미야자키'; golf='미야자키'; }
+  else if(s.indexOf('구마모토 시내')>=0){ accom='구마모토 시내 호텔'; roomType='트윈'; region='구마모토'; golf=''; }
+  else if(s.indexOf('닐라이스프링스')>=0){ accom='닐라이스프링스 리조트'; roomType='트윈'; region='쿠알라룸푸르'; golf='닐라이스프링스GC'; }
+  else if(s.indexOf('국제공항')>=0){ accom='국제공항CC 골프텔'; roomType='트윈'; region='나고야'; golf='국제공항CC'; }
+
   const m=name.match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
-  return {accom, roomType, nights};
+  return {accom, roomType, region, golf, nights};
 }
+/* 숙소 → 태그 색상 (야마나미 직영 계열 블루, 그 외 회색) */
 function accomTag(accom){
-  const map={'야마나미리조트':'tag-yama','간지호텔':'tag-ganji','시즈노야도 료칸':'tag-shiz','쿠주힐즈':'tag-kuzu'};
-  const cls=map[accom]||'tag-excl';
-  return `<span class="tag ${cls}">${accom||'기타'}</span>`;
+  if(!accom) return '<span class="tag tag-excl">기타</span>';
+  let cls='tag-excl';
+  if(accom.indexOf('야마나미')>=0||accom.indexOf('쿠주')>=0) cls='tag-yama';
+  else if(accom.indexOf('간지')>=0) cls='tag-ganji';
+  else if(accom.indexOf('시즈노야도')>=0||accom.indexOf('료칸')>=0) cls='tag-shiz';
+  else if(accom.indexOf('포틴힐즈')>=0) cls='tag-kuzu';
+  return `<span class="tag ${cls}">${accom}</span>`;
 }
 
 /* 비고에서 팀명 자동 파싱 (사이젠 parseTeamName 계승) */
@@ -684,7 +713,7 @@ function analyze(){
   valid.forEach(r=>{
     const seq=String(r['eventSeq']||'').trim();
     const prodName=String(r['상품명']||'');
-    const {accom,roomType,nights}=parseProduct(prodName);
+    const {accom,roomType,region,golf,nights}=parseProduct(prodName);
     const remark=String(r['비고']||'');
     const dep=fmtDate(r['출발일자']);
     const arr=fmtDate(r['도착일자']);
@@ -700,7 +729,7 @@ function analyze(){
       dep, arr, period,
       origin: String(r['출발지']||'').trim(),
       flight: String(r['항공']||'').trim(),
-      prodName, accom, roomType, nights,
+      prodName, accom, roomType, region, golf, nights,
       pax: num(r['예약']),
       sales: num(r['판매금액']),
       due: num(r['미수금액']),
@@ -1078,7 +1107,7 @@ function renderTransfer(){
    ⑥ 숙소 정보
 ════════════════════════════════════════════════════════════ */
 const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입','기간','인원','출발일자','도착일자'];
-const ACCOM_ORDER=['야마나미리조트','간지호텔','시즈노야도 료칸','쿠주힐즈'];
+const ACCOM_ORDER=['아소 야마나미 골프텔','아소 야마나미 관내별장','아소 야마나미 돔하우스','야마나미 쿠주힐즈','간지호텔','시즈노야도 료칸','포틴힐즈CC 골프텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC 골프텔','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 시내 호텔','구마모토 시내 호텔','국제공항CC 골프텔','닐라이스프링스 리조트'];
 function renderAccom(){
   document.getElementById('accom-thead').innerHTML='<tr>'+ACCOM_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const accomTeams=teams.filter(t=>t.accom);
@@ -1121,27 +1150,14 @@ function renderAccom(){
 /* ════════════════════════════════════════════════════════════
    ⑦ 골프 정보
 ════════════════════════════════════════════════════════════ */
-const GOLF_HDR=['No','구분','행사번호','대표고객','출발지','골프장(상품명 기준)','상품명','기간','인원','출발일자','도착일자'];
-/* 상품명에서 골프장/지역 추출 */
-function golfCourseFromProduct(name){
-  name=String(name||'');
-  if(name.includes('벳푸')||name.includes('아키바')) return '벳푸 아키바 리조트';
-  if(name.includes('스가다이라')) return '스가다이라 그린CC';
-  if(name.includes('간지')||name.includes('구주고원')) return '구주고원CC / 야마나미CC';
-  if(name.includes('야마나미')||name.includes('쿠주')||name.includes('구주힐즈')||name.includes('시즈노야도')||name.includes('돔하우스')||name.includes('별장')) return '야마나미CC';
-  if(name.includes('닐라이')) return '닐라이스프링스GC';
-  if(name.includes('나고야')) return '나고야 지역';
-  if(name.includes('미야자키')) return '미야자키 지역';
-  if(name.includes('이바라키')) return '이바라키 지역';
-  return '-';
-}
+const GOLF_HDR=['No','구분','행사번호','대표고객','출발지','지역','골프장','상품명','기간','인원','출발일자','도착일자'];
 function renderGolf(){
   document.getElementById('golf-thead').innerHTML='<tr>'+GOLF_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const golfTeams=teams.filter(t=>t.accom);
   // 골프장별 집계
   const byCourse={};
-  golfTeams.forEach(t=>{ const c=golfCourseFromProduct(t.prodName); (byCourse[c]=byCourse[c]||{teams:0,pax:0}); byCourse[c].teams++; byCourse[c].pax+=t.pax; });
-  document.getElementById('golf-summary').innerHTML=Object.entries(byCourse).map(([c,v])=>
+  golfTeams.forEach(t=>{ const c=t.golf||'-'; (byCourse[c]=byCourse[c]||{teams:0,pax:0}); byCourse[c].teams++; byCourse[c].pax+=t.pax; });
+  document.getElementById('golf-summary').innerHTML=Object.entries(byCourse).sort((a,b)=>b[1].teams-a[1].teams).map(([c,v])=>
     `<div class="sum-box"><div class="sum-label">${c}</div><div class="sum-val">${v.teams}건 · ${v.pax}명</div></div>`).join('');
 
   document.getElementById('golf-tbody').innerHTML = golfTeams.map(t=>`<tr>
@@ -1150,7 +1166,8 @@ function renderGolf(){
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
       <td class="center">${t.apisOrigin||t.origin}</td>
-      <td>${golfCourseFromProduct(t.prodName)}</td>
+      <td class="center">${t.region||'-'}</td>
+      <td>${t.golf||'-'}</td>
       <td class="muted" style="font-size:11px">${t.prodName}</td>
       <td class="center">${t.period}</td>
       <td class="num">${t.pax}</td>
@@ -1239,13 +1256,15 @@ function sortTeams(arr, which){
 }
 function setSort(which, key){
   const st=sortState[which];
-  if(st.key===key){ st.dir*=-1; } else { st.key=key; st.dir=1; }
+  if(st.key!==key){ st.key=key; st.dir=1; }       // 다른 컬럼 → 오름차순
+  else if(st.dir===1){ st.dir=-1; }                // 오름 → 내림
+  else { st.key=null; st.dir=1; }                  // 내림 → 해제(원래 순서)
   if(which==='booking') renderBooking(); else renderAir();
 }
 // 정렬 가능한 th 생성 (라벨, 정렬키, which)
 function sortTh(label, key, which){
   const st=sortState[which];
-  const arrow = st.key===key ? (st.dir===1?' ▲':' ▼') : '';
+  const arrow = st.key===key ? (st.dir===1?' ▲':' ▼') : ' <span style="opacity:.3">↕</span>';
   const active = st.key===key ? 'style="color:var(--accent);font-weight:700"' : '';
   return `<th class="sortable" ${active} onclick="setSort('${which}','${key}')">${label}${arrow}</th>`;
 }
