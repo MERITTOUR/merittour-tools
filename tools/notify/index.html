@@ -171,11 +171,6 @@
     border-radius: 20px; font-size: 12px;
   }
   .filter-row .switch input { cursor: pointer; }
-  #guideUrl {
-    padding: 5px 10px; border: 1px solid var(--border);
-    border-radius: 6px; font-size: 12px; width: 240px;
-    font-family: inherit;
-  }
 
   /* 버튼 */
   .btn {
@@ -463,7 +458,6 @@
     header h1 { font-size: 14px; }
     header span { display: none; }
     .filter-row { gap: 8px; }
-    #guideUrl { width: 100%; }
     .members th:nth-child(4), .members td:nth-child(4) { display: none; } /* 영문이름 모바일에서 숨김 */
   }
 
@@ -514,7 +508,7 @@ tr.no-phone{ opacity:.62; }
 
   <div class="mt-header">
     <div class="mt-brand-wrap">
-      <img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="mt-brand-logo">
+      <div class="mt-brand">MERITTOUR</div>
       <div class="mt-brand-sub">INTERNAL TOOLS</div>
       <span class="mt-dept-badge">고객 안내 발송</span>
     </div>
@@ -566,11 +560,6 @@ tr.no-phone{ opacity:.62; }
         <input type="date" id="dateTo">
       </div>
       <div class="filter-row" style="margin-top:8px">
-        <label class="switch" title="알림톡 [출국 가이드 보기] 버튼 URL — 이메일 본문에도 포함됩니다">
-          <input type="checkbox" id="includeGuide" checked>
-          가이드 페이지 URL
-        </label>
-        <input type="text" id="guideUrl" placeholder="https://merittour.github.io/guide" value="https://merittour.github.io/guide">
         <span style="flex:1"></span>
         <button class="btn primary" id="processBtn" disabled>분석 시작</button>
       </div>
@@ -1237,9 +1226,6 @@ const ALIMTALK_TEMPLATE = `[메리트투어] 출국 안내
 온라인 체크인은 출발 #{체크인} 전부터
 #{항공사} 앱·홈페이지에서 가능합니다.
 
-자세한 출국 가이드 및 짐 안내는
-아래 가이드 페이지에서 확인해 주세요.
-
 문의 : 02-365-9800
 MERITTOUR 회원골프예약센터`;
 
@@ -1248,7 +1234,6 @@ const ALIMTALK_EMPHASIZE = '[메리트투어] 출국 안내';
 
 // 알림톡 버튼 (알리고 템플릿 등록 시 같이 설정)
 const ALIMTALK_BUTTONS = [
-  { name: '출국 가이드 보기', linkType: 'WL', linkUrl: 'https://merittour.github.io/guide' },
   { name: '예약 센터 문의', linkType: 'AL', linkAndroid: 'tel:0223659800', linkIos: 'tel:0223659800' },
 ];
 
@@ -1286,8 +1271,6 @@ function buildLmsMsg(team, member) {
 
 // 이메일 (별도, 더 정중하고 상세하게)
 function buildEmailMsg(team, member) {
-  const guideUrl = document.getElementById('guideUrl').value.trim();
-  const guideOn = document.getElementById('includeGuide').checked && guideUrl;
   const ch = getCheckinHours(team.airline);
   const arr = getArrivalGuidance(team.depFrom);
   const counter = getCounterInfo(team.airline, team.depFrom);
@@ -1323,11 +1306,6 @@ function buildEmailMsg(team, member) {
   lines.push(`   - 골프채 커버 및 자물쇠`);
   lines.push(`   - 일본 엔화 또는 해외 결제 카드`);
   lines.push(`   - 데이터 로밍 또는 유심`);
-  if (guideOn) {
-    lines.push(``);
-    lines.push(`자세한 안내는 메리트투어 가이드 페이지를 참고해 주세요.`);
-    lines.push(`${guideUrl}`);
-  }
   lines.push(``);
   lines.push(`문의 사항은 회원골프예약센터(02-365-9800)로 연락 주시기 바랍니다.`);
   lines.push(`감사합니다.`);
@@ -1659,9 +1637,6 @@ document.getElementById('dlAligo').onclick = () => {
   ws2['!cols'] = [{wch:5},{wch:14},{wch:10},{wch:30},{wch:10},{wch:10},{wch:10},{wch:60}];
   XLSX.utils.book_append_sheet(wb, ws2, '발송_미리보기');
 
-  // 알림톡 버튼 URL은 사용자 입력값 사용
-  const btnUrl = document.getElementById('guideUrl').value.trim() || ALIMTALK_BUTTONS[0].linkUrl;
-
   // ── 시트3: 알림톡 템플릿 (사이즌님이 알리고에 등록할 본문) ──
   const tplSheet = [
     ['항목', '내용'],
@@ -1671,12 +1646,9 @@ document.getElementById('dlAligo').onclick = () => {
     ['', ''],
     ['본문 (그대로 복사하여 알리고 알림톡 템플릿 등록)', ALIMTALK_TEMPLATE],
     ['', ''],
-    ['버튼1 - 종류', '웹링크'],
+    ['버튼1 - 종류', '앱링크 (전화걸기)'],
     ['버튼1 - 이름', ALIMTALK_BUTTONS[0].name],
-    ['버튼1 - URL', btnUrl],
-    ['버튼2 - 종류', '앱링크 (전화걸기)'],
-    ['버튼2 - 이름', ALIMTALK_BUTTONS[1].name],
-    ['버튼2 - 번호', '02-365-9800'],
+    ['버튼1 - 번호', '02-365-9800'],
     ['', ''],
     ['치환변수 목록', VAR_KEYS.map(k => `#{${k}}`).join(', ')],
     ['총 변수 개수', VAR_KEYS.length],
