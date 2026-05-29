@@ -87,6 +87,8 @@ a{color:inherit}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--surface3);color:var(--text2);font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{background:var(--surface4);color:var(--accent)}
 td{padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;vertical-align:middle}
 tr:hover td{background:#EEF3FA}
 .tr-section td{background:var(--surface4)!important;color:var(--text2);font-weight:700;font-size:11px}
@@ -469,6 +471,7 @@ let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
 let teamAssign = {};   // eventSeq → 사용자 지정 팀명
 let ticketDone = {};   // eventSeq → 발권완료 여부
 let selectedSeqs = new Set();  // 알리고 발송용 선택 팀
+let sortState = { booking:{key:null,dir:1}, air:{key:null,dir:1} };  // 컬럼 정렬
 
 const STORE_TEAM = 'mt_notify_teamAssign';
 const STORE_TICKET = 'mt_notify_ticketDone';
@@ -736,6 +739,8 @@ function analyze(){
       retFlight: String(r['귀국편']||'').trim()
     }));
     if(grp.length) t.pax = grp.length; // 실제 인원 보정
+    // 대표자 연락처 (pax_list 첫 행 = 대표자)
+    t.repPhone = (t.pax_list[0] && t.pax_list[0].phone) ? t.pax_list[0].phone : '';
 
     // 현지도착 보완
     const av=arrivalMap[t.eventSeq];
@@ -811,7 +816,30 @@ function analyze(){
 ════════════════════════════════════════════════════════════ */
 const BOOKING_HDR=['☑','No','구분','호텔Y','명단Y','행사번호','대표고객','회원권구분','출발일자','도착일자','기간','요일','출발지','항공','상품명','예약인원','판매금액','미수금액','팀','비고 특이사항'];
 function renderBooking(){
-  document.getElementById('booking-thead').innerHTML='<tr><th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'booking\',this.checked)"></th>'+BOOKING_HDR.slice(1).map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  // 정렬 가능한 헤더 (☑·No·요일 제외 나머지 정렬 가능)
+  const thead='<tr>'+
+    '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'booking\',this.checked)"></th>'+
+    '<th>No</th>'+
+    sortTh('구분','status','booking')+
+    sortTh('호텔Y','hotelY','booking')+
+    sortTh('명단Y','listY','booking')+
+    sortTh('행사번호','eventNo','booking')+
+    sortTh('대표고객','repName','booking')+
+    sortTh('연락처','repPhone','booking')+
+    sortTh('회원권구분','memberType','booking')+
+    sortTh('출발일자','dep','booking')+
+    sortTh('도착일자','arr','booking')+
+    sortTh('기간','period','booking')+
+    '<th>요일</th>'+
+    sortTh('출발지','origin','booking')+
+    sortTh('항공','flight','booking')+
+    sortTh('상품명','prodName','booking')+
+    sortTh('예약인원','pax','booking')+
+    sortTh('판매금액','sales','booking')+
+    sortTh('미수금액','due','booking')+
+    sortTh('팀','team','booking')+
+    '<th>비고 특이사항</th></tr>';
+  document.getElementById('booking-thead').innerHTML=thead;
   // 요약
   const totSales=teams.reduce((s,t)=>s+t.sales,0);
   const totDue=teams.reduce((s,t)=>s+t.due,0);
@@ -824,7 +852,7 @@ function renderBooking(){
     <div class="sum-box"><div class="sum-label">총 미수금액</div><div class="sum-val ${totDue>0?'red':'green'}">${won(totDue)}</div></div>
     <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>`;
 
-  document.getElementById('booking-tbody').innerHTML = teams.map(t=>{
+  document.getElementById('booking-tbody').innerHTML = sortTeams(teams,'booking').map(t=>{
     const team=teamAssign[t.eventSeq]||t.teamAuto||'';
     const teamCell= team
       ? `<span class="tag tag-team" style="background:${getTeamColor(team).bg};border:1px solid ${getTeamColor(team).border};color:${getTeamColor(team).text}" onclick="openTeamModal('${t.eventSeq}')">팀:${team}</span>`
@@ -839,12 +867,13 @@ function renderBooking(){
       <td class="center">${listY}</td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
+      <td style="font-family:var(--mono);font-size:11px">${t.repPhone||'<span class="muted">-</span>'}</td>
       <td>${t.memberType}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
       <td class="center">${t.period}</td>
       <td class="center">${weekday(t.dep)}</td>
-      <td class="center">${t.origin}</td>
+      <td class="center">${t.apisOrigin||t.origin}</td>
       <td>${t.flight}</td>
       <td>${accomTag(t.accom)} <span class="muted" style="font-size:10px">${t.roomType}</span></td>
       <td class="num">${t.pax}</td>
@@ -863,10 +892,28 @@ let airFilter='all';
 function filterAir(f){ airFilter=f; renderAir(); }
 const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','발권완료','출국 안내'];
 function renderAir(){
-  document.getElementById('air-thead').innerHTML='<tr><th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+AIR_HDR.slice(1).map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const thead='<tr>'+
+    '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+
+    '<th>No</th>'+
+    sortTh('구분','status','air')+
+    sortTh('행사번호','eventNo','air')+
+    sortTh('대표고객','repName','air')+
+    sortTh('출발지','origin','air')+
+    sortTh('항공사','airline','air')+
+    sortTh('출발편','depFlight','air')+
+    sortTh('귀국편','retFlight','air')+
+    sortTh('출발일자','dep','air')+
+    sortTh('도착일자','arr','air')+
+    sortTh('사전좌석','seat','air')+
+    '<th>일행 명단 (영문·생년월일·여권·만료)</th>'+
+    sortTh('PNR','pnr','air')+
+    '<th>발권완료</th>'+
+    sortTh('출국 안내','dday','air')+'</tr>';
+  document.getElementById('air-thead').innerHTML=thead;
   let rows=[...teams];
   if(airFilter==='pnr') rows=rows.filter(t=>t.pnrList&&t.pnrList.length);
   if(airFilter==='d7') rows=rows.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; });
+  rows=sortTeams(rows,'air');
 
   const withPnr=teams.filter(t=>t.pnrList&&t.pnrList.length).length;
   const noPnr=teams.filter(t=>!(t.pnrList&&t.pnrList.length)).length;
@@ -1163,6 +1210,44 @@ function updateSelCount(){
   document.querySelectorAll('[onclick^="exportAligo"]').forEach(b=>{
     b.textContent = selectedSeqs.size ? `✉ 선택 ${selectedSeqs.size}팀 알리고 양식` : '✉ 선택 팀 알리고 양식';
   });
+}
+
+/* ════════════════════════════════════════════════════════════
+   컬럼 정렬 엔진
+════════════════════════════════════════════════════════════ */
+// 정렬 키 → 팀 객체에서 비교값 추출
+const SORT_GETTERS={
+  status:t=>t.status, hotelY:t=>t.hotelY?1:0, listY:t=>t.listY?1:0,
+  eventNo:t=>t.eventNo, repName:t=>t.repName, repPhone:t=>t.repPhone||'',
+  memberType:t=>t.memberType, dep:t=>t.dep, arr:t=>t.arr, period:t=>t.period,
+  origin:t=>t.apisOrigin||t.origin, flight:t=>t.flight, prodName:t=>t.prodName,
+  pax:t=>t.pax, sales:t=>t.sales, due:t=>t.due, team:t=>teamAssign[t.eventSeq]||t.teamAuto||'',
+  airline:t=>(t.airlines&&t.airlines[0])||'', depFlight:t=>t.apisDepFlight||'',
+  retFlight:t=>t.apisRetFlight||'', seat:t=>t.seatReq?1:0,
+  pnr:t=>(t.pnrList&&t.pnrList.length)?1:0, dday:t=>{ const d=daysUntil(t.dep); return d===null?99999:d; }
+};
+function sortTeams(arr, which){
+  const st=sortState[which];
+  if(!st.key) return arr;
+  const get=SORT_GETTERS[st.key]; if(!get) return arr;
+  return [...arr].sort((a,b)=>{
+    let va=get(a), vb=get(b);
+    if(typeof va==='number' && typeof vb==='number') return (va-vb)*st.dir;
+    va=String(va||''); vb=String(vb||'');
+    return va.localeCompare(vb,'ko')*st.dir;
+  });
+}
+function setSort(which, key){
+  const st=sortState[which];
+  if(st.key===key){ st.dir*=-1; } else { st.key=key; st.dir=1; }
+  if(which==='booking') renderBooking(); else renderAir();
+}
+// 정렬 가능한 th 생성 (라벨, 정렬키, which)
+function sortTh(label, key, which){
+  const st=sortState[which];
+  const arrow = st.key===key ? (st.dir===1?' ▲':' ▼') : '';
+  const active = st.key===key ? 'style="color:var(--accent);font-weight:700"' : '';
+  return `<th class="sortable" ${active} onclick="setSort('${which}','${key}')">${label}${arrow}</th>`;
 }
 
 /* ════════════════════════════════════════════════════════════
