@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERITTOUR 통합 안내 관리 시스템</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* 라이트 모드 고정 · 메리트투어 네이비/블루그레이/크림 계열 */
+  --bg:#EEF2F8;--surface:#FFFFFF;--surface2:#F5F8FC;--surface3:#E8EDF5;--surface4:#DCE3EF;
+  --border:#D2DBE8;--border2:#B4C0D6;
+  /* 메인 액센트 = 블루 (네이비는 헤더·강조 텍스트에) */
+  --accent:#2E5A88;--accent2:#234A73;--accent3:#1B3A5C;--accent-dim:#E3ECF6;
+  --green:#059669;--green2:#047857;--green-dim:#D1FAE5;
+  --amber:#D97706;--amber2:#B45309;--amber-dim:#FEF3C7;
+  --red:#DC2626;--red2:#B91C1C;--red-dim:#FEE2E2;
+  --purple:#7C3AED;--purple2:#6D28D9;--purple-dim:#EDE9FE;
+  --teal:#0D9488;--teal2:#0F766E;--teal-dim:#CCFBF1;
+  --navy:#1a2332;
+  --cream:#FBF8F2;
+  --text:#1E2A45;--text2:#4A5A80;--text3:#8A97B8;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Noto Sans KR',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;font-size:13px}
+a{color:inherit}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:2px solid var(--navy);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
+.logo-bar{width:4px;height:30px;background:var(--navy);border-radius:2px;margin-right:2px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-img{height:26px;width:auto;display:block}
+.logo-img path,.logo-img polygon,.logo-img rect{fill:var(--navy)}
+.logo-divider{width:1px;height:22px;background:var(--border2)}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:.01em;color:var(--navy)}
+.logo-sub{font-size:12px;color:var(--text2);font-weight:500}
+.header-right{display:flex;align-items:center;gap:6px}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent)}
+.ghost-btn{background:transparent;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.ghost-btn:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* NAV TABS */
+.nav{background:var(--surface2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;gap:0;position:sticky;top:52px;z-index:190;overflow-x:auto}
+.nav-tab{box-sizing:border-box;padding:0 16px;height:44px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:500;line-height:1;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:var(--text2)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-tab .nav-dot{flex-shrink:0;width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .2s}
+.nav-tab.active .nav-dot{background:var(--accent)}
+.nav-tab.locked{opacity:.4;cursor:not-allowed}
+
+/* LAYOUT */
+.wrap{max-width:1400px;margin:0 auto;padding:1.5rem}
+.section{display:none}
+.section.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.25rem}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.card-title{font-size:15px;font-weight:700;color:var(--navy)}
+.card-sub{font-size:11px;color:var(--text2)}
+
+/* UPLOAD */
+.upload-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem}
+.upload-area{border:1.5px dashed var(--border2);border-radius:12px;padding:1.75rem 1.25rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);display:flex;flex-direction:column}
+.upload-area:hover,.upload-area.drag{border-color:var(--accent);background:var(--accent-dim)}
+.upload-area.uploaded{border-color:var(--green);border-style:solid;background:var(--green-dim)}
+.upload-area.uploaded .upload-icon{background:var(--green-dim);border-color:var(--green)}
+.upload-area.uploaded .upload-icon svg{stroke:var(--green)}
+.upload-area.uploaded .upload-title{color:var(--green2)}
+.upload-icon{width:44px;height:44px;margin:0 auto .75rem;background:var(--surface3);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.upload-icon svg{stroke:var(--accent);fill:none;stroke-width:1.5;width:22px;height:22px}
+.upload-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.upload-sub{font-size:11px;color:var(--text2);line-height:1.5;flex:1}
+.upload-meta{margin-top:.75rem;font-size:10px;color:var(--text3);font-family:var(--mono);min-height:14px}
+.upload-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px}
+.upload-dot.empty{background:var(--text3);opacity:.4}
+
+/* BUTTONS */
+.btn-primary{padding:11px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;font-family:var(--sans)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
+.btn-sm{padding:5px 12px;font-size:11px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .2s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--surface3);color:var(--text2);font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+td{padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;vertical-align:middle}
+tr:hover td{background:#EEF3FA}
+.tr-section td{background:var(--surface4)!important;color:var(--text2);font-weight:700;font-size:11px}
+.num{text-align:right;font-family:var(--mono)}
+.center{text-align:center}
+.muted{color:var(--text3)}
+
+/* TAGS */
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.tag-status-견적{background:#FEF9C3;color:#854D0E;border:1px solid #FDE047}
+.tag-status-대기{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+.tag-status-확정{background:#DBEAFE;color:#1D4ED8;border:1px solid #93C5FD}
+.tag-status-정산{background:#DCFCE7;color:#15803D;border:1px solid #86EFAC}
+.tag-status-취소{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5}
+.tag-yama{background:#E3ECF6;color:#234A73;border:1px solid #9FB8D6}
+.tag-ganji{background:#FBF8F2;color:#8A6D3B;border:1px solid #E0CfA8}
+.tag-shiz{background:#CCFBF1;color:#0F766E;border:1px solid #5EEAD4}
+.tag-kuzu{background:#E8EDF5;color:#3E4F6B;border:1px solid #B4C0D6}
+.tag-excl{background:#F1F5F9;color:#64748B;border:1px solid #CBD5E1}
+.tag-team{font-family:var(--mono);font-weight:700;cursor:pointer}
+.ystamp{display:inline-block;width:18px;text-align:center;font-weight:700;color:var(--green2)}
+.nstamp{display:inline-block;width:18px;text-align:center;color:var(--text3)}
+
+/* CHECK CELL */
+.chk{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(20,30,50,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:640px;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(20,30,50,.25)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:15px;font-weight:700;color:var(--navy)}
+.modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-shrink:0;align-items:center}
+
+/* TEAM MODAL specifics */
+.tm-field{margin-bottom:14px}
+.tm-label{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.tm-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--sans);background:var(--surface2);color:var(--text)}
+.tm-input:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
+.tm-row-info{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.7;margin-bottom:14px}
+.tm-row-info b{color:var(--navy)}
+.tm-existing{margin-top:12px}
+.tm-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;border-radius:20px;font-family:var(--mono);font-weight:700;cursor:pointer;margin:0 5px 6px 0;border:1px solid transparent}
+.tm-chip:hover{filter:brightness(.96)}
+
+/* INFO BANNER */
+.note{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:1.25rem}
+.note b{color:var(--navy)}
+.placeholder{padding:3rem 1.5rem;text-align:center;color:var(--text3);font-size:13px;border:1.5px dashed var(--border2);border-radius:12px;background:var(--surface2)}
+.placeholder .ph-icon{font-size:32px;margin-bottom:10px;opacity:.5}
+
+/* SUMMARY BOXES */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.25rem}
+.sum-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.sum-box .sum-label{font-size:11px;color:var(--text2);margin-bottom:6px}
+.sum-box .sum-val{font-size:20px;font-weight:700;color:var(--navy);font-family:var(--mono)}
+.sum-box .sum-val.red{color:var(--red)}
+.sum-box .sum-val.green{color:var(--green2)}
+
+/* AIRCOVER passenger sub-table */
+.pax-sub{font-size:11px;color:var(--text2)}
+.pax-list{margin:2px 0 0 0;padding:0;list-style:none}
+.pax-list li{padding:1px 0;font-size:11px}
+.pax-list .rep{font-weight:700;color:var(--navy)}
+.pnr-cell{font-family:var(--mono);font-size:11px;line-height:1.5}
+.pnr-tag{display:inline-block;background:var(--teal-dim);color:var(--teal2);border:1px solid var(--teal2);border-radius:4px;padding:1px 6px;margin:1px 3px 1px 0;font-size:10px;font-weight:600}
+
+/* RESORT MASTER */
+.rm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:1rem}
+.rm-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.rm-card-head{padding:12px 16px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.rm-card-head .rm-name{font-size:14px;font-weight:700}
+.rm-card-head .rm-region{font-size:11px;opacity:.8}
+.rm-card-body{padding:14px 16px}
+.rm-group{margin-bottom:14px}
+.rm-group:last-child{margin-bottom:0}
+.rm-group-label{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.rm-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
+.rm-row label{font-size:12px;color:var(--text2);flex-shrink:0}
+.rm-input{width:120px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--mono);text-align:right;background:var(--surface2);color:var(--text)}
+.rm-input.text{text-align:left;font-family:var(--sans);width:150px}
+.rm-input.wide{width:100%;text-align:left;font-family:var(--sans)}
+.rm-input:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
+.rm-unit{font-size:10px;color:var(--text3);margin-left:4px;flex-shrink:0;width:34px;text-align:left}
+.rm-saved{font-size:10px;color:var(--green2);opacity:0;transition:opacity .3s}
+.rm-saved.show{opacity:1}
+.cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:680px){.cm-grid{grid-template-columns:1fr}}
+.cm-box{border:1px solid var(--border);border-radius:12px;padding:16px}
+.cm-box-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.cm-rate-big{font-size:24px;font-weight:700;color:var(--accent);font-family:var(--mono);margin:8px 0}
+
+/* D-DAY MODAL */
+.dday-sec{margin-bottom:18px}
+.dday-sec-head{font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;margin-bottom:8px;display:inline-block}
+.dday-sec-head.d1{background:var(--red-dim);color:var(--red2);border:1px solid var(--red)}
+.dday-sec-head.d7{background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber)}
+.dday-sec-head.d30{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent)}
+.dday-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:12px}
+.dday-item:hover{background:var(--surface2)}
+.dday-badge{font-family:var(--mono);font-weight:700;font-size:11px;padding:2px 7px;border-radius:4px;flex-shrink:0;min-width:42px;text-align:center}
+.dday-badge.d1{background:var(--red);color:#fff}
+.dday-badge.d7{background:var(--amber);color:#fff}
+.dday-badge.d30{background:var(--accent);color:#fff}
+.dday-rep{flex:1;min-width:0}
+.dday-info{flex-shrink:0;font-size:11px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg class="logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31" height="26" aria-label="MERITTOUR"><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48"/><rect x="277.51" y="9.89" width="9.7" height="48.33"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z"/></g></svg>
+    <div class="logo-divider"></div>
+    <div class="logo-sub">통합 안내 관리 시스템</div>
+  </div>
+  <div class="header-right">
+    <span class="badge" id="session-badge">세션 대기중</span>
+    <button class="ghost-btn" onclick="resetAll()">초기화</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav" id="nav">
+  <div class="nav-tab active" id="nav-upload" onclick="gotoSection('upload')"><div class="nav-dot"></div> 업로드</div>
+  <div class="nav-tab" id="nav-resort" onclick="gotoSection('resort')"><div class="nav-dot"></div> ① 리조트 마스터</div>
+  <div class="nav-tab locked" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ② 예약 관리</div>
+  <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> ③ 보험 정보</div>
+  <div class="nav-tab locked" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ④ 항공 정보</div>
+  <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> ⑤ 송영 정보</div>
+  <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> ⑥ 숙소 정보</div>
+  <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
+  <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════ 업로드 ════════ -->
+<div class="section active" id="sec-upload">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">파일 업로드</div>
+        <div class="card-sub">엠클릭 3종 + APIS 정보 엑셀 · 500건 분할 시 여러 파일 동시 선택 가능</div>
+      </div>
+    </div>
+
+    <div class="upload-grid">
+      <!-- 예약리스트 -->
+      <div class="upload-area" id="drop-res" onclick="document.getElementById('inp-res').click()" ondragover="onDrag(event,'drop-res')" ondragleave="offDrag('drop-res')" ondrop="onDrop(event,'res')">
+        <input type="file" id="inp-res" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'res')">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+        <div class="upload-title">예약 리스트</div>
+        <div class="upload-sub">예약리스트___.xlsx<br>판매금액·미수금액·구분·비고 포함</div>
+        <div class="upload-meta"><span class="upload-dot empty" id="dot-res"></span><span id="meta-res">미선택</span></div>
+      </div>
+      <!-- 일행별예약 -->
+      <div class="upload-area" id="drop-ilhaeng" onclick="document.getElementById('inp-ilhaeng').click()" ondragover="onDrag(event,'drop-ilhaeng')" ondragleave="offDrag('drop-ilhaeng')" ondrop="onDrop(event,'ilhaeng')">
+        <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="upload-title">일행별 예약</div>
+        <div class="upload-sub">일행별예약___.xlsx<br>개인(탑승객) 단위 명단</div>
+        <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
+      </div>
+      <!-- 현지도착 -->
+      <div class="upload-area" id="drop-arrival" onclick="document.getElementById('inp-arrival').click()" ondragover="onDrag(event,'drop-arrival')" ondragleave="offDrag('drop-arrival')" ondrop="onDrop(event,'arrival')">
+        <input type="file" id="inp-arrival" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'arrival')">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div class="upload-title">현지도착</div>
+        <div class="upload-sub">현지도착___.xlsx<br>영문명·회원권구분·행사번호 보완</div>
+        <div class="upload-meta"><span class="upload-dot empty" id="dot-arrival"></span><span id="meta-arrival">미선택</span></div>
+      </div>
+      <!-- APIS -->
+      <div class="upload-area" id="drop-apis" onclick="document.getElementById('inp-apis').click()" ondragover="onDrag(event,'drop-apis')" ondragleave="offDrag('drop-apis')" ondrop="onDrop(event,'apis')">
+        <input type="file" id="inp-apis" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'apis')">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <div class="upload-title">APIS 정보</div>
+        <div class="upload-sub">APIS___.xlsx<br>PNR(콤마 분리 전부)·항공 상세</div>
+        <div class="upload-meta"><span class="upload-dot empty" id="dot-apis"></span><span id="meta-apis">미선택</span></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>결합 방식</b> · 모든 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약은 같은 eventSeq 하위 개인 명단으로, 현지도착·APIS는 eventSeq(또는 영문명)로 보완됩니다.
+      그룹코드 마스터는 이 도구에서 사용하지 않습니다. <b>예약리스트·일행별예약</b>이 모두 업로드되면 통합이 가능합니다.
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn-primary" id="btn-analyze" disabled onclick="analyze()">통합 분석 실행 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ① 리조트 마스터 ════════ -->
+<div class="section" id="sec-resort">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율·여행자보험 — 입력 즉시 자동 저장됩니다</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
+      </div>
+    </div>
+    <div id="resort-cards"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><div class="card-title">공통 마스터</div><div class="card-sub">환율 · 여행자보험</div></div></div>
+    <div id="common-master"></div>
+  </div>
+</div>
+
+<!-- ════════ ② 예약 관리 ════════ -->
+<div class="section" id="sec-booking">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">② 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박 (D-30/7/1)</button>
+        <button class="btn-sm" onclick="openTeamColorLegend()">팀 색상 보기</button>
+        <button class="btn-sm" onclick="exportAligo('booking')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="booking-summary"></div>
+    <div class="tbl-wrap">
+      <table id="booking-table">
+        <thead id="booking-thead"></thead>
+        <tbody id="booking-tbody"></tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:1rem">
+      <b>팀 구분</b> · 비고란에 <code>팀:홍길동</code> 형식이 있으면 자동으로 팀 배지가 붙습니다. 배지(또는 "팀 지정" 버튼)를 클릭하면 모달에서 팀을 지정·변경·해제할 수 있습니다. 같은 팀끼리 단체 발송 단위로 묶입니다.
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ③ 보험 정보 ════════ -->
+<div class="section" id="sec-insurance">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">③ 보험 정보</div><div class="card-sub">팀별 여권 정보(번호·만료일·발행국가) · 여행자보험 가입 확인 · 여권 만료 임박 경고</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="filterIns('all')">전체</button>
+        <button class="btn-sm" onclick="filterIns('expiry')">만료 임박</button>
+        <button class="btn-sm" onclick="filterIns('noins')">보험 미가입</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="ins-summary"></div>
+    <div class="tbl-wrap"><table id="ins-table"><thead id="ins-thead"></thead><tbody id="ins-tbody"></tbody></table></div>
+    <div class="note" style="margin-top:1rem">
+      <b>여권 만료 경고</b> · 출국일 기준 잔여 유효기간이 6개월 미만이면 경고가 표시됩니다(일본 입국 권장 기준). <b>보험 가입</b> 체크는 수동 확인용이며 브라우저에 저장됩니다.
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ④ 항공 정보 ════════ -->
+<div class="section" id="sec-air">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">④ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 발권완료 확인 · 출국 1주일 전 안내</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="filterAir('all')" id="airf-all">전체</button>
+        <button class="btn-sm" onclick="filterAir('pnr')" id="airf-pnr">PNR 있음</button>
+        <button class="btn-sm" onclick="filterAir('d7')" id="airf-d7">출국 D-7 이내</button>
+        <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박</button>
+        <button class="btn-sm" onclick="exportAligo('air')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="air-summary"></div>
+    <div class="tbl-wrap">
+      <table id="air-table">
+        <thead id="air-thead"></thead>
+        <tbody id="air-tbody"></tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:1rem">
+      <b>발권완료 확인</b> · 현재 업로드 파일로는 발권 완료 여부를 자동 판별할 수 없습니다. 발권완료 체크박스는 수동 확인용이며 브라우저에 저장됩니다. (추후 엠클릭 API 연동 시 자동화 예정)
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ⑤ 송영 / ⑥ 숙소 / ⑦ 골프 / ⑧ 식사 ════════ -->
+<div class="section" id="sec-transfer">
+  <div class="card">
+    <div class="card-head"><div><div class="card-title">⑤ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 송영 대상 명단</div></div></div>
+    <div class="sum-grid" id="transfer-summary"></div>
+    <div class="tbl-wrap"><table id="transfer-table"><thead id="transfer-thead"></thead><tbody id="transfer-tbody"></tbody></table></div>
+    <div class="note" style="margin-top:1rem"><b>송영비</b> · 숙박 예약 포함 건에 ¥6,000/인 적용. 입국/출국 시간은 현지도착 파일에서 가져옵니다.</div>
+  </div>
+</div>
+<div class="section" id="sec-accom">
+  <div class="card">
+    <div class="card-head"><div><div class="card-title">⑥ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div></div>
+    <div class="sum-grid" id="accom-summary"></div>
+    <div class="tbl-wrap"><table id="accom-table"><thead id="accom-thead"></thead><tbody id="accom-tbody"></tbody></table></div>
+  </div>
+</div>
+<div class="section" id="sec-golf">
+  <div class="card">
+    <div class="card-head"><div><div class="card-title">⑦ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div></div>
+    <div class="sum-grid" id="golf-summary"></div>
+    <div class="tbl-wrap"><table id="golf-table"><thead id="golf-thead"></thead><tbody id="golf-tbody"></tbody></table></div>
+  </div>
+</div>
+<div class="section" id="sec-dinner">
+  <div class="card">
+    <div class="card-head"><div><div class="card-title">⑧ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div></div>
+    <div class="sum-grid" id="dinner-summary"></div>
+    <div class="tbl-wrap"><table id="dinner-table"><thead id="dinner-thead"></thead><tbody id="dinner-tbody"></tbody></table></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- ════════ 팀 구분 모달 ════════ -->
+<div class="modal-bg" id="team-modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">팀 구분 지정</div>
+      <button class="modal-close" onclick="closeTeamModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tm-row-info" id="tm-row-info"></div>
+      <div class="tm-field">
+        <label class="tm-label">팀명</label>
+        <input class="tm-input" id="tm-team-input" placeholder="예: 홍길동 · 1팀 · A조" autocomplete="off">
+      </div>
+      <div class="tm-existing">
+        <label class="tm-label">기존 팀에 합류 (클릭)</label>
+        <div id="tm-existing-chips"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="clearTeam()">팀 해제</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="closeTeamModal()">취소</button>
+        <button class="btn-primary" style="padding:8px 18px" onclick="saveTeam()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 팀 색상 범례 모달 ════════ -->
+<div class="modal-bg" id="legend-modal-bg">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><div class="modal-title">팀 색상 범례</div><button class="modal-close" onclick="document.getElementById('legend-modal-bg').classList.remove('open')">×</button></div>
+    <div class="modal-body" id="legend-body"></div>
+  </div>
+</div>
+
+<!-- ════════ 출국 임박 모달 ════════ -->
+<div class="modal-bg" id="dday-modal-bg">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <div class="modal-title">📅 출국 임박 팀 — D-30 / D-7 / D-1</div>
+      <button class="modal-close" onclick="document.getElementById('dday-modal-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body" id="dday-body"></div>
+    <div class="modal-foot">
+      <span class="muted" style="font-size:11px">체크한 팀은 알리고 양식으로 바로 내보낼 수 있습니다</span>
+      <button class="btn-primary" style="padding:8px 18px" onclick="exportAligoFromModal()">✉ 선택 팀 알리고 양식</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   상태
+════════════════════════════════════════════════════════════ */
+let resData=null, ilhaengData=null, arrivalData=null, apisData=null;
+let resMerged=[], ilhaengMerged=[], arrivalMerged=[], apisMerged=[];
+let resPending=0, ilhaengPending=0, arrivalPending=0, apisPending=0;
+let resCount=0, ilhaengCount=0, arrivalCount=0, apisCount=0;
+
+let teams = [];        // 통합 결과: 팀(eventSeq) 단위
+let arrivalMap = {};   // eventSeq → 현지도착 보완
+let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
+let teamAssign = {};   // eventSeq → 사용자 지정 팀명
+let ticketDone = {};   // eventSeq → 발권완료 여부
+let selectedSeqs = new Set();  // 알리고 발송용 선택 팀
+
+const STORE_TEAM = 'mt_notify_teamAssign';
+const STORE_TICKET = 'mt_notify_ticketDone';
+
+/* 팀 색상 팔레트 */
+const TEAM_COLORS=[
+  {bg:'#DBEAFE',border:'#93C5FD',text:'#1D4ED8'},{bg:'#E3ECF6',border:'#9FB8D6',text:'#234A73'},
+  {bg:'#CCFBF1',border:'#5EEAD4',text:'#0F766E'},{bg:'#E0F2FE',border:'#7DD3FC',text:'#0369A1'},
+  {bg:'#E8EDF5',border:'#B4C0D6',text:'#3E4F6B'},{bg:'#DBE9F4',border:'#8FB4D6',text:'#1B4965'},
+  {bg:'#EDE9FE',border:'#C4B5FD',text:'#6D28D9'},{bg:'#FBF8F2',border:'#E0CFA8',text:'#8A6D3B'},
+  {bg:'#FCE7F3',border:'#F9A8D4',text:'#BE185D'},{bg:'#D1FAE5',border:'#86EFAC',text:'#15803D'}
+];
+let teamColorMap={}, teamColorIdx=0;
+function getTeamColor(name){
+  if(!teamColorMap[name]){ teamColorMap[name]=TEAM_COLORS[teamColorIdx%TEAM_COLORS.length]; teamColorIdx++; }
+  return teamColorMap[name];
+}
+
+/* ════════════════════════════════════════════════════════════
+   유틸
+════════════════════════════════════════════════════════════ */
+function fmtDate(v){
+  if(v==null||v==='') return '';
+  if(v instanceof Date){
+    const y=v.getFullYear(), m=String(v.getMonth()+1).padStart(2,'0'), d=String(v.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s=String(v).trim();
+  let m=s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=s.match(/(\d{2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if(m) return `20${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return s;
+}
+const WEEKDAY=['일','월','화','수','목','금','토'];
+function weekday(dateStr){
+  if(!dateStr) return '';
+  const d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d)) return '';
+  return WEEKDAY[d.getDay()];
+}
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const d=new Date(dateStr+'T00:00:00'); if(isNaN(d)) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  return Math.round((d-now)/86400000);
+}
+function num(v){ const n=Number(String(v||'').replace(/[, ]/g,'')); return isNaN(n)?0:n; }
+function won(v){ return '₩'+num(v).toLocaleString(); }
+
+/* 상품명 → 숙소 분류 (사이젠 parseProduct 계승) */
+function parseProduct(name){
+  name=String(name||'');
+  let accom='', roomType='';
+  if(name.includes('야마나미')||name.includes('돔하우스')||name.includes('관내별장')||name.includes('소보별장')||name.includes('아소별장')){
+    accom='야마나미리조트';
+    if(name.includes('소형트윈')) roomType='호텔 소형트윈';
+    else if(name.includes('트윈')) roomType='호텔 트윈';
+    else if(name.includes('돔하우스')) roomType='돔하우스';
+    else if(name.includes('별장')) roomType='관내별장';
+    else roomType='호텔 트윈';
+  } else if(name.includes('쿠주힐즈')||name.includes('구주힐즈')||name.includes('久住ヒルズ')||name.includes('장기숙박')||name.includes('별장전용')){
+    accom='쿠주힐즈'; roomType='장기숙박전용';
+  } else if(name.includes('간지호텔')){
+    accom='간지호텔'; roomType='호텔';
+  } else if(name.includes('시즈노야도')||name.includes('료칸')){
+    accom='시즈노야도 료칸'; roomType='료칸';
+  }
+  const m=name.match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
+  return {accom, roomType, nights};
+}
+function accomTag(accom){
+  const map={'야마나미리조트':'tag-yama','간지호텔':'tag-ganji','시즈노야도 료칸':'tag-shiz','쿠주힐즈':'tag-kuzu'};
+  const cls=map[accom]||'tag-excl';
+  return `<span class="tag ${cls}">${accom||'기타'}</span>`;
+}
+
+/* 비고에서 팀명 자동 파싱 (사이젠 parseTeamName 계승) */
+function parseTeamName(remark){
+  const m=String(remark||'').match(/팀\s*[:：]\s*([^\s\/,·\|]+)/i);
+  return m?m[1].trim():null;
+}
+/* 비고에서 팀 표기 제외한 특이사항만 */
+function remarkSpecial(remark){
+  return String(remark||'').replace(/팀\s*[:：]\s*[^\s\/,·\|]+/i,'').replace(/^[\s\/,·\|]+|[\s\/,·\|]+$/g,'').trim();
+}
+
+/* ════════════════════════════════════════════════════════════
+   업로드
+════════════════════════════════════════════════════════════ */
+function onDrag(e,id){ e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function offDrag(id){ document.getElementById(id).classList.remove('drag'); }
+function onDrop(e,type){
+  e.preventDefault();
+  const id={res:'drop-res',ilhaeng:'drop-ilhaeng',arrival:'drop-arrival',apis:'drop-apis'}[type];
+  offDrag(id);
+  const files=Array.from(e.dataTransfer.files).filter(f=>/\.xlsx?$/i.test(f.name));
+  if(!files.length) return;
+  startLoad(type, files);
+}
+function loadFile(e,type){
+  const files=Array.from(e.target.files);
+  if(files.length) startLoad(type, files);
+  const inp=e.target; setTimeout(()=>{ if(inp) inp.value=''; },100);
+}
+function startLoad(type, files){
+  if(type==='res'){ resData=null; resMerged=[]; resPending=files.length; resCount=files.length; }
+  else if(type==='ilhaeng'){ ilhaengData=null; ilhaengMerged=[]; ilhaengPending=files.length; ilhaengCount=files.length; }
+  else if(type==='arrival'){ arrivalData=null; arrivalMerged=[]; arrivalPending=files.length; arrivalCount=files.length; }
+  else if(type==='apis'){ apisData=null; apisMerged=[]; apisPending=files.length; apisCount=files.length; }
+  files.forEach(f=>processFile(f,type));
+}
+function processFile(file,type){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const json=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(type==='res'){ resMerged=resMerged.concat(json); if(--resPending<=0){ resData=resMerged; markUploaded('res',file,resData.length,resCount); } }
+    else if(type==='ilhaeng'){ ilhaengMerged=ilhaengMerged.concat(json); if(--ilhaengPending<=0){ ilhaengData=ilhaengMerged; markUploaded('ilhaeng',file,ilhaengData.length,ilhaengCount); } }
+    else if(type==='arrival'){ arrivalMerged=arrivalMerged.concat(json); if(--arrivalPending<=0){ arrivalData=arrivalMerged; markUploaded('arrival',file,arrivalData.length,arrivalCount); } }
+    else if(type==='apis'){ apisMerged=apisMerged.concat(json); if(--apisPending<=0){ apisData=apisMerged; markUploaded('apis',file,apisData.length,apisCount); } }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function markUploaded(type,file,rows,cnt){
+  document.getElementById('drop-'+type).classList.add('uploaded');
+  document.getElementById('dot-'+type).classList.remove('empty');
+  document.getElementById('meta-'+type).textContent = (cnt>1?`${cnt}개 병합 · `:'')+`${rows}행`;
+  checkReady();
+}
+function checkReady(){
+  document.getElementById('btn-analyze').disabled = !(resData && ilhaengData);
+}
+
+/* ════════════════════════════════════════════════════════════
+   통합 분석
+════════════════════════════════════════════════════════════ */
+function buildArrivalMap(){
+  arrivalMap={};
+  (arrivalData||[]).forEach(r=>{
+    const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
+    const engRaw=String(r['영문명']||'').trim();
+    arrivalMap[seq]={
+      engFull: engRaw.replace('/',' ').trim(),
+      memberType: String(r['회원권구분']||'').trim()||'',
+      memberNo: String(r['회원번호']||'').trim()||'',
+      eventNo: String(r['행사번호']||'').trim()||'',
+      depFlight: String(r['한국출발편']||'').trim()||'',
+      depTime: String(r['출발시간']||'').trim()||'',     // 한국 출발시간
+      arrTimeJP: String(r['현지도착']||'').trim()||'',     // 현지 도착시간
+      retFlight: String(r['출발편']||'').trim()||'',       // 귀국편
+      arrDateLocal: fmtDate(r['현지도착일']),
+      depDateLocal: fmtDate(r['현지출발일'])
+    };
+  });
+}
+
+/* APIS 맵: eventSeq → 항공 집계(PNR 콤마 전부, 항공사/편/좌석) + 개인별 상세(영문명 키) */
+function buildApisMap(){
+  apisMap={};
+  if(!apisData) return;
+  apisData.forEach(r=>{
+    if(r['cancCd']) return; // 취소 행 제외
+    const seq=String(r['eventSeq']||'').trim();
+    if(!seq) return;
+    const pnrRaw=String(r['PNR']||'').trim();
+    const eng=[(r['영문성']||'').toString().trim(),(r['영문이름']||'').toString().trim()].filter(Boolean).join(' ');
+    if(!apisMap[seq]) apisMap[seq]={
+      pnrSet:new Set(), airlineSet:new Set(),
+      depFlightSet:new Set(), retFlightSet:new Set(),
+      origin:'', dest:'', seatReq:false,
+      persons:{}  // 영문명 → {pnr, seat, passport, expiry, country, gender, birth, name}
+    };
+    const m=apisMap[seq];
+    // PNR 콤마(전각 포함) 분리 → 전부 수집
+    if(pnrRaw) pnrRaw.replace(/，/g,',').split(',').map(s=>s.trim()).filter(Boolean).forEach(p=>m.pnrSet.add(p));
+    if(r['항공사']) m.airlineSet.add(String(r['항공사']).trim());
+    if(r['출발편']) m.depFlightSet.add(String(r['출발편']).trim());
+    if(r['귀국편']) m.retFlightSet.add(String(r['귀국편']).trim());
+    if(r['출발지'] && !m.origin) m.origin=String(r['출발지']).trim();
+    if(r['도착지'] && !m.dest) m.dest=String(r['도착지']).trim();
+    if(String(r['사전좌석']||'').trim().toUpperCase()==='Y') m.seatReq=true;
+    // 개인별 상세
+    if(eng){
+      m.persons[eng]={
+        pnr: pnrRaw,
+        seat: String(r['사전좌석']||'').trim(),
+        passport: String(r['여권번호']||'').trim(),
+        expiry: fmtDate(r['만료일']),
+        country: String(r['발행국가']||'').trim(),
+        gender: String(r['성별']||'').trim(),
+        birth: fmtDate(r['생년월일']),
+        name: String(r['고객명']||'').trim()
+      };
+    }
+  });
+}
+
+function analyze(){
+  buildArrivalMap();
+  buildApisMap();
+  teamColorMap={}; teamColorIdx=0;
+  selectedSeqs=new Set();
+  loadPersist();
+
+  // 예약리스트 → 팀(eventSeq) 단위 ('합계' 행은 화이트리스트로 자동 제외)
+  const valid = resData.filter(r=>['견적','대기','확정','정산'].includes(String(r['구분']||'').trim()) && !r['cancCd']);
+  teams = [];
+  valid.forEach(r=>{
+    const seq=String(r['eventSeq']||'').trim();
+    const prodName=String(r['상품명']||'');
+    const {accom,roomType,nights}=parseProduct(prodName);
+    const remark=String(r['비고']||'');
+    const dep=fmtDate(r['출발일자']);
+    const arr=fmtDate(r['도착일자']);
+    const period=String(r['기간']||'').trim() || (nights?`${nights}박`:'');
+    teams.push({
+      eventSeq: seq,
+      status: String(r['구분']||'').trim(),
+      hotelY: String(r['호텔']||'').trim().toUpperCase()==='Y',
+      listY: String(r['명단']||'').trim().toUpperCase()==='Y',
+      eventNo: String(r['행사번호']||'').trim()||'-',
+      repName: String(r['대표고객']||'').trim(),
+      memberType: String(r['회원권구분']||'').trim()||'-',
+      dep, arr, period,
+      origin: String(r['출발지']||'').trim(),
+      flight: String(r['항공']||'').trim(),
+      prodName, accom, roomType, nights,
+      pax: num(r['예약']),
+      sales: num(r['판매금액']),
+      due: num(r['미수금액']),
+      remark,
+      teamAuto: parseTeamName(remark),
+      special: remarkSpecial(remark),
+      pax_list: [],
+      raw: r
+    });
+  });
+
+  // 일행별예약 → eventSeq별 개인 명단
+  const seqGroups={};
+  (ilhaengData||[]).filter(r=>!r['cancCd']).forEach(r=>{
+    const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
+    (seqGroups[seq]=seqGroups[seq]||[]).push(r);
+  });
+  Object.values(seqGroups).forEach(grp=>{
+    grp.sort((a,b)=>{
+      const ar=(a['고객명']||'').trim()===(a['예약자명']||'').trim()?0:1;
+      const br=(b['고객명']||'').trim()===(b['예약자명']||'').trim()?0:1;
+      return ar-br;
+    });
+  });
+
+  teams.forEach(t=>{
+    const grp=seqGroups[t.eventSeq]||[];
+    t.pax_list = grp.map((r,i)=>({
+      isRep: i===0,
+      name: String(r['고객명']||'').trim(),
+      engFull: [(r['영문성']||'').trim(),(r['영문이름']||'').trim()].filter(Boolean).join(' '),
+      birth: fmtDate(r['생년월일']),
+      gender: String(r['성별']||'').trim(),
+      phone: String(r['휴대번호']||'').trim(),
+      depFlight: String(r['출발편']||'').trim(),
+      retFlight: String(r['귀국편']||'').trim()
+    }));
+    if(grp.length) t.pax = grp.length; // 실제 인원 보정
+
+    // 현지도착 보완
+    const av=arrivalMap[t.eventSeq];
+    if(av){
+      if(av.memberType) t.memberType=av.memberType;
+      if(av.eventNo && av.eventNo!=='') t.eventNo=av.eventNo;
+      t.pax_list.forEach(p=>{ if(!p.engFull && av.engFull) p.engFull=av.engFull; });
+      t.arrDepFlight=av.depFlight; t.arrDepTime=av.depTime;
+      t.arrTimeJP=av.arrTimeJP; t.arrRetFlight=av.retFlight;
+      t.arrDateLocal=av.arrDateLocal; t.depDateLocal=av.depDateLocal;
+    } else {
+      t.arrDepFlight=''; t.arrDepTime=''; t.arrTimeJP=''; t.arrRetFlight='';
+      t.arrDateLocal=''; t.depDateLocal='';
+    }
+
+    // APIS 결합 (eventSeq 단위) — 항공 집계 + 개인별 여권/좌석/PNR
+    const ap=apisMap[t.eventSeq];
+    if(ap){
+      t.pnrList    = [...ap.pnrSet];
+      t.airlines   = [...ap.airlineSet];
+      t.apisDepFlight = [...ap.depFlightSet].join(', ');
+      t.apisRetFlight = [...ap.retFlightSet].join(', ');
+      t.apisOrigin = ap.origin;
+      t.apisDest   = ap.dest;
+      t.seatReq    = ap.seatReq;
+      // 명단 개인별 APIS 상세 매칭 (영문명 기준)
+      t.pax_list.forEach(p=>{
+        const a=p.engFull && ap.persons[p.engFull];
+        if(a){
+          p.pnr=a.pnr; p.seat=a.seat; p.passport=a.passport;
+          p.expiry=a.expiry; p.country=a.country;
+          if(!p.gender) p.gender=a.gender;
+          if(!p.birth) p.birth=a.birth;
+        }
+      });
+    } else {
+      t.pnrList=[]; t.airlines=[]; t.apisDepFlight=''; t.apisRetFlight='';
+      t.apisOrigin=''; t.apisDest=''; t.seatReq=false;
+    }
+    // APIS만 있고 일행별 명단이 비어있는 경우 → APIS persons로 명단 보완
+    if(!t.pax_list.length && ap && Object.keys(ap.persons).length){
+      t.pax_list = Object.entries(ap.persons).map(([eng,a],i)=>({
+        isRep:i===0, name:a.name, engFull:eng, birth:a.birth, gender:a.gender,
+        phone:'', depFlight:t.apisDepFlight, retFlight:t.apisRetFlight,
+        pnr:a.pnr, seat:a.seat, passport:a.passport, expiry:a.expiry, country:a.country
+      }));
+    }
+  });
+
+  teams.forEach((t,i)=>t.no=i+1);
+
+  // 탭 해제
+  ['booking','insurance','air','transfer','accom','golf','dinner'].forEach(s=>
+    document.getElementById('nav-'+s).classList.remove('locked'));
+
+  // 세션 배지
+  const deps=teams.map(t=>t.dep).filter(Boolean).sort();
+  const ym=deps.length?deps[0].slice(0,7):'';
+  document.getElementById('session-badge').textContent = ym?`${ym} 세션`:'분석 완료';
+
+  renderBooking();
+  renderAir();
+  renderInsurance();
+  renderTransfer();
+  renderAccom();
+  renderGolf();
+  renderDinner();
+  gotoSection('booking');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ② 예약 관리 렌더
+════════════════════════════════════════════════════════════ */
+const BOOKING_HDR=['☑','No','구분','호텔Y','명단Y','행사번호','대표고객','회원권구분','출발일자','도착일자','기간','요일','출발지','항공','상품명','예약인원','판매금액','미수금액','팀','비고 특이사항'];
+function renderBooking(){
+  document.getElementById('booking-thead').innerHTML='<tr><th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'booking\',this.checked)"></th>'+BOOKING_HDR.slice(1).map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  // 요약
+  const totSales=teams.reduce((s,t)=>s+t.sales,0);
+  const totDue=teams.reduce((s,t)=>s+t.due,0);
+  const dueTeams=teams.filter(t=>t.due>0).length;
+  const totPax=teams.reduce((s,t)=>s+t.pax,0);
+  document.getElementById('booking-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">총 예약 건수</div><div class="sum-val">${teams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">총 인원</div><div class="sum-val">${totPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">총 판매금액</div><div class="sum-val">${won(totSales)}</div></div>
+    <div class="sum-box"><div class="sum-label">총 미수금액</div><div class="sum-val ${totDue>0?'red':'green'}">${won(totDue)}</div></div>
+    <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>`;
+
+  document.getElementById('booking-tbody').innerHTML = teams.map(t=>{
+    const team=teamAssign[t.eventSeq]||t.teamAuto||'';
+    const teamCell= team
+      ? `<span class="tag tag-team" style="background:${getTeamColor(team).bg};border:1px solid ${getTeamColor(team).border};color:${getTeamColor(team).text}" onclick="openTeamModal('${t.eventSeq}')">팀:${team}</span>`
+      : `<button class="btn-sm" style="padding:2px 8px;font-size:10px" onclick="openTeamModal('${t.eventSeq}')">팀 지정</button>`;
+    const hotelY = t.hotelY ? '<span class="ystamp">Y</span>' : '<span class="nstamp">N</span>';
+    const listY = t.listY ? '<span class="ystamp">Y</span>' : '<span class="nstamp">N</span>';
+    return `<tr>
+      <td class="center"><input type="checkbox" class="chk sel-booking" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center">${hotelY}</td>
+      <td class="center">${listY}</td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td>${t.memberType}</td>
+      <td>${t.dep}</td>
+      <td>${t.arr}</td>
+      <td class="center">${t.period}</td>
+      <td class="center">${weekday(t.dep)}</td>
+      <td class="center">${t.origin}</td>
+      <td>${t.flight}</td>
+      <td>${accomTag(t.accom)} <span class="muted" style="font-size:10px">${t.roomType}</span></td>
+      <td class="num">${t.pax}</td>
+      <td class="num">${won(t.sales)}</td>
+      <td class="num" style="color:${t.due>0?'var(--red)':'var(--text3)'}">${t.due>0?won(t.due):'-'}</td>
+      <td class="center">${teamCell}</td>
+      <td class="muted">${t.special||'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ④ 항공 정보 렌더
+════════════════════════════════════════════════════════════ */
+let airFilter='all';
+function filterAir(f){ airFilter=f; renderAir(); }
+const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','발권완료','출국 안내'];
+function renderAir(){
+  document.getElementById('air-thead').innerHTML='<tr><th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+AIR_HDR.slice(1).map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  let rows=[...teams];
+  if(airFilter==='pnr') rows=rows.filter(t=>t.pnrList&&t.pnrList.length);
+  if(airFilter==='d7') rows=rows.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; });
+
+  const withPnr=teams.filter(t=>t.pnrList&&t.pnrList.length).length;
+  const noPnr=teams.filter(t=>!(t.pnrList&&t.pnrList.length)).length;
+  const d7=teams.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; }).length;
+  const ticketedCnt=teams.filter(t=>ticketDone[t.eventSeq]).length;
+  document.getElementById('air-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">PNR 등록 팀</div><div class="sum-val">${withPnr}건</div></div>
+    <div class="sum-box"><div class="sum-label">PNR 미등록 팀</div><div class="sum-val ${noPnr>0?'red':''}">${noPnr}건</div></div>
+    <div class="sum-box"><div class="sum-label">출국 D-7 이내</div><div class="sum-val ${d7>0?'red':''}">${d7}건</div></div>
+    <div class="sum-box"><div class="sum-label">발권완료 (수동)</div><div class="sum-val green">${ticketedCnt}/${teams.length}</div></div>`;
+
+  document.getElementById('air-tbody').innerHTML = rows.map(t=>{
+    const paxHtml = t.pax_list.length
+      ? '<ul class="pax-list">'+t.pax_list.map(p=>{
+          const bd=p.birth?p.birth.slice(2).replace(/-/g,''):'';
+          const pass=p.passport?`<span class="muted">여권 ${p.passport}</span>`:'';
+          const exp=p.expiry?`<span class="muted">~${p.expiry.slice(2).replace(/-/g,'')}</span>`:'';
+          const seat=p.seat==='Y'?'<span class="pnr-tag" style="background:var(--amber-dim);color:var(--amber2);border-color:var(--amber)">좌석요청</span>':'';
+          return `<li class="${p.isRep?'rep':''}">${p.isRep?'★ ':''}${p.name}${p.engFull?` <span class="muted">${p.engFull}</span>`:''}${bd?` <span class="muted">${bd}</span>`:''}${p.gender?` ${p.gender}`:''} ${pass} ${exp} ${seat}</li>`;
+        }).join('')+'</ul>'
+      : '<span class="muted">명단 없음</span>';
+    const pnrHtml = (t.pnrList&&t.pnrList.length)
+      ? '<div class="pnr-cell">'+t.pnrList.map(p=>`<span class="pnr-tag">${p}</span>`).join('')+(t.pnrList.length>1?'<div class="muted" style="font-size:9px;margin-top:2px">발권 분리 '+t.pnrList.length+'건</div>':'')+'</div>'
+      : '<span class="muted">미발권</span>';
+    const airlineHtml = (t.airlines&&t.airlines.length)?t.airlines.join('<br>'):`<span class="muted">${t.flight||'-'}</span>`;
+    const seatCell = t.seatReq?'<span class="ystamp">Y</span>':'<span class="nstamp">N</span>';
+    const d=daysUntil(t.dep);
+    let notify='<span class="muted">-</span>';
+    if(d!==null){
+      if(d<0) notify='<span class="muted">출국 완료</span>';
+      else if(d<=7) notify=`<span class="tag tag-status-대기">D-${d} 출국안내</span>`;
+      else notify=`<span class="muted">D-${d}</span>`;
+    }
+    const checked=ticketDone[t.eventSeq]?'checked':'';
+    return `<tr>
+      <td class="center"><input type="checkbox" class="chk sel-air" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td class="center">${t.apisOrigin||t.origin}</td>
+      <td style="font-size:11px">${airlineHtml}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'-'}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisRetFlight||'-'}</td>
+      <td>${t.dep}</td>
+      <td>${t.arr}</td>
+      <td class="center">${seatCell}</td>
+      <td>${paxHtml}</td>
+      <td>${pnrHtml}</td>
+      <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleTicket('${t.eventSeq}',this.checked)"></td>
+      <td class="center">${notify}</td>
+    </tr>`;
+  }).join('');
+}
+function toggleTicket(seq,val){
+  if(val) ticketDone[seq]=true; else delete ticketDone[seq];
+  savePersist();
+  const cnt=teams.filter(t=>ticketDone[t.eventSeq]).length;
+  const boxes=document.querySelectorAll('#air-summary .sum-val');
+  if(boxes[3]) boxes[3].textContent=`${cnt}/${teams.length}`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ③ 보험 정보
+════════════════════════════════════════════════════════════ */
+const STORE_INS='mt_notify_insDone';
+let insDone={};
+let insFilter='all';
+function filterIns(f){ insFilter=f; renderInsurance(); }
+/* 여권 만료까지 출국일 기준 잔여 개월 */
+function monthsToExpiry(expiry, depDate){
+  if(!expiry||!depDate) return null;
+  const e=new Date(expiry+'T00:00:00'), d=new Date(depDate+'T00:00:00');
+  if(isNaN(e)||isNaN(d)) return null;
+  return (e-d)/(86400000*30.4);
+}
+const INS_HDR=['No','구분','대표고객','출발일자','일행(영문·여권번호·만료일·국가)','여권 경고','보험가입'];
+function renderInsurance(){
+  document.getElementById('ins-thead').innerHTML='<tr>'+INS_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  // 만료 임박 판정: 팀 내 6개월 미만 여권 보유
+  const hasExpiryWarn=t=>t.pax_list.some(p=>{ const m=monthsToExpiry(p.expiry,t.dep); return m!==null && m<6; });
+  let rows=[...teams];
+  if(insFilter==='expiry') rows=rows.filter(hasExpiryWarn);
+  if(insFilter==='noins') rows=rows.filter(t=>!insDone[t.eventSeq]);
+
+  const warnTeams=teams.filter(hasExpiryWarn).length;
+  const insCnt=teams.filter(t=>insDone[t.eventSeq]).length;
+  const foreignCnt=teams.filter(t=>t.pax_list.some(p=>p.country && p.country!=='KR')).length;
+  document.getElementById('ins-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">총 팀</div><div class="sum-val">${teams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">여권 만료 임박 팀</div><div class="sum-val ${warnTeams>0?'red':''}">${warnTeams}건</div></div>
+    <div class="sum-box"><div class="sum-label">외국 여권 포함 팀</div><div class="sum-val">${foreignCnt}건</div></div>
+    <div class="sum-box"><div class="sum-label">보험 가입(수동)</div><div class="sum-val green">${insCnt}/${teams.length}</div></div>`;
+
+  document.getElementById('ins-tbody').innerHTML = rows.map(t=>{
+    const paxHtml = t.pax_list.length
+      ? '<ul class="pax-list">'+t.pax_list.map(p=>{
+          const m=monthsToExpiry(p.expiry,t.dep);
+          const warn=(m!==null && m<6);
+          const cntry=p.country && p.country!=='KR'?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
+          return `<li class="${p.isRep?'rep':''}">${p.isRep?'★ ':''}${p.name} <span class="muted">${p.engFull||''}</span>${p.passport?` <span class="muted">여권 ${p.passport}</span>`:' <span class="muted">여권 미등록</span>'}${p.expiry?` <span class="${warn?'':'muted'}" style="${warn?'color:var(--red);font-weight:700':''}">~${p.expiry}</span>`:''} ${cntry}</li>`;
+        }).join('')+'</ul>'
+      : '<span class="muted">명단 없음(APIS 미연동)</span>';
+    const warnCell = hasExpiryWarn(t)?'<span class="tag tag-status-취소">6개월 미만</span>':'<span class="muted">OK</span>';
+    const checked=insDone[t.eventSeq]?'checked':'';
+    return `<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td><b>${t.repName}</b></td>
+      <td>${t.dep}</td>
+      <td>${paxHtml}</td>
+      <td class="center">${warnCell}</td>
+      <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleIns('${t.eventSeq}',this.checked)"></td>
+    </tr>`;
+  }).join('');
+}
+function toggleIns(seq,val){
+  if(val) insDone[seq]=true; else delete insDone[seq];
+  try{ localStorage.setItem(STORE_INS,JSON.stringify(insDone)); }catch(e){}
+  const cnt=teams.filter(t=>insDone[t.eventSeq]).length;
+  const boxes=document.querySelectorAll('#ins-summary .sum-val');
+  if(boxes[3]) boxes[3].textContent=`${cnt}/${teams.length}`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⑤ 송영 정보
+════════════════════════════════════════════════════════════ */
+const TRANSFER_HDR=['No','구분','행사번호','대표고객','인원','출발지','입국편','한국출발','현지도착','출국편','숙소','송영비'];
+function renderTransfer(){
+  document.getElementById('transfer-thead').innerHTML='<tr>'+TRANSFER_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const accomTeams=teams.filter(t=>t.accom);
+  const totPax=accomTeams.reduce((s,t)=>s+t.pax,0);
+  const rate=resortMaster.find(r=>r.key==='yamanami')?.transfer||6000;
+  const totTransfer=totPax*6000;
+  document.getElementById('transfer-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">송영 대상 팀</div><div class="sum-val">${accomTeams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">송영 대상 인원</div><div class="sum-val">${totPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">송영비 합계</div><div class="sum-val">¥${totTransfer.toLocaleString()}</div></div>`;
+
+  document.getElementById('transfer-tbody').innerHTML = accomTeams.map(t=>{
+    const depFlight=t.arrDepFlight||t.apisDepFlight||'-';
+    const retFlight=t.arrRetFlight||t.apisRetFlight||'-';
+    const transfer= t.pax*6000;
+    return `<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td class="num">${t.pax}</td>
+      <td class="center">${t.apisOrigin||t.origin}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${depFlight}</td>
+      <td class="center" style="font-family:var(--mono)">${t.arrDepTime||'-'}</td>
+      <td class="center" style="font-family:var(--mono)">${t.arrTimeJP||'-'}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${retFlight}</td>
+      <td>${accomTag(t.accom)}</td>
+      <td class="num">¥${transfer.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⑥ 숙소 정보
+════════════════════════════════════════════════════════════ */
+const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입','기간','인원','출발일자','도착일자'];
+const ACCOM_ORDER=['야마나미리조트','간지호텔','시즈노야도 료칸','쿠주힐즈'];
+function renderAccom(){
+  document.getElementById('accom-thead').innerHTML='<tr>'+ACCOM_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const accomTeams=teams.filter(t=>t.accom);
+  // 숙소별 집계 박스
+  const boxes=ACCOM_ORDER.map(a=>{
+    const rs=accomTeams.filter(t=>t.accom===a);
+    if(!rs.length) return '';
+    const pax=rs.reduce((s,t)=>s+t.pax,0);
+    return `<div class="sum-box"><div class="sum-label">${a}</div><div class="sum-val">${rs.length}건 · ${pax}명</div></div>`;
+  }).filter(Boolean).join('');
+  document.getElementById('accom-summary').innerHTML=boxes;
+  // 숙소별 그룹핑 테이블
+  const sorted=[...accomTeams].sort((a,b)=>{
+    const ia=ACCOM_ORDER.indexOf(a.accom), ib=ACCOM_ORDER.indexOf(b.accom);
+    return (ia-ib)||a.dep.localeCompare(b.dep);
+  });
+  let prev='';
+  document.getElementById('accom-tbody').innerHTML = sorted.map(t=>{
+    let header='';
+    if(t.accom!==prev){
+      prev=t.accom;
+      const grp=sorted.filter(x=>x.accom===t.accom);
+      header=`<tr class="tr-section"><td colspan="10">◎ ${t.accom} — ${grp.length}건 · ${grp.reduce((s,x)=>s+x.pax,0)}명</td></tr>`;
+    }
+    return header+`<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td>${accomTag(t.accom)}</td>
+      <td>${t.roomType||'-'}</td>
+      <td class="center">${t.period}</td>
+      <td class="num">${t.pax}</td>
+      <td>${t.dep}</td>
+      <td>${t.arr}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⑦ 골프 정보
+════════════════════════════════════════════════════════════ */
+const GOLF_HDR=['No','구분','행사번호','대표고객','출발지','골프장(상품명 기준)','상품명','기간','인원','출발일자','도착일자'];
+/* 상품명에서 골프장/지역 추출 */
+function golfCourseFromProduct(name){
+  name=String(name||'');
+  if(name.includes('벳푸')||name.includes('아키바')) return '벳푸 아키바 리조트';
+  if(name.includes('스가다이라')) return '스가다이라 그린CC';
+  if(name.includes('간지')||name.includes('구주고원')) return '구주고원CC / 야마나미CC';
+  if(name.includes('야마나미')||name.includes('쿠주')||name.includes('구주힐즈')||name.includes('시즈노야도')||name.includes('돔하우스')||name.includes('별장')) return '야마나미CC';
+  if(name.includes('닐라이')) return '닐라이스프링스GC';
+  if(name.includes('나고야')) return '나고야 지역';
+  if(name.includes('미야자키')) return '미야자키 지역';
+  if(name.includes('이바라키')) return '이바라키 지역';
+  return '-';
+}
+function renderGolf(){
+  document.getElementById('golf-thead').innerHTML='<tr>'+GOLF_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const golfTeams=teams.filter(t=>t.accom);
+  // 골프장별 집계
+  const byCourse={};
+  golfTeams.forEach(t=>{ const c=golfCourseFromProduct(t.prodName); (byCourse[c]=byCourse[c]||{teams:0,pax:0}); byCourse[c].teams++; byCourse[c].pax+=t.pax; });
+  document.getElementById('golf-summary').innerHTML=Object.entries(byCourse).map(([c,v])=>
+    `<div class="sum-box"><div class="sum-label">${c}</div><div class="sum-val">${v.teams}건 · ${v.pax}명</div></div>`).join('');
+
+  document.getElementById('golf-tbody').innerHTML = golfTeams.map(t=>`<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td class="center">${t.apisOrigin||t.origin}</td>
+      <td>${golfCourseFromProduct(t.prodName)}</td>
+      <td class="muted" style="font-size:11px">${t.prodName}</td>
+      <td class="center">${t.period}</td>
+      <td class="num">${t.pax}</td>
+      <td>${t.dep}</td>
+      <td>${t.arr}</td>
+    </tr>`).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ⑧ 식사 정보
+════════════════════════════════════════════════════════════ */
+const DINNER_HDR=['No','구분','행사번호','대표고객','숙소','기간','인원','출발일자','도착일자','비고'];
+function renderDinner(){
+  document.getElementById('dinner-thead').innerHTML='<tr>'+DINNER_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const accomTeams=teams.filter(t=>t.accom);
+  const totPax=accomTeams.reduce((s,t)=>s+t.pax,0);
+  // 박수 합산 (기간에서 N박 추출)
+  const totNights=accomTeams.reduce((s,t)=>{ const m=String(t.period).match(/(\d+)박/); return s+(m?parseInt(m[1])*t.pax:0); },0);
+  document.getElementById('dinner-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">식사 대상 팀</div><div class="sum-val">${accomTeams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">식사 대상 인원</div><div class="sum-val">${totPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">연인박(인×박)</div><div class="sum-val">${totNights.toLocaleString()}</div></div>`;
+
+  document.getElementById('dinner-tbody').innerHTML = accomTeams.map(t=>`<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td>${accomTag(t.accom)}</td>
+      <td class="center">${t.period}</td>
+      <td class="num">${t.pax}</td>
+      <td>${t.dep}</td>
+      <td>${t.arr}</td>
+      <td class="muted">${t.special||'-'}</td>
+    </tr>`).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   선택 관리 (알리고 발송용)
+════════════════════════════════════════════════════════════ */
+function toggleSel(seq,val){
+  if(val) selectedSeqs.add(seq); else selectedSeqs.delete(seq);
+  // 두 테이블의 같은 seq 체크박스 동기화
+  document.querySelectorAll(`.sel-booking[data-seq="${seq}"],.sel-air[data-seq="${seq}"]`).forEach(c=>c.checked=val);
+  updateSelCount();
+}
+function toggleAllSel(which,val){
+  const visible=document.querySelectorAll('.sel-'+which);
+  visible.forEach(c=>{ const seq=c.dataset.seq; if(val) selectedSeqs.add(seq); else selectedSeqs.delete(seq); c.checked=val; });
+  // 반대편 테이블 동기화
+  selectedSeqs.forEach(seq=>{ document.querySelectorAll(`.sel-booking[data-seq="${seq}"],.sel-air[data-seq="${seq}"]`).forEach(c=>c.checked=true); });
+  if(!val){ document.querySelectorAll('.sel-booking,.sel-air').forEach(c=>{ if(!selectedSeqs.has(c.dataset.seq)) c.checked=false; }); }
+  updateSelCount();
+}
+function updateSelCount(){
+  // 버튼 라벨에 선택 수 반영
+  document.querySelectorAll('[onclick^="exportAligo"]').forEach(b=>{
+    b.textContent = selectedSeqs.size ? `✉ 선택 ${selectedSeqs.size}팀 알리고 양식` : '✉ 선택 팀 알리고 양식';
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   알리고 PNR 안내 양식 내보내기 (개인 단위 행)
+   헤더: 수신번호 · #{고객명} #{출발일자} #{도착일자} #{상품명}
+        #{출발지} #{도착지} #{출발편} #{귀국편} #{PNR}
+════════════════════════════════════════════════════════════ */
+function exportAligo(){
+  if(!selectedSeqs.size){ alert('먼저 발송할 팀을 체크해주세요.\n(예약 관리 또는 항공 정보 표에서 행 앞 체크박스 선택)'); return; }
+  const sel=teams.filter(t=>selectedSeqs.has(t.eventSeq));
+  const HEADER=['메시지 수신 휴대폰 번호','#{고객명}','#{출발일자}','#{도착일자}','#{상품명}','#{출발지}','#{도착지}','#{출발편}','#{귀국편}','#{PNR}'];
+  const rows=[HEADER];
+  let noPhone=0, noPnr=0;
+  sel.forEach(t=>{
+    const dest = t.apisDest || '구마모토';
+    const dep  = t.apisDepFlight || t.arrDepFlight || t.flight || '';
+    const ret  = t.apisRetFlight || t.arrRetFlight || '';
+    const pnr  = (t.pnrList&&t.pnrList.length) ? t.pnrList.join(', ') : '';
+    if(!pnr) noPnr++;
+    const list = t.pax_list.length ? t.pax_list : [{name:t.repName,phone:''}];
+    list.forEach(p=>{
+      let phone=String(p.phone||'').replace(/[^0-9]/g,'');
+      if(!phone) noPhone++;
+      rows.push([phone, p.name||'', t.dep||'', t.arr||'', t.prodName||'', t.apisOrigin||t.origin||'', dest, dep, ret, pnr]);
+    });
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:18},{wch:10},{wch:12},{wch:12},{wch:30},{wch:8},{wch:10},{wch:10},{wch:10},{wch:16}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb,`PNR안내_알리고양식_${today}.xlsx`);
+  let msg=`${sel.length}팀 / ${rows.length-1}명 알리고 양식 생성 완료`;
+  if(noPhone) msg+=`\n· 휴대번호 없는 행 ${noPhone}건 (빈칸 출력 — 확인 필요)`;
+  if(noPnr) msg+=`\n· PNR 없는 팀 ${noPnr}건 (빈칸 출력)`;
+  setTimeout(()=>alert(msg),100);
+}
+
+/* ════════════════════════════════════════════════════════════
+   출국 임박 모달 (D-30 / D-7 / D-1)
+════════════════════════════════════════════════════════════ */
+function openDdayModal(){
+  if(!teams.length){ alert('먼저 통합 분석을 실행해주세요.'); return; }
+  const buckets={ d1:[], d7:[], d30:[] };
+  teams.forEach(t=>{
+    const d=daysUntil(t.dep);
+    if(d===null||d<0) return;
+    if(d<=1) buckets.d1.push({t,d});
+    else if(d<=7) buckets.d7.push({t,d});
+    else if(d<=30) buckets.d30.push({t,d});
+  });
+  Object.values(buckets).forEach(b=>b.sort((a,b)=>a.d-b.d));
+  const section=(title,cls,arr)=>{
+    if(!arr.length) return `<div class="dday-sec"><div class="dday-sec-head ${cls}">${title} · 0건</div><div class="muted" style="padding:8px 4px;font-size:11px">해당 없음</div></div>`;
+    return `<div class="dday-sec"><div class="dday-sec-head ${cls}">${title} · ${arr.length}건</div>`+
+      arr.map(({t,d})=>{
+        const pnr=(t.pnrList&&t.pnrList.length)?`<span class="pnr-tag">${t.pnrList.join(', ')}</span>`:'<span class="muted">미발권</span>';
+        const due=t.due>0?`<span style="color:var(--red);font-weight:700">미수 ${won(t.due)}</span>`:'';
+        const tk=ticketDone[t.eventSeq]?'<span class="ystamp" title="발권완료">✓</span>':'';
+        const checked=selectedSeqs.has(t.eventSeq)?'checked':'';
+        return `<div class="dday-item">
+          <input type="checkbox" class="chk" ${checked} onchange="toggleSel('${t.eventSeq}',this.checked)">
+          <span class="dday-badge ${cls}">D-${d}</span>
+          <span class="dday-rep"><b>${t.repName}</b> <span class="muted">${t.pax}명 · ${t.dep}</span></span>
+          <span class="dday-info">${pnr} ${tk} ${due}</span>
+        </div>`;
+      }).join('')+'</div>';
+  };
+  document.getElementById('dday-body').innerHTML =
+    section('🔴 D-1 (긴급)','d1',buckets.d1)+
+    section('🟠 D-7 (출국 안내)','d7',buckets.d7)+
+    section('🔵 D-30 (사전 점검)','d30',buckets.d30);
+  document.getElementById('dday-modal-bg').classList.add('open');
+  updateSelCount();
+}
+function exportAligoFromModal(){
+  document.getElementById('dday-modal-bg').classList.remove('open');
+  exportAligo();
+}
+let modalSeq=null;
+function openTeamModal(seq){
+  modalSeq=seq;
+  const t=teams.find(x=>x.eventSeq===seq);
+  if(!t) return;
+  const cur=teamAssign[seq]||t.teamAuto||'';
+  document.getElementById('tm-row-info').innerHTML=
+    `<b>${t.repName}</b> · 행사번호 ${t.eventNo} · ${t.pax}명<br>`+
+    `${t.dep} ~ ${t.arr} · ${t.origin} · ${accomTag(t.accom)}<br>`+
+    `<span class="muted">비고 원문: ${t.remark||'(없음)'}</span>`;
+  document.getElementById('tm-team-input').value=cur;
+  // 기존 팀 칩
+  const allTeams=[...new Set(teams.map(x=>teamAssign[x.eventSeq]||x.teamAuto).filter(Boolean))];
+  document.getElementById('tm-existing-chips').innerHTML = allTeams.length
+    ? allTeams.map(nm=>{ const c=getTeamColor(nm); return `<span class="tm-chip" style="background:${c.bg};border-color:${c.border};color:${c.text}" onclick="document.getElementById('tm-team-input').value='${nm}'">팀:${nm}</span>`; }).join('')
+    : '<span class="muted" style="font-size:11px">아직 지정된 팀이 없습니다.</span>';
+  document.getElementById('team-modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('tm-team-input').focus(),50);
+}
+function closeTeamModal(){ document.getElementById('team-modal-bg').classList.remove('open'); modalSeq=null; }
+function saveTeam(){
+  if(!modalSeq) return;
+  const v=document.getElementById('tm-team-input').value.trim();
+  if(v) teamAssign[modalSeq]=v; else delete teamAssign[modalSeq];
+  savePersist(); closeTeamModal(); renderBooking();
+}
+function clearTeam(){
+  if(!modalSeq) return;
+  delete teamAssign[modalSeq];
+  // 자동 파싱된 팀도 무시하도록 빈 문자열로 덮어쓸지 여부: 여기선 해제=수동지정 제거
+  savePersist(); closeTeamModal(); renderBooking();
+}
+function openTeamColorLegend(){
+  const allTeams=[...new Set(teams.map(x=>teamAssign[x.eventSeq]||x.teamAuto).filter(Boolean))];
+  document.getElementById('legend-body').innerHTML = allTeams.length
+    ? allTeams.map(nm=>{ const c=getTeamColor(nm); const cnt=teams.filter(x=>(teamAssign[x.eventSeq]||x.teamAuto)===nm).length; return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0"><span class="tag tag-team" style="background:${c.bg};border:1px solid ${c.border};color:${c.text}">팀:${nm}</span><span class="muted">${cnt}건</span></div>`; }).join('')
+    : '<div class="muted">아직 지정된 팀이 없습니다.</div>';
+  document.getElementById('legend-modal-bg').classList.add('open');
+}
+
+/* ════════════════════════════════════════════════════════════
+   ① 리조트 마스터
+════════════════════════════════════════════════════════════ */
+const STORE_RESORT='mt_notify_resortMaster';
+const STORE_COMMON='mt_notify_commonMaster';
+
+/* 기본값 — 알고 있는 메리트투어 요금 기준 (모두 수정 가능) */
+const RESORT_DEFAULTS=[
+  {key:'yamanami', name:'아소 야마나미리조트', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   bfast:0, lunch:0, dinner:0, memo:''},
+  {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
+   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   bfast:0, lunch:0, dinner:0, memo:''},
+  {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
+   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   bfast:0, lunch:0, dinner:0, memo:''},
+  {key:'kuzu', name:'쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
+   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   bfast:0, lunch:0, dinner:0, memo:''},
+  {key:'sugadaira', name:'스가다이라 그린CC', region:'나가노', golf:'스가다이라 그린CC', holes:18,
+   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
+   bfast:0, lunch:0, dinner:0, memo:'온천호텔/맨션 분리'}
+];
+const COMMON_DEFAULTS={
+  rate:0, rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
+  insCompany:'', insProduct:'', insFee:0, insCover:''
+};
+
+let resortMaster=[], commonMaster={};
+
+function loadResortMaster(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORE_RESORT)||'null');
+    // 기본값과 병합 (새 항목 추가 시에도 안전)
+    resortMaster = RESORT_DEFAULTS.map(def=>{
+      const s = saved && saved.find(x=>x.key===def.key);
+      return s ? {...def, ...s} : {...def};
+    });
+  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
+  try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
+  catch(e){ commonMaster={...COMMON_DEFAULTS}; }
+}
+function saveResortMaster(){
+  try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
+}
+function resetResortMaster(){
+  if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·보험 정보가 사라집니다)')) return;
+  resortMaster=RESORT_DEFAULTS.map(d=>({...d}));
+  commonMaster={...COMMON_DEFAULTS};
+  saveResortMaster(); renderResortMaster();
+}
+
+/* 숫자 입력 1개 행 */
+function rmNumRow(label, rkey, field, val, unit){
+  return `<div class="rm-row"><label>${label}</label><div style="display:flex;align-items:center">
+    <input class="rm-input" type="text" inputmode="numeric" value="${val?Number(val).toLocaleString():''}" placeholder="0"
+      onchange="updateResort('${rkey}','${field}',this.value,this)">
+    <span class="rm-unit">${unit||''}</span></div></div>`;
+}
+
+function renderResortMaster(){
+  if(!resortMaster.length) loadResortMaster();
+  document.getElementById('resort-cards').innerHTML='<div class="rm-grid">'+resortMaster.map(r=>`
+    <div class="rm-card">
+      <div class="rm-card-head">
+        <div><div class="rm-name">${r.name}</div><div class="rm-region">${r.region} · ${r.golf} · ${r.holes}홀</div></div>
+        <span class="rm-saved" id="saved-${r.key}">✓ 저장됨</span>
+      </div>
+      <div class="rm-card-body">
+        <div class="rm-group">
+          <div class="rm-group-label">요금 (엔)</div>
+          ${rmNumRow('체재비',r.key,'stay',r.stay,'/인박')}
+          ${rmNumRow('송영비',r.key,'transfer',r.transfer,'/인')}
+          ${rmNumRow('회원관리비',r.key,'mgmt',r.mgmt,'')}
+        </div>
+        <div class="rm-group">
+          <div class="rm-group-label">그린피 (엔)</div>
+          ${rmNumRow('평일',r.key,'greenWeekday',r.greenWeekday,'')}
+          ${rmNumRow('주말·공휴일',r.key,'greenWeekend',r.greenWeekend,'')}
+          ${rmNumRow('9홀 추가',r.key,'add9h',r.add9h,'')}
+        </div>
+        <div class="rm-group">
+          <div class="rm-group-label">식사 (엔)</div>
+          ${rmNumRow('조식',r.key,'bfast',r.bfast,'/인')}
+          ${rmNumRow('중식',r.key,'lunch',r.lunch,'/인')}
+          ${rmNumRow('석식',r.key,'dinner',r.dinner,'/인')}
+        </div>
+        <div class="rm-group">
+          <div class="rm-group-label">비고</div>
+          <input class="rm-input wide" type="text" value="${(r.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
+            onchange="updateResort('${r.key}','memo',this.value,this)">
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+
+  // 공통 마스터
+  document.getElementById('common-master').innerHTML=`<div class="cm-grid">
+    <div class="cm-box">
+      <div class="cm-box-title">💱 적용 환율</div>
+      <div class="rm-row"><label>환율 (100엔당 원)</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rate?Number(commonMaster.rate).toLocaleString():''}" placeholder="0"
+          onchange="updateCommon('rate',this.value,this)"><span class="rm-unit">원</span></div></div>
+      <div class="cm-rate-big">${commonMaster.rate?'100엔 = '+Number(commonMaster.rate).toLocaleString()+'원':'환율 미입력'}</div>
+      <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
+        <label>적용 기준</label>
+        <input class="rm-input wide" type="text" value="${(commonMaster.rateBase||'').replace(/"/g,'&quot;')}" placeholder="환율 적용 기준일"
+          onchange="updateCommon('rateBase',this.value,this)"></div>
+    </div>
+    <div class="cm-box">
+      <div class="cm-box-title">🛡️ 여행자보험</div>
+      <div class="rm-row"><label>보험사</label>
+        <input class="rm-input text" type="text" value="${(commonMaster.insCompany||'').replace(/"/g,'&quot;')}" placeholder="보험사명"
+          onchange="updateCommon('insCompany',this.value,this)"></div>
+      <div class="rm-row"><label>상품명</label>
+        <input class="rm-input text" type="text" value="${(commonMaster.insProduct||'').replace(/"/g,'&quot;')}" placeholder="상품명"
+          onchange="updateCommon('insProduct',this.value,this)"></div>
+      <div class="rm-row"><label>1인 보험료</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.insFee?Number(commonMaster.insFee).toLocaleString():''}" placeholder="0"
+          onchange="updateCommon('insFee',this.value,this)"><span class="rm-unit">원</span></div></div>
+      <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
+        <label>보장 한도</label>
+        <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
+          onchange="updateCommon('insCover',this.value,this)"></div>
+    </div>
+  </div>`;
+}
+
+function flashSaved(el, resortKey){
+  if(resortKey){
+    const s=document.getElementById('saved-'+resortKey);
+    if(s){ s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1200); }
+  }
+}
+function updateResort(key, field, val, el){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  if(field==='memo') r[field]=val;
+  else r[field]=num(val);
+  saveResortMaster(); flashSaved(el, key);
+  // 숫자 입력은 천단위 콤마 재포맷
+  if(field!=='memo' && el){ el.value = r[field]?Number(r[field]).toLocaleString():''; }
+}
+function updateCommon(field, val, el){
+  if(field==='rate'||field==='insFee'){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  else commonMaster[field]=val;
+  saveResortMaster();
+  if(field==='rate') renderResortMaster(); // 큰 숫자 표시 갱신
+}
+
+/* ════════════════════════════════════════════════════════════
+   영속화 (localStorage)
+════════════════════════════════════════════════════════════ */
+function savePersist(){
+  try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); }catch(e){}
+}
+function loadPersist(){
+  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   네비게이션
+════════════════════════════════════════════════════════════ */
+function gotoSection(name){
+  const nav=document.getElementById('nav-'+name);
+  if(nav && nav.classList.contains('locked')) return;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  if(nav) nav.classList.add('active');
+  window.scrollTo(0,0);
+}
+function resetAll(){
+  if(!confirm('업로드한 파일과 분석 결과를 모두 초기화할까요?\n(팀 지정·발권 체크는 유지됩니다)')) return;
+  location.reload();
+}
+
+/* 모달 배경 클릭 닫기 */
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); });
+
+/* 페이지 로드 시 리조트 마스터 초기화 */
+loadResortMaster();
+renderResortMaster();
+</script>
+</body>
+</html>
