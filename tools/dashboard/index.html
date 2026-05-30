@@ -87,37 +87,6 @@ a{color:inherit}
 
 /* TABLE */
 .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
-/* 예약관리 검색·필터 바 */
-.bk-filterbar{margin:6px 0 14px;display:flex;flex-direction:column;gap:9px}
-.bk-search-row{position:relative;display:flex;align-items:center}
-.bk-search-ico{position:absolute;left:12px;font-size:13px;opacity:.5;pointer-events:none}
-.bk-search-input{width:100%;padding:10px 36px;border:1px solid var(--border2);border-radius:9px;font-size:14px;font-family:var(--sans);background:var(--surface);color:var(--text);transition:border-color .15s}
-.bk-search-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
-.bk-clear{position:absolute;right:10px;width:22px;height:22px;border:none;border-radius:50%;background:var(--surface3);color:var(--text2);cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center}
-.bk-clear:hover{background:var(--red-dim);color:var(--red2)}
-.bk-chip-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.bk-chip-grp{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
-.bk-chip-lbl{font-size:10px;color:var(--text3);font-weight:700;margin-right:2px;letter-spacing:.02em}
-.bk-chip-sep{width:1px;height:16px;background:var(--border);margin:0 4px}
-.bk-chip{font-size:12px;padding:4px 12px;border-radius:16px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;user-select:none}
-.bk-chip:hover{border-color:var(--accent);color:var(--accent)}
-.bk-chip.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
-.bk-date-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.bk-date-label{font-size:11px;color:var(--text2);font-weight:600}
-.bk-date-input{padding:5px 9px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:var(--sans);background:var(--surface);color:var(--text)}
-.bk-date-input:focus{outline:none;border-color:var(--accent)}
-.bk-date-tilde{color:var(--text3)}
-.bk-result-count{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
-/* 토스트 */
-.mt-toast{position:fixed;left:50%;bottom:38px;transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(26,35,50,.32);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:9999;letter-spacing:.01em}
-.mt-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.mt-toast.err{background:var(--red2,#b3261e)}
-.tbl-topscroll{overflow-x:auto;overflow-y:hidden;height:14px}
-.tbl-topscroll-inner{height:1px}
-.tbl-topscroll::-webkit-scrollbar{height:10px}
-.tbl-topscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px}
-.tbl-topscroll::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-.tbl-topscroll::-webkit-scrollbar-track{background:var(--surface3);border-radius:6px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--surface3);color:var(--text2);font-weight:600;padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
 th.sortable{cursor:pointer;user-select:none}
@@ -233,7 +202,6 @@ tr:hover td{background:#EEF3FA}
 @media(max-width:680px){.cm-grid{grid-template-columns:1fr}}
 .cm-box{border:1px solid var(--border);border-radius:12px;padding:16px}
 .cm-box-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:7px}
-.cm-rate-big{font-size:24px;font-weight:700;color:var(--accent);font-family:var(--mono);margin:8px 0}
 
 /* D-DAY MODAL */
 .dday-sec{margin-bottom:18px}
@@ -373,6 +341,7 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
   <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
   <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑨ 요금 검증</div>
+  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ⑪ 데이터 검수</div>
   <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ⑩ 호텔 블록</div>
 </div>
 
@@ -463,30 +432,6 @@ tr:hover td{background:#EEF3FA}
       </div>
     </div>
     <div class="sum-grid" id="booking-summary"></div>
-    <div class="bk-filterbar">
-      <div class="bk-search-row">
-        <span class="bk-search-ico">🔍</span>
-        <input type="text" id="bk-search" class="bk-search-input" placeholder="이름 · 행사번호 · 연락처 · 회원권 · 출발지 검색  ( / 키로 포커스 )" oninput="renderBooking()">
-        <button class="bk-clear" id="bk-clear" onclick="bkClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
-      </div>
-      <div class="bk-chip-row">
-        <span class="bk-chip-grp" id="bk-chip-status"></span>
-        <span class="bk-chip-sep"></span>
-        <span class="bk-chip-grp" id="bk-chip-hotel"></span>
-        <span class="bk-chip-sep"></span>
-        <span class="bk-chip-grp" id="bk-chip-list"></span>
-        <span class="bk-chip-sep"></span>
-        <span class="bk-chip-grp" id="bk-chip-quick"></span>
-      </div>
-      <div class="bk-date-row">
-        <span class="bk-date-label">출발일</span>
-        <input type="date" id="bk-date-from" class="bk-date-input" onchange="renderBooking()">
-        <span class="bk-date-tilde">~</span>
-        <input type="date" id="bk-date-to" class="bk-date-input" onchange="renderBooking()">
-        <button class="btn-sm" onclick="bkClearDate()" style="padding:4px 10px">날짜 초기화</button>
-        <span class="bk-result-count" id="bk-result-count"></span>
-      </div>
-    </div>
     <div class="tbl-wrap">
       <table id="booking-table">
         <thead id="booking-thead"></thead>
@@ -586,10 +531,29 @@ tr:hover td{background:#EEF3FA}
     </div>
     <div class="sum-grid" id="verify-summary"></div>
     <div class="note">
-      <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 적용환율 + 항공요금합 + 회원관리비합(₩50,000/인) + 원화기타.
+      <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 출국월 환율 + 항공요금합 + 회원관리비합(₩50,000/인) + 원화기타.
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.
     </div>
     <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════════ ⑪ 데이터 검수 ════════ -->
+<div class="section" id="sec-audit">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">⑪ 데이터 검수</div><div class="card-sub">엠클릭 수기 입력 오류를 발권 전에 검출 — 자동 수정하지 않고, 담당자가 엠클릭에서 직접 고치도록 안내합니다</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="filterAudit('all')">전체</button>
+        <button class="btn-sm" onclick="filterAudit('red')">🔴 긴급만</button>
+        <button class="btn-sm" onclick="filterAudit('amber')">🟠 확인만</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="audit-summary"></div>
+    <div class="note">
+      <b>검출만 합니다</b> · 이 화면은 잘못된 값을 <b>대신 고치지 않습니다</b>. 영문명 공백 등은 항공팀 발권과 엠클릭에 동일하게 반영돼야 하므로, 표의 "현재 값 → 권장 형태"를 보고 담당자가 <b>엠클릭에서 직접 수정</b>해 주세요. 권장 형태는 참고용 표시일 뿐입니다.
+    </div>
+    <div id="audit-body"></div>
   </div>
 </div>
 
@@ -872,7 +836,7 @@ function parseProduct(name){
   }
   else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='야마나미 쿠주힐즈'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
   else if(s.indexOf('포틴힐즈')>=0){
-    region='구마모토'; golf='포틴힐즈CC';
+    region='나고야'; golf='포틴힐즈CC';
     if(s.indexOf('카라반')>=0){ accom='포틴힐즈CC 카라반'; roomType='트윈'; }
     else if(s.indexOf('패밀리룸')>=0){ accom='포틴힐즈CC 골프텔'; roomType='패밀리룸'; }
     else { accom='포틴힐즈CC 골프텔'; roomType='트윈'; }
@@ -891,7 +855,7 @@ function parseProduct(name){
   else if(s.indexOf('미야자키')>=0){ accom='미야자키 시내 호텔'; roomType='트윈'; region='미야자키'; golf='미야자키'; }
   else if(s.indexOf('구마모토 시내')>=0){ accom='구마모토 시내 호텔'; roomType='트윈'; region='구마모토'; golf=''; }
   else if(s.indexOf('닐라이스프링스')>=0){ accom='닐라이스프링스 리조트'; roomType='트윈'; region='쿠알라룸푸르'; golf='닐라이스프링스GC'; }
-  else if(s.indexOf('국제공항')>=0){ accom='국제공항CC 골프텔'; roomType='트윈'; region='나고야'; golf='국제공항CC'; }
+  else if(s.indexOf('국제공항')>=0){ accom='국제공항CC 골프텔'; roomType='트윈'; region='미야자키'; golf='국제공항CC'; }
 
   const m=name.match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
   return {accom, roomType, region, golf, nights};
@@ -1151,7 +1115,7 @@ function analyze(){
   teams.forEach((t,i)=>t.no=i+1);
 
   // 탭 해제
-  ['booking','insurance','air','transfer','accom','golf','dinner','verify'].forEach(s=>
+  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit'].forEach(s=>
     document.getElementById('nav-'+s).classList.remove('locked'));
 
   // 세션 배지
@@ -1167,57 +1131,22 @@ function analyze(){
   renderGolf();
   renderDinner();
   renderVerify();
+  renderAudit();
   gotoSection('booking');
 }
 
 /* ════════════════════════════════════════════════════════════
    ② 예약 관리 렌더
 ════════════════════════════════════════════════════════════ */
-const BOOKING_HDR=['☑','No','구분','호텔','명단','행사번호','대표고객','회원권구분','출발일자','도착일자','기간','요일','출발지','항공','상품명','예약인원','판매금액','미수금액','팀','비고 특이사항'];
-/* 검색·필터 상태 */
-const bkFilter={ status:'전체', hotel:'전체', list:'전체', quick:'' };
-function bkSetFilter(group,val){
-  bkFilter[group] = (bkFilter[group]===val ? (group==='quick'?'':'전체') : val);
-  renderBooking();
-}
-function bkClearSearch(){ const el=document.getElementById('bk-search'); if(el){ el.value=''; renderBooking(); el.focus(); } }
-function bkClearDate(){ document.getElementById('bk-date-from').value=''; document.getElementById('bk-date-to').value=''; renderBooking(); }
-function bkRenderChips(){
-  const mk=(grp,opts)=>opts.map(o=>`<span class="bk-chip ${bkFilter[grp]===o.v?'on':''}" onclick="bkSetFilter('${grp}','${o.v}')">${o.l}</span>`).join('');
-  const c1=document.getElementById('bk-chip-status'); if(c1) c1.innerHTML='<span class="bk-chip-lbl">구분</span>'+mk('status',[{v:'전체',l:'전체'},{v:'견적',l:'견적'},{v:'대기',l:'대기'},{v:'확정',l:'확정'},{v:'정산',l:'정산'}]);
-  const c2=document.getElementById('bk-chip-hotel'); if(c2) c2.innerHTML='<span class="bk-chip-lbl">호텔</span>'+mk('hotel',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
-  const c3=document.getElementById('bk-chip-list'); if(c3) c3.innerHTML='<span class="bk-chip-lbl">명단</span>'+mk('list',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
-  const c4=document.getElementById('bk-chip-quick'); if(c4) c4.innerHTML='<span class="bk-chip-lbl">빠른필터</span>'+
-    `<span class="bk-chip ${bkFilter.quick==='due'?'on':''}" onclick="bkSetFilter('quick','due')">미수 있음</span>`+
-    `<span class="bk-chip ${bkFilter.quick==='noteam'?'on':''}" onclick="bkSetFilter('quick','noteam')">팀 미지정</span>`;
-}
-function bkFilteredTeams(){
-  const q=(document.getElementById('bk-search')?.value||'').trim().toLowerCase();
-  const from=document.getElementById('bk-date-from')?.value||'';
-  const to=document.getElementById('bk-date-to')?.value||'';
-  return teams.filter(t=>{
-    if(bkFilter.status!=='전체' && t.status!==bkFilter.status) return false;
-    if(bkFilter.hotel!=='전체' && (t.hotelY?'Y':'N')!==bkFilter.hotel) return false;
-    if(bkFilter.list!=='전체' && (t.listY?'Y':'N')!==bkFilter.list) return false;
-    if(bkFilter.quick==='due' && !(t.due>0)) return false;
-    if(bkFilter.quick==='noteam'){ const tm=teamAssign[t.eventSeq]||t.teamAuto||''; if(tm) return false; }
-    if(from && t.dep && t.dep<from) return false;
-    if(to && t.dep && t.dep>to) return false;
-    if(q){
-      const hay=[t.repName,t.eventNo,t.repPhone,t.memberType,t.apisOrigin,t.origin,t.prodName,t.accom,weekday(t.dep),(teamAssign[t.eventSeq]||t.teamAuto||'')].map(x=>(x||'').toString().toLowerCase()).join(' ');
-      if(!hay.includes(q)) return false;
-    }
-    return true;
-  });
-}
+const BOOKING_HDR=['☑','No','구분','호텔Y','명단Y','행사번호','대표고객','회원권구분','출발일자','도착일자','기간','요일','출발지','항공','상품명','예약인원','판매금액','미수금액','팀','비고 특이사항'];
 function renderBooking(){
   // 정렬 가능한 헤더 (☑·No·요일 제외 나머지 정렬 가능)
   const thead='<tr>'+
     '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'booking\',this.checked)"></th>'+
     '<th>No</th>'+
     sortTh('구분','status','booking')+
-    sortTh('호텔','hotelY','booking')+
-    sortTh('명단','listY','booking')+
+    sortTh('호텔Y','hotelY','booking')+
+    sortTh('명단Y','listY','booking')+
     sortTh('행사번호','eventNo','booking')+
     sortTh('대표고객','repName','booking')+
     sortTh('연락처','repPhone','booking')+
@@ -1235,29 +1164,19 @@ function renderBooking(){
     sortTh('팀','team','booking')+
     '<th>비고 특이사항</th></tr>';
   document.getElementById('booking-thead').innerHTML=thead;
-  bkRenderChips();
-  const fteams=bkFilteredTeams();
-  const filtered = fteams.length!==teams.length;
-  // 검색창 클리어 버튼 표시
-  const sv=(document.getElementById('bk-search')?.value||'').length>0;
-  const clr=document.getElementById('bk-clear'); if(clr) clr.style.display=sv?'block':'none';
-  // 요약 (필터 결과 기준)
-  const totSales=fteams.reduce((s,t)=>s+t.sales,0);
-  const totDue=fteams.reduce((s,t)=>s+t.due,0);
-  const dueTeams=fteams.filter(t=>t.due>0).length;
-  const totPax=fteams.reduce((s,t)=>s+t.pax,0);
+  // 요약
+  const totSales=teams.reduce((s,t)=>s+t.sales,0);
+  const totDue=teams.reduce((s,t)=>s+t.due,0);
+  const dueTeams=teams.filter(t=>t.due>0).length;
+  const totPax=teams.reduce((s,t)=>s+t.pax,0);
   document.getElementById('booking-summary').innerHTML=`
-    <div class="sum-box"><div class="sum-label">예약 건수${filtered?' (필터)':''}</div><div class="sum-val">${fteams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">총 예약 건수</div><div class="sum-val">${teams.length}건</div></div>
     <div class="sum-box"><div class="sum-label">총 인원</div><div class="sum-val">${totPax}명</div></div>
     <div class="sum-box"><div class="sum-label">총 판매금액</div><div class="sum-val">${won(totSales)}</div></div>
     <div class="sum-box"><div class="sum-label">총 미수금액</div><div class="sum-val ${totDue>0?'red':'green'}">${won(totDue)}</div></div>
     <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>`;
-  // 결과 카운트
-  const rc=document.getElementById('bk-result-count');
-  if(rc) rc.textContent = filtered ? `${fteams.length} / ${teams.length}건 표시` : `전체 ${teams.length}건`;
 
-  const list=sortTeams(fteams,'booking');
-  document.getElementById('booking-tbody').innerHTML = (list.length?list:[]).map(t=>{
+  document.getElementById('booking-tbody').innerHTML = sortTeams(teams,'booking').map(t=>{
     const team=teamAssign[t.eventSeq]||t.teamAuto||'';
     const teamCell= team
       ? `<span class="tag tag-team" style="background:${getTeamColor(team).bg};border:1px solid ${getTeamColor(team).border};color:${getTeamColor(team).text}" onclick="openTeamModal('${t.eventSeq}')">팀:${team}</span>`
@@ -1287,7 +1206,7 @@ function renderBooking(){
       <td class="center">${teamCell}</td>
       <td class="muted">${t.special||'-'}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="20" class="center muted" style="padding:30px">검색·필터 조건에 맞는 예약이 없습니다.</td></tr>`;
+  }).join('');
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1613,12 +1532,12 @@ function resortUnitFor(accom){
   }
   return {stay:r.stay, transfer:r.transfer, matched:true};
 }
-/* 출국월 환율 조회 */
+/* 출국월 환율 조회 (월별 환율 미등록 시 0 → 기준 미등록 처리) */
 function rateForMonth(depDate){
-  if(!depDate) return commonMaster.rate||0;
+  if(!depDate) return 0;
   const ym=depDate.slice(0,7);
   const mr=commonMaster.monthlyRates||{};
-  return mr[ym]!=null ? mr[ym] : (commonMaster.rate||0);
+  return mr[ym]!=null ? mr[ym] : 0;
 }
 /* 항공요금 조회 (월 × 출발지 × 도착지 × 박수) */
 function airfareFor(t){
@@ -1724,6 +1643,174 @@ function renderVerify(){
     </tr>`;
   }).join('');
 }
+
+/* ════════════════════════════════════════════════════════════
+   ⑪ 데이터 검수 — 엠클릭 수기 입력 오류 검출 (자동 수정 없음)
+════════════════════════════════════════════════════════════ */
+let auditFilter='all';
+let auditResult=null;
+function filterAudit(f){ auditFilter=f; renderAudit(); }
+
+/* 영문 토큰 정리: 앞뒤·중간 공백 제거한 '붙인 형태' */
+function engJoined(s){ return String(s||'').replace(/\s+/g,'').toUpperCase(); }
+/* 표시용: 원본 공백을 가운데점으로 시각화 */
+function showSpace(s){ return String(s||'').replace(/ /g,'·'); }
+
+function repNameOf(seq){
+  const t=teams.find(x=>String(x.eventSeq)===String(seq));
+  return t?t.repName:'';
+}
+
+function buildAudit(){
+  const issues={ engSpace:[], expSoon:[], expMiss:[], ppMiss:[], pnrMiss:[], engMismatch:[] };
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  // ── APIS 개인 단위 검수 ──
+  if(apisData){
+    apisData.forEach(r=>{
+      if(r['cancCd']) return;
+      const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
+      const name=String(r['고객명']||'').trim();
+      const ln=String(r['영문성']||''); const fn=String(r['영문이름']||'');
+      const dep=fmtDate(r['출발일자']);
+      const base={seq, name, dep};
+      // 1) 영문명 공백/비알파벳 (성·이름 각각)
+      const lnBad=/[^A-Za-z]/.test(ln.trim())||/\s/.test(ln)||ln!==ln.trim();
+      const fnBad=/[^A-Za-z]/.test(fn.trim())||/\s/.test(fn)||fn!==fn.trim();
+      if(lnBad||fnBad){
+        issues.engSpace.push({...base,
+          field: (lnBad&&fnBad)?'성·이름':(lnBad?'영문성':'영문이름'),
+          cur: `${showSpace(ln)} / ${showSpace(fn)}`,
+          rec: `${engJoined(ln)} / ${engJoined(fn)}`,
+          severe: fnBad // 이름 공백이 발권 핵심
+        });
+      }
+      // 2) 여권 만료일
+      const expStr=fmtDate(r['만료일']);
+      if(!expStr) issues.expMiss.push({...base});
+      else {
+        const exp=new Date(expStr+'T00:00:00');
+        const depD=dep?new Date(dep+'T00:00:00'):today;
+        if(!isNaN(exp)){
+          const days=Math.round((exp-depD)/86400000);
+          if(days<183) issues.expSoon.push({...base, expiry:expStr, days, severe: days<90});
+        }
+      }
+      // 3) 여권번호 누락
+      if(!String(r['여권번호']||'').trim()) issues.ppMiss.push({...base});
+      // 4) PNR 누락
+      if(!String(r['PNR']||'').trim()) issues.pnrMiss.push({...base});
+    });
+  }
+
+  // ── 두 파일 영문명 교차검증 (APIS ↔ 일행별예약, pkgPsgrSeq 기준) ──
+  if(apisData && ilhaengData){
+    const apMap={};
+    apisData.forEach(r=>{ if(r['cancCd'])return; const k=String(r['pkgPsgrSeq']||'').trim(); if(k) apMap[k]={ln:String(r['영문성']||''),fn:String(r['영문이름']||''),name:String(r['고객명']||'').trim(),seq:String(r['eventSeq']||'').trim(),dep:fmtDate(r['출발일자'])}; });
+    ilhaengData.forEach(r=>{
+      if(r['cancCd'])return;
+      const k=String(r['pkgPsgrSeq']||'').trim(); if(!k||!apMap[k])return;
+      const a=apMap[k];
+      const ilLn=String(r['영문성']||''); const ilFn=String(r['영문이름']||'');
+      // 붙인 형태가 같은데 원본 표기만 다르면 '같은 사람 다른 표기'로 검출
+      if(engJoined(a.ln)===engJoined(ilLn) && engJoined(a.fn)===engJoined(ilFn)){
+        if(a.ln+a.fn !== ilLn+ilFn){
+          issues.engMismatch.push({seq:a.seq, name:a.name||String(r['고객명']||'').trim(), dep:a.dep,
+            cur:`APIS: ${showSpace(a.ln)} ${showSpace(a.fn)}  /  일행: ${showSpace(ilLn)} ${showSpace(ilFn)}`,
+            rec:`${engJoined(a.ln)} ${engJoined(a.fn)}`, severe:true});
+        }
+      }
+    });
+  }
+
+  const byDep=(a,b)=>String(a.dep||'').localeCompare(String(b.dep||''));
+  Object.values(issues).forEach(arr=>arr.sort(byDep));
+  auditResult=issues;
+  return issues;
+}
+
+function renderAudit(){
+  const box=document.getElementById('audit-body');
+  const sumBox=document.getElementById('audit-summary');
+  if(!box) return;
+  if(!apisData && !ilhaengData){
+    sumBox.innerHTML='';
+    box.innerHTML='<div class="note" style="border-left-color:var(--text3)">APIS 정보 또는 일행별예약 파일을 업로드하면 검수가 실행됩니다.</div>';
+    return;
+  }
+  const I=buildAudit();
+  const totalRed = I.engSpace.filter(x=>x.severe).length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length + I.pnrMiss.length + I.engMismatch.length;
+  const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length;
+  const totalAll = totalRed+totalAmber;
+
+  sumBox.innerHTML=`
+    <div class="sum-box"><div class="sum-label">전체 검출</div><div class="sum-val">${totalAll}건</div></div>
+    <div class="sum-box"><div class="sum-label">🔴 긴급(발권 영향)</div><div class="sum-val red">${totalRed}건</div></div>
+    <div class="sum-box"><div class="sum-label">🟠 확인 필요</div><div class="sum-val" style="color:var(--amber2)">${totalAmber}건</div></div>`;
+
+  if(totalAll===0){
+    box.innerHTML='<div class="note" style="border-left-color:var(--green)"><b>검출된 문제가 없습니다.</b> 업로드된 데이터에서 영문명 공백·여권 만료·누락·표기 불일치가 발견되지 않았습니다.</div>';
+    return;
+  }
+
+  const block=(title,desc,arr,cols,sevKey)=>{
+    let rows=arr;
+    if(auditFilter==='red') rows=arr.filter(x=> sevKey? x[sevKey] : true );
+    else if(auditFilter==='amber') rows=arr.filter(x=> sevKey? !x[sevKey] : false );
+    if(!rows.length) return '';
+    const head=cols.map(c=>`<th>${c.h}</th>`).join('');
+    const body=rows.map(x=>{
+      const sev = sevKey ? (x[sevKey]?'red':'amber') : 'red';
+      const dot = sev==='red'?'🔴':'🟠';
+      return '<tr>'+`<td class="center">${dot}</td>`+cols.map(c=>`<td>${c.f(x)}</td>`).join('')+'</tr>';
+    }).join('');
+    return `<div style="margin-bottom:1.5rem">
+      <div class="card-title" style="font-size:13px;margin-bottom:4px">${title} <span class="muted" style="font-weight:400">· ${rows.length}건</span></div>
+      <div class="card-sub" style="margin-bottom:8px">${desc}</div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:32px"></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    </div>`;
+  };
+
+  const blocks=[];
+  blocks.push(block('영문명 공백·특수문자',
+    '엠클릭 외교부 여권검수 후 다시 붙이지 않아 공백이 남은 건. 발권·온라인 체크인 안내(붙여서)와 어긋납니다. 엠클릭에서 공백 제거 후 저장하세요.',
+    I.engSpace,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green2)">'+x.rec+'</span>'},{h:'출발일',f:x=>x.dep||'-'}],
+    'severe'));
+
+  blocks.push(block('영문명 파일 간 불일치',
+    'APIS와 일행별예약에서 같은 사람의 영문명 표기가 다른 건(한쪽만 붙여 저장). 두 곳을 같은 값으로 통일하세요.',
+    I.engMismatch,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'현재(불일치)',f:x=>'<span style="color:var(--red)">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green2)">'+x.rec+'</span>'},{h:'출발일',f:x=>x.dep||'-'}],
+    null));
+
+  blocks.push(block('여권 만료 임박',
+    '출발일 기준 잔여 6개월 미만(3개월 미만은 긴급). 손님께 여권 갱신 안내가 필요합니다.',
+    I.expSoon,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'만료일',f:x=>'<span style="color:var(--red);font-weight:700">'+x.expiry+'</span>'},{h:'출발일',f:x=>x.dep||'-'},{h:'잔여',f:x=>x.days+'일'}],
+    'severe'));
+
+  blocks.push(block('여권 만료일 누락',
+    '만료일이 비어 있는 건. 발권·체크인 전 입력이 필요합니다.',
+    I.expMiss,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'출발일',f:x=>x.dep||'-'}],
+    null));
+
+  blocks.push(block('여권번호 누락',
+    '여권번호가 비어 있는 건.',
+    I.ppMiss,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'출발일',f:x=>x.dep||'-'}],
+    null));
+
+  blocks.push(block('PNR 누락',
+    'APIS에 PNR이 비어 있는 건(미발권 또는 미입력).',
+    I.pnrMiss,
+    [{h:'행사번호',f:x=>x.seq},{h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'},{h:'손님',f:x=>x.name||'-'},{h:'출발일',f:x=>x.dep||'-'}],
+    null));
+
+  const html=blocks.filter(Boolean).join('');
+  box.innerHTML = html || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
+}
 function setVAdj(seq, field, val){
   vAdjust[seq]=vAdjust[seq]||{};
   vAdjust[seq][field]=num(val);
@@ -1828,8 +1915,7 @@ function exportAligo(){
   let msg=`${sel.length}팀 / ${rows.length-1}명 알리고 양식 생성 완료`;
   if(noPhone) msg+=`\n· 휴대번호 없는 행 ${noPhone}건 (빈칸 출력 — 확인 필요)`;
   if(noPnr) msg+=`\n· PNR 없는 팀 ${noPnr}건 (빈칸 출력)`;
-  if(noPhone||noPnr) setTimeout(()=>alert(msg),100);
-  else showToast(`${sel.length}팀 / ${rows.length-1}명 알리고 양식 생성 완료`);
+  setTimeout(()=>alert(msg),100);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1898,13 +1984,12 @@ function saveTeam(){
   const v=document.getElementById('tm-team-input').value.trim();
   if(v) teamAssign[modalSeq]=v; else delete teamAssign[modalSeq];
   savePersist(); closeTeamModal(); renderBooking();
-  showToast(v?'팀이 지정되었습니다':'팀 지정이 해제되었습니다');
 }
 function clearTeam(){
   if(!modalSeq) return;
   delete teamAssign[modalSeq];
+  // 자동 파싱된 팀도 무시하도록 빈 문자열로 덮어쓸지 여부: 여기선 해제=수동지정 제거
   savePersist(); closeTeamModal(); renderBooking();
-  showToast('팀 지정이 해제되었습니다');
 }
 function openTeamColorLegend(){
   const allTeams=[...new Set(teams.map(x=>teamAssign[x.eventSeq]||x.teamAuto).filter(Boolean))];
@@ -1942,12 +2027,12 @@ const RESORT_DEFAULTS=[
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
-  {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'구마모토', golf:'포틴힐즈CC', holes:18,
+  {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
-  {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'구마모토', golf:'포틴힐즈CC', holes:18,
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
+  {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
@@ -1966,9 +2051,9 @@ const RESORT_DEFAULTS=[
   {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
-  {key:'kokusai', name:'국제공항CC 골프텔', region:'나고야', golf:'국제공항CC', holes:18,
+  {key:'kokusai', name:'국제공항CC 골프텔', region:'미야자키', golf:'국제공항CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'나고야', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
+   depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
@@ -1980,8 +2065,6 @@ const RESORT_DEFAULTS=[
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  rate:0, rateUSD:0, rateMYR:0,
-  rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
   insCompany:'', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
@@ -2155,25 +2238,7 @@ function renderResortMaster(){
   }).join('');
 
   // 공통 마스터
-  document.getElementById('common-master').innerHTML=`<div class="cm-grid">
-    <div class="cm-box">
-      <div class="cm-box-title">💱 적용 환율</div>
-      <div class="rm-row"><label>엔 (100엔당 원)</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rate?Number(commonMaster.rate).toLocaleString():''}" placeholder="0"
-          onchange="updateCommon('rate',this.value,this)"><span class="rm-unit">원</span></div></div>
-      <div class="cm-rate-big">${commonMaster.rate?'100엔 = '+Number(commonMaster.rate).toLocaleString()+'원':'환율 미입력'}</div>
-      <div class="rm-row"><label>달러 (1달러당 원)</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rateUSD?Number(commonMaster.rateUSD).toLocaleString():''}" placeholder="0"
-          onchange="updateCommon('rateUSD',this.value,this)"><span class="rm-unit">원</span></div></div>
-      <div class="rm-row"><label>링깃 (1링깃당 원)</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rateMYR?Number(commonMaster.rateMYR).toLocaleString():''}" placeholder="0"
-          onchange="updateCommon('rateMYR',this.value,this)"><span class="rm-unit">원</span></div></div>
-      <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
-        <label>적용 기준 (엔)</label>
-        <input class="rm-input wide" type="text" value="${(commonMaster.rateBase||'').replace(/"/g,'&quot;')}" placeholder="환율 적용 기준일 (통화별 기준은 추후)"
-          onchange="updateCommon('rateBase',this.value,this)"></div>
-    </div>
-    <div class="cm-box">
+  document.getElementById('common-master').innerHTML=`<div class="cm-box">
       <div class="cm-box-title">🛡️ 여행자보험</div>
       <div class="rm-row"><label>보험사</label>
         <input class="rm-input text" type="text" value="${(commonMaster.insCompany||'').replace(/"/g,'&quot;')}" placeholder="보험사명"
@@ -2189,7 +2254,6 @@ function renderResortMaster(){
         <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
           onchange="updateCommon('insCover',this.value,this)"></div>
     </div>
-  </div>
   <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">💰 회원관리비 (원화 고정)</div>
     <div class="rm-row"><label>1인 회원관리비</label><div style="display:flex;align-items:center">
@@ -2197,7 +2261,7 @@ function renderResortMaster(){
         onchange="updateCommon('mgmtKRW',this.value,this)"><span class="rm-unit">원</span></div></div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 미등록 월은 위 기본 환율로 폴백</span></div>
+    <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율</span></div>
     <div id="monthly-rate-rows"></div>
     <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
       <input class="rm-input" id="mr-month" type="month" style="width:130px;text-align:left;font-family:var(--sans)">
@@ -2338,10 +2402,9 @@ function updateResort(key, field, val, el){
   if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
-  if(['rate','rateUSD','rateMYR','insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  if(['insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
   saveResortMaster();
-  if(field==='rate') renderResortMaster(); // 큰 숫자 표시 갱신
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2376,48 +2439,6 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{
   bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); });
-
-/* ════════ 전역 토스트 알림 ════════ */
-let _toastTimer=null;
-function showToast(msg, type){
-  let box=document.getElementById('mt-toast');
-  if(!box){ box=document.createElement('div'); box.id='mt-toast'; box.className='mt-toast'; document.body.appendChild(box); }
-  box.textContent=msg;
-  box.className='mt-toast'+(type==='error'?' err':'')+' show';
-  clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>{ box.classList.remove('show'); }, 1600);
-}
-/* 클립보드 복사 헬퍼 (복사되었습니다 토스트) */
-function copyToClipboard(text, label){
-  const done=()=>showToast((label||'복사')+'되었습니다');
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); }
-  else fallbackCopy(text,done);
-}
-function fallbackCopy(text,cb){ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); if(cb)cb(); }
-
-/* ════════ 전역 단축키 ════════ */
-/* Ctrl+S 저장 / "/" 검색 포커스 / Esc 검색비우기·모달닫기 */
-document.addEventListener('keydown',e=>{
-  const tag=(e.target.tagName||'').toLowerCase();
-  const typing = tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
-  // Ctrl/Cmd + S : 저장
-  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){
-    e.preventDefault();
-    try{ if(typeof savePersist==='function') savePersist(); if(typeof saveResortMaster==='function') saveResortMaster(); if(typeof blkSave==='function') blkSave(); }catch(_){}
-    showToast('저장되었습니다');
-    return;
-  }
-  // "/" : 현재 보이는 검색창에 포커스 (입력 중이 아닐 때만)
-  if(e.key==='/' && !typing){
-    const search=document.getElementById('bk-search');
-    if(search && search.offsetParent!==null){ e.preventDefault(); search.focus(); search.select(); }
-    return;
-  }
-  // Esc : 검색창 비우기 (포커스가 검색창일 때)
-  if(e.key==='Escape' && e.target && e.target.id==='bk-search'){
-    if(e.target.value){ e.target.value=''; if(typeof renderBooking==='function') renderBooking(); }
-  }
-});
 
 /* 페이지 로드 시 리조트 마스터 초기화 — blkMaster 로드 이후로 미룸(정원 배지 계산 위해) */
 loadResortMaster();
@@ -2712,7 +2733,7 @@ function blkRenderStatus(){
   // 매트릭스
   let head='<thead><tr><th class="rowhd">호텔 · 룸타입</th>';
   days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
-  head+='<th class="total-col" title="기간 중 가장 빡빡한 날의 잔여 (잔여 = 보유 − 사용)">최소잔여</th></tr></thead>';
+  head+='<th class="total-col">사용계</th></tr></thead>';
   let body='<tbody>';
   // 선택 합계 행: 호텔 2개 이상 선택 시 맨 위에 합산(룸타입 무시, 객실 단위)
   if(blkHotelFilter.size>=2){
@@ -2738,14 +2759,7 @@ function blkRenderStatus(){
         body+= `<td class="${blkClsRemain(rem)}" title="보유 합 ${capSum} / 사용 합 ${used} / 잔여 ${rem}"><b>${rem}</b></td>`;
       }
     });
-    // 끝 열: 선택 합계의 최소 잔여 (임의배정 포함 시 계산 불가 → '—')
-    if(hasAssign || !capHas){
-      body+=`<td class="total-col" title="임의배정 포함—잔여 계산 불가">—</td></tr>`;
-    } else {
-      let minRem=Infinity;
-      days.forEach(d=>{ minRem=Math.min(minRem, capSum-(useByDay[d.day]||0)); });
-      body+=`<td class="total-col ${blkClsRemain(minRem)}"><b>${minRem===Infinity?'—':minRem}</b></td></tr>`;
-    }
+    body+=`<td class="total-col"><b>${selTot}</b></td></tr>`;
   }
   units.forEach(u=>{
     const rooms=usage[u]||{};
@@ -2753,25 +2767,18 @@ function blkRenderStatus(){
     Object.keys(rooms).sort().forEach((rm,ri)=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
       const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block">보유 ${blk}</span>`);
-      let rowTot=0, minRem=Infinity, hasUse=false;
+      let rowTot=0;
       body+=`<tr><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}</td>`;
       days.forEach(d=>{
         const used=rooms[rm][d.day]||0;
-        rowTot+=used; if(used>0) hasUse=true;
-        if(used===0){ body+=`<td class="b-zero">·</td>`; if(!(assign||blk==null)) minRem=Math.min(minRem, (blk+(blkOver[`${u}|${rm}|${d.day}`]||0))); return; }
+        rowTot+=used;
+        if(used===0){ body+=`<td class="b-zero">·</td>`; return; }
         if(assign||blk==null){ body+=`<td class="b-use">${used}</td>`; return; }
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
         const rem=(blk+over)-used;
-        minRem=Math.min(minRem, rem);
         body+=`<td class="${blkClsRemain(rem)}" title="보유 ${blk}${over?'+'+over:''} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
       });
-      // 끝 열: 최소 잔여 (임의배정·보유미등록은 계산 불가 → 사용 최대값 표시)
-      if(assign||blk==null){
-        let maxUse=0; days.forEach(d=>{ maxUse=Math.max(maxUse, rooms[rm][d.day]||0); });
-        body+=`<td class="total-col" title="${assign?'임의배정—잔여 계산 안 함':'보유 미등록'} / 일 최대 사용 ${maxUse}">${assign?'배정':'—'}</td></tr>`;
-      } else {
-        body+=`<td class="total-col ${blkClsRemain(minRem)}" title="기간 중 최소 잔여">${minRem===Infinity?'—':minRem}</td></tr>`;
-      }
+      body+=`<td class="total-col">${rowTot}</td></tr>`;
     });
   });
   body+='</tbody>';
@@ -3109,44 +3116,6 @@ function downloadNotice(){
     a.click();
   }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
 }
-
-/* ── 표 상단 동기화 가로 스크롤바 ── */
-/* 넘치는 .tbl-wrap 위에, 하단 스크롤바와 동기화되는 상단 스크롤바를 부착.
-   가로로 넘칠 때만 생기고, 안 넘치면 안 생김. 윈도우 리사이즈·내용 변경 시 갱신. */
-function attachTopScrollbars(){
-  document.querySelectorAll('.tbl-wrap').forEach(wrap=>{
-    const tbl=wrap.querySelector('table'); if(!tbl) return;
-    const overflow = tbl.scrollWidth > wrap.clientWidth + 2;
-    let top = wrap.previousElementSibling;
-    const isTopBar = top && top.classList && top.classList.contains('tbl-topscroll');
-    if(!overflow){ if(isTopBar) top.remove(); return; }
-    if(!isTopBar){
-      top=document.createElement('div');
-      top.className='tbl-topscroll';
-      const inner=document.createElement('div'); inner.className='tbl-topscroll-inner';
-      top.appendChild(inner);
-      wrap.parentNode.insertBefore(top, wrap);
-      // 양방향 동기화
-      let lock=false;
-      top.addEventListener('scroll',()=>{ if(lock)return; lock=true; wrap.scrollLeft=top.scrollLeft; lock=false; });
-      wrap.addEventListener('scroll',()=>{ if(lock)return; lock=true; top.scrollLeft=wrap.scrollLeft; lock=false; });
-    }
-    // 너비 동기화 (내용 폭만큼 더미 채움)
-    top.querySelector('.tbl-topscroll-inner').style.width = tbl.scrollWidth + 'px';
-  });
-}
-/* 렌더 후 호출되도록 훅: 주요 렌더 함수 뒤에서 호출 + 리사이즈/탭전환 대응 */
-const _attachDebounced = (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(attachTopScrollbars,60); }; })();
-window.addEventListener('resize', _attachDebounced);
-// MutationObserver로 표 내용 바뀔 때 자동 부착
-(function(){
-  const mo=new MutationObserver(_attachDebounced);
-  document.querySelectorAll('.tbl-wrap').forEach(w=>mo.observe(w,{childList:true,subtree:true}));
-  // 동적으로 생기는 tbl-wrap(출발조회·대기점검 등)도 잡도록 상위 컨테이너 관찰
-  const main=document.querySelector('.wrap')||document.body;
-  new MutationObserver(()=>{ _attachDebounced(); }).observe(main,{childList:true,subtree:true});
-})();
-setTimeout(attachTopScrollbars, 300);
 
 /* ── 초기화 ── */
 blkLoad();
