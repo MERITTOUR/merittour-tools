@@ -372,8 +372,8 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
   <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
   <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑨ 요금 검증</div>
-  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ⑪ 데이터 검수</div>
   <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ⑩ 호텔 블록</div>
+  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ⑪ 데이터 검수</div>
 </div>
 
 <div class="wrap">
@@ -593,25 +593,6 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
-<!-- ════════ ⑪ 데이터 검수 ════════ -->
-<div class="section" id="sec-audit">
-  <div class="card">
-    <div class="card-head">
-      <div><div class="card-title">⑪ 데이터 검수</div><div class="card-sub">엠클릭 수기 입력 오류를 발권 전에 검출 — 자동 수정하지 않고, 담당자가 엠클릭에서 직접 고치도록 안내합니다</div></div>
-      <div style="display:flex;gap:6px">
-        <button class="btn-sm" id="audit-f-all" onclick="filterAudit('all')">전체</button>
-        <button class="btn-sm" id="audit-f-red" onclick="filterAudit('red')" style="color:var(--red);border-color:var(--red)">🔴 긴급만</button>
-        <button class="btn-sm" id="audit-f-amber" onclick="filterAudit('amber')">🟠 확인필요만</button>
-      </div>
-    </div>
-    <div class="sum-grid" id="audit-summary"></div>
-    <div class="note" style="margin:0.5rem 0 1rem">
-      <b>영문명 공백</b>이 핵심입니다. 엠클릭 외교부 여권검수 후 다시 붙이지 않아 공백이 남으면, 항공팀 발권·손님 온라인 체크인 안내(붙여서)와 어긋납니다. <b>검출된 건은 엠클릭에서 공백을 제거해 다시 저장</b>해야 합니다.
-    </div>
-    <div id="audit-body"></div>
-  </div>
-</div>
-
 <!-- ════════ ⑩ 호텔 블록 ════════ -->
 <div class="section" id="sec-block">
   <div class="blk-subtabs">
@@ -748,6 +729,25 @@ tr:hover td{background:#EEF3FA}
       <div class="blk-cfg-title">🔄 오버부킹 보정 초기화 <span class="card-sub" style="font-weight:400">— 판매 시뮬레이션에서 입력한 오버부킹 조정값을 모두 지웁니다</span></div>
       <button class="btn-sm" onclick="blkResetOver()" style="color:var(--red);border-color:var(--red)">오버부킹 보정값 초기화</button>
     </div>
+  </div>
+</div>
+
+<!-- ════════ ⑪ 데이터 검수 ════════ -->
+<div class="section" id="sec-audit">
+  <div class="card">
+    <div class="card-head">
+      <div><div class="card-title">⑪ 데이터 검수</div><div class="card-sub">엠클릭 수기 입력 오류를 발권 전에 검출 — 자동 수정하지 않고, 담당자가 엠클릭에서 직접 고치도록 안내합니다</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-sm" id="audit-f-all" onclick="filterAudit('all')">전체</button>
+        <button class="btn-sm" id="audit-f-red" onclick="filterAudit('red')" style="color:var(--red);border-color:var(--red)">🔴 긴급만</button>
+        <button class="btn-sm" id="audit-f-amber" onclick="filterAudit('amber')">🟠 확인필요만</button>
+      </div>
+    </div>
+    <div class="sum-grid" id="audit-summary"></div>
+    <div class="note" style="margin:0.5rem 0 1rem">
+      <b>영문명 공백</b>이 핵심입니다. 엠클릭 외교부 여권검수 후 다시 붙이지 않아 공백이 남으면, 항공팀 발권·손님 온라인 체크인 안내(붙여서)와 어긋납니다. <b>검출된 건은 엠클릭에서 공백을 제거해 다시 저장</b>해야 합니다.
+    </div>
+    <div id="audit-body"></div>
   </div>
 </div>
 
