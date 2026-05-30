@@ -546,7 +546,7 @@ tr:hover td{background:#EEF3FA}
     <div class="blk-subtab" id="blksub-wait" onclick="blkSwitch('wait')">⏳ 대기 전환 점검</div>
     <div class="blk-subtab" id="blksub-sim" onclick="blkSwitch('sim')">📈 판매 시뮬레이션</div>
     <div class="blk-subtab" id="blksub-cart" onclick="blkSwitch('cart')">🛺 전기카트</div>
-    <div class="blk-subtab" id="blksub-config" onclick="blkSwitch('config')">⚙️ 보유·풀 설정</div>
+    <div class="blk-subtab" id="blksub-config" onclick="blkSwitch('config')">⚙️ 설정 안내</div>
   </div>
 
   <!-- 블록 현황 -->
@@ -584,7 +584,7 @@ tr:hover td{background:#EEF3FA}
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
       <div class="note" style="border-left-color:var(--red)">
-        <b>미분류 호텔 발견</b> · 아래 호텔은 보유 마스터·그룹·별칭 어디에도 등록돼 있지 않습니다. <b>⚙️ 보유·그룹 설정</b> 탭에서 등록하면 잔여가 계산됩니다.
+        <b>미분류 호텔 발견</b> · 아래 호텔은 ① 리조트 마스터에 등록돼 있지 않습니다. 리조트 마스터에서 해당 숙소의 룸타입 보유를 등록하거나, 표기가 다르면 별칭에 추가하면 잔여가 계산됩니다.
         <div id="blk-unmapped-list" style="margin-top:6px"></div>
       </div>
     </div>
@@ -649,36 +649,30 @@ tr:hover td{background:#EEF3FA}
     </div>
   </div>
 
-  <!-- 보유·풀 설정 -->
+  <!-- 설정 안내 -->
   <div class="blk-view" id="blkv-config">
     <div class="blk-cfg-card">
-      <div class="blk-cfg-title">🏨 검색 풀 설정 <span class="card-sub" style="font-weight:400">— 호텔·룸을 묶는 검색 단위. 정원 = 묶인 호텔 보유 합산(자동). 출발 일정·공항은 ① 리조트 마스터에서 관리합니다.</span></div>
-      <div id="blk-pools"></div>
-      <div style="display:flex;gap:6px;margin-top:10px">
-        <input class="blk-cfg-input text" id="blk-newpool" placeholder="새 풀 이름">
-        <button class="btn-sm" onclick="blkAddPool()">+ 풀 추가</button>
+      <div class="blk-cfg-title">⚙️ 호텔 블록 설정 안내</div>
+      <div class="note" style="margin:0">
+        호텔 블록의 <b>보유 블록 수·별칭·임의배정·출발 일정</b>은 모두 <b>① 리조트 마스터</b>에서 관리합니다.
+        숙소 정보가 한 곳에 모여 있어, 리조트 마스터만 수정하면 블록 현황·출발 일정 조회·대기 점검에 자동 반영됩니다.
+        <div style="margin-top:10px">
+          <button class="btn-primary" style="padding:9px 18px" onclick="gotoSection('resort')">① 리조트 마스터로 이동 →</button>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="blk-cfg-title" style="font-size:12px">리조트 마스터에서 설정하는 항목</div>
+        <ul style="font-size:12px;color:var(--text2);line-height:1.9;padding-left:18px;margin:0">
+          <li><b>룸타입별 보유 블록</b> — 예: 아소 야마나미 골프텔 트윈 55 / 소형트윈 50</li>
+          <li><b>엠클릭 표기 별칭</b> — 예: 14hills → 포틴힐즈CC 골프텔, 소테츠/다이와 → 구마모토 시내 호텔</li>
+          <li><b>임의배정 여부</b> — 블록을 미리 안 까는 숙소(구마모토 시내). 잔여 계산 대신 사용수만 표시</li>
+          <li><b>출발 일정·출발/도착 공항</b> — 출발 일정 조회에 사용</li>
+        </ul>
       </div>
     </div>
     <div class="blk-cfg-card">
-      <div class="blk-cfg-title">🔗 별칭 <span class="card-sub" style="font-weight:400">— 같은 호텔의 다른 표기(예: 14hills = 포틴힐즈CC 골프텔)</span></div>
-      <div id="blk-aliases"></div>
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        <input class="blk-cfg-input text" id="blk-alias-from" placeholder="표기 (예: 14hills)">
-        <span style="align-self:center">→</span>
-        <input class="blk-cfg-input text" id="blk-alias-to" placeholder="실제 호텔명 (예: 포틴힐즈CC 골프텔)">
-        <button class="btn-sm" onclick="blkAddAlias()">+ 별칭 추가</button>
-      </div>
-    </div>
-    <div class="blk-cfg-card">
-      <div class="blk-cfg-title">📦 보유 블록 마스터 <span class="card-sub" style="font-weight:400">— 호텔×룸타입별 1일 보유 수. 풀 정원은 여기서 자동 합산됩니다.</span></div>
-      <div id="blk-master"></div>
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
-        <input class="blk-cfg-input text" id="blk-nm-hotel" placeholder="호텔명" style="min-width:140px">
-        <input class="blk-cfg-input text" id="blk-nm-room" placeholder="룸타입" style="min-width:80px">
-        <input class="blk-cfg-input" id="blk-nm-block" placeholder="보유" type="text" inputmode="numeric">
-        <button class="btn-sm" onclick="blkAddMaster()">+ 추가</button>
-        <button class="btn-sm" onclick="blkResetConfig()" style="color:var(--red);border-color:var(--red);margin-left:auto">설정 기본값 복원</button>
-      </div>
+      <div class="blk-cfg-title">🔄 오버부킹 보정 초기화 <span class="card-sub" style="font-weight:400">— 판매 시뮬레이션에서 입력한 오버부킹 조정값을 모두 지웁니다</span></div>
+      <button class="btn-sm" onclick="blkResetOver()" style="color:var(--red);border-color:var(--red)">오버부킹 보정값 초기화</button>
     </div>
   </div>
 </div>
@@ -1824,72 +1818,92 @@ const STORE_RESORT='mt_notify_resortMaster';
 const STORE_COMMON='mt_notify_commonMaster';
 
 /* 기본값 — 실제 판매 상품 18개 숙소. 단가는 사이님이 화면에서 입력(localStorage 저장).
-   출발일정·공항은 호텔 블록 풀에 있던 값을 기본으로 미리 채움. name은 호텔 블록 숙소명과 일치(출발일정 조회 연결). */
+   rooms: 룸타입별 보유 블록 (호텔 블록 보유 마스터 통합). aliases: 엠클릭 표기 별칭. assign: 임의배정형(블록 안 깜).
+   name은 엠클릭 표 숙소명과 일치(블록 현황·출발일정 조회 연결). */
 const RESORT_DEFAULTS=[
   {key:'yamanami_golf', name:'아소 야마나미 골프텔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':55,'소형트윈':50}, aliases:[], assign:false, memo:''},
   {key:'yamanami_bessou', name:'아소 야마나미 관내별장', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'yamanami_dome', name:'아소 야마나미 돔하우스', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'kuzu', name:'야마나미 쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
    stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'구마모토', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', memo:'14hills'},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'구마모토', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', memo:''},
+   depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'mutsuki', name:'무츠키 료칸', region:'벳푸', golf:'벳푸', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', memo:''},
+   depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'shirosato', name:'시로사토CC 골프텔', region:'이바라키', golf:'시로사토CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일6박', airOut:'인천', airIn:'나리타', memo:''},
+   depart:'일6박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'fukuroda', name:'후쿠로다노타키CC 골프텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'월7박', airOut:'인천', airIn:'나리타', memo:''},
+   depart:'월7박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{'트윈':35}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
   {key:'kokusai', name:'국제공항CC 골프텔', region:'나고야', golf:'국제공항CC', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'나고야', memo:''},
+   depart:'일5박', airOut:'인천', airIn:'나고야', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'미야자키', memo:''},
+   depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'kumamoto_city', name:'구마모토 시내 호텔', region:'구마모토', golf:'-', holes:0,
    stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', memo:'소테츠·다이와 임의배정'},
+   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
   {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
    stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', memo:''}
+   depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  rate:0, rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
+  rate:0, rateUSD:0, rateMYR:0,
+  rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
   insCompany:'', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
-  monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원)
+  monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
   airfares:[]              // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
 };
 
 let resortMaster=[], commonMaster={};
+
+/* ── 리조트 마스터에서 호텔 블록 데이터 파생 (보유/별칭/임의배정 단일 출처) ── */
+/* blkMaster 형태로: "숙소명|룸타입" → 보유 */
+function deriveBlkMaster(){
+  const m={};
+  resortMaster.forEach(r=>{ const rooms=r.rooms||{}; Object.keys(rooms).forEach(rt=>{ m[r.name+'|'+rt]=rooms[rt]; }); });
+  return m;
+}
+/* 별칭: 표기 → 실제 숙소명 */
+function deriveBlkAlias(){
+  const a={};
+  resortMaster.forEach(r=>{ (r.aliases||[]).forEach(al=>{ if(al) a[al]=r.name; }); });
+  return a;
+}
+/* 임의배정 숙소명 목록 */
+function deriveAssignNames(){
+  return resortMaster.filter(r=>r.assign).map(r=>r.name);
+}
 
 function loadResortMaster(){
   try{
@@ -1907,10 +1921,13 @@ function saveResortMaster(){
   try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
 }
 function resetResortMaster(){
-  if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·보험 정보가 사라집니다)')) return;
-  resortMaster=RESORT_DEFAULTS.map(d=>({...d}));
+  if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·보험·보유블록 정보가 사라집니다)')) return;
+  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])]}));
   commonMaster={...COMMON_DEFAULTS};
-  saveResortMaster(); renderResortMaster();
+  saveResortMaster();
+  if(typeof blkSyncFromResort==='function') blkSyncFromResort();
+  renderResortMaster();
+  if(blkParsed) blkRender();
 }
 
 /* 리조트 마스터 아코디언 열림 상태 */
@@ -1935,6 +1952,29 @@ function rmNumRow(label, rkey, field, val, unit){
     <input class="rm-input" type="text" inputmode="numeric" value="${val?Number(val).toLocaleString():''}" placeholder="0"
       onchange="updateResort('${rkey}','${field}',this.value,this)">
     <span class="rm-unit">${unit||''}</span></div></div>`;
+}
+/* 룸타입별 보유 입력 행들 + 새 룸타입 추가 */
+function rmRoomsRows(r){
+  const rooms=r.rooms||{};
+  const keys=Object.keys(rooms);
+  let html = keys.length
+    ? keys.map(rt=>`<div class="rm-row"><label>${rt}</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${rooms[rt]?Number(rooms[rt]).toLocaleString():''}" placeholder="0"
+          onchange="updateResort('${r.key}','room:${rt.replace(/'/g,"\\'")}',this.value,this)">
+        <span class="rm-unit">객실</span></div></div>`).join('')
+    : '<div class="muted" style="font-size:11px;padding:2px 0">등록된 룸타입 없음</div>';
+  // 새 룸타입 추가
+  html += `<div class="rm-row" style="margin-top:4px;gap:5px">
+    <input class="rm-input text" id="rm-newroom-${r.key}" placeholder="룸타입(트윈)" style="width:90px">
+    <input class="rm-input" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="보유" style="width:60px">
+    <button class="btn-sm" style="padding:3px 9px" onclick="rmAddRoom('${r.key}')">+ 룸</button></div>`;
+  return html;
+}
+function rmAddRoom(key){
+  const rt=document.getElementById('rm-newroom-'+key).value.trim();
+  const n=num(document.getElementById('rm-newroomn-'+key).value);
+  if(!rt||!n){ alert('룸타입과 보유 수를 입력해주세요.'); return; }
+  updateResort(key,'room:'+rt,n,null);
 }
 
 function renderResortMaster(){
@@ -1988,6 +2028,19 @@ function renderResortMaster(){
               <input class="rm-input text" style="width:170px" type="text" value="${(r.airIn||'').replace(/"/g,'&quot;')}" placeholder="예: 구마모토"
                 onchange="updateResort('${r.key}','airIn',this.value,this)"></div>
           </div>
+          <div class="rm-group">
+            <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
+            ${rmRoomsRows(r)}
+            <div class="rm-row" style="margin-top:6px"><label><input type="checkbox" ${r.assign?'checked':''} onchange="updateResort('${r.key}','assign',this.checked,this)"> 임의배정(블록 안 깜·잔여계산 제외)</label></div>
+          </div>
+          <div class="rm-group">
+            <div class="rm-group-label">엠클릭 표기 별칭</div>
+            <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:4px">
+              <input class="rm-input wide" type="text" value="${(r.aliases||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 14hills (쉼표로 여러 개)"
+                onchange="updateResort('${r.key}','aliases',this.value,this)">
+              <span class="muted" style="font-size:10px">엠클릭 표에 이 이름으로 찍혀도 이 숙소로 인식</span>
+            </div>
+          </div>
         </div>
         <div class="rm-group" style="margin-top:12px">
           <div class="rm-group-label">비고</div>
@@ -2002,13 +2055,19 @@ function renderResortMaster(){
   document.getElementById('common-master').innerHTML=`<div class="cm-grid">
     <div class="cm-box">
       <div class="cm-box-title">💱 적용 환율</div>
-      <div class="rm-row"><label>환율 (100엔당 원)</label><div style="display:flex;align-items:center">
+      <div class="rm-row"><label>엔 (100엔당 원)</label><div style="display:flex;align-items:center">
         <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rate?Number(commonMaster.rate).toLocaleString():''}" placeholder="0"
           onchange="updateCommon('rate',this.value,this)"><span class="rm-unit">원</span></div></div>
       <div class="cm-rate-big">${commonMaster.rate?'100엔 = '+Number(commonMaster.rate).toLocaleString()+'원':'환율 미입력'}</div>
+      <div class="rm-row"><label>달러 (1달러당 원)</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rateUSD?Number(commonMaster.rateUSD).toLocaleString():''}" placeholder="0"
+          onchange="updateCommon('rateUSD',this.value,this)"><span class="rm-unit">원</span></div></div>
+      <div class="rm-row"><label>링깃 (1링깃당 원)</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.rateMYR?Number(commonMaster.rateMYR).toLocaleString():''}" placeholder="0"
+          onchange="updateCommon('rateMYR',this.value,this)"><span class="rm-unit">원</span></div></div>
       <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
-        <label>적용 기준</label>
-        <input class="rm-input wide" type="text" value="${(commonMaster.rateBase||'').replace(/"/g,'&quot;')}" placeholder="환율 적용 기준일"
+        <label>적용 기준 (엔)</label>
+        <input class="rm-input wide" type="text" value="${(commonMaster.rateBase||'').replace(/"/g,'&quot;')}" placeholder="환율 적용 기준일 (통화별 기준은 추후)"
           onchange="updateCommon('rateBase',this.value,this)"></div>
     </div>
     <div class="cm-box">
@@ -2035,10 +2094,15 @@ function renderResortMaster(){
         onchange="updateCommon('mgmtKRW',this.value,this)"><span class="rm-unit">원</span></div></div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">📅 월별 환율 (출국월 기준 · 100엔당 원)</div>
+    <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 미등록 월은 위 기본 환율로 폴백</span></div>
     <div id="monthly-rate-rows"></div>
-    <div style="display:flex;gap:6px;margin-top:8px">
+    <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
       <input class="rm-input" id="mr-month" type="month" style="width:130px;text-align:left;font-family:var(--sans)">
+      <select class="rm-input" id="mr-cur" style="width:75px;text-align:left;font-family:var(--sans)">
+        <option value="JPY">엔(100)</option>
+        <option value="USD">달러</option>
+        <option value="MYR">링깃</option>
+      </select>
       <input class="rm-input" id="mr-rate" type="text" inputmode="numeric" placeholder="환율" style="width:90px">
       <button class="btn-sm" onclick="addMonthlyRate()">+ 추가</button>
     </div>
@@ -2066,26 +2130,32 @@ function renderResortMaster(){
   renderAirfares();
 }
 
-/* 월별 환율 테이블 렌더 */
+/* 월별 환율 테이블 렌더 (통화별: 엔=YYYY-MM, 달러=YYYY-MM|USD, 링깃=YYYY-MM|MYR) */
+const MR_CUR_LABEL={JPY:'100엔',USD:'1달러',MYR:'1링깃'};
 function renderMonthlyRates(){
   const box=document.getElementById('monthly-rate-rows'); if(!box) return;
   const ents=Object.entries(commonMaster.monthlyRates||{}).sort();
   box.innerHTML = ents.length
-    ? ents.map(([m,r])=>`<div class="rm-row"><label>${m}</label><div style="display:flex;align-items:center;gap:6px">
-        <span style="font-family:var(--mono)">100엔 = ${Number(r).toLocaleString()}원</span>
-        <button class="btn-sm" style="padding:2px 8px;color:var(--red);border-color:var(--red)" onclick="delMonthlyRate('${m}')">삭제</button></div></div>`).join('')
+    ? ents.map(([key,r])=>{
+        const [m,cur]=key.split('|'); const c=cur||'JPY';
+        return `<div class="rm-row"><label>${m} · ${c==='JPY'?'엔':c==='USD'?'달러':'링깃'}</label><div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--mono)">${MR_CUR_LABEL[c]} = ${Number(r).toLocaleString()}원</span>
+          <button class="btn-sm" style="padding:2px 8px;color:var(--red);border-color:var(--red)" onclick="delMonthlyRate('${key}')">삭제</button></div></div>`;
+      }).join('')
     : '<div class="muted" style="font-size:11px">등록된 월별 환율이 없습니다.</div>';
 }
 function addMonthlyRate(){
   const m=document.getElementById('mr-month').value;
+  const cur=document.getElementById('mr-cur').value;
   const r=num(document.getElementById('mr-rate').value);
   if(!m||!r){ alert('출국월과 환율을 모두 입력해주세요.'); return; }
   commonMaster.monthlyRates=commonMaster.monthlyRates||{};
-  commonMaster.monthlyRates[m]=r;
+  const key = cur==='JPY' ? m : (m+'|'+cur);  // 엔은 하위호환 위해 통화 없이
+  commonMaster.monthlyRates[key]=r;
   saveResortMaster(); renderMonthlyRates();
   document.getElementById('mr-month').value=''; document.getElementById('mr-rate').value='';
 }
-function delMonthlyRate(m){ delete commonMaster.monthlyRates[m]; saveResortMaster(); renderMonthlyRates(); }
+function delMonthlyRate(key){ delete commonMaster.monthlyRates[key]; saveResortMaster(); renderMonthlyRates(); }
 
 /* 항공요금 테이블 렌더 */
 function renderAirfares(){
@@ -2139,16 +2209,33 @@ function flashSaved(el, resortKey){
 function updateResort(key, field, val, el){
   const r=resortMaster.find(x=>x.key===key); if(!r) return;
   const textFields=['memo','depart','airOut','airIn'];
-  if(textFields.includes(field)) r[field]=val;
-  else r[field]=num(val);
+  let syncBlk=false;
+  if(field.startsWith('room:')){           // 룸타입별 보유: "room:트윈"
+    const rt=field.slice(5);
+    r.rooms=r.rooms||{};
+    const n=num(val);
+    if(n>0) r.rooms[rt]=n; else delete r.rooms[rt];
+    if(el) el.value = n? n.toLocaleString():'';
+    syncBlk=true;
+  } else if(field==='aliases'){            // 별칭(쉼표 구분)
+    r.aliases=String(val).split(',').map(s=>s.trim()).filter(Boolean);
+    syncBlk=true;
+  } else if(field==='assign'){             // 임의배정 체크
+    r.assign=!!val; syncBlk=true;
+  } else if(textFields.includes(field)){
+    r[field]=val;
+  } else {
+    r[field]=num(val);
+    if(el) el.value = r[field]?Number(r[field]).toLocaleString():'';
+  }
   saveResortMaster(); flashSaved(el, key);
-  // 숫자 입력만 천단위 콤마 재포맷
-  if(!textFields.includes(field) && el){ el.value = r[field]?Number(r[field]).toLocaleString():''; }
+  // 보유·별칭·임의배정 변경 → 호텔 블록 데이터 재동기화 + 재렌더
+  if(syncBlk){ blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender(); }
   // 출발 정보 변경 시 출발 일정 조회 갱신
   if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
-  if(field==='rate'||field==='insFee'||field==='mgmtKRW'){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  if(['rate','rateUSD','rateMYR','insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
   saveResortMaster();
   if(field==='rate') renderResortMaster(); // 큰 숫자 표시 갱신
@@ -2197,43 +2284,7 @@ loadResortMaster();
 const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'mt_notify_blkAlias',over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth'};
 
 /* 기본 보유 마스터 (블록 대시보드 실데이터에서 추출) — 호텔|룸타입 → 보유 */
-const BLK_MASTER_DEFAULT={
-  '아소 야마나미 골프텔|트윈':55,'아소 야마나미 골프텔|소형트윈':50,
-  '아소 야마나미 관내별장|트윈':15,'아소 야마나미 돔하우스|트윈':4,
-  '야마나미 쿠주힐즈|트윈':10,
-  '포틴힐즈CC 골프텔|트윈':13,'포틴힐즈CC 골프텔|패밀리룸':19,'포틴힐즈CC 카라반|트윈':6,
-  '간지호텔|트윈':15,'시즈노야도 료칸|트윈':7,
-  '시로사토CC 골프텔|트윈':20,'후쿠로다노타키CC 골프텔|트윈':20,
-  '아키바 리조트|트윈':15,'무츠키 료칸|트윈':4,
-  '스가다이라 고원 온천호텔|트윈':35,'국제공항CC 골프텔|트윈':10,
-  '미야자키 시내 호텔|트윈':10,'닐라이스프링스리조트호텔|트윈':50
-};
-/* 검색 풀 — 키워드/호텔명/룸필터로 매칭. 정원=보유합산. depart=출발패턴. exclude=객실안내 제외(카트 등) */
-const BLK_POOLS_DEFAULT=[
-  {name:'아소 야마나미 (통합)',keyword:'아소',hotels:[],rooms:[],depart:'목3박, 일4박, 수7박',airport:'인천 / 김해',exclude:false},
-  {name:'야마나미 쿠주힐즈',keyword:'',hotels:['야마나미 쿠주힐즈'],rooms:[],depart:'수7박',airport:'인천 / 김해',exclude:false},
-  {name:'(제외) 야마나미 전기카트',keyword:'',hotels:['야마나미 전기카트'],rooms:[],depart:'자유',airport:'',exclude:true},
-  {name:'시즈노야도 료칸',keyword:'',hotels:['시즈노야도 료칸'],rooms:[],depart:'목3박, 일4박, 목7박, 일7박',airport:'인천 / 김해',exclude:false},
-  {name:'간지호텔 2색 골프투어',keyword:'',hotels:['간지호텔'],rooms:[],depart:'목3박, 일4박, 수7박',airport:'인천 / 김해',exclude:false},
-  {name:'구마모토 시내 호텔',keyword:'',hotels:['구마모토 시내 호텔','소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'],rooms:[],depart:'자유',airport:'인천 / 김해',exclude:false},
-  {name:'포틴힐즈 (트윈)',keyword:'',hotels:['14hills','포틴힐즈CC 골프텔'],rooms:['트윈'],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
-  {name:'포틴힐즈 (패밀리룸 4인실)',keyword:'',hotels:['14hills','포틴힐즈CC 골프텔'],rooms:['패밀리룸'],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
-  {name:'포틴힐즈 카라반',keyword:'',hotels:['포틴힐즈CC 카라반'],rooms:[],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
-  {name:'아키바 리조트 2색',keyword:'',hotels:['아키바 리조트'],rooms:[],depart:'금3박, 월4박',airport:'인천 / 대구 / 김해',exclude:false},
-  {name:'무츠키 료칸',keyword:'',hotels:['무츠키 료칸'],rooms:[],depart:'금3박, 월4박',airport:'인천',exclude:false},
-  {name:'시로사토CC',keyword:'',hotels:['시로사토CC 골프텔'],rooms:[],depart:'일6박',airport:'인천',exclude:false},
-  {name:'후쿠로다노타키CC',keyword:'',hotels:['후쿠로다노타키CC 골프텔'],rooms:[],depart:'월7박',airport:'인천',exclude:false},
-  {name:'미야자키 국제공항CC',keyword:'',hotels:['국제공항CC 골프텔'],rooms:[],depart:'일5박',airport:'인천',exclude:false},
-  {name:'미야자키 시내 호텔 (메인)',keyword:'',hotels:['미야자키 시내 호텔'],rooms:[],depart:'일5박',airport:'인천',exclude:false},
-  {name:'스가다이라 그린CC (온천호텔)',keyword:'',hotels:['스가다이라 고원 온천호텔'],rooms:[],depart:'목5박, 화7박, 목7박, 화14박, 목14박',airport:'인천 (니가타)',exclude:false},
-  {name:'스가다이라 그린CC (맨션형)',keyword:'',hotels:['스가다이라 맨션형 숙소'],rooms:['트윈'],depart:'목5박, 화7박, 목7박, 화14박, 목14박',airport:'인천 (니가타)',exclude:false},
-  {name:'닐라이스프링스 (자유 박수)',keyword:'',hotels:['닐라이스프링스리조트호텔'],rooms:[],depart:'자유',airport:'인천',exclude:false}
-];
-/* 별칭: 표기 → 실제 호텔명 */
-const BLK_ALIAS_DEFAULT={'14hills':'포틴힐즈CC 골프텔'};
-/* 임의배정형 풀(보유 없이 사용수만): 구마모토 시내 */
-const BLK_ASSIGN_POOLS=['구마모토 시내 호텔'];
-/* 카트(숙소 아님) — exclude=true 풀로도 처리되지만 별도 섹션용 */
+/* 카트(숙소 아님) — 매트릭스에서 분리해 별도 전기카트 섹션 */
 const BLK_CART=['야마나미 전기카트'];
 const BLK_WDMAP={'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
 
@@ -2243,24 +2294,33 @@ let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
 let blkDepPoolSel=new Set(); // 출발조회 선택 풀
 
+/* 리조트 마스터에서 호텔 블록 데이터 재생성 — 보유/별칭/임의배정/풀 단일 출처 */
+function blkSyncFromResort(){
+  blkMaster=deriveBlkMaster();
+  blkAlias=deriveBlkAlias();
+  // 풀 = 각 숙소를 1:1 (name=숙소명, hotels=[숙소명], rooms=[] 전체). 임의배정/제외는 리조트 마스터 기준.
+  blkPools = resortMaster.map(r=>({
+    name:r.name, keyword:'', hotels:[r.name], rooms:[],
+    exclude:false, assign:!!r.assign
+  }));
+  // 전기카트는 리조트 마스터에 없으므로 별도 제외 풀로 추가(매트릭스 분리용)
+  blkPools.push({name:'야마나미 전기카트', keyword:'', hotels:['야마나미 전기카트'], rooms:[], exclude:true, assign:false});
+}
 function blkLoad(){
-  try{ blkMaster={...BLK_MASTER_DEFAULT,...(JSON.parse(localStorage.getItem(BLK_STORE.master)||'{}'))}; }catch(e){ blkMaster={...BLK_MASTER_DEFAULT}; }
-  try{ blkPools=JSON.parse(localStorage.getItem(BLK_STORE.pools)||'null')||JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); }catch(e){ blkPools=JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); }
-  try{ blkAlias={...BLK_ALIAS_DEFAULT,...(JSON.parse(localStorage.getItem(BLK_STORE.alias)||'{}'))}; }catch(e){ blkAlias={...BLK_ALIAS_DEFAULT}; }
+  // 리조트 마스터에서 파생 (resortMaster는 loadResortMaster로 이미 로드됨)
+  if(!resortMaster.length) loadResortMaster();
+  blkSyncFromResort();
   try{ blkOver=JSON.parse(localStorage.getItem(BLK_STORE.over)||'{}'); }catch(e){ blkOver={}; }
 }
 function blkSave(){
-  try{
-    localStorage.setItem(BLK_STORE.master,JSON.stringify(blkMaster));
-    localStorage.setItem(BLK_STORE.pools,JSON.stringify(blkPools));
-    localStorage.setItem(BLK_STORE.alias,JSON.stringify(blkAlias));
-    localStorage.setItem(BLK_STORE.over,JSON.stringify(blkOver));
-  }catch(e){}
+  try{ localStorage.setItem(BLK_STORE.over,JSON.stringify(blkOver)); }catch(e){}
+  // 보유·별칭·임의배정은 리조트 마스터에 저장되므로 여기선 오버부킹만
 }
 
-/* 풀 매칭 */
+/* 풀 매칭 (hotel은 별칭일 수 있으므로 실제 숙소명으로 해소 후 비교) */
 function blkPoolMatch(pool,hotel,room){
-  let hm = pool.keyword ? hotel.includes(pool.keyword) : (pool.hotels||[]).includes(hotel);
+  const name=(blkAlias&&blkAlias[hotel])||hotel;
+  let hm = pool.keyword ? name.includes(pool.keyword) : (pool.hotels||[]).includes(name);
   if(!hm) return false;
   if(pool.rooms&&pool.rooms.length && !pool.rooms.includes(room)) return false;
   return true;
@@ -2287,21 +2347,25 @@ function blkParseDepart(s){
     return m?{dow:BLK_WDMAP[m[1]],nights:parseInt(m[2]),label:tok}:null;
   }).filter(Boolean);
 }
-function blkIsAssignPool(pool){ return BLK_ASSIGN_POOLS.includes(pool.name); }
+function blkIsAssignPool(pool){ return !!pool.assign; }
 
 /* 호텔 유형 (매트릭스용) */
 function blkTypeOf(hotel){
   if(BLK_CART.includes(hotel)) return 'cart';
-  // 임의배정 풀에 매칭되면 assign
-  for(const p of blkPools){ if(blkIsAssignPool(p) && blkPoolMatch(p,hotel,'')) return 'assign'; if(blkIsAssignPool(p) && (p.hotels||[]).includes(hotel)) return 'assign'; }
+  // 별칭 해소 후 리조트 마스터에서 임의배정 여부
+  const name=blkAlias[hotel]||hotel;
+  const r=resortMaster.find(x=>x.name===name);
+  if(r&&r.assign) return 'assign';
   return 'block';
 }
 function blkGroupOf(hotel){
-  for(const p of blkPools){ if(blkIsAssignPool(p) && (p.hotels||[]).includes(hotel)) return p.name; }
-  return null;
+  const name=blkAlias[hotel]||hotel;
+  const r=resortMaster.find(x=>x.name===name);
+  return (r&&r.assign)?r.name:null;
 }
 function blkBlockOf(hotel,room){
-  const v=blkMaster[hotel+'|'+room];
+  const name=blkAlias[hotel]||hotel;
+  const v=blkMaster[name+'|'+room];
   return (v!=null)?v:null;
 }
 
@@ -2456,18 +2520,11 @@ function blkUsageMap(){
   });
   return map;
 }
-/* 보유 조회 (통합이면 그룹 멤버 합산, 실물이면 직접) */
+/* 보유 조회 — 실물 보기 기준(unit=숙소명) */
 function blkBlockForUnit(unit,room){
-  const assignPool=blkPools.find(p=>blkIsAssignPool(p)&&p.name===unit);
-  if(blkMode==='integrated' && assignPool){
-    let sum=0,has=false;
-    (assignPool.hotels||[]).forEach(h=>{ const v=blkBlockOf(h,room); if(v!=null){sum+=v;has=true;} });
-    return has?sum:null;
-  }
   return blkBlockOf(unit,room);
 }
 function blkIsAssignUnit(unit){
-  if(blkMode==='integrated' && blkPools.find(p=>blkIsAssignPool(p)&&p.name===unit)) return true;
   return blkTypeOf(unit)==='assign';
 }
 
@@ -2660,79 +2717,11 @@ function blkSetOver(u,rm,day,val,blk){
   blkRenderSim(); blkRenderStatus();
 }
 
-/* ── 설정: 풀/별칭/마스터 편집 ── */
-function blkRenderConfig(){
-  // 풀
-  const pbox=document.getElementById('blk-pools');
-  pbox.innerHTML=blkPools.map((p,i)=>{
-    const cap=blkPoolCap(p);
-    const assign=blkIsAssignPool(p);
-    const tag=p.exclude?'<span class="blk-tag-type blk-tag-cart">안내제외</span>':assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':`<span class="blk-tag-type blk-tag-block">정원 ${cap!=null?cap:'—'}</span>`;
-    return `<div class="blk-cfg-card" style="margin-bottom:10px;background:var(--surface2)">
-      <div class="blk-cfg-row"><label style="min-width:auto"><b>${p.name}</b></label> ${tag}
-        <button class="btn-sm" style="color:var(--red);border-color:var(--red);margin-left:auto" onclick="blkDelPool(${i})">삭제</button></div>
-      <div class="blk-cfg-row"><label>키워드(부분일치)</label>
-        <input class="blk-cfg-input text" value="${(p.keyword||'').replace(/"/g,'&quot;')}" placeholder="예: 아소" onchange="blkSetPool(${i},'keyword',this.value)" style="min-width:120px"></div>
-      <div class="blk-cfg-row"><label>호텔(쉼표, 키워드 없을때)</label>
-        <input class="blk-cfg-input text" value="${(p.hotels||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 14hills, 포틴힐즈CC 골프텔" onchange="blkSetPool(${i},'hotels',this.value)"></div>
-      <div class="blk-cfg-row"><label>룸 필터(쉼표, 비우면 전체)</label>
-        <input class="blk-cfg-input text" value="${(p.rooms||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 트윈, 소형트윈" onchange="blkSetPool(${i},'rooms',this.value)" style="min-width:120px"></div>
-      <div class="blk-cfg-row"><label><input type="checkbox" ${p.exclude?'checked':''} onchange="blkSetPool(${i},'exclude',this.checked)"> 객실 안내에서 제외(옵션상품/카트 등)</label></div>
-    </div>`;
-  }).join('')||'<span class="muted" style="font-size:12px">등록된 풀이 없습니다.</span>';
-  // 별칭
-  const abox=document.getElementById('blk-aliases');
-  abox.innerHTML=Object.keys(blkAlias).map(a=>`
-    <div class="blk-cfg-row"><label>${a}</label><span>→ ${blkAlias[a]}</span>
-      <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="blkDelAlias('${a.replace(/'/g,"\\'")}')">삭제</button></div>`).join('')||'<span class="muted" style="font-size:12px">등록된 별칭이 없습니다.</span>';
-  // 마스터
-  const mbox=document.getElementById('blk-master');
-  mbox.innerHTML=Object.keys(blkMaster).sort().map(k=>{
-    const [h,rm]=k.split('|');
-    return `<div class="blk-cfg-row"><label>${h} · ${rm}</label>
-      <input class="blk-cfg-input" type="text" inputmode="numeric" value="${blkMaster[k]}" onchange="blkSetMaster('${k.replace(/'/g,"\\'")}',this.value)">
-      <span class="rm-unit" style="width:auto">보유</span>
-      <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="blkDelMaster('${k.replace(/'/g,"\\'")}')">삭제</button></div>`;
-  }).join('');
-}
-function blkSetPool(i,field,val){
-  if(field==='hotels'||field==='rooms') blkPools[i][field]=String(val).split(',').map(s=>s.trim()).filter(Boolean);
-  else if(field==='exclude') blkPools[i][field]=val;
-  else blkPools[i][field]=val;
-  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
-}
-function blkAddPool(){
-  const n=document.getElementById('blk-newpool').value.trim();
-  if(!n) return;
-  blkPools.push({name:n,keyword:'',hotels:[],rooms:[],depart:'',airport:'',exclude:false});
-  document.getElementById('blk-newpool').value='';
-  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
-}
-function blkDelPool(i){ if(!confirm(`풀 "${blkPools[i].name}"을 삭제할까요?`)) return; blkPools.splice(i,1); blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
-function blkAddAlias(){
-  const f=document.getElementById('blk-alias-from').value.trim();
-  const t=document.getElementById('blk-alias-to').value.trim();
-  if(!f||!t) return;
-  blkAlias[f]=t;
-  document.getElementById('blk-alias-from').value=''; document.getElementById('blk-alias-to').value='';
-  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
-}
-function blkDelAlias(a){ delete blkAlias[a]; blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
-function blkAddMaster(){
-  const h=document.getElementById('blk-nm-hotel').value.trim();
-  const rm=document.getElementById('blk-nm-room').value.trim();
-  const b=num(document.getElementById('blk-nm-block').value);
-  if(!h||!rm){ alert('호텔명과 룸타입을 입력해주세요.'); return; }
-  blkMaster[h+'|'+rm]=b;
-  ['blk-nm-hotel','blk-nm-room','blk-nm-block'].forEach(id=>document.getElementById(id).value='');
-  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
-}
-function blkSetMaster(k,v){ blkMaster[k]=num(v); blkSave(); if(blkParsed) blkRender(); }
-function blkDelMaster(k){ delete blkMaster[k]; blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
-function blkResetConfig(){
-  if(!confirm('보유 마스터·풀·별칭을 모두 기본값으로 되돌릴까요?')) return;
-  blkMaster={...BLK_MASTER_DEFAULT}; blkPools=JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); blkAlias={...BLK_ALIAS_DEFAULT}; blkOver={};
-  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+/* ── 설정 안내 (보유·별칭·임의배정은 리조트 마스터에서 관리) ── */
+function blkRenderConfig(){ /* 정적 안내 뷰 — 렌더할 동적 내용 없음 */ }
+function blkResetOver(){
+  if(!confirm('오버부킹 보정값을 모두 초기화할까요?')) return;
+  blkOver={}; blkSave(); if(blkParsed) blkRender();
 }
 
 /* ── 🛫 출발 일정 조회 ── */
