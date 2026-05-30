@@ -108,6 +108,14 @@ a{color:inherit}
 .bk-date-input:focus{outline:none;border-color:var(--accent)}
 .bk-date-tilde{color:var(--text3)}
 .bk-result-count{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+/* 일괄 수정 바 */
+.bulk-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:9px 13px;margin:0 0 12px}
+.bulk-count{font-size:12px;font-weight:700;color:var(--accent2)}
+.bulk-sep{width:1px;height:18px;background:var(--border2)}
+.bulk-lbl{font-size:11px;color:var(--text2);font-weight:600}
+.bulk-sel{padding:5px 9px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:var(--sans);background:var(--surface);color:var(--text)}
+.bulk-sel:focus{outline:none;border-color:var(--accent)}
+.bk-edited-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:4px;vertical-align:middle}
 /* 토스트 */
 .mt-toast{position:fixed;left:50%;bottom:38px;transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(26,35,50,.32);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:9999;letter-spacing:.01em}
 .mt-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -178,6 +186,8 @@ tr:hover td{background:#EEF3FA}
 
 /* INFO BANNER */
 .note{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:1.25rem}
+.tf-part-head{font-size:13px;font-weight:700;color:var(--navy);margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid var(--surface3);display:flex;align-items:baseline;gap:8px}
+.tf-part-sub{font-size:11px;font-weight:500;color:var(--text3)}
 .note b{color:var(--navy)}
 .placeholder{padding:3rem 1.5rem;text-align:center;color:var(--text3);font-size:13px;border:1.5px dashed var(--border2);border-radius:12px;background:var(--surface2)}
 .placeholder .ph-icon{font-size:32px;margin-bottom:10px;opacity:.5}
@@ -364,16 +374,16 @@ tr:hover td{background:#EEF3FA}
 <div class="nav" id="nav">
   <div class="nav-tab active" id="nav-upload" onclick="gotoSection('upload')"><div class="nav-dot"></div> 업로드</div>
   <div class="nav-tab" id="nav-resort" onclick="gotoSection('resort')"><div class="nav-dot"></div> ① 리조트 마스터</div>
-  <div class="nav-tab locked" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ② 예약 관리</div>
-  <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> ③ 보험 정보</div>
-  <div class="nav-tab locked" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ④ 항공 정보</div>
-  <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> ⑤ 송영 정보</div>
-  <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> ⑥ 숙소 정보</div>
-  <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
-  <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
-  <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑨ 요금 검증</div>
-  <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ⑩ 호텔 블록</div>
-  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ⑪ 데이터 검수</div>
+  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ② 데이터 검수</div>
+  <div class="nav-tab locked" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ③ 예약 관리</div>
+  <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> ④ 보험 정보</div>
+  <div class="nav-tab locked" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑤ 항공 정보</div>
+  <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> ⑥ 송영 정보</div>
+  <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> ⑦ 숙소 정보</div>
+  <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑧ 골프 정보</div>
+  <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑨ 식사 정보</div>
+  <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑩ 요금 검증</div>
+  <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ⑪ 호텔 블록</div>
 </div>
 
 <div class="wrap">
@@ -451,14 +461,15 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
-<!-- ════════ ② 예약 관리 ════════ -->
+<!-- ════════ ③ 예약 관리 ════════ -->
 <div class="section" id="sec-booking">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">② 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분</div></div>
+      <div><div class="card-title">③ 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분 · 구분/호텔/명단/비고 일괄 수정</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박 (D-30/7/1)</button>
         <button class="btn-sm" onclick="openTeamColorLegend()">팀 색상 보기</button>
+        <button class="btn-sm" onclick="resetEditOverrides()">↩ 수정 초기화</button>
         <button class="btn-sm" onclick="exportAligo('booking')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
       </div>
     </div>
@@ -487,6 +498,25 @@ tr:hover td{background:#EEF3FA}
         <span class="bk-result-count" id="bk-result-count"></span>
       </div>
     </div>
+    <!-- 일괄 수정 바 (선택 행 있을 때 표시) -->
+    <div class="bulk-bar" id="bulk-bar" style="display:none">
+      <span class="bulk-count" id="bulk-count">0건 선택</span>
+      <span class="bulk-sep"></span>
+      <span class="bulk-lbl">구분</span>
+      <select class="bulk-sel" id="bulk-status">
+        <option value="">변경 안 함</option>
+        <option value="견적">견적</option><option value="대기">대기</option>
+        <option value="확정">확정</option><option value="정산">정산</option>
+      </select>
+      <span class="bulk-lbl">호텔</span>
+      <select class="bulk-sel" id="bulk-hotel"><option value="">유지</option><option value="Y">Y</option><option value="N">N</option></select>
+      <span class="bulk-lbl">명단</span>
+      <select class="bulk-sel" id="bulk-list"><option value="">유지</option><option value="Y">Y</option><option value="N">N</option></select>
+      <button class="btn-sm" style="border-color:var(--accent);color:var(--accent);font-weight:700" onclick="applyBulkFields()">선택 건 적용</button>
+      <span class="bulk-sep"></span>
+      <button class="btn-sm" onclick="openBulkRemark()">📝 비고 일괄 등록</button>
+      <button class="btn-sm" style="margin-left:auto" onclick="bkClearSelection()">선택 해제</button>
+    </div>
     <div class="tbl-wrap">
       <table id="booking-table">
         <thead id="booking-thead"></thead>
@@ -494,16 +524,17 @@ tr:hover td{background:#EEF3FA}
       </table>
     </div>
     <div class="note" style="margin-top:1rem">
-      <b>팀 구분</b> · 비고란에 <code>팀:홍길동</code> 형식이 있으면 자동으로 팀 배지가 붙습니다. 배지(또는 "팀 지정" 버튼)를 클릭하면 모달에서 팀을 지정·변경·해제할 수 있습니다. 같은 팀끼리 단체 발송 단위로 묶입니다.
+      <b>팀 구분</b> · 비고란에 <code>팀:홍길동</code> 형식이 있으면 자동으로 팀 배지가 붙습니다. 배지(또는 "팀 지정" 버튼)를 클릭하면 모달에서 팀을 지정·변경·해제할 수 있습니다.<br>
+      <b>일괄 수정</b> · 행 앞 체크박스로 여러 건을 고르면 상단에 일괄 수정 바가 나타납니다. 구분·호텔·명단을 한 번에 바꾸거나, 비고를 추가·덮어쓰기할 수 있습니다. 수정값은 브라우저에 저장되며(원본 엠클릭 데이터는 그대로), <b>비고 수정 시 <span style="color:var(--amber2)">●</span> 표시</b>가 붙습니다. "수정 초기화"로 원본으로 되돌립니다.
     </div>
   </div>
 </div>
 
-<!-- ════════ ③ 보험 정보 ════════ -->
+<!-- ════════ ④ 보험 정보 ════════ -->
 <div class="section" id="sec-insurance">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">③ 보험 정보</div><div class="card-sub">팀별 여권 정보(번호·만료일·발행국가) · 여행자보험 가입 확인 · 여권 만료 임박 경고</div></div>
+      <div><div class="card-title">④ 보험 정보</div><div class="card-sub">팀별 여권 정보(번호·만료일·발행국가) · 여행자보험 가입 확인 · 여권 만료 임박 경고</div></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sm" onclick="filterIns('all')">전체</button>
         <button class="btn-sm" onclick="filterIns('expiry')">만료 임박</button>
@@ -518,11 +549,11 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
-<!-- ════════ ④ 항공 정보 ════════ -->
+<!-- ════════ ⑤ 항공 정보 ════════ -->
 <div class="section" id="sec-air">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">④ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 발권완료 확인 · 출국 1주일 전 안내</div></div>
+      <div><div class="card-title">⑤ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 출국 1주일 전 안내</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" onclick="filterAir('all')" id="airf-all">전체</button>
         <button class="btn-sm" onclick="filterAir('pnr')" id="airf-pnr">PNR 있음</button>
@@ -539,37 +570,43 @@ tr:hover td{background:#EEF3FA}
       </table>
     </div>
     <div class="note" style="margin-top:1rem">
-      <b>발권완료 확인</b> · 현재 업로드 파일로는 발권 완료 여부를 자동 판별할 수 없습니다. 발권완료 체크박스는 수동 확인용이며 브라우저에 저장됩니다. (추후 엠클릭 API 연동 시 자동화 예정)
+      <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 APIS·일행별예약에서 자동 보완되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.
     </div>
   </div>
 </div>
 
-<!-- ════════ ⑤ 송영 / ⑥ 숙소 / ⑦ 골프 / ⑧ 식사 ════════ -->
+<!-- ════════ ⑥ 송영 / ⑦ 숙소 / ⑧ 골프 / ⑨ 식사 ════════ -->
 <div class="section" id="sec-transfer">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑤ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 송영 대상 명단</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑥ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div></div>
     <div class="sum-grid" id="transfer-summary"></div>
-    <div class="tbl-wrap"><table id="transfer-table"><thead id="transfer-thead"></thead><tbody id="transfer-tbody"></tbody></table></div>
-    <div class="note" style="margin-top:1rem"><b>송영비</b> · 숙박 예약 포함 건에 ¥6,000/인 적용. 입국/출국 시간은 현지도착 파일에서 가져옵니다.</div>
+
+    <div class="tf-part-head">🛬 출국 송영표 <span class="tf-part-sub">공항 → 숙소 (입국편 · 현지 도착시간 기준)</span></div>
+    <div class="tbl-wrap"><table id="transfer-out-table"><thead id="transfer-out-thead"></thead><tbody id="transfer-out-tbody"></tbody></table></div>
+
+    <div class="tf-part-head" style="margin-top:1.5rem">🛫 귀국 송영표 <span class="tf-part-sub">숙소 → 공항 (귀국편 · 현지 출발시간 기준)</span></div>
+    <div class="tbl-wrap"><table id="transfer-ret-table"><thead id="transfer-ret-thead"></thead><tbody id="transfer-ret-tbody"></tbody></table></div>
+
+    <div class="note" style="margin-top:1rem"><b>송영 대상</b> · 숙박 예약(호텔 Y) 포함 건만 표시됩니다. 입국/출국 시간은 현지도착 파일에서 가져옵니다.</div>
   </div>
 </div>
 <div class="section" id="sec-accom">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑥ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑦ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div></div>
     <div class="sum-grid" id="accom-summary"></div>
     <div class="tbl-wrap"><table id="accom-table"><thead id="accom-thead"></thead><tbody id="accom-tbody"></tbody></table></div>
   </div>
 </div>
 <div class="section" id="sec-golf">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑦ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑧ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div></div>
     <div class="sum-grid" id="golf-summary"></div>
     <div class="tbl-wrap"><table id="golf-table"><thead id="golf-thead"></thead><tbody id="golf-tbody"></tbody></table></div>
   </div>
 </div>
 <div class="section" id="sec-dinner">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑧ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑨ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div></div>
     <div class="sum-grid" id="dinner-summary"></div>
     <div class="tbl-wrap"><table id="dinner-table"><thead id="dinner-thead"></thead><tbody id="dinner-tbody"></tbody></table></div>
   </div>
@@ -577,7 +614,7 @@ tr:hover td{background:#EEF3FA}
 <div class="section" id="sec-verify">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑨ 요금 검증</div><div class="card-sub">리조트 마스터 단가 × 월별 환율 + 항공요금으로 예상 판매금액을 산출해 실제와 대조</div></div>
+      <div><div class="card-title">⑩ 요금 검증</div><div class="card-sub">리조트 마스터 단가 × 월별 환율 + 항공요금으로 예상 판매금액을 산출해 실제와 대조</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" onclick="filterVerify('all')">전체</button>
         <button class="btn-sm" onclick="filterVerify('diff')">차액 있음만</button>
@@ -593,7 +630,7 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
-<!-- ════════ ⑩ 호텔 블록 ════════ -->
+<!-- ════════ ⑪ 호텔 블록 ════════ -->
 <div class="section" id="sec-block">
   <div class="blk-subtabs">
     <div class="blk-subtab active" id="blksub-status" onclick="blkSwitch('status')">📊 블록 현황</div>
@@ -732,11 +769,11 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
-<!-- ════════ ⑪ 데이터 검수 ════════ -->
+<!-- ════════ ② 데이터 검수 ════════ -->
 <div class="section" id="sec-audit">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑪ 데이터 검수</div><div class="card-sub">엠클릭 수기 입력 오류를 발권 전에 검출 — 자동 수정하지 않고, 담당자가 엠클릭에서 직접 고치도록 안내합니다</div></div>
+      <div><div class="card-title">② 데이터 검수</div><div class="card-sub">엠클릭 수기 입력 오류를 발권 전에 검출 — 자동 수정하지 않고, 담당자가 엠클릭에서 직접 고치도록 안내합니다</div></div>
       <div style="display:flex;gap:6px">
         <button class="btn-sm" id="audit-f-all" onclick="filterAudit('all')">전체</button>
         <button class="btn-sm" id="audit-f-red" onclick="filterAudit('red')" style="color:var(--red);border-color:var(--red)">🔴 긴급만</button>
@@ -781,6 +818,37 @@ tr:hover td{background:#EEF3FA}
   </div>
 </div>
 
+<!-- ════════ 비고 일괄 등록 모달 ════════ -->
+<div class="modal-bg" id="bulk-remark-bg">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div><div class="modal-title">📝 비고 일괄 등록</div><div class="card-sub" id="bulk-remark-count">0건 대상</div></div>
+      <button class="modal-close" onclick="document.getElementById('bulk-remark-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tm-field">
+        <label class="tm-label">등록 방식</label>
+        <div style="display:flex;gap:16px;margin-top:4px">
+          <label style="font-size:13px;display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="bulk-remark-mode" value="append" checked> 기존 비고 뒤에 추가</label>
+          <label style="font-size:13px;display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="bulk-remark-mode" value="overwrite"> 덮어쓰기</label>
+        </div>
+      </div>
+      <div class="tm-field" style="margin-top:12px">
+        <label class="tm-label">내용</label>
+        <input class="tm-input" id="bulk-remark-input" placeholder="예: 우선 예약 기간 / 팀:홍길동" autocomplete="off">
+      </div>
+      <div class="note" style="margin-top:10px;margin-bottom:0"><code>팀:홍길동</code> 형식을 넣으면 팀 배지도 자동 갱신됩니다. '추가'는 기존 비고 끝에 <code> / 내용</code> 으로 붙습니다.</div>
+    </div>
+    <div class="modal-foot">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="document.getElementById('bulk-remark-bg').classList.remove('open')">취소</button>
+        <button class="btn-primary" style="padding:8px 18px" onclick="applyBulkRemark()">적용</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ════════ 팀 색상 범례 모달 ════════ -->
 <div class="modal-bg" id="legend-modal-bg">
   <div class="modal" style="max-width:420px">
@@ -817,7 +885,9 @@ let teams = [];        // 통합 결과: 팀(eventSeq) 단위
 let arrivalMap = {};   // eventSeq → 현지도착 보완
 let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
 let teamAssign = {};   // eventSeq → 사용자 지정 팀명
-let ticketDone = {};   // eventSeq → 발권완료 여부
+let ticketDone = {};   // eventSeq → 발권완료 여부 (미사용·레거시 보존)
+let editOverrides = {}; // eventSeq → {status, hotelY, listY, remark} 일괄 수정 오버라이드
+const STORE_EDIT = 'mt_edit_overrides';
 let selectedSeqs = new Set();  // 알리고 발송용 선택 팀
 let sortState = { booking:{key:null,dir:1}, air:{key:null,dir:1} };  // 컬럼 정렬
 
@@ -936,6 +1006,24 @@ function remarkSpecial(remark){
   return String(remark||'').replace(/팀\s*[:：]\s*[^\s\/,·\|]+/i,'').replace(/^[\s\/,·\|]+|[\s\/,·\|]+$/g,'').trim();
 }
 
+/* ── 일괄 수정 오버라이드 적용 (구분·호텔·명단·비고) ──
+   editOverrides[eventSeq] = {status, hotelY, listY, remark} 중 존재하는 필드만 덮어씀.
+   비고가 바뀌면 teamAuto·special도 재계산. 원본은 t.raw에 보존됨. */
+function applyEditOverrides(){
+  teams.forEach(t=>{
+    const o=editOverrides[t.eventSeq]; if(!o) return;
+    if(o.status!==undefined && ['견적','대기','확정','정산'].includes(o.status)) t.status=o.status;
+    if(o.hotelY!==undefined) t.hotelY=!!o.hotelY;
+    if(o.listY!==undefined)  t.listY=!!o.listY;
+    if(o.remark!==undefined){
+      t.remark=o.remark;
+      t.teamAuto=parseTeamName(o.remark);
+      t.special=remarkSpecial(o.remark);
+    }
+    t.edited=true;
+  });
+}
+
 /* ════════════════════════════════════════════════════════════
    업로드
 ════════════════════════════════════════════════════════════ */
@@ -999,10 +1087,11 @@ function buildArrivalMap(){
       eventNo: String(r['행사번호']||'').trim()||'',
       depFlight: String(r['한국출발편']||'').trim()||'',
       depTime: String(r['출발시간']||'').trim()||'',     // 한국 출발시간
-      arrTimeJP: String(r['현지도착']||'').trim()||'',     // 현지 도착시간
+      arrTimeJP: String(r['현지도착']||'').trim()||'',     // 현지 도착시간 (출국 송영)
       retFlight: String(r['출발편']||'').trim()||'',       // 귀국편
+      retTimeJP: String(r['출발시간_1']||r['출발시간_2']||'').trim()||'', // 귀국 현지 출발시간 (귀국 송영)
       arrDateLocal: fmtDate(r['현지도착일']),
-      depDateLocal: fmtDate(r['현지출발일'])
+      depDateLocal: fmtDate(r['현지출발일_1']||r['현지출발일'])
     };
   });
 }
@@ -1126,10 +1215,10 @@ function analyze(){
       if(av.eventNo && av.eventNo!=='') t.eventNo=av.eventNo;
       t.pax_list.forEach(p=>{ if(!p.engFull && av.engFull) p.engFull=av.engFull; });
       t.arrDepFlight=av.depFlight; t.arrDepTime=av.depTime;
-      t.arrTimeJP=av.arrTimeJP; t.arrRetFlight=av.retFlight;
+      t.arrTimeJP=av.arrTimeJP; t.arrRetFlight=av.retFlight; t.retTimeJP=av.retTimeJP;
       t.arrDateLocal=av.arrDateLocal; t.depDateLocal=av.depDateLocal;
     } else {
-      t.arrDepFlight=''; t.arrDepTime=''; t.arrTimeJP=''; t.arrRetFlight='';
+      t.arrDepFlight=''; t.arrDepTime=''; t.arrTimeJP=''; t.arrRetFlight=''; t.retTimeJP='';
       t.arrDateLocal=''; t.depDateLocal='';
     }
 
@@ -1167,6 +1256,7 @@ function analyze(){
     }
   });
 
+  applyEditOverrides();
   teams.forEach((t,i)=>t.no=i+1);
 
   // 탭 해제
@@ -1187,15 +1277,20 @@ function analyze(){
   renderDinner();
   renderVerify();
   renderAudit();
-  gotoSection('booking');
+  gotoSection('audit');
 }
 
 /* ════════════════════════════════════════════════════════════
-   ② 예약 관리 렌더
+   ③ 예약 관리 렌더
 ════════════════════════════════════════════════════════════ */
 const BOOKING_HDR=['☑','No','구분','호텔','명단','행사번호','대표고객','회원권구분','출발일자','도착일자','기간','요일','출발지','항공','상품명','예약인원','판매금액','미수금액','팀','비고 특이사항'];
-/* 검색·필터 상태 */
-const bkFilter={ status:'전체', hotel:'전체', list:'전체', quick:'' };
+/* 검색·필터 상태 (status는 복수 선택) */
+const bkFilter={ status:new Set(), hotel:'전체', list:'전체', quick:'' };
+function bkToggleStatus(val){
+  if(val==='전체'){ bkFilter.status.clear(); }
+  else { if(bkFilter.status.has(val)) bkFilter.status.delete(val); else bkFilter.status.add(val); }
+  renderBooking();
+}
 function bkSetFilter(group,val){
   bkFilter[group] = (bkFilter[group]===val ? (group==='quick'?'':'전체') : val);
   renderBooking();
@@ -1204,7 +1299,12 @@ function bkClearSearch(){ const el=document.getElementById('bk-search'); if(el){
 function bkClearDate(){ document.getElementById('bk-date-from').value=''; document.getElementById('bk-date-to').value=''; renderBooking(); }
 function bkRenderChips(){
   const mk=(grp,opts)=>opts.map(o=>`<span class="bk-chip ${bkFilter[grp]===o.v?'on':''}" onclick="bkSetFilter('${grp}','${o.v}')">${o.l}</span>`).join('');
-  const c1=document.getElementById('bk-chip-status'); if(c1) c1.innerHTML='<span class="bk-chip-lbl">구분</span>'+mk('status',[{v:'전체',l:'전체'},{v:'견적',l:'견적'},{v:'대기',l:'대기'},{v:'확정',l:'확정'},{v:'정산',l:'정산'}]);
+  // 구분: 복수 선택 (전체 = 아무것도 선택 안 함)
+  const stOpts=['견적','대기','확정','정산'];
+  const c1=document.getElementById('bk-chip-status');
+  if(c1) c1.innerHTML='<span class="bk-chip-lbl">구분</span>'+
+    `<span class="bk-chip ${bkFilter.status.size===0?'on':''}" onclick="bkToggleStatus('전체')">전체</span>`+
+    stOpts.map(v=>`<span class="bk-chip ${bkFilter.status.has(v)?'on':''}" onclick="bkToggleStatus('${v}')">${v}</span>`).join('');
   const c2=document.getElementById('bk-chip-hotel'); if(c2) c2.innerHTML='<span class="bk-chip-lbl">호텔</span>'+mk('hotel',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
   const c3=document.getElementById('bk-chip-list'); if(c3) c3.innerHTML='<span class="bk-chip-lbl">명단</span>'+mk('list',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
   const c4=document.getElementById('bk-chip-quick'); if(c4) c4.innerHTML='<span class="bk-chip-lbl">빠른필터</span>'+
@@ -1216,7 +1316,7 @@ function bkFilteredTeams(){
   const from=document.getElementById('bk-date-from')?.value||'';
   const to=document.getElementById('bk-date-to')?.value||'';
   return teams.filter(t=>{
-    if(bkFilter.status!=='전체' && t.status!==bkFilter.status) return false;
+    if(bkFilter.status.size>0 && !bkFilter.status.has(t.status)) return false;
     if(bkFilter.hotel!=='전체' && (t.hotelY?'Y':'N')!==bkFilter.hotel) return false;
     if(bkFilter.list!=='전체' && (t.listY?'Y':'N')!==bkFilter.list) return false;
     if(bkFilter.quick==='due' && !(t.due>0)) return false;
@@ -1305,17 +1405,18 @@ function renderBooking(){
       <td class="num">${won(t.sales)}</td>
       <td class="num" style="color:${t.due>0?'var(--red)':'var(--text3)'}">${t.due>0?won(t.due):'-'}</td>
       <td class="center">${teamCell}</td>
-      <td class="muted">${t.special||'-'}</td>
+      <td class="muted">${t.special||'-'}${t.edited?'<span class="bk-edited-dot" title="일괄 수정됨"></span>':''}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="20" class="center muted" style="padding:30px">검색·필터 조건에 맞는 예약이 없습니다.</td></tr>`;
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
-   ④ 항공 정보 렌더
+   ⑤ 항공 정보 렌더
 ════════════════════════════════════════════════════════════ */
 let airFilter='all';
 function filterAir(f){ airFilter=f; renderAir(); }
-const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','발권완료','출국 안내'];
+const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
 function renderAir(){
   const thead='<tr>'+
     '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+
@@ -1332,7 +1433,6 @@ function renderAir(){
     sortTh('사전좌석','seat','air')+
     '<th class="center">인원</th>'+
     sortTh('PNR','pnr','air')+
-    '<th>발권완료</th>'+
     sortTh('출국 안내','dday','air')+'</tr>';
   document.getElementById('air-thead').innerHTML=thead;
   let rows=[...teams];
@@ -1343,12 +1443,10 @@ function renderAir(){
   const withPnr=teams.filter(t=>t.pnrList&&t.pnrList.length).length;
   const noPnr=teams.filter(t=>!(t.pnrList&&t.pnrList.length)).length;
   const d7=teams.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; }).length;
-  const ticketedCnt=teams.filter(t=>ticketDone[t.eventSeq]).length;
   document.getElementById('air-summary').innerHTML=`
     <div class="sum-box"><div class="sum-label">PNR 등록 팀</div><div class="sum-val">${withPnr}건</div></div>
     <div class="sum-box"><div class="sum-label">PNR 미등록 팀</div><div class="sum-val ${noPnr>0?'red':''}">${noPnr}건</div></div>
-    <div class="sum-box"><div class="sum-label">출국 D-7 이내</div><div class="sum-val ${d7>0?'red':''}">${d7}건</div></div>
-    <div class="sum-box"><div class="sum-label">발권완료 (수동)</div><div class="sum-val green">${ticketedCnt}/${teams.length}</div></div>`;
+    <div class="sum-box"><div class="sum-label">출국 D-7 이내</div><div class="sum-val ${d7>0?'red':''}">${d7}건</div></div>`;
 
   document.getElementById('air-tbody').innerHTML = rows.map(t=>{
     const pnrHtml = (t.pnrList&&t.pnrList.length)
@@ -1363,7 +1461,6 @@ function renderAir(){
       else if(d<=7) notify=`<span class="tag tag-status-대기">D-${d} 출국안내</span>`;
       else notify=`<span class="muted">D-${d}</span>`;
     }
-    const checked=ticketDone[t.eventSeq]?'checked':'';
     // 팀 헤더 행
     const headRow=`<tr class="air-team-row">
       <td class="center"><input type="checkbox" class="chk sel-air" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
@@ -1380,7 +1477,6 @@ function renderAir(){
       <td class="center">${seatCell}</td>
       <td class="num">${t.pax}</td>
       <td>${pnrHtml}</td>
-      <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleTicket('${t.eventSeq}',this.checked)"></td>
       <td class="center">${notify}</td>
     </tr>`;
     // 일행 하위 행 (대표자 포함 전원, 들여쓰기)
@@ -1399,19 +1495,13 @@ function renderAir(){
             <td class="center" style="font-family:var(--mono);font-size:11px">${bd}</td>
             <td colspan="2" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span> ${cntry}</td>
             <td class="center">${seat}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
           </tr>`;
         }).join('')
-      : `<tr class="air-pax-row"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+      : `<tr class="air-pax-row"><td colspan="4"></td><td colspan="11" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
     return headRow+paxRows;
   }).join('');
-}
-function toggleTicket(seq,val){
-  if(val) ticketDone[seq]=true; else delete ticketDone[seq];
-  savePersist();
-  const cnt=teams.filter(t=>ticketDone[t.eventSeq]).length;
-  const boxes=document.querySelectorAll('#air-summary .sum-val');
-  if(boxes[3]) boxes[3].textContent=`${cnt}/${teams.length}`;
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1428,7 +1518,7 @@ function monthsToExpiry(expiry, depDate){
   if(isNaN(e)||isNaN(d)) return null;
   return (e-d)/(86400000*30.4);
 }
-const INS_HDR=['No','구분','대표고객','출발일자','일행(영문·여권번호·만료일·국가)','여권 경고','보험가입'];
+const INS_HDR=['No','구분','행사번호','대표고객','출발일자','일행 명단 (영문 · 여권번호 · 만료일 · 국가)','여권 경고','보험가입'];
 function renderInsurance(){
   document.getElementById('ins-thead').innerHTML='<tr>'+INS_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   // 만료 임박 판정: 팀 내 6개월 미만 여권 보유
@@ -1447,26 +1537,44 @@ function renderInsurance(){
     <div class="sum-box"><div class="sum-label">보험 가입(수동)</div><div class="sum-val green">${insCnt}/${teams.length}</div></div>`;
 
   document.getElementById('ins-tbody').innerHTML = rows.map(t=>{
-    const paxHtml = t.pax_list.length
-      ? '<ul class="pax-list">'+t.pax_list.map(p=>{
-          const m=monthsToExpiry(p.expiry,t.dep);
-          const warn=(m!==null && m<6);
-          const cntry=p.country && p.country!=='KR'?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
-          return `<li class="${p.isRep?'rep':''}">${p.isRep?'★ ':''}${p.name} <span class="muted">${p.engFull||''}</span>${p.passport?` <span class="muted">여권 ${p.passport}</span>`:' <span class="muted">여권 미등록</span>'}${p.expiry?` <span class="${warn?'':'muted'}" style="${warn?'color:var(--red);font-weight:700':''}">~${p.expiry}</span>`:''} ${cntry}</li>`;
-        }).join('')+'</ul>'
-      : '<span class="muted">명단 없음(APIS 미연동)</span>';
-    const warnCell = hasExpiryWarn(t)?'<span class="tag tag-status-취소">6개월 미만</span>':'<span class="muted">OK</span>';
+    const warn=hasExpiryWarn(t);
+    const warnCell = warn?'<span class="tag tag-status-취소">6개월 미만</span>':'<span class="muted">OK</span>';
     const checked=insDone[t.eventSeq]?'checked':'';
-    return `<tr>
+    // 팀 헤더 행
+    const headRow=`<tr class="air-team-row">
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
       <td>${t.dep}</td>
-      <td>${paxHtml}</td>
+      <td class="muted" style="font-size:11px">${t.pax_list.length?`일행 ${t.pax_list.length}명 ▾`:'명단 없음 (APIS·일행별 미연동)'}</td>
       <td class="center">${warnCell}</td>
       <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleIns('${t.eventSeq}',this.checked)"></td>
     </tr>`;
+    // 일행 하위 행 (항공과 동일 패턴 — 영문명·여권번호·만료일·국가·만료경고)
+    const paxRows = t.pax_list.length
+      ? t.pax_list.map(p=>{
+          const m=monthsToExpiry(p.expiry,t.dep);
+          const pWarn=(m!==null && m<6);
+          const pass=p.passport?p.passport:'<span class="muted">여권 미등록</span>';
+          const expHtml=p.expiry
+            ? `<span class="${pWarn?'':'muted'}" style="${pWarn?'color:var(--red);font-weight:700':''}">~${p.expiry}${pWarn&&m!==null?` (${m<0?'만료':m.toFixed(1)+'개월'})`:''}</span>`
+            : '<span class="muted">만료일 미등록</span>';
+          const cntry=(p.country&&p.country!=='KR')?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
+          const warnTag=pWarn?'<span class="tag tag-status-취소" style="font-size:9px">만료 임박</span>':'';
+          return `<tr class="air-pax-row">
+            <td></td><td></td><td></td>
+            <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
+            <td style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
+            <td style="font-family:var(--mono);font-size:11px">여권 ${pass} &nbsp; ${expHtml} ${cntry}</td>
+            <td class="center">${warnTag}</td>
+            <td></td>
+          </tr>`;
+        }).join('')
+      : '';
+    return headRow+paxRows;
   }).join('');
+  attachTopScrollbars();
 }
 function toggleIns(seq,val){
   if(val) insDone[seq]=true; else delete insDone[seq];
@@ -1479,22 +1587,21 @@ function toggleIns(seq,val){
 /* ════════════════════════════════════════════════════════════
    ⑤ 송영 정보
 ════════════════════════════════════════════════════════════ */
-const TRANSFER_HDR=['No','구분','행사번호','대표고객','인원','출발지','입국편','한국출발','현지도착','출국편','숙소','송영비'];
+const TRANSFER_OUT_HDR=['No','구분','행사번호','대표고객','인원','출발지','입국편','한국 출발','현지 도착','현지 도착일','숙소'];
+const TRANSFER_RET_HDR=['No','구분','행사번호','대표고객','인원','출발지','귀국편','현지 출발','현지 출발일','숙소'];
 function renderTransfer(){
-  document.getElementById('transfer-thead').innerHTML='<tr>'+TRANSFER_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const accomTeams=teams.filter(t=>t.accom);
   const totPax=accomTeams.reduce((s,t)=>s+t.pax,0);
-  const rate=resortMaster.find(r=>r.key==='yamanami_golf')?.transfer||6000;
-  const totTransfer=totPax*6000;
   document.getElementById('transfer-summary').innerHTML=`
     <div class="sum-box"><div class="sum-label">송영 대상 팀</div><div class="sum-val">${accomTeams.length}건</div></div>
     <div class="sum-box"><div class="sum-label">송영 대상 인원</div><div class="sum-val">${totPax}명</div></div>
-    <div class="sum-box"><div class="sum-label">송영비 합계</div><div class="sum-val">¥${totTransfer.toLocaleString()}</div></div>`;
+    <div class="sum-box"><div class="sum-label">출국 송영 (공항→숙소)</div><div class="sum-val">${accomTeams.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">귀국 송영 (숙소→공항)</div><div class="sum-val">${accomTeams.length}건</div></div>`;
 
-  document.getElementById('transfer-tbody').innerHTML = accomTeams.map(t=>{
+  // 출국 송영표
+  document.getElementById('transfer-out-thead').innerHTML='<tr>'+TRANSFER_OUT_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  document.getElementById('transfer-out-tbody').innerHTML = accomTeams.map(t=>{
     const depFlight=t.arrDepFlight||t.apisDepFlight||'-';
-    const retFlight=t.arrRetFlight||t.apisRetFlight||'-';
-    const transfer= t.pax*6000;
     return `<tr>
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
@@ -1505,11 +1612,29 @@ function renderTransfer(){
       <td class="center" style="font-family:var(--mono);font-size:11px">${depFlight}</td>
       <td class="center" style="font-family:var(--mono)">${t.arrDepTime||'-'}</td>
       <td class="center" style="font-family:var(--mono)">${t.arrTimeJP||'-'}</td>
-      <td class="center" style="font-family:var(--mono);font-size:11px">${retFlight}</td>
+      <td class="center">${t.arrDateLocal||'-'}</td>
       <td>${accomTag(t.accom)}</td>
-      <td class="num">¥${transfer.toLocaleString()}</td>
     </tr>`;
-  }).join('');
+  }).join('') || `<tr><td colspan="11" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
+
+  // 귀국 송영표
+  document.getElementById('transfer-ret-thead').innerHTML='<tr>'+TRANSFER_RET_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  document.getElementById('transfer-ret-tbody').innerHTML = accomTeams.map(t=>{
+    const retFlight=t.arrRetFlight||t.apisRetFlight||'-';
+    return `<tr>
+      <td class="center">${t.no}</td>
+      <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
+      <td><b>${t.repName}</b></td>
+      <td class="num">${t.pax}</td>
+      <td class="center">${t.apisOrigin||t.origin}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${retFlight}</td>
+      <td class="center" style="font-family:var(--mono)">${t.retTimeJP||'-'}</td>
+      <td class="center">${t.depDateLocal||'-'}</td>
+      <td>${accomTag(t.accom)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="10" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1554,6 +1679,7 @@ function renderAccom(){
       <td>${t.arr}</td>
     </tr>`;
   }).join('');
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1583,6 +1709,7 @@ function renderGolf(){
       <td>${t.dep}</td>
       <td>${t.arr}</td>
     </tr>`).join('');
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1612,6 +1739,7 @@ function renderDinner(){
       <td>${t.arr}</td>
       <td class="muted">${t.special||'-'}</td>
     </tr>`).join('');
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1743,10 +1871,11 @@ function renderVerify(){
       <td class="center">${statusCell}</td>
     </tr>`;
   }).join('');
+  attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
-   ⑪ 데이터 검수 — 엠클릭 수기 입력 오류 검출 (자동 수정 없음)
+   ② 데이터 검수 — 엠클릭 수기 입력 오류 검출 (자동 수정 없음)
 ════════════════════════════════════════════════════════════ */
 let auditFilter='all';
 let auditResult=null;
@@ -1903,6 +2032,7 @@ function renderAudit(){
 
   const html=blocks.filter(Boolean).join('');
   box.innerHTML = html || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
+  attachTopScrollbars();
 }
 function setVAdj(seq, field, val){
   vAdjust[seq]=vAdjust[seq]||{};
@@ -1933,6 +2063,104 @@ function updateSelCount(){
   document.querySelectorAll('[onclick^="exportAligo"]').forEach(b=>{
     b.textContent = selectedSeqs.size ? `✉ 선택 ${selectedSeqs.size}팀 알리고 양식` : '✉ 선택 팀 알리고 양식';
   });
+  updateBulkBar();
+}
+
+/* ════════════════════════════════════════════════════════════
+   일괄 수정 (구분·호텔·명단·비고) — editOverrides 레이어
+════════════════════════════════════════════════════════════ */
+function updateBulkBar(){
+  const bar=document.getElementById('bulk-bar'); if(!bar) return;
+  const n=selectedSeqs.size;
+  bar.style.display = n>0 ? 'flex' : 'none';
+  const c=document.getElementById('bulk-count'); if(c) c.textContent=`${n}건 선택`;
+}
+function bkClearSelection(){
+  selectedSeqs.clear();
+  document.querySelectorAll('.sel-booking,.sel-air').forEach(c=>c.checked=false);
+  updateSelCount();
+}
+/* 선택 건의 구분/호텔/명단 일괄 적용 */
+function applyBulkFields(){
+  if(!selectedSeqs.size){ showToast('선택된 건이 없습니다','error'); return; }
+  const st=document.getElementById('bulk-status').value;
+  const ho=document.getElementById('bulk-hotel').value;
+  const li=document.getElementById('bulk-list').value;
+  if(!st && !ho && !li){ showToast('변경할 값을 골라주세요','error'); return; }
+  let cnt=0;
+  selectedSeqs.forEach(seq=>{
+    const o=editOverrides[seq]=editOverrides[seq]||{};
+    if(st) o.status=st;
+    if(ho) o.hotelY=(ho==='Y');
+    if(li) o.listY=(li==='Y');
+    cnt++;
+  });
+  savePersist();
+  applyEditOverrides();
+  // 셀렉트 초기화
+  document.getElementById('bulk-status').value='';
+  document.getElementById('bulk-hotel').value='';
+  document.getElementById('bulk-list').value='';
+  rerenderAfterEdit();
+  showToast(`${cnt}건 수정되었습니다`);
+}
+/* 비고 일괄 등록 모달 */
+function openBulkRemark(){
+  if(!selectedSeqs.size){ showToast('선택된 건이 없습니다','error'); return; }
+  document.getElementById('bulk-remark-count').textContent=`${selectedSeqs.size}건 대상`;
+  document.getElementById('bulk-remark-input').value='';
+  document.querySelector('input[name="bulk-remark-mode"][value="append"]').checked=true;
+  document.getElementById('bulk-remark-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('bulk-remark-input').focus(),60);
+}
+function applyBulkRemark(){
+  const txt=document.getElementById('bulk-remark-input').value.trim();
+  const mode=document.querySelector('input[name="bulk-remark-mode"]:checked')?.value||'append';
+  if(!txt){ showToast('등록할 내용을 입력해주세요','error'); return; }
+  let cnt=0;
+  selectedSeqs.forEach(seq=>{
+    const t=teams.find(x=>x.eventSeq===seq); if(!t) return;
+    const cur=(editOverrides[seq]&&editOverrides[seq].remark!==undefined)?editOverrides[seq].remark:(t.remark||'');
+    let next;
+    if(mode==='overwrite') next=txt;
+    else next = cur ? (cur.replace(/[\s\/·\|]+$/,'')+' / '+txt) : txt;
+    const o=editOverrides[seq]=editOverrides[seq]||{};
+    o.remark=next;
+    cnt++;
+  });
+  savePersist();
+  applyEditOverrides();
+  document.getElementById('bulk-remark-bg').classList.remove('open');
+  rerenderAfterEdit();
+  showToast(`${cnt}건 비고 ${mode==='overwrite'?'덮어쓰기':'추가'} 완료`);
+}
+/* 편집 후 영향받는 표 일괄 재렌더 (선택 상태 유지) */
+function rerenderAfterEdit(){
+  renderBooking(); renderAir(); renderInsurance(); renderTransfer();
+  renderAccom(); renderGolf(); renderDinner(); renderVerify();
+  // 체크 상태 복원
+  selectedSeqs.forEach(seq=>{ document.querySelectorAll(`.sel-booking[data-seq="${seq}"],.sel-air[data-seq="${seq}"]`).forEach(c=>c.checked=true); });
+  updateBulkBar();
+}
+/* 모든 일괄 수정 되돌리기 (원본 엠클릭 값으로 복원) */
+function resetEditOverrides(){
+  if(!Object.keys(editOverrides).length){ showToast('되돌릴 수정이 없습니다'); return; }
+  if(!confirm('일괄 수정한 구분·호텔·명단·비고를 모두 원본(엠클릭) 값으로 되돌릴까요?\n(팀 지정은 유지됩니다)')) return;
+  editOverrides={};
+  savePersist();
+  // 원본 복원: 재분석 없이 raw에서 되돌림
+  teams.forEach(t=>{
+    const r=t.raw||{};
+    t.status=String(r['구분']||t.status).trim();
+    t.hotelY=String(r['호텔']||'').trim().toUpperCase()==='Y';
+    t.listY=String(r['명단']||'').trim().toUpperCase()==='Y';
+    t.remark=String(r['비고']||'');
+    t.teamAuto=parseTeamName(t.remark);
+    t.special=remarkSpecial(t.remark);
+    t.edited=false;
+  });
+  rerenderAfterEdit();
+  showToast('원본으로 되돌렸습니다');
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2506,10 +2734,10 @@ function updateCommon(field, val, el){
    영속화 (localStorage)
 ════════════════════════════════════════════════════════════ */
 function savePersist(){
-  try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); }catch(e){}
+  try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides)); }catch(e){}
 }
 function loadPersist(){
-  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; vAdjust={}; }
+  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; vAdjust={}; editOverrides={}; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2523,6 +2751,7 @@ function gotoSection(name){
   document.getElementById('sec-'+name).classList.add('active');
   if(nav) nav.classList.add('active');
   window.scrollTo(0,0);
+  setTimeout(()=>{ try{ attachTopScrollbars(); }catch(e){} }, 50);
 }
 function resetAll(){
   if(!confirm('업로드한 파일과 분석 결과를 모두 초기화할까요?\n(팀 지정·발권 체크는 유지됩니다)')) return;
