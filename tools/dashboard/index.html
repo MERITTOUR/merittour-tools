@@ -170,6 +170,18 @@ tr:hover td{background:#EEF3FA}
 /* RESORT MASTER */
 .rm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:1rem}
 .rm-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.rm-accordion{margin-bottom:8px}
+.rm-accordion.open{border-color:var(--accent)}
+.rm-acc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;cursor:pointer;background:var(--surface2);transition:background .15s;flex-wrap:wrap}
+.rm-acc-head:hover{background:var(--surface3)}
+.rm-accordion.open .rm-acc-head{background:var(--accent-dim)}
+.rm-acc-title{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+.rm-acc-arrow{color:var(--accent);font-size:12px;width:12px;flex-shrink:0}
+.rm-acc-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rm-cap-badge{font-size:11px;font-family:var(--mono);background:var(--surface);color:var(--accent2);border:1px solid var(--accent);border-radius:20px;padding:2px 9px}
+.rm-dep-badge{font-size:11px;background:var(--surface);color:var(--text2);border:1px solid var(--border2);border-radius:20px;padding:2px 9px}
+.rm-acc-body{padding:16px}
+.rm-acc-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
 .rm-card-head{padding:12px 16px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between}
 .rm-card-head .rm-name{font-size:14px;font-weight:700}
 .rm-card-head .rm-region{font-size:11px;opacity:.8}
@@ -236,6 +248,14 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx .rowhd{background:var(--surface2);text-align:left;font-weight:700;color:var(--navy);position:sticky;left:0;z-index:1;padding-left:10px}
 .blk-mtx .rt-sub{font-weight:500;color:var(--text3);font-size:10px}
 .blk-mtx .grp-row td{background:var(--surface4)!important;font-weight:700;color:var(--text2)}
+.blk-mtx tr.blk-sumrow td{background:var(--navy)!important;color:#fff!important;font-weight:700;border-color:var(--navy)}
+.blk-mtx tr.blk-sumrow td.rowhd{background:var(--navy)!important;color:#fff!important}
+.blk-mtx tr.blk-sumrow td.b-g{background:#1f6b4d!important;color:#d6ffe9!important}
+.blk-mtx tr.blk-sumrow td.b-a{background:#9a6a17!important;color:#ffe9c2!important}
+.blk-mtx tr.blk-sumrow td.b-r{background:#a3302f!important;color:#ffd9d8!important}
+.blk-mtx tr.blk-sumrow td.b-zero{background:#3a4a6b!important;color:#9fb0d0!important}
+.blk-mtx tr.blk-sumrow td.b-use{background:#3a4a6b!important;color:#fff!important}
+.blk-mtx tr.blk-sumrow .blk-tag-type{background:rgba(255,255,255,.18)!important;color:#fff!important;border-color:rgba(255,255,255,.3)!important}
 .blk-mtx td.b-g{background:var(--green-dim);color:var(--green2);font-weight:700}
 .blk-mtx td.b-a{background:var(--amber-dim);color:var(--amber2);font-weight:700}
 .blk-mtx td.b-r{background:var(--red-dim);color:var(--red2);font-weight:700}
@@ -547,10 +567,6 @@ tr:hover td{background:#EEF3FA}
       <div class="card-head">
         <div><div class="card-title">일별 블록 현황 (보유 − 사용 = 잔여)</div><div class="card-sub" id="blk-status-sub"></div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <div class="blk-view-toggle">
-            <button id="blkmode-integrated" class="on" onclick="blkSetMode('integrated')">통합 보기</button>
-            <button id="blkmode-real" onclick="blkSetMode('real')">실물 보기</button>
-          </div>
           <button class="btn-sm" onclick="openNotice()" style="border-color:var(--accent);color:var(--accent)">📤 예약가능일자 공지 PNG</button>
         </div>
       </div>
@@ -636,7 +652,7 @@ tr:hover td{background:#EEF3FA}
   <!-- 보유·풀 설정 -->
   <div class="blk-view" id="blkv-config">
     <div class="blk-cfg-card">
-      <div class="blk-cfg-title">🏨 검색 풀 설정 <span class="card-sub" style="font-weight:400">— 호텔·룸을 묶는 검색 단위. 정원 = 묶인 호텔 보유 합산(자동). 출발일정(목3박 등)으로 연박 잔여를 계산.</span></div>
+      <div class="blk-cfg-title">🏨 검색 풀 설정 <span class="card-sub" style="font-weight:400">— 호텔·룸을 묶는 검색 단위. 정원 = 묶인 호텔 보유 합산(자동). 출발 일정·공항은 ① 리조트 마스터에서 관리합니다.</span></div>
       <div id="blk-pools"></div>
       <div style="display:flex;gap:6px;margin-top:10px">
         <input class="blk-cfg-input text" id="blk-newpool" placeholder="새 풀 이름">
@@ -1353,7 +1369,7 @@ function renderTransfer(){
   document.getElementById('transfer-thead').innerHTML='<tr>'+TRANSFER_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const accomTeams=teams.filter(t=>t.accom);
   const totPax=accomTeams.reduce((s,t)=>s+t.pax,0);
-  const rate=resortMaster.find(r=>r.key==='yamanami')?.transfer||6000;
+  const rate=resortMaster.find(r=>r.key==='yamanami_golf')?.transfer||6000;
   const totTransfer=totPax*6000;
   document.getElementById('transfer-summary').innerHTML=`
     <div class="sum-box"><div class="sum-label">송영 대상 팀</div><div class="sum-val">${accomTeams.length}건</div></div>
@@ -1491,17 +1507,15 @@ function filterVerify(f){ verifyFilter=f; renderVerify(); }
 
 /* 숙소명 → 리조트 마스터 단가(체재비·송영비) 조회 */
 function resortUnitFor(accom){
-  // accom(parseProduct 결과) → resortMaster key 매핑
-  let key='';
-  if(/야마나미|쿠주|관내별장|돔하우스/.test(accom)){
-    if(/쿠주/.test(accom)) key='kuzu'; else key='yamanami';
+  // accom(parseProduct 결과)은 리조트 마스터 name과 일치하도록 맞춰져 있음 → 직접 매칭
+  let r = resortMaster.find(x=>x.name===accom);
+  // 부분 일치 보완 (룸타입 등이 붙은 경우)
+  if(!r) r = resortMaster.find(x=>accom && accom.indexOf(x.name)>=0);
+  if(!r){
+    // 못 찾으면 야마나미 골프텔 기본 단가로 대체 표시
+    const y=resortMaster.find(x=>x.key==='yamanami_golf');
+    return {stay:y?y.stay:0, transfer:y?y.transfer:0, matched:false};
   }
-  else if(/간지/.test(accom)) key='ganji';
-  else if(/시즈노야도/.test(accom)) key='shizu';
-  else if(/스가다이라/.test(accom)) key='sugadaira';
-  const r = key && resortMaster.find(x=>x.key===key);
-  // 마스터에 없는 위탁 숙소는 야마나미 기본 단가로 (체재비만, 송영 동일)
-  if(!r){ const y=resortMaster.find(x=>x.key==='yamanami'); return {stay:y?y.stay:0, transfer:y?y.transfer:0, matched:false}; }
   return {stay:r.stay, transfer:r.transfer, matched:true};
 }
 /* 출국월 환율 조회 */
@@ -1809,30 +1823,70 @@ function openTeamColorLegend(){
 const STORE_RESORT='mt_notify_resortMaster';
 const STORE_COMMON='mt_notify_commonMaster';
 
-/* 기본값 — 알고 있는 메리트투어 요금 기준 (모두 수정 가능) */
+/* 기본값 — 실제 판매 상품 18개 숙소. 단가는 사이님이 화면에서 입력(localStorage 저장).
+   출발일정·공항은 호텔 블록 풀에 있던 값을 기본으로 미리 채움. name은 호텔 블록 숙소명과 일치(출발일정 조회 연결). */
 const RESORT_DEFAULTS=[
-  {key:'yamanami', name:'아소 야마나미리조트', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:15000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
-   bfast:0, lunch:0, dinner:0, memo:''},
+  {key:'yamanami_golf', name:'아소 야마나미 골프텔', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:15000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+  {key:'yamanami_bessou', name:'아소 야마나미 관내별장', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+  {key:'yamanami_dome', name:'아소 야마나미 돔하우스', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+  {key:'kuzu', name:'야마나미 쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
+   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
-   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
-   bfast:0, lunch:0, dinner:0, memo:''},
+   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
-   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
-   bfast:0, lunch:0, dinner:0, memo:''},
-  {key:'kuzu', name:'쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
-   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
-   bfast:0, lunch:0, dinner:0, memo:''},
-  {key:'sugadaira', name:'스가다이라 그린CC', region:'나가노', golf:'스가다이라 그린CC', holes:18,
-   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0,
-   bfast:0, lunch:0, dinner:0, memo:'온천호텔/맨션 분리'}
+   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', memo:''},
+  {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'구마모토', golf:'포틴힐즈CC', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', memo:'14hills'},
+  {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'구마모토', golf:'포틴힐즈CC', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'구마모토', memo:''},
+  {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', memo:''},
+  {key:'mutsuki', name:'무츠키 료칸', region:'벳푸', golf:'벳푸', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', memo:''},
+  {key:'shirosato', name:'시로사토CC 골프텔', region:'이바라키', golf:'시로사토CC', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'일6박', airOut:'인천', airIn:'나리타', memo:''},
+  {key:'fukuroda', name:'후쿠로다노타키CC 골프텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'월7박', airOut:'인천', airIn:'나리타', memo:''},
+  {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
+   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', memo:''},
+  {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
+   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', memo:''},
+  {key:'kokusai', name:'국제공항CC 골프텔', region:'나고야', golf:'국제공항CC', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'일5박', airOut:'인천', airIn:'나고야', memo:''},
+  {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'일5박', airOut:'인천', airIn:'미야자키', memo:''},
+  {key:'kumamoto_city', name:'구마모토 시내 호텔', region:'구마모토', golf:'-', holes:0,
+   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', memo:'소테츠·다이와 임의배정'},
+  {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
+   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', memo:''}
 ];
 const COMMON_DEFAULTS={
   rate:0, rateBase:'출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율',
   insCompany:'', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원)
-  airfares:[]              // [{month, origin, dest, nights, fare}] 항공요금 테이블
+  airfares:[]              // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
 };
 
 let resortMaster=[], commonMaster={};
@@ -1859,6 +1913,22 @@ function resetResortMaster(){
   saveResortMaster(); renderResortMaster();
 }
 
+/* 리조트 마스터 아코디언 열림 상태 */
+let blkRmOpen=new Set();
+function toggleRmCard(key){
+  if(blkRmOpen.has(key)) blkRmOpen.delete(key); else blkRmOpen.add(key);
+  renderResortMaster();
+}
+/* 숙소명으로 정원(보유 합산) 조회 — blkPoolCap과 동일 원리, name 기준 */
+function blkPoolCapByName(name){
+  try{
+    if(typeof blkMaster==='undefined'||!blkMaster) return null;
+  }catch(e){ return null; }  // 초기화 전 TDZ 방어
+  let sum=0,has=false;
+  Object.keys(blkMaster).forEach(k=>{ const [h]=k.split('|'); if(h===name||(blkAlias&&blkAlias[h]===name)){ sum+=blkMaster[k]; has=true; } });
+  return has?sum:null;
+}
+
 /* 숫자 입력 1개 행 */
 function rmNumRow(label, rkey, field, val, unit){
   return `<div class="rm-row"><label>${label}</label><div style="display:flex;align-items:center">
@@ -1869,38 +1939,64 @@ function rmNumRow(label, rkey, field, val, unit){
 
 function renderResortMaster(){
   if(!resortMaster.length) loadResortMaster();
-  document.getElementById('resort-cards').innerHTML='<div class="rm-grid">'+resortMaster.map(r=>`
-    <div class="rm-card">
-      <div class="rm-card-head">
-        <div><div class="rm-name">${r.name}</div><div class="rm-region">${r.region} · ${r.golf} · ${r.holes}홀</div></div>
-        <span class="rm-saved" id="saved-${r.key}">✓ 저장됨</span>
+  document.getElementById('resort-cards').innerHTML=resortMaster.map((r,i)=>{
+    const cap=blkPoolCapByName(r.name); // 정원(보유 합산) 표시
+    const open=blkRmOpen.has(r.key);
+    return `
+    <div class="rm-card rm-accordion ${open?'open':''}">
+      <div class="rm-acc-head" onclick="toggleRmCard('${r.key}')">
+        <div class="rm-acc-title">
+          <span class="rm-acc-arrow">${open?'▾':'▸'}</span>
+          <span class="rm-name">${r.name}</span>
+          <span class="rm-region">${r.region}${r.golf&&r.golf!=='-'?' · '+r.golf:''}</span>
+        </div>
+        <div class="rm-acc-meta">
+          ${cap!=null?`<span class="rm-cap-badge">정원 ${cap}</span>`:''}
+          ${r.depart?`<span class="rm-dep-badge">${r.depart}</span>`:''}
+          <span class="rm-saved" id="saved-${r.key}">✓ 저장됨</span>
+        </div>
       </div>
-      <div class="rm-card-body">
-        <div class="rm-group">
-          <div class="rm-group-label">요금 (엔)</div>
-          ${rmNumRow('체재비',r.key,'stay',r.stay,'/인박')}
-          ${rmNumRow('송영비',r.key,'transfer',r.transfer,'/인')}
-          ${rmNumRow('회원관리비',r.key,'mgmt',r.mgmt,'')}
+      <div class="rm-acc-body" ${open?'':'style="display:none"'}>
+        <div class="rm-acc-cols">
+          <div class="rm-group">
+            <div class="rm-group-label">요금 (엔)</div>
+            ${rmNumRow('체재비',r.key,'stay',r.stay,'/인박')}
+            ${rmNumRow('송영비',r.key,'transfer',r.transfer,'/인')}
+            ${rmNumRow('회원관리비',r.key,'mgmt',r.mgmt,'')}
+          </div>
+          <div class="rm-group">
+            <div class="rm-group-label">그린피 (엔)</div>
+            ${rmNumRow('평일',r.key,'greenWeekday',r.greenWeekday,'')}
+            ${rmNumRow('주말·공휴일',r.key,'greenWeekend',r.greenWeekend,'')}
+            ${rmNumRow('9홀 추가',r.key,'add9h',r.add9h,'')}
+          </div>
+          <div class="rm-group">
+            <div class="rm-group-label">식사 (엔)</div>
+            ${rmNumRow('조식',r.key,'bfast',r.bfast,'/인')}
+            ${rmNumRow('중식',r.key,'lunch',r.lunch,'/인')}
+            ${rmNumRow('석식',r.key,'dinner',r.dinner,'/인')}
+          </div>
+          <div class="rm-group">
+            <div class="rm-group-label">출발 정보</div>
+            <div class="rm-row"><label>출발 일정</label>
+              <input class="rm-input text" style="width:170px" type="text" value="${(r.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박"
+                onchange="updateResort('${r.key}','depart',this.value,this)"></div>
+            <div class="rm-row"><label>출발 공항</label>
+              <input class="rm-input text" style="width:170px" type="text" value="${(r.airOut||'').replace(/"/g,'&quot;')}" placeholder="예: 인천 / 김해"
+                onchange="updateResort('${r.key}','airOut',this.value,this)"></div>
+            <div class="rm-row"><label>도착 공항</label>
+              <input class="rm-input text" style="width:170px" type="text" value="${(r.airIn||'').replace(/"/g,'&quot;')}" placeholder="예: 구마모토"
+                onchange="updateResort('${r.key}','airIn',this.value,this)"></div>
+          </div>
         </div>
-        <div class="rm-group">
-          <div class="rm-group-label">그린피 (엔)</div>
-          ${rmNumRow('평일',r.key,'greenWeekday',r.greenWeekday,'')}
-          ${rmNumRow('주말·공휴일',r.key,'greenWeekend',r.greenWeekend,'')}
-          ${rmNumRow('9홀 추가',r.key,'add9h',r.add9h,'')}
-        </div>
-        <div class="rm-group">
-          <div class="rm-group-label">식사 (엔)</div>
-          ${rmNumRow('조식',r.key,'bfast',r.bfast,'/인')}
-          ${rmNumRow('중식',r.key,'lunch',r.lunch,'/인')}
-          ${rmNumRow('석식',r.key,'dinner',r.dinner,'/인')}
-        </div>
-        <div class="rm-group">
+        <div class="rm-group" style="margin-top:12px">
           <div class="rm-group-label">비고</div>
           <input class="rm-input wide" type="text" value="${(r.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
             onchange="updateResort('${r.key}','memo',this.value,this)">
         </div>
       </div>
-    </div>`).join('')+'</div>';
+    </div>`;
+  }).join('');
 
   // 공통 마스터
   document.getElementById('common-master').innerHTML=`<div class="cm-grid">
@@ -1948,13 +2044,20 @@ function renderResortMaster(){
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">✈️ 항공요금 테이블 (월 × 출발지→도착지 × 박수 · 원화/인)</div>
+    <div class="cm-box-title">✈️ 항공요금 테이블 <span class="card-sub" style="font-weight:400">— 월 × 항공사 × 출발지→도착지 × 박수 · 원화/인 (출국편 입력 시 귀국편 자동, 수정 가능)</span></div>
     <div id="airfare-rows"></div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
       <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
-      <input class="rm-input text" id="af-origin" placeholder="출발지(인천)" style="width:90px">
-      <input class="rm-input text" id="af-dest" placeholder="도착지(구마모토)" style="width:100px">
-      <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:60px">
+      <input class="rm-input text" id="af-airline" placeholder="항공사(TW)" style="width:80px">
+      <input class="rm-input text" id="af-origin" placeholder="출발지(인천)" style="width:85px">
+      <input class="rm-input text" id="af-dest" placeholder="도착지(구마모토)" style="width:95px">
+      <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:55px">
+      <input class="rm-input text" id="af-flightout" placeholder="출국편(TW295)" style="width:95px" onchange="afAutoReturn()">
+      <input class="rm-input text" id="af-flightin" placeholder="귀국편(TW296)" style="width:95px">
+      <select class="rm-input" id="af-trip" style="width:80px;text-align:left;font-family:var(--sans)">
+        <option value="왕복">왕복</option>
+        <option value="편도">편도</option>
+      </select>
       <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="요금(원)" style="width:90px">
       <button class="btn-sm" onclick="addAirfare()">+ 추가</button>
     </div>
@@ -1989,26 +2092,41 @@ function renderAirfares(){
   const box=document.getElementById('airfare-rows'); if(!box) return;
   const arr=commonMaster.airfares||[];
   box.innerHTML = arr.length
-    ? '<div class="tbl-wrap" style="max-height:200px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>월</th><th>출발지</th><th>도착지</th><th>박수</th><th>요금</th><th></th></tr></thead><tbody>'+
-      arr.map((a,i)=>`<tr><td>${a.month}</td><td>${a.origin}</td><td>${a.dest}</td><td class="center">${a.nights}박</td><td class="num">₩${Number(a.fare).toLocaleString()}</td>
+    ? '<div class="tbl-wrap" style="max-height:240px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>월</th><th>항공사</th><th>노선</th><th>박수</th><th>출국편</th><th>귀국편</th><th>구분</th><th>요금</th><th></th></tr></thead><tbody>'+
+      arr.map((a,i)=>`<tr><td>${a.month}</td><td class="center">${a.airline||'-'}</td><td>${a.origin}→${a.dest}</td><td class="center">${a.nights}박</td>
+        <td class="center" style="font-family:var(--mono)">${a.flightOut||'-'}</td><td class="center" style="font-family:var(--mono)">${a.tripType==='편도'?'<span class="muted">편도</span>':(a.flightIn||'-')}</td>
+        <td class="center">${a.tripType||'왕복'}</td><td class="num">₩${Number(a.fare).toLocaleString()}</td>
         <td class="center"><button class="btn-sm" style="padding:1px 7px;color:var(--red);border-color:var(--red)" onclick="delAirfare(${i})">×</button></td></tr>`).join('')+
       '</tbody></table></div>'
     : '<div class="muted" style="font-size:11px">등록된 항공요금이 없습니다.</div>';
 }
+/* 출국편 입력 시 귀국편 자동 (예: TW295 → TW296, 끝 숫자 +1). 귀국편이 비어있을 때만 */
+function afAutoReturn(){
+  const out=document.getElementById('af-flightout').value.trim();
+  const inEl=document.getElementById('af-flightin');
+  if(!out || inEl.value.trim()) return;
+  const m=out.match(/^([A-Za-z]*)(\d+)$/);
+  if(m){ const n=(parseInt(m[2])+1).toString().padStart(m[2].length,'0'); inEl.value=m[1]+n; }
+}
 function addAirfare(){
   const month=document.getElementById('af-month').value;
+  const airline=document.getElementById('af-airline').value.trim();
   const origin=document.getElementById('af-origin').value.trim();
   const dest=document.getElementById('af-dest').value.trim();
   const nights=num(document.getElementById('af-nights').value);
+  const flightOut=document.getElementById('af-flightout').value.trim();
+  const flightIn=document.getElementById('af-flightin').value.trim();
+  const tripType=document.getElementById('af-trip').value;
   const fare=num(document.getElementById('af-fare').value);
-  if(!month||!origin||!dest||!nights||!fare){ alert('월·출발지·도착지·박수·요금을 모두 입력해주세요.'); return; }
+  if(!month||!origin||!dest||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다.'); return; }
   commonMaster.airfares=commonMaster.airfares||[];
-  // 같은 키 있으면 덮어쓰기
+  // 같은 키(월·노선·박수) 있으면 덮어쓰기
   const idx=commonMaster.airfares.findIndex(a=>a.month===month&&a.origin===origin&&a.dest===dest&&a.nights===nights);
-  if(idx>=0) commonMaster.airfares[idx].fare=fare;
-  else commonMaster.airfares.push({month,origin,dest,nights,fare});
+  const rec={month,airline,origin,dest,nights,flightOut,flightIn:(tripType==='편도'?'':flightIn),tripType,fare};
+  if(idx>=0) commonMaster.airfares[idx]=rec;
+  else commonMaster.airfares.push(rec);
   saveResortMaster(); renderAirfares();
-  ['af-origin','af-dest','af-nights','af-fare'].forEach(id=>document.getElementById(id).value='');
+  ['af-airline','af-origin','af-dest','af-nights','af-flightout','af-flightin','af-fare'].forEach(id=>document.getElementById(id).value='');
 }
 function delAirfare(i){ commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares(); }
 
@@ -2020,11 +2138,14 @@ function flashSaved(el, resortKey){
 }
 function updateResort(key, field, val, el){
   const r=resortMaster.find(x=>x.key===key); if(!r) return;
-  if(field==='memo') r[field]=val;
+  const textFields=['memo','depart','airOut','airIn'];
+  if(textFields.includes(field)) r[field]=val;
   else r[field]=num(val);
   saveResortMaster(); flashSaved(el, key);
-  // 숫자 입력은 천단위 콤마 재포맷
-  if(field!=='memo' && el){ el.value = r[field]?Number(r[field]).toLocaleString():''; }
+  // 숫자 입력만 천단위 콤마 재포맷
+  if(!textFields.includes(field) && el){ el.value = r[field]?Number(r[field]).toLocaleString():''; }
+  // 출발 정보 변경 시 출발 일정 조회 갱신
+  if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
   if(field==='rate'||field==='insFee'||field==='mgmtKRW'){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
@@ -2066,9 +2187,9 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); });
 
-/* 페이지 로드 시 리조트 마스터 초기화 */
+/* 페이지 로드 시 리조트 마스터 초기화 — blkMaster 로드 이후로 미룸(정원 배지 계산 위해) */
 loadResortMaster();
-renderResortMaster();
+/* renderResortMaster()는 스크립트 맨 끝, blkLoad() 이후 호출 */
 
 /* ════════════════════════════════════════════════════════════
    ⑩ 호텔 블록 — 엠클릭 붙여넣기 기반 즉석 분석
@@ -2118,7 +2239,7 @@ const BLK_WDMAP={'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
 
 let blkMaster={}, blkPools=[], blkAlias={}, blkOver={};
 let blkParsed=null;        // {rows, days, month}
-let blkMode='integrated';  // integrated | real
+let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
 let blkDepPoolSel=new Set(); // 출발조회 선택 풀
 
@@ -2361,7 +2482,7 @@ function blkRenderStatus(){
   // 정렬: 블록형 먼저, 임의배정형 뒤
   units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
 
-  document.getElementById('blk-status-sub').textContent=`${month} · ${blkMode==='integrated'?'통합 보기(그룹 합산)':'실물 보기'} · 잔여 = 보유 − 사용`;
+  document.getElementById('blk-status-sub').textContent=`${month} · 잔여 = 보유 − 사용 · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
 
   // 요약 박스: 블록형 기준 마감/임박 날·칸 수
   let cellMaegam=0, cellImbak=0, cellOk=0, assignCells=0;
@@ -2391,6 +2512,32 @@ function blkRenderStatus(){
   days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
   head+='<th class="total-col">사용계</th></tr></thead>';
   let body='<tbody>';
+  // 선택 합계 행: 호텔 2개 이상 선택 시 맨 위에 합산(룸타입 무시, 객실 단위)
+  if(blkHotelFilter.size>=2){
+    let capSum=0, capHas=false, hasAssign=false, hasUnmapped=false;
+    const useByDay={}; let selTot=0;
+    units.forEach(u=>{
+      const rooms=usage[u]||{};
+      const assign=blkIsAssignUnit(u);
+      if(assign) hasAssign=true;
+      Object.keys(rooms).forEach(rm=>{
+        if(!assign){ const blk=blkBlockForUnit(u,rm); if(blk==null) hasUnmapped=true; else { capSum+=blk; capHas=true; } }
+        days.forEach(d=>{ const used=rooms[rm][d.day]||0; if(used){ useByDay[d.day]=(useByDay[d.day]||0)+used; selTot+=used; } });
+      });
+    });
+    const capLabel = hasAssign ? `<span class="blk-tag-type blk-tag-assign" title="임의배정형이 포함되어 보유·잔여는 참고용">임의배정 포함</span>` : (capHas?`<span class="blk-tag-type blk-tag-block">보유 합 ${capSum}</span>`:'');
+    body+=`<tr class="blk-sumrow"><td class="rowhd"><b>📊 선택 합계</b> <span class="rt-sub">${blkHotelFilter.size}개 · 객실합산</span> ${capLabel}</td>`;
+    days.forEach(d=>{
+      const used=useByDay[d.day]||0;
+      if(hasAssign || !capHas){ // 잔여 계산 불가 → 사용 합만
+        body+= used? `<td class="b-use" title="사용 합 ${used}">${used}</td>` : `<td class="b-zero">·</td>`;
+      } else {
+        const rem=capSum-used;
+        body+= `<td class="${blkClsRemain(rem)}" title="보유 합 ${capSum} / 사용 합 ${used} / 잔여 ${rem}"><b>${rem}</b></td>`;
+      }
+    });
+    body+=`<td class="total-col"><b>${selTot}</b></td></tr>`;
+  }
   units.forEach(u=>{
     const rooms=usage[u]||{};
     const assign=blkIsAssignUnit(u);
@@ -2530,10 +2677,6 @@ function blkRenderConfig(){
         <input class="blk-cfg-input text" value="${(p.hotels||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 14hills, 포틴힐즈CC 골프텔" onchange="blkSetPool(${i},'hotels',this.value)"></div>
       <div class="blk-cfg-row"><label>룸 필터(쉼표, 비우면 전체)</label>
         <input class="blk-cfg-input text" value="${(p.rooms||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 트윈, 소형트윈" onchange="blkSetPool(${i},'rooms',this.value)" style="min-width:120px"></div>
-      <div class="blk-cfg-row"><label>출발 일정</label>
-        <input class="blk-cfg-input text" value="${(p.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박, 수7박 (또는 자유)" onchange="blkSetPool(${i},'depart',this.value)"></div>
-      <div class="blk-cfg-row"><label>출발 공항</label>
-        <input class="blk-cfg-input text" value="${(p.airport||'').replace(/"/g,'&quot;')}" placeholder="예: 인천 / 김해" onchange="blkSetPool(${i},'airport',this.value)" style="min-width:120px"></div>
       <div class="blk-cfg-row"><label><input type="checkbox" ${p.exclude?'checked':''} onchange="blkSetPool(${i},'exclude',this.checked)"> 객실 안내에서 제외(옵션상품/카트 등)</label></div>
     </div>`;
   }).join('')||'<span class="muted" style="font-size:12px">등록된 풀이 없습니다.</span>';
@@ -2603,6 +2746,21 @@ function blkRenderDepartChips(){
 function blkDepTog(n){ if(blkDepPoolSel.has(n)) blkDepPoolSel.delete(n); else blkDepPoolSel.add(n); blkRenderDepartChips(); blkRenderDepart(); }
 function blkDepTogAll(){ const pools=blkPools.filter(p=>!p.exclude); if(blkDepPoolSel.size===pools.length) blkDepPoolSel.clear(); else { blkDepPoolSel.clear(); pools.forEach(p=>blkDepPoolSel.add(p.name)); } blkRenderDepartChips(); blkRenderDepart(); }
 
+/* 풀 → 리조트 마스터 출발 정보 조회. 풀에 매칭되는 숙소 중 첫 번째 리조트 마스터의 depart/airOut/airIn */
+function resortDepartForPool(pool){
+  // 풀 이름이 리조트 마스터 name과 직접 일치하면 우선
+  let r=resortMaster.find(x=>x.name===pool.name);
+  // 아니면 풀에 매칭되는 호텔(마스터 name)을 찾아 그 리조트 마스터
+  if(!r){
+    for(const rm of resortMaster){
+      if(blkPoolMatch(pool, rm.name, (rm.rooms&&rm.rooms[0])||'')) { r=rm; break; }
+      if(pool.keyword && rm.name.includes(pool.keyword)) { r=rm; break; }
+      if((pool.hotels||[]).some(h=>h===rm.name || blkAlias[h]===rm.name)) { r=rm; break; }
+    }
+  }
+  return r ? {depart:r.depart||'', airOut:r.airOut||'', airIn:r.airIn||''} : {depart:'', airOut:'', airIn:''};
+}
+
 function blkRenderDepart(){
   const box=document.getElementById('blk-depart-result');
   if(!blkParsed){ box.innerHTML='<div class="placeholder">먼저 「블록 현황」 탭에서 엠클릭 표를 붙여넣어 주세요.</div>'; return; }
@@ -2615,7 +2773,8 @@ function blkRenderDepart(){
   blkPools.filter(p=>!p.exclude && blkDepPoolSel.has(p.name)).forEach(pool=>{
     const cap=blkPoolCap(pool);
     const used=blkPoolUsedByDay(pool);
-    const pats=blkParseDepart(pool.depart);
+    const dep=resortDepartForPool(pool);  // 리조트 마스터에서 출발 정보 조회
+    const pats=blkParseDepart(dep.depart);
     const assign=blkIsAssignPool(pool);
     // 출발 가능 일정 목록
     const departs=[];
@@ -2641,7 +2800,7 @@ function blkRenderDepart(){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <b style="color:var(--navy);font-size:13px">${pool.name}</b>
         ${assign?'<span class="blk-tag-type blk-tag-assign">임의배정(잔여계산 제외)</span>':`<span class="blk-tag-type blk-tag-block">정원 ${cap!=null?cap:'—'}</span>`}
-        <span class="muted" style="font-size:11px">출발: ${pool.depart||'미설정'} · ${pool.airport||''}</span>
+        <span class="muted" style="font-size:11px">출발: ${dep.depart||'미설정'}${dep.airOut?' · '+dep.airOut:''}${dep.airIn?' → '+dep.airIn:''}</span>
       </div>`;
     if(assign){
       html+='<div class="muted" style="font-size:12px">임의배정형 — 그때그때 객실을 까는 방식이라 잔여 계산 대신 일자별 사용수만 아래 현황에서 확인하세요.</div>';
@@ -2805,6 +2964,7 @@ function downloadNotice(){
 
 /* ── 초기화 ── */
 blkLoad();
+renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
 (function blkRestore(){
   try{
     const savedMonth=localStorage.getItem(BLK_STORE.month);
