@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MERITTOUR 통합 안내 관리 시스템</title>
+<title>MERITTOUR 통합 업무 허브</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -32,6 +33,7 @@ a{color:inherit}
 .header{background:var(--surface);border-bottom:2px solid var(--navy);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
 .logo-bar{width:4px;height:30px;background:var(--navy);border-radius:2px;margin-right:2px}
 .logo{display:flex;align-items:center;gap:12px}
+.logo:hover{opacity:.7;transition:opacity .15s}
 .logo-img{height:26px;width:auto;display:block}
 .logo-img path,.logo-img polygon,.logo-img rect{fill:var(--navy)}
 .logo-divider{width:1px;height:22px;background:var(--border2)}
@@ -204,18 +206,105 @@ tr:hover td{background:#EEF3FA}
 .dday-badge.d30{background:var(--accent);color:#fff}
 .dday-rep{flex:1;min-width:0}
 .dday-info{flex-shrink:0;font-size:11px;text-align:right}
+
+/* ═══════ ⑩ 호텔 블록 ═══════ */
+.blk-subtabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.blk-subtab{padding:9px 18px;border:1.5px solid var(--border2);border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;color:var(--text2);background:var(--surface);transition:all .15s}
+.blk-subtab:hover{border-color:var(--accent);color:var(--accent2)}
+.blk-subtab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.blk-view{display:none}
+.blk-view.active{display:block}
+.paste-area{width:100%;min-height:90px;border:1.5px dashed var(--border2);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:11px;background:var(--surface2);color:var(--text);resize:vertical;line-height:1.5}
+.paste-area:focus{outline:none;border-color:var(--accent);background:var(--accent-dim);border-style:solid}
+.paste-area.filled{border-style:solid;border-color:var(--green);background:var(--green-dim)}
+.blk-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.blk-toolbar label{font-size:12px;font-weight:600;color:var(--text2)}
+.blk-month-input{padding:7px 11px;border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:var(--sans);background:var(--surface);color:var(--text)}
+.blk-month-input:focus{outline:none;border-color:var(--accent)}
+.blk-chips{display:flex;gap:6px;flex-wrap:wrap}
+.blk-chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .12s;white-space:nowrap}
+.blk-chip:hover{border-color:var(--accent)}
+.blk-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.blk-view-toggle{display:inline-flex;border:1.5px solid var(--border2);border-radius:8px;overflow:hidden}
+.blk-view-toggle button{padding:6px 14px;font-size:11px;font-weight:600;border:none;background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--sans)}
+.blk-view-toggle button.on{background:var(--accent);color:#fff}
+/* 블록 매트릭스 */
+.blk-mtx{border-collapse:collapse;font-size:11px;width:auto}
+.blk-mtx th,.blk-mtx td{border:1px solid var(--border);padding:4px 6px;text-align:center;white-space:nowrap}
+.blk-mtx thead th{background:var(--surface3);color:var(--text2);font-weight:600;position:sticky;top:0;font-size:11px}
+.blk-mtx th.wk{color:var(--red)}
+.blk-mtx .rowhd{background:var(--surface2);text-align:left;font-weight:700;color:var(--navy);position:sticky;left:0;z-index:1;padding-left:10px}
+.blk-mtx .rt-sub{font-weight:500;color:var(--text3);font-size:10px}
+.blk-mtx .grp-row td{background:var(--surface4)!important;font-weight:700;color:var(--text2)}
+.blk-mtx td.b-g{background:var(--green-dim);color:var(--green2);font-weight:700}
+.blk-mtx td.b-a{background:var(--amber-dim);color:var(--amber2);font-weight:700}
+.blk-mtx td.b-r{background:var(--red-dim);color:var(--red2);font-weight:700}
+.blk-mtx td.b-use{color:var(--text2)}
+.blk-mtx td.b-zero{color:var(--text3);opacity:.4}
+.blk-mtx td.clickable{cursor:pointer}
+.blk-mtx td.clickable:hover{box-shadow:inset 0 0 0 2px var(--accent)}
+.blk-mtx .total-col{background:var(--surface3);font-weight:700;color:var(--navy)}
+.blk-mtx .total-row td{background:var(--surface4)!important;font-weight:700;color:var(--navy);border-top:2px solid var(--border2)}
+/* 그룹 매핑 / 마스터 편집 */
+.blk-cfg-card{border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;background:var(--surface)}
+.blk-cfg-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.blk-cfg-row{display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap}
+.blk-cfg-row label{font-size:12px;color:var(--text2);min-width:140px}
+.blk-cfg-input{padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--mono);text-align:right;background:var(--surface2);color:var(--text);width:70px}
+.blk-cfg-input.text{text-align:left;font-family:var(--sans);width:auto;flex:1;min-width:160px}
+.blk-cfg-input:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
+.blk-tag-type{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.blk-tag-block{background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent)}
+.blk-tag-assign{background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber)}
+.blk-tag-cart{background:var(--purple-dim);color:var(--purple2);border:1px solid var(--purple2)}
+.blk-tag-unmapped{background:var(--red-dim);color:var(--red2);border:1px solid var(--red)}
+.blk-member-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:16px;background:var(--surface3);border:1px solid var(--border2);margin:2px}
+.blk-member-chip button{border:none;background:none;color:var(--red);cursor:pointer;font-size:13px;line-height:1;padding:0}
+/* 시뮬레이션 막대 */
+.blk-sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.blk-sim-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--surface)}
+.blk-sim-card h4{font-size:13px;color:var(--navy);margin-bottom:4px}
+.blk-sim-card .sim-sub{font-size:11px;color:var(--text3);margin-bottom:10px}
+.blk-bar-row{margin-bottom:10px}
+.blk-bar-label{font-size:11px;color:var(--text2);margin-bottom:3px;display:flex;justify-content:space-between}
+.blk-bar-track{height:18px;background:var(--surface3);border-radius:5px;overflow:hidden;position:relative}
+.blk-bar-fill{height:100%;border-radius:5px;transition:width .3s}
+.blk-bar-fill.use{background:var(--accent)}
+.blk-bar-fill.over{background:var(--red)}
+.blk-bar-marker{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--red);z-index:2}
+.blk-over-input{width:60px;padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);text-align:right;background:var(--surface2)}
+.blk-over-input:focus{outline:none;border-color:var(--accent)}
+/* 공지 모달 */
+.notice-canvas-wrap{background:#e9edf2;padding:18px;border-radius:10px;overflow:auto;max-height:60vh}
+.notice{width:720px;margin:0 auto;background:#fff;font-family:var(--sans);color:var(--text)}
+.notice-hd{background:var(--navy);color:#fff;padding:24px 30px}
+.notice-hd .ntag{display:inline-block;font-size:11px;letter-spacing:2px;color:#9ec9ef;border:1px solid rgba(158,201,239,.4);padding:3px 10px;border-radius:4px;margin-bottom:10px}
+.notice-hd h2{margin:0;font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700}
+.notice-hd .nperiod{margin-top:7px;font-size:13px;color:rgba(255,255,255,.85)}
+.notice-bd{padding:20px 30px}
+.ntbl{width:100%;border-collapse:collapse;font-size:12px}
+.ntbl th,.ntbl td{border:1px solid #e3e8ee;text-align:center;padding:6px 4px}
+.ntbl thead th{background:#f1f4f8;color:var(--navy);font-weight:700;font-size:11px}
+.ntbl thead th.wk{color:var(--red)}
+.ntbl .nrowhd{background:#fafbfc;text-align:left;padding-left:10px;font-weight:700;color:var(--navy);white-space:nowrap;font-size:11px}
+.nst-ok{color:var(--green2);font-weight:800}
+.nst-soon{color:var(--amber2);font-weight:800}
+.nst-x{color:#cfd6de;font-weight:700}
+.notice-ft{padding:14px 30px;background:#f7f9fb;border-top:1px solid #e3e8ee;font-size:11px;color:var(--text2)}
+.notice-ft b{color:var(--navy)}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">
+  <a class="logo" href="../../sales/" title="영업 도구 홈으로" style="text-decoration:none;cursor:pointer">
     <svg class="logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31" height="26" aria-label="MERITTOUR"><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48"/><rect x="277.51" y="9.89" width="9.7" height="48.33"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z"/></g></svg>
     <div class="logo-divider"></div>
-    <div class="logo-sub">통합 안내 관리 시스템</div>
-  </div>
+    <div class="logo-sub">통합 업무 허브 <span style="font-size:10px;color:var(--text3);font-weight:400">· 엠클릭 보조</span></div>
+  </a>
   <div class="header-right">
+    <a class="ghost-btn" href="../../sales/" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px">⌂ 홈</a>
     <span class="badge" id="session-badge">세션 대기중</span>
     <button class="ghost-btn" onclick="resetAll()">초기화</button>
   </div>
@@ -233,6 +322,7 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑦ 골프 정보</div>
   <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑧ 식사 정보</div>
   <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ⑨ 요금 검증</div>
+  <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ⑩ 호텔 블록</div>
 </div>
 
 <div class="wrap">
@@ -425,6 +515,155 @@ tr:hover td{background:#EEF3FA}
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.
     </div>
     <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════════ ⑩ 호텔 블록 ════════ -->
+<div class="section" id="sec-block">
+  <div class="blk-subtabs">
+    <div class="blk-subtab active" id="blksub-status" onclick="blkSwitch('status')">📊 블록 현황</div>
+    <div class="blk-subtab" id="blksub-depart" onclick="blkSwitch('depart')">🛫 출발 일정 조회</div>
+    <div class="blk-subtab" id="blksub-wait" onclick="blkSwitch('wait')">⏳ 대기 전환 점검</div>
+    <div class="blk-subtab" id="blksub-sim" onclick="blkSwitch('sim')">📈 판매 시뮬레이션</div>
+    <div class="blk-subtab" id="blksub-cart" onclick="blkSwitch('cart')">🛺 전기카트</div>
+    <div class="blk-subtab" id="blksub-config" onclick="blkSwitch('config')">⚙️ 보유·풀 설정</div>
+  </div>
+
+  <!-- 블록 현황 -->
+  <div class="blk-view active" id="blkv-status">
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">엠클릭 호텔별 예약현황 붙여넣기</div><div class="card-sub">엠클릭 「호텔별 예약현황」 표를 드래그 → 복사(Ctrl+C) → 아래 칸에 붙여넣기(Ctrl+V). 파일 업로드·저장 없이 즉석 분석합니다.</div></div>
+      </div>
+      <div class="blk-toolbar">
+        <label>출발년월</label>
+        <input type="month" class="blk-month-input" id="blk-month" value="2026-05" onchange="blkRender()">
+        <button class="btn-sm" onclick="blkClear()" style="color:var(--red);border-color:var(--red)">붙여넣기 지우기</button>
+        <span class="muted" id="blk-paste-meta" style="font-size:11px"></span>
+      </div>
+      <textarea class="paste-area" id="blk-paste" placeholder="여기에 엠클릭 호텔별 예약현황 표를 붙여넣으세요 (Ctrl+V)&#10;&#10;호텔명 ⇥ 룸타입 ⇥ 1(금) ⇥ 2(토) ⇥ … ⇥ 합계&#10;간지호텔 ⇥ 트윈 ⇥ 15 ⇥ 15 ⇥ …"></textarea>
+    </div>
+    <div class="card" id="blk-status-result" style="display:none">
+      <div class="card-head">
+        <div><div class="card-title">일별 블록 현황 (보유 − 사용 = 잔여)</div><div class="card-sub" id="blk-status-sub"></div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="blk-view-toggle">
+            <button id="blkmode-integrated" class="on" onclick="blkSetMode('integrated')">통합 보기</button>
+            <button id="blkmode-real" onclick="blkSetMode('real')">실물 보기</button>
+          </div>
+          <button class="btn-sm" onclick="openNotice()" style="border-color:var(--accent);color:var(--accent)">📤 예약가능일자 공지 PNG</button>
+        </div>
+      </div>
+      <div class="sum-grid" id="blk-summary"></div>
+      <div class="blk-toolbar" style="margin-top:.5rem">
+        <label>호텔 필터</label><div class="blk-chips" id="blk-hotel-chips"></div>
+      </div>
+      <div style="display:flex;gap:18px;font-size:11px;color:var(--text2);margin-bottom:8px;flex-wrap:wrap">
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--green-dim);border:1px solid var(--green);vertical-align:middle"></span> 여유(잔여 4+)</span>
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--amber-dim);border:1px solid var(--amber);vertical-align:middle"></span> 임박(1~3)</span>
+        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--red-dim);border:1px solid var(--red);vertical-align:middle"></span> 마감/초과(0이하)</span>
+        <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
+      </div>
+      <div class="tbl-wrap" style="max-height:600px"><table class="blk-mtx" id="blk-mtx"></table></div>
+    </div>
+    <div class="card" id="blk-unmapped-card" style="display:none">
+      <div class="note" style="border-left-color:var(--red)">
+        <b>미분류 호텔 발견</b> · 아래 호텔은 보유 마스터·그룹·별칭 어디에도 등록돼 있지 않습니다. <b>⚙️ 보유·그룹 설정</b> 탭에서 등록하면 잔여가 계산됩니다.
+        <div id="blk-unmapped-list" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 출발 일정 조회 -->
+  <div class="blk-view" id="blkv-depart">
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">🛫 출발 가능 일정 조회</div><div class="card-sub">풀별 출발 패턴(목3박 등)으로 연박 구간 최소 잔여를 계산합니다. 연박 중 하루라도 마감이면 그 출발편은 막힘.</div></div></div>
+      <div class="blk-toolbar">
+        <label>최소 잔여 기준</label>
+        <select class="blk-month-input" id="blk-dep-min" onchange="blkRenderDepart()">
+          <option value="1">1실 이상 (마감만 제외)</option>
+          <option value="2">2실 이상</option>
+          <option value="3" selected>3실 이상 (권장)</option>
+          <option value="5">5실 이상</option>
+          <option value="10">10실 이상</option>
+        </select>
+        <label>풀 선택</label>
+        <div class="blk-chips" id="blk-dep-pool-chips"></div>
+      </div>
+      <div id="blk-depart-result"></div>
+    </div>
+  </div>
+
+  <!-- 대기 전환 점검 -->
+  <div class="blk-view" id="blkv-wait">
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">⏳ 대기 예약 → 전환 가능 점검</div><div class="card-sub">②예약 관리에서 통합 분석을 실행하면, 구분=대기 팀을 자동으로 뽑아 풀 잔여와 대조합니다. 별도 업로드 불필요.</div></div></div>
+      <div id="blk-wait-result"></div>
+      <div class="note" style="margin-top:1rem">
+        <b>판정 기준</b> · 팀의 숙소·출발일 기준 풀 잔여 ≥ 예약 인원이면 <b>전환 가능</b>. 풀 데이터(붙여넣기)가 없으면 "확인 필요". 실제 대기→확정 처리는 엠클릭에서 직접 하세요.
+      </div>
+    </div>
+  </div>
+
+  <!-- 판매 시뮬레이션 -->
+  <div class="blk-view" id="blkv-sim">
+    <div class="card">
+      <div class="note">
+        <b>판매 가능 수량 시뮬레이션</b> · 웹 오픈 수량은 기본적으로 실 보유 블록 전체입니다. 백오피스(전화·카톡) 예약으로 사용이 늘면 웹잔여(=보유−사용)가 자동으로 줄어듭니다. 특정 날짜만 보유 초과로 더 팔 때(오버부킹) 그 칸의 수량을 보유보다 크게 올리세요. 상단 막대 = 사용/보유, 빨강 마커 = 보유 100% 지점.
+      </div>
+      <div class="blk-toolbar">
+        <label>날짜</label>
+        <select class="blk-month-input" id="blk-sim-day" onchange="blkRenderSim()"></select>
+        <label>호텔</label>
+        <select class="blk-month-input" id="blk-sim-hotel" onchange="blkRenderSim()"><option value="">전체</option></select>
+      </div>
+      <div class="blk-sim-grid" id="blk-sim-grid"></div>
+    </div>
+  </div>
+
+  <!-- 전기카트 -->
+  <div class="blk-view" id="blkv-cart">
+    <div class="card">
+      <div class="note">
+        <b>야마나미 전기카트</b> · 객실이 아닌 이동수단(사전 신청 분량) 관리입니다. 엠클릭 표에 함께 입력된 전기카트 행을 분리해 보여줍니다. 숙소 합계에는 포함되지 않습니다.
+        <br><span class="muted">메모: 서울 출발=출국 당일 라운딩 가능(박수만큼 배정), 부산 출발=귀국 라운딩분(출국 다음날부터 체크). 향후 출발지·일정 연동 자동 계산 검토.</span>
+      </div>
+      <div class="sum-grid" id="blk-cart-summary"></div>
+      <div class="tbl-wrap"><table class="blk-mtx" id="blk-cart-mtx"></table></div>
+    </div>
+  </div>
+
+  <!-- 보유·풀 설정 -->
+  <div class="blk-view" id="blkv-config">
+    <div class="blk-cfg-card">
+      <div class="blk-cfg-title">🏨 검색 풀 설정 <span class="card-sub" style="font-weight:400">— 호텔·룸을 묶는 검색 단위. 정원 = 묶인 호텔 보유 합산(자동). 출발일정(목3박 등)으로 연박 잔여를 계산.</span></div>
+      <div id="blk-pools"></div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <input class="blk-cfg-input text" id="blk-newpool" placeholder="새 풀 이름">
+        <button class="btn-sm" onclick="blkAddPool()">+ 풀 추가</button>
+      </div>
+    </div>
+    <div class="blk-cfg-card">
+      <div class="blk-cfg-title">🔗 별칭 <span class="card-sub" style="font-weight:400">— 같은 호텔의 다른 표기(예: 14hills = 포틴힐즈CC 골프텔)</span></div>
+      <div id="blk-aliases"></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <input class="blk-cfg-input text" id="blk-alias-from" placeholder="표기 (예: 14hills)">
+        <span style="align-self:center">→</span>
+        <input class="blk-cfg-input text" id="blk-alias-to" placeholder="실제 호텔명 (예: 포틴힐즈CC 골프텔)">
+        <button class="btn-sm" onclick="blkAddAlias()">+ 별칭 추가</button>
+      </div>
+    </div>
+    <div class="blk-cfg-card">
+      <div class="blk-cfg-title">📦 보유 블록 마스터 <span class="card-sub" style="font-weight:400">— 호텔×룸타입별 1일 보유 수. 풀 정원은 여기서 자동 합산됩니다.</span></div>
+      <div id="blk-master"></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <input class="blk-cfg-input text" id="blk-nm-hotel" placeholder="호텔명" style="min-width:140px">
+        <input class="blk-cfg-input text" id="blk-nm-room" placeholder="룸타입" style="min-width:80px">
+        <input class="blk-cfg-input" id="blk-nm-block" placeholder="보유" type="text" inputmode="numeric">
+        <button class="btn-sm" onclick="blkAddMaster()">+ 추가</button>
+        <button class="btn-sm" onclick="blkResetConfig()" style="color:var(--red);border-color:var(--red);margin-left:auto">설정 기본값 복원</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1830,6 +2069,776 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySele
 /* 페이지 로드 시 리조트 마스터 초기화 */
 loadResortMaster();
 renderResortMaster();
+
+/* ════════════════════════════════════════════════════════════
+   ⑩ 호텔 블록 — 엠클릭 붙여넣기 기반 즉석 분석
+════════════════════════════════════════════════════════════ */
+const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'mt_notify_blkAlias',over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth'};
+
+/* 기본 보유 마스터 (블록 대시보드 실데이터에서 추출) — 호텔|룸타입 → 보유 */
+const BLK_MASTER_DEFAULT={
+  '아소 야마나미 골프텔|트윈':55,'아소 야마나미 골프텔|소형트윈':50,
+  '아소 야마나미 관내별장|트윈':15,'아소 야마나미 돔하우스|트윈':4,
+  '야마나미 쿠주힐즈|트윈':10,
+  '포틴힐즈CC 골프텔|트윈':13,'포틴힐즈CC 골프텔|패밀리룸':19,'포틴힐즈CC 카라반|트윈':6,
+  '간지호텔|트윈':15,'시즈노야도 료칸|트윈':7,
+  '시로사토CC 골프텔|트윈':20,'후쿠로다노타키CC 골프텔|트윈':20,
+  '아키바 리조트|트윈':15,'무츠키 료칸|트윈':4,
+  '스가다이라 고원 온천호텔|트윈':35,'국제공항CC 골프텔|트윈':10,
+  '미야자키 시내 호텔|트윈':10,'닐라이스프링스리조트호텔|트윈':50
+};
+/* 검색 풀 — 키워드/호텔명/룸필터로 매칭. 정원=보유합산. depart=출발패턴. exclude=객실안내 제외(카트 등) */
+const BLK_POOLS_DEFAULT=[
+  {name:'아소 야마나미 (통합)',keyword:'아소',hotels:[],rooms:[],depart:'목3박, 일4박, 수7박',airport:'인천 / 김해',exclude:false},
+  {name:'야마나미 쿠주힐즈',keyword:'',hotels:['야마나미 쿠주힐즈'],rooms:[],depart:'수7박',airport:'인천 / 김해',exclude:false},
+  {name:'(제외) 야마나미 전기카트',keyword:'',hotels:['야마나미 전기카트'],rooms:[],depart:'자유',airport:'',exclude:true},
+  {name:'시즈노야도 료칸',keyword:'',hotels:['시즈노야도 료칸'],rooms:[],depart:'목3박, 일4박, 목7박, 일7박',airport:'인천 / 김해',exclude:false},
+  {name:'간지호텔 2색 골프투어',keyword:'',hotels:['간지호텔'],rooms:[],depart:'목3박, 일4박, 수7박',airport:'인천 / 김해',exclude:false},
+  {name:'구마모토 시내 호텔',keyword:'',hotels:['구마모토 시내 호텔','소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'],rooms:[],depart:'자유',airport:'인천 / 김해',exclude:false},
+  {name:'포틴힐즈 (트윈)',keyword:'',hotels:['14hills','포틴힐즈CC 골프텔'],rooms:['트윈'],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
+  {name:'포틴힐즈 (패밀리룸 4인실)',keyword:'',hotels:['14hills','포틴힐즈CC 골프텔'],rooms:['패밀리룸'],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
+  {name:'포틴힐즈 카라반',keyword:'',hotels:['포틴힐즈CC 카라반'],rooms:[],depart:'목3박, 일4박, 화7박',airport:'김해',exclude:false},
+  {name:'아키바 리조트 2색',keyword:'',hotels:['아키바 리조트'],rooms:[],depart:'금3박, 월4박',airport:'인천 / 대구 / 김해',exclude:false},
+  {name:'무츠키 료칸',keyword:'',hotels:['무츠키 료칸'],rooms:[],depart:'금3박, 월4박',airport:'인천',exclude:false},
+  {name:'시로사토CC',keyword:'',hotels:['시로사토CC 골프텔'],rooms:[],depart:'일6박',airport:'인천',exclude:false},
+  {name:'후쿠로다노타키CC',keyword:'',hotels:['후쿠로다노타키CC 골프텔'],rooms:[],depart:'월7박',airport:'인천',exclude:false},
+  {name:'미야자키 국제공항CC',keyword:'',hotels:['국제공항CC 골프텔'],rooms:[],depart:'일5박',airport:'인천',exclude:false},
+  {name:'미야자키 시내 호텔 (메인)',keyword:'',hotels:['미야자키 시내 호텔'],rooms:[],depart:'일5박',airport:'인천',exclude:false},
+  {name:'스가다이라 그린CC (온천호텔)',keyword:'',hotels:['스가다이라 고원 온천호텔'],rooms:[],depart:'목5박, 화7박, 목7박, 화14박, 목14박',airport:'인천 (니가타)',exclude:false},
+  {name:'스가다이라 그린CC (맨션형)',keyword:'',hotels:['스가다이라 맨션형 숙소'],rooms:['트윈'],depart:'목5박, 화7박, 목7박, 화14박, 목14박',airport:'인천 (니가타)',exclude:false},
+  {name:'닐라이스프링스 (자유 박수)',keyword:'',hotels:['닐라이스프링스리조트호텔'],rooms:[],depart:'자유',airport:'인천',exclude:false}
+];
+/* 별칭: 표기 → 실제 호텔명 */
+const BLK_ALIAS_DEFAULT={'14hills':'포틴힐즈CC 골프텔'};
+/* 임의배정형 풀(보유 없이 사용수만): 구마모토 시내 */
+const BLK_ASSIGN_POOLS=['구마모토 시내 호텔'];
+/* 카트(숙소 아님) — exclude=true 풀로도 처리되지만 별도 섹션용 */
+const BLK_CART=['야마나미 전기카트'];
+const BLK_WDMAP={'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
+
+let blkMaster={}, blkPools=[], blkAlias={}, blkOver={};
+let blkParsed=null;        // {rows, days, month}
+let blkMode='integrated';  // integrated | real
+let blkHotelFilter=new Set();
+let blkDepPoolSel=new Set(); // 출발조회 선택 풀
+
+function blkLoad(){
+  try{ blkMaster={...BLK_MASTER_DEFAULT,...(JSON.parse(localStorage.getItem(BLK_STORE.master)||'{}'))}; }catch(e){ blkMaster={...BLK_MASTER_DEFAULT}; }
+  try{ blkPools=JSON.parse(localStorage.getItem(BLK_STORE.pools)||'null')||JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); }catch(e){ blkPools=JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); }
+  try{ blkAlias={...BLK_ALIAS_DEFAULT,...(JSON.parse(localStorage.getItem(BLK_STORE.alias)||'{}'))}; }catch(e){ blkAlias={...BLK_ALIAS_DEFAULT}; }
+  try{ blkOver=JSON.parse(localStorage.getItem(BLK_STORE.over)||'{}'); }catch(e){ blkOver={}; }
+}
+function blkSave(){
+  try{
+    localStorage.setItem(BLK_STORE.master,JSON.stringify(blkMaster));
+    localStorage.setItem(BLK_STORE.pools,JSON.stringify(blkPools));
+    localStorage.setItem(BLK_STORE.alias,JSON.stringify(blkAlias));
+    localStorage.setItem(BLK_STORE.over,JSON.stringify(blkOver));
+  }catch(e){}
+}
+
+/* 풀 매칭 */
+function blkPoolMatch(pool,hotel,room){
+  let hm = pool.keyword ? hotel.includes(pool.keyword) : (pool.hotels||[]).includes(hotel);
+  if(!hm) return false;
+  if(pool.rooms&&pool.rooms.length && !pool.rooms.includes(room)) return false;
+  return true;
+}
+/* 풀 정원 = 매칭되는 마스터 보유 합산 */
+function blkPoolCap(pool){
+  let sum=0,has=false;
+  Object.keys(blkMaster).forEach(k=>{const [h,rm]=k.split('|'); if(blkPoolMatch(pool,h,rm)){sum+=blkMaster[k];has=true;}});
+  return has?sum:null;
+}
+/* 풀 일자별 사용 합산 (붙여넣기 rows 기준) */
+function blkPoolUsedByDay(pool){
+  const u={};
+  if(!blkParsed) return u;
+  blkParsed.rows.forEach(r=>{ if(blkPoolMatch(pool,r.hotel,r.room)){ u[r.day]=(u[r.day]||0)+r.used; } });
+  return u;
+}
+/* 출발패턴 파싱 */
+function blkParseDepart(s){
+  if(!s||!s.trim()) return [];
+  if(s.trim()==='자유') return [{free:true,label:'자유'}];
+  return s.split(',').map(x=>x.trim()).filter(Boolean).map(tok=>{
+    const m=tok.match(/^([일월화수목금토])(\d+)박$/);
+    return m?{dow:BLK_WDMAP[m[1]],nights:parseInt(m[2]),label:tok}:null;
+  }).filter(Boolean);
+}
+function blkIsAssignPool(pool){ return BLK_ASSIGN_POOLS.includes(pool.name); }
+
+/* 호텔 유형 (매트릭스용) */
+function blkTypeOf(hotel){
+  if(BLK_CART.includes(hotel)) return 'cart';
+  // 임의배정 풀에 매칭되면 assign
+  for(const p of blkPools){ if(blkIsAssignPool(p) && blkPoolMatch(p,hotel,'')) return 'assign'; if(blkIsAssignPool(p) && (p.hotels||[]).includes(hotel)) return 'assign'; }
+  return 'block';
+}
+function blkGroupOf(hotel){
+  for(const p of blkPools){ if(blkIsAssignPool(p) && (p.hotels||[]).includes(hotel)) return p.name; }
+  return null;
+}
+function blkBlockOf(hotel,room){
+  const v=blkMaster[hotel+'|'+room];
+  return (v!=null)?v:null;
+}
+
+/* ── 붙여넣기 파서 ── */
+function blkParse(text){
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
+  if(lines.length<2) return null;
+  const header=lines[0].split('\t');
+  const dayIdx=[];
+  header.forEach((h,i)=>{ const m=h.match(/^(\d{1,2})\(/); if(m) dayIdx.push({col:i,day:m[1].padStart(2,'0')}); });
+  if(!dayIdx.length) return null;
+  const ncol=header.length;
+  const rows=[]; let curHotel='';
+  for(let li=1;li<lines.length;li++){
+    const c=lines[li].split('\t');
+    const first=(c[0]||'').trim();
+    if(first==='합계'||first==='소계') continue;
+    const indented=(c.length===ncol-1);
+    let hotel, room, offset;
+    if(indented){ hotel=curHotel; room=first; offset=-1; }
+    else { hotel=first; room=(c[1]||'').trim(); offset=0; if(hotel) curHotel=hotel; }
+    if(!hotel||!room) continue;
+    const H=blkAlias[hotel]||hotel;
+    dayIdx.forEach(di=>{
+      const raw=(c[di.col+offset]||'').trim();
+      const v=parseInt(raw);
+      if(!isNaN(v)&&v>0) rows.push({hotel:H,room,day:di.day,used:v});
+    });
+  }
+  return rows;
+}
+
+const BLK_WEEKDAY=['일','월','화','수','목','금','토'];
+function blkDays(month, rows){
+  const [y,m]=month.split('-').map(Number);
+  const last=new Date(y,m,0).getDate();
+  const days=[];
+  for(let d=1;d<=last;d++){
+    const dt=new Date(y,m-1,d);
+    const dow=dt.getDay();
+    days.push({day:String(d).padStart(2,'0'), dow:BLK_WEEKDAY[dow], wk:(dow===0||dow===6)});
+  }
+  return days;
+}
+
+/* 붙여넣기 이벤트 */
+document.getElementById('blk-paste').addEventListener('input',function(){
+  const t=this.value.trim();
+  if(t){ this.classList.add('filled'); } else { this.classList.remove('filled'); }
+  try{ localStorage.setItem(BLK_STORE.paste,this.value); localStorage.setItem(BLK_STORE.month,document.getElementById('blk-month').value); }catch(e){}
+  blkRender();
+});
+function blkClear(){
+  document.getElementById('blk-paste').value='';
+  document.getElementById('blk-paste').classList.remove('filled');
+  try{ localStorage.removeItem(BLK_STORE.paste); }catch(e){}
+  blkParsed=null;
+  document.getElementById('blk-status-result').style.display='none';
+  document.getElementById('blk-unmapped-card').style.display='none';
+  document.getElementById('blk-paste-meta').textContent='';
+}
+
+function blkRender(){
+  const text=document.getElementById('blk-paste').value;
+  const month=document.getElementById('blk-month').value||'2026-05';
+  const rows=blkParse(text);
+  if(!rows||!rows.length){
+    blkParsed=null;
+    document.getElementById('blk-status-result').style.display='none';
+    document.getElementById('blk-unmapped-card').style.display='none';
+    document.getElementById('blk-paste-meta').textContent='';
+    return;
+  }
+  blkParsed={rows, days:blkDays(month,rows), month};
+  const hotels=[...new Set(rows.map(r=>r.hotel))];
+  document.getElementById('blk-paste-meta').textContent=`✓ ${hotels.length}개 호텔 · ${rows.length}개 셀 인식`;
+  document.getElementById('blk-status-result').style.display='block';
+  blkRenderHotelChips();
+  blkRenderStatus();
+  blkRenderCart();
+  blkFillSimSelectors();
+  blkRenderSim();
+  blkRenderDepartChips();
+  blkRenderDepart();
+  blkRenderWait();
+  blkCheckUnmapped();
+}
+
+/* 미분류 호텔 경고 */
+function blkCheckUnmapped(){
+  if(!blkParsed) return;
+  const seen={};
+  blkParsed.rows.forEach(r=>{
+    if(blkTypeOf(r.hotel)==='block' && blkBlockOf(r.hotel,r.room)==null){
+      seen[r.hotel+'|'+r.room]=true;
+    }
+  });
+  const list=Object.keys(seen);
+  const card=document.getElementById('blk-unmapped-card');
+  if(list.length){
+    card.style.display='block';
+    document.getElementById('blk-unmapped-list').innerHTML=list.map(k=>`<span class="blk-tag-type blk-tag-unmapped">${k.replace('|',' · ')}</span>`).join(' ');
+  } else card.style.display='none';
+}
+
+/* 호텔 필터 칩 */
+function blkRenderHotelChips(){
+  if(!blkParsed) return;
+  // 표시 단위: 통합이면 그룹명, 실물이면 실호텔
+  const units=blkDisplayUnits();
+  const box=document.getElementById('blk-hotel-chips');
+  box.innerHTML=`<span class="blk-chip ${blkHotelFilter.size===0?'on':''}" onclick="blkTogHotel(null)">전체</span>`+
+    units.map(u=>`<span class="blk-chip ${blkHotelFilter.has(u)?'on':''}" onclick="blkTogHotel('${u.replace(/'/g,"\\'")}')">${u}</span>`).join('');
+}
+function blkTogHotel(u){
+  if(u===null) blkHotelFilter.clear();
+  else { if(blkHotelFilter.has(u)) blkHotelFilter.delete(u); else blkHotelFilter.add(u); }
+  blkRenderHotelChips(); blkRenderStatus();
+}
+
+/* 표시 단위 목록 (통합/실물) — 카트 제외 */
+function blkDisplayUnits(){
+  if(!blkParsed) return [];
+  const set=new Set();
+  blkParsed.rows.forEach(r=>{
+    if(blkTypeOf(r.hotel)==='cart') return;
+    if(blkMode==='integrated'){ const g=blkGroupOf(r.hotel); set.add(g||r.hotel); }
+    else set.add(r.hotel);
+  });
+  return [...set];
+}
+
+function blkSetMode(m){
+  blkMode=m;
+  document.getElementById('blkmode-integrated').classList.toggle('on',m==='integrated');
+  document.getElementById('blkmode-real').classList.toggle('on',m==='real');
+  blkHotelFilter.clear();
+  blkRenderHotelChips(); blkRenderStatus();
+}
+
+/* 사용수 집계: 표시단위|룸타입|day → used */
+function blkUsageMap(){
+  const map={}; // unit -> room -> day -> used
+  blkParsed.rows.forEach(r=>{
+    if(blkTypeOf(r.hotel)==='cart') return;
+    let unit;
+    if(blkMode==='integrated'){ const g=blkGroupOf(r.hotel); unit=g||r.hotel; }
+    else unit=r.hotel;
+    map[unit]=map[unit]||{};
+    map[unit][r.room]=map[unit][r.room]||{};
+    map[unit][r.room][r.day]=(map[unit][r.room][r.day]||0)+r.used;
+  });
+  return map;
+}
+/* 보유 조회 (통합이면 그룹 멤버 합산, 실물이면 직접) */
+function blkBlockForUnit(unit,room){
+  const assignPool=blkPools.find(p=>blkIsAssignPool(p)&&p.name===unit);
+  if(blkMode==='integrated' && assignPool){
+    let sum=0,has=false;
+    (assignPool.hotels||[]).forEach(h=>{ const v=blkBlockOf(h,room); if(v!=null){sum+=v;has=true;} });
+    return has?sum:null;
+  }
+  return blkBlockOf(unit,room);
+}
+function blkIsAssignUnit(unit){
+  if(blkMode==='integrated' && blkPools.find(p=>blkIsAssignPool(p)&&p.name===unit)) return true;
+  return blkTypeOf(unit)==='assign';
+}
+
+function blkClsRemain(r){ if(r<=0) return 'b-r'; if(r<=3) return 'b-a'; return 'b-g'; }
+
+function blkRenderStatus(){
+  if(!blkParsed) return;
+  const {days,month}=blkParsed;
+  const usage=blkUsageMap();
+  let units=blkDisplayUnits();
+  if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
+  // 정렬: 블록형 먼저, 임의배정형 뒤
+  units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
+
+  document.getElementById('blk-status-sub').textContent=`${month} · ${blkMode==='integrated'?'통합 보기(그룹 합산)':'실물 보기'} · 잔여 = 보유 − 사용`;
+
+  // 요약 박스: 블록형 기준 마감/임박 날·칸 수
+  let cellMaegam=0, cellImbak=0, cellOk=0, assignCells=0;
+  units.forEach(u=>{
+    const rooms=usage[u]||{};
+    Object.keys(rooms).forEach(rm=>{
+      days.forEach(d=>{
+        const used=rooms[rm][d.day]||0;
+        if(used===0) return;
+        if(blkIsAssignUnit(u)){ assignCells++; return; }
+        const blk=blkBlockForUnit(u,rm);
+        if(blk==null) return;
+        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const rem=(blk+over)-used;
+        if(rem<=0) cellMaegam++; else if(rem<=3) cellImbak++; else cellOk++;
+      });
+    });
+  });
+  document.getElementById('blk-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">표시 단위</div><div class="sum-val">${units.length}</div></div>
+    <div class="sum-box"><div class="sum-label">여유 (잔여 4+)</div><div class="sum-val green">${cellOk}</div></div>
+    <div class="sum-box"><div class="sum-label">임박 (1~3)</div><div class="sum-val" style="color:var(--amber2)">${cellImbak}</div></div>
+    <div class="sum-box"><div class="sum-label">마감/초과</div><div class="sum-val ${cellMaegam>0?'red':''}">${cellMaegam}</div></div>`;
+
+  // 매트릭스
+  let head='<thead><tr><th class="rowhd">호텔 · 룸타입</th>';
+  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
+  head+='<th class="total-col">사용계</th></tr></thead>';
+  let body='<tbody>';
+  units.forEach(u=>{
+    const rooms=usage[u]||{};
+    const assign=blkIsAssignUnit(u);
+    Object.keys(rooms).sort().forEach((rm,ri)=>{
+      const blk=assign?null:blkBlockForUnit(u,rm);
+      const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block">보유 ${blk}</span>`);
+      let rowTot=0;
+      body+=`<tr><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}</td>`;
+      days.forEach(d=>{
+        const used=rooms[rm][d.day]||0;
+        rowTot+=used;
+        if(used===0){ body+=`<td class="b-zero">·</td>`; return; }
+        if(assign||blk==null){ body+=`<td class="b-use">${used}</td>`; return; }
+        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const rem=(blk+over)-used;
+        body+=`<td class="${blkClsRemain(rem)}" title="보유 ${blk}${over?'+'+over:''} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+      });
+      body+=`<td class="total-col">${rowTot}</td></tr>`;
+    });
+  });
+  body+='</tbody>';
+  document.getElementById('blk-mtx').innerHTML=head+body;
+}
+
+/* ── 전기카트 ── */
+function blkRenderCart(){
+  if(!blkParsed) return;
+  const {days}=blkParsed;
+  const cartRows=blkParsed.rows.filter(r=>blkTypeOf(r.hotel)==='cart');
+  if(!cartRows.length){
+    document.getElementById('blk-cart-summary').innerHTML='<div class="sum-box"><div class="sum-label">전기카트</div><div class="sum-val muted">데이터 없음</div></div>';
+    document.getElementById('blk-cart-mtx').innerHTML='';
+    return;
+  }
+  const map={}; // hotel|room -> day -> used
+  cartRows.forEach(r=>{ const k=r.hotel+'|'+r.room; map[k]=map[k]||{}; map[k][r.day]=(map[k][r.day]||0)+r.used; });
+  let totUse=0; let maegam=0;
+  let head='<thead><tr><th class="rowhd">카트</th>';
+  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
+  head+='<th class="total-col">사용계</th></tr></thead>';
+  let body='<tbody>';
+  Object.keys(map).forEach(k=>{
+    const [h,rm]=k.split('|');
+    const blk=blkBlockOf(h,rm); // 전기카트 보유 (마스터에 없으면 기본 15는 별도)
+    const cap=(blk!=null)?blk:15;
+    let rowTot=0;
+    body+=`<tr><td class="rowhd">${h} <span class="rt-sub">${rm}</span> <span class="blk-tag-type blk-tag-cart">보유 ${cap}</span></td>`;
+    days.forEach(d=>{
+      const used=map[k][d.day]||0; rowTot+=used;
+      if(used===0){ body+=`<td class="b-zero">·</td>`; return; }
+      const rem=cap-used;
+      if(rem<=0) maegam++;
+      body+=`<td class="${blkClsRemain(rem)}" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+    });
+    totUse+=rowTot;
+    body+=`<td class="total-col">${rowTot}</td></tr>`;
+  });
+  body+='</tbody>';
+  document.getElementById('blk-cart-mtx').innerHTML=head+body;
+  document.getElementById('blk-cart-summary').innerHTML=`
+    <div class="sum-box"><div class="sum-label">카트 사용계(월)</div><div class="sum-val">${totUse}</div></div>
+    <div class="sum-box"><div class="sum-label">초과 발생일</div><div class="sum-val ${maegam>0?'red':''}">${maegam}</div></div>`;
+}
+
+/* ── 판매 시뮬레이션 ── */
+function blkFillSimSelectors(){
+  if(!blkParsed) return;
+  const daySel=document.getElementById('blk-sim-day');
+  daySel.innerHTML=blkParsed.days.map(d=>`<option value="${d.day}">${parseInt(d.day)}일(${d.dow})</option>`).join('');
+  const hotelSel=document.getElementById('blk-sim-hotel');
+  const units=blkDisplayUnits().filter(u=>!blkIsAssignUnit(u)); // 블록형만 시뮬레이션
+  hotelSel.innerHTML='<option value="">전체</option>'+units.map(u=>`<option value="${u}">${u}</option>`).join('');
+}
+function blkRenderSim(){
+  if(!blkParsed){ document.getElementById('blk-sim-grid').innerHTML=''; return; }
+  const day=document.getElementById('blk-sim-day').value;
+  const hotelF=document.getElementById('blk-sim-hotel').value;
+  const usage=blkUsageMap();
+  let units=blkDisplayUnits().filter(u=>!blkIsAssignUnit(u));
+  if(hotelF) units=units.filter(u=>u===hotelF);
+  let html='';
+  units.forEach(u=>{
+    const rooms=usage[u]||{};
+    Object.keys(rooms).sort().forEach(rm=>{
+      const blk=blkBlockForUnit(u,rm);
+      if(blk==null) return;
+      const used=rooms[rm][day]||0;
+      const over=blkOver[`${u}|${rm}|${day}`]||0;
+      const cap=blk+over;
+      const rem=cap-used;
+      const pct=Math.min(100,Math.round(used/Math.max(cap,1)*100));
+      const overFlag=used>blk;
+      const blkPct=cap>blk?Math.round(blk/cap*100):100;
+      html+=`<div class="blk-sim-card">
+        <h4>${u} · ${rm}</h4>
+        <div class="sim-sub">${parseInt(day)}일 · 보유 ${blk}${over?` (+오버 ${over})`:''} · 사용 ${used} · 잔여 <b style="color:${rem<=0?'var(--red)':rem<=3?'var(--amber2)':'var(--green2)'}">${rem}</b></div>
+        <div class="blk-bar-row">
+          <div class="blk-bar-label"><span>사용률</span><span>${pct}%${overFlag?' ⚠ 오버부킹':''}</span></div>
+          <div class="blk-bar-track">
+            <div class="blk-bar-fill ${overFlag?'over':'use'}" style="width:${pct}%"></div>
+            ${cap>blk?`<div class="blk-bar-marker" style="left:${blkPct}%"></div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2)">
+          <label>웹오픈 수량</label>
+          <input class="blk-over-input" type="text" inputmode="numeric" value="${cap}" onchange="blkSetOver('${u.replace(/'/g,"\\'")}','${rm.replace(/'/g,"\\'")}','${day}',this.value,${blk})">
+          <span class="muted">(보유 ${blk})</span>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('blk-sim-grid').innerHTML=html||'<div class="placeholder">블록형 호텔 데이터가 없습니다.</div>';
+}
+function blkSetOver(u,rm,day,val,blk){
+  const cap=num(val);
+  const over=cap-blk;
+  const key=`${u}|${rm}|${day}`;
+  if(over>0) blkOver[key]=over; else delete blkOver[key];
+  blkSave();
+  blkRenderSim(); blkRenderStatus();
+}
+
+/* ── 설정: 풀/별칭/마스터 편집 ── */
+function blkRenderConfig(){
+  // 풀
+  const pbox=document.getElementById('blk-pools');
+  pbox.innerHTML=blkPools.map((p,i)=>{
+    const cap=blkPoolCap(p);
+    const assign=blkIsAssignPool(p);
+    const tag=p.exclude?'<span class="blk-tag-type blk-tag-cart">안내제외</span>':assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':`<span class="blk-tag-type blk-tag-block">정원 ${cap!=null?cap:'—'}</span>`;
+    return `<div class="blk-cfg-card" style="margin-bottom:10px;background:var(--surface2)">
+      <div class="blk-cfg-row"><label style="min-width:auto"><b>${p.name}</b></label> ${tag}
+        <button class="btn-sm" style="color:var(--red);border-color:var(--red);margin-left:auto" onclick="blkDelPool(${i})">삭제</button></div>
+      <div class="blk-cfg-row"><label>키워드(부분일치)</label>
+        <input class="blk-cfg-input text" value="${(p.keyword||'').replace(/"/g,'&quot;')}" placeholder="예: 아소" onchange="blkSetPool(${i},'keyword',this.value)" style="min-width:120px"></div>
+      <div class="blk-cfg-row"><label>호텔(쉼표, 키워드 없을때)</label>
+        <input class="blk-cfg-input text" value="${(p.hotels||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 14hills, 포틴힐즈CC 골프텔" onchange="blkSetPool(${i},'hotels',this.value)"></div>
+      <div class="blk-cfg-row"><label>룸 필터(쉼표, 비우면 전체)</label>
+        <input class="blk-cfg-input text" value="${(p.rooms||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 트윈, 소형트윈" onchange="blkSetPool(${i},'rooms',this.value)" style="min-width:120px"></div>
+      <div class="blk-cfg-row"><label>출발 일정</label>
+        <input class="blk-cfg-input text" value="${(p.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박, 수7박 (또는 자유)" onchange="blkSetPool(${i},'depart',this.value)"></div>
+      <div class="blk-cfg-row"><label>출발 공항</label>
+        <input class="blk-cfg-input text" value="${(p.airport||'').replace(/"/g,'&quot;')}" placeholder="예: 인천 / 김해" onchange="blkSetPool(${i},'airport',this.value)" style="min-width:120px"></div>
+      <div class="blk-cfg-row"><label><input type="checkbox" ${p.exclude?'checked':''} onchange="blkSetPool(${i},'exclude',this.checked)"> 객실 안내에서 제외(옵션상품/카트 등)</label></div>
+    </div>`;
+  }).join('')||'<span class="muted" style="font-size:12px">등록된 풀이 없습니다.</span>';
+  // 별칭
+  const abox=document.getElementById('blk-aliases');
+  abox.innerHTML=Object.keys(blkAlias).map(a=>`
+    <div class="blk-cfg-row"><label>${a}</label><span>→ ${blkAlias[a]}</span>
+      <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="blkDelAlias('${a.replace(/'/g,"\\'")}')">삭제</button></div>`).join('')||'<span class="muted" style="font-size:12px">등록된 별칭이 없습니다.</span>';
+  // 마스터
+  const mbox=document.getElementById('blk-master');
+  mbox.innerHTML=Object.keys(blkMaster).sort().map(k=>{
+    const [h,rm]=k.split('|');
+    return `<div class="blk-cfg-row"><label>${h} · ${rm}</label>
+      <input class="blk-cfg-input" type="text" inputmode="numeric" value="${blkMaster[k]}" onchange="blkSetMaster('${k.replace(/'/g,"\\'")}',this.value)">
+      <span class="rm-unit" style="width:auto">보유</span>
+      <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="blkDelMaster('${k.replace(/'/g,"\\'")}')">삭제</button></div>`;
+  }).join('');
+}
+function blkSetPool(i,field,val){
+  if(field==='hotels'||field==='rooms') blkPools[i][field]=String(val).split(',').map(s=>s.trim()).filter(Boolean);
+  else if(field==='exclude') blkPools[i][field]=val;
+  else blkPools[i][field]=val;
+  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+}
+function blkAddPool(){
+  const n=document.getElementById('blk-newpool').value.trim();
+  if(!n) return;
+  blkPools.push({name:n,keyword:'',hotels:[],rooms:[],depart:'',airport:'',exclude:false});
+  document.getElementById('blk-newpool').value='';
+  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+}
+function blkDelPool(i){ if(!confirm(`풀 "${blkPools[i].name}"을 삭제할까요?`)) return; blkPools.splice(i,1); blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
+function blkAddAlias(){
+  const f=document.getElementById('blk-alias-from').value.trim();
+  const t=document.getElementById('blk-alias-to').value.trim();
+  if(!f||!t) return;
+  blkAlias[f]=t;
+  document.getElementById('blk-alias-from').value=''; document.getElementById('blk-alias-to').value='';
+  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+}
+function blkDelAlias(a){ delete blkAlias[a]; blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
+function blkAddMaster(){
+  const h=document.getElementById('blk-nm-hotel').value.trim();
+  const rm=document.getElementById('blk-nm-room').value.trim();
+  const b=num(document.getElementById('blk-nm-block').value);
+  if(!h||!rm){ alert('호텔명과 룸타입을 입력해주세요.'); return; }
+  blkMaster[h+'|'+rm]=b;
+  ['blk-nm-hotel','blk-nm-room','blk-nm-block'].forEach(id=>document.getElementById(id).value='');
+  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+}
+function blkSetMaster(k,v){ blkMaster[k]=num(v); blkSave(); if(blkParsed) blkRender(); }
+function blkDelMaster(k){ delete blkMaster[k]; blkSave(); blkRenderConfig(); if(blkParsed) blkRender(); }
+function blkResetConfig(){
+  if(!confirm('보유 마스터·풀·별칭을 모두 기본값으로 되돌릴까요?')) return;
+  blkMaster={...BLK_MASTER_DEFAULT}; blkPools=JSON.parse(JSON.stringify(BLK_POOLS_DEFAULT)); blkAlias={...BLK_ALIAS_DEFAULT}; blkOver={};
+  blkSave(); blkRenderConfig(); if(blkParsed) blkRender();
+}
+
+/* ── 🛫 출발 일정 조회 ── */
+function blkRenderDepartChips(){
+  const pools=blkPools.filter(p=>!p.exclude);
+  if(blkDepPoolSel.size===0) pools.forEach(p=>blkDepPoolSel.add(p.name)); // 기본 전체
+  const box=document.getElementById('blk-dep-pool-chips');
+  box.innerHTML=`<span class="blk-chip ${blkDepPoolSel.size===pools.length?'on':''}" onclick="blkDepTogAll()">전체</span>`+
+    pools.map(p=>`<span class="blk-chip ${blkDepPoolSel.has(p.name)?'on':''}" onclick="blkDepTog('${p.name.replace(/'/g,"\\'")}')">${p.name}</span>`).join('');
+}
+function blkDepTog(n){ if(blkDepPoolSel.has(n)) blkDepPoolSel.delete(n); else blkDepPoolSel.add(n); blkRenderDepartChips(); blkRenderDepart(); }
+function blkDepTogAll(){ const pools=blkPools.filter(p=>!p.exclude); if(blkDepPoolSel.size===pools.length) blkDepPoolSel.clear(); else { blkDepPoolSel.clear(); pools.forEach(p=>blkDepPoolSel.add(p.name)); } blkRenderDepartChips(); blkRenderDepart(); }
+
+function blkRenderDepart(){
+  const box=document.getElementById('blk-depart-result');
+  if(!blkParsed){ box.innerHTML='<div class="placeholder">먼저 「블록 현황」 탭에서 엠클릭 표를 붙여넣어 주세요.</div>'; return; }
+  const minRem=parseInt(document.getElementById('blk-dep-min').value);
+  const {month,days}=blkParsed;
+  const [y,m]=month.split('-').map(Number);
+  const lastDay=new Date(y,m,0).getDate();
+  const WK=['일','월','화','수','목','금','토'];
+  let html='';
+  blkPools.filter(p=>!p.exclude && blkDepPoolSel.has(p.name)).forEach(pool=>{
+    const cap=blkPoolCap(pool);
+    const used=blkPoolUsedByDay(pool);
+    const pats=blkParseDepart(pool.depart);
+    const assign=blkIsAssignPool(pool);
+    // 출발 가능 일정 목록
+    const departs=[];
+    const isFree=pats.some(p=>p.free);
+    if(cap!=null && !assign){
+      if(isFree){
+        // 자유: 매일 그날 잔여만
+        for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0); if(rem>=minRem) departs.push({day:dd,dow:WK[new Date(y,m-1,d).getDay()],label:'자유(1박~)',rem}); }
+      } else {
+        for(let d=1;d<=lastDay;d++){
+          const dt=new Date(y,m-1,d); const dow=dt.getDay(); const dd=String(d).padStart(2,'0');
+          pats.forEach(p=>{
+            if(p.free||p.dow!==dow) return;
+            let mn=Infinity,valid=true;
+            for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,cap-(used[String(cd).padStart(2,'0')]||0)); }
+            if(valid&&mn>=minRem) departs.push({day:dd,dow:WK[dow],label:p.label,rem:mn});
+          });
+        }
+      }
+    }
+    // 헤더 + 출발 가능 일정
+    html+=`<div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <b style="color:var(--navy);font-size:13px">${pool.name}</b>
+        ${assign?'<span class="blk-tag-type blk-tag-assign">임의배정(잔여계산 제외)</span>':`<span class="blk-tag-type blk-tag-block">정원 ${cap!=null?cap:'—'}</span>`}
+        <span class="muted" style="font-size:11px">출발: ${pool.depart||'미설정'} · ${pool.airport||''}</span>
+      </div>`;
+    if(assign){
+      html+='<div class="muted" style="font-size:12px">임의배정형 — 그때그때 객실을 까는 방식이라 잔여 계산 대신 일자별 사용수만 아래 현황에서 확인하세요.</div>';
+    } else if(cap==null){
+      html+='<div class="muted" style="font-size:12px">보유 마스터에 정원이 없어 계산할 수 없습니다.</div>';
+    } else if(!departs.length){
+      html+=`<div class="muted" style="font-size:12px">${minRem}실 이상 출발 가능한 일정이 없습니다.</div>`;
+    } else {
+      html+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+departs.map(x=>{
+        const cls=x.rem<=2?'b-a':'b-g';
+        const color=x.rem<=2?'var(--amber2)':'var(--green2)';
+        return `<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:${x.rem<=2?'var(--amber-dim)':'var(--green-dim)'};color:${color};font-weight:600;border:1px solid ${x.rem<=2?'var(--amber)':'var(--green)'}">${parseInt(x.day)}일(${x.dow}) ${x.label} · ${x.rem}실</span>`;
+      }).join('')+'</div>';
+    }
+    // 일자별 잔여 (막힌 출발편도 그날 잔여 확인용)
+    if(!assign && cap!=null){
+      html+='<div style="margin-top:10px"><div class="muted" style="font-size:11px;margin-bottom:4px">일자별 잔여 (출발편 막혀도 그날 단독 잔여 확인):</div><div class="tbl-wrap"><table class="blk-mtx"><thead><tr>';
+      for(let d=1;d<=lastDay;d++){ const wk=[0,6].includes(new Date(y,m-1,d).getDay()); html+=`<th class="${wk?'wk':''}">${d}</th>`; }
+      html+='</tr></thead><tbody><tr>';
+      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0); const c=rem<=0?'b-r':rem<=3?'b-a':'b-g'; html+=`<td class="${c}">${rem}</td>`; }
+      html+='</tr></tbody></table></div></div>';
+    }
+    html+='</div>';
+  });
+  box.innerHTML=html||'<div class="placeholder">선택된 풀이 없습니다.</div>';
+}
+
+/* ── ⏳ 대기 전환 점검 ── */
+function blkRenderWait(){
+  const box=document.getElementById('blk-wait-result');
+  if(typeof teams==='undefined' || !teams || !teams.length){
+    box.innerHTML='<div class="placeholder">②예약 관리에서 [통합 분석 실행]을 먼저 눌러주세요. (예약리스트·일행별예약 업로드 필요)</div>';
+    return;
+  }
+  if(!blkParsed){
+    box.innerHTML='<div class="placeholder">「블록 현황」 탭에서 엠클릭 표를 붙여넣으면 대기 건을 잔여와 대조합니다.</div>';
+    return;
+  }
+  const waits=teams.filter(t=>t.status==='대기');
+  if(!waits.length){ box.innerHTML='<div class="placeholder">구분=대기 팀이 없습니다.</div>'; return; }
+  // 각 대기 팀 → 숙소가 속한 풀 찾기 → 출발일 잔여 확인
+  let html=`<div class="sum-grid">
+    <div class="sum-box"><div class="sum-label">대기 팀</div><div class="sum-val">${waits.length}건</div></div>
+    <div class="sum-box"><div class="sum-label">전환 가능</div><div class="sum-val green" id="blk-wait-ok">-</div></div>
+  </div>`;
+  html+='<div class="tbl-wrap"><table class="blk-mtx" style="width:100%"><thead><tr><th class="rowhd">대표고객</th><th>숙소</th><th>출발일</th><th>인원</th><th>해당 풀 / 정원</th><th>출발일 잔여</th><th>판정</th></tr></thead><tbody>';
+  let okCnt=0;
+  waits.forEach(t=>{
+    // 팀 숙소(accom) → 풀 매칭
+    const accom=t.accom||'';
+    const room=t.roomType||'';
+    let pool=blkPools.find(p=>!p.exclude && blkPoolMatch(p,accom,room));
+    const dep=t.dep||'';
+    const day=dep?dep.slice(8,10):'';
+    let verdict, vcolor, remCell='-', poolCell='-';
+    if(!accom){ verdict='숙소 미확인'; vcolor='var(--text3)'; }
+    else if(!pool){ verdict='확인 필요(풀 없음)'; vcolor='var(--amber2)'; poolCell=accom; }
+    else {
+      const cap=blkPoolCap(pool);
+      poolCell=`${pool.name} / ${cap!=null?cap:'—'}`;
+      if(blkIsAssignPool(pool)){ verdict='임의배정(수동확인)'; vcolor='var(--amber2)'; }
+      else if(cap==null){ verdict='확인 필요(정원없음)'; vcolor='var(--amber2)'; }
+      else if(!day || dep.slice(0,7)!==blkParsed.month){ verdict='타월/날짜확인'; vcolor='var(--text3)'; remCell=dep.slice(0,7)!==blkParsed.month?'다른 월':'-'; }
+      else {
+        const used=blkPoolUsedByDay(pool);
+        const rem=cap-(used[day]||0);
+        remCell=`${rem}실`;
+        if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; }
+        else { verdict='✕ 잔여 부족'; vcolor='var(--red)'; }
+      }
+    }
+    html+=`<tr>
+      <td class="rowhd"><b>${t.repName||'-'}</b></td>
+      <td>${accom||'<span class="muted">미확인</span>'} <span class="muted">${room}</span></td>
+      <td>${dep||'-'}</td>
+      <td class="center">${t.pax}</td>
+      <td style="font-size:11px">${poolCell}</td>
+      <td class="center">${remCell}</td>
+      <td class="center" style="color:${vcolor};font-weight:700">${verdict}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  box.innerHTML=html;
+  const okEl=document.getElementById('blk-wait-ok'); if(okEl) okEl.textContent=okCnt+'건';
+}
+
+/* ── 서브탭 전환 ── */
+function blkSwitch(name){
+  ['status','depart','wait','sim','cart','config'].forEach(s=>{
+    document.getElementById('blksub-'+s).classList.toggle('active',s===name);
+    document.getElementById('blkv-'+s).classList.toggle('active',s===name);
+  });
+  if(name==='config') blkRenderConfig();
+  if(name==='sim') blkRenderSim();
+  if(name==='depart'){ blkRenderDepartChips(); blkRenderDepart(); }
+  if(name==='wait') blkRenderWait();
+}
+
+/* ── 예약가능일자 공지 PNG ── */
+function openNotice(){
+  if(!blkParsed){ alert('먼저 엠클릭 표를 붙여넣어 주세요.'); return; }
+  document.getElementById('notice-sub').textContent=`${blkParsed.month} · ${blkHotelFilter.size?[...blkHotelFilter].join(', '):'전체 호텔'}`;
+  renderNotice();
+  document.getElementById('notice-modal-bg').classList.add('open');
+}
+function noticeSymbol(rem){
+  if(rem<=0) return '<span class="nst-x">✕</span>';
+  if(rem<=3) return `<span class="nst-soon">△${rem}</span>`;
+  return `<span class="nst-ok">○${rem}</span>`;
+}
+function renderNotice(){
+  if(!blkParsed) return;
+  const {days,month}=blkParsed;
+  const hideX=document.getElementById('notice-hide-x').checked;
+  const hideEmpty=document.getElementById('notice-hide-empty').checked;
+  const usage=blkUsageMap();
+  let units=blkDisplayUnits().filter(u=>!blkIsAssignUnit(u));
+  if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
+  // 행 구성: 호텔·룸타입
+  const rowDefs=[];
+  units.forEach(u=>{ const rooms=usage[u]||{}; Object.keys(rooms).sort().forEach(rm=>{ const blk=blkBlockForUnit(u,rm); if(blk!=null) rowDefs.push({u,rm,blk,used:rooms[rm]}); }); });
+  // 표시할 날짜: 빈날 숨김 옵션
+  let showDays=days;
+  if(hideEmpty){
+    showDays=days.filter(d=>rowDefs.some(rd=>(rd.used[d.day]||0)>0 || true));
+  }
+  const [y,mm]=month.split('-');
+  let html=`<div class="notice" id="notice-body">
+    <div class="notice-hd"><div class="ntag">RESERVATION</div><h2>예약 가능일자 안내</h2><div class="nperiod">${y}년 ${parseInt(mm)}월 · 메리트투어</div></div>
+    <div class="notice-bd"><table class="ntbl"><thead><tr><th class="nrowhd">호텔 · 객실</th>`;
+  showDays.forEach(d=>{ html+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
+  html+='</tr></thead><tbody>';
+  rowDefs.forEach(rd=>{
+    html+=`<tr><td class="nrowhd">${rd.u} <span style="color:#94a0b0;font-weight:500">${rd.rm}</span></td>`;
+    showDays.forEach(d=>{
+      const used=rd.used[d.day]||0;
+      const over=blkOver[`${rd.u}|${rd.rm}|${d.day}`]||0;
+      const rem=(rd.blk+over)-used;
+      let cell;
+      if(rem<=0){ cell=hideX?'<span class="nst-x">·</span>':noticeSymbol(rem); }
+      else cell=noticeSymbol(rem);
+      html+=`<td>${cell}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+=`</tbody></table></div>
+    <div class="notice-ft"><b>○ 여유 · △ 임박(잔여 1~3) · ✕ 마감</b> &nbsp;|&nbsp; 숫자는 잔여 객실 수입니다. 예약 문의: 메리트투어</div></div>`;
+  document.getElementById('notice-canvas').innerHTML=html;
+}
+function downloadNotice(){
+  const el=document.getElementById('notice-body');
+  if(!el){ alert('공지 내용이 없습니다.'); return; }
+  html2canvas(el,{scale:2,backgroundColor:'#ffffff'}).then(canvas=>{
+    const a=document.createElement('a');
+    const ym=(blkParsed?blkParsed.month:'').replace('-','');
+    a.download=`예약가능일자_${ym}.png`;
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
+}
+
+/* ── 초기화 ── */
+blkLoad();
+(function blkRestore(){
+  try{
+    const savedMonth=localStorage.getItem(BLK_STORE.month);
+    if(savedMonth) document.getElementById('blk-month').value=savedMonth;
+    const savedPaste=localStorage.getItem(BLK_STORE.paste);
+    if(savedPaste){ const ta=document.getElementById('blk-paste'); ta.value=savedPaste; ta.classList.add('filled'); blkRender(); }
+  }catch(e){}
+})();
 </script>
+<!-- ════════ 예약가능일자 공지 PNG 모달 ════════ -->
+<div class="modal-bg" id="notice-modal-bg">
+  <div class="modal" style="max-width:820px">
+    <div class="modal-head">
+      <div><div class="modal-title">📤 예약가능일자 공지 이미지</div><div class="card-sub" id="notice-sub">선택한 호텔 기준</div></div>
+      <button class="modal-close" onclick="document.getElementById('notice-modal-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <label class="exp-chk" style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="notice-hide-x" onchange="renderNotice()"> 마감(✕)일 숨기기</label>
+        <label class="exp-chk" style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="notice-hide-empty" checked onchange="renderNotice()"> 블록 없는 날 숨기기</label>
+        <button class="btn-sm" onclick="downloadNotice()" style="border-color:var(--accent);color:var(--accent);margin-left:auto">📷 PNG 다운로드</button>
+      </div>
+      <div class="notice-canvas-wrap"><div id="notice-canvas"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 블록 예약 상세 사이드 (간이) ════════ -->
+<div class="modal-bg" id="blk-detail-bg">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><div class="modal-title" id="blk-detail-title">블록 상세</div><button class="modal-close" onclick="document.getElementById('blk-detail-bg').classList.remove('open')">×</button></div>
+    <div class="modal-body" id="blk-detail-body"></div>
+  </div>
+</div>
+
 </body>
 </html>
