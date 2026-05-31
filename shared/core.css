@@ -82,7 +82,7 @@ html, body {
 .mt-brand { font-size: 22px; font-weight: 700; color: var(--mt-brand); letter-spacing: -.02em; }
 .mt-brand-link { display: inline-flex; align-items: center; text-decoration: none; cursor: pointer; transition: opacity .15s; }
 .mt-brand-link:hover { opacity: .65; }
-.mt-brand-logo { height: 22px; width: auto; display: block; }
+.mt-brand-logo { height: 20px; width: auto; display: block; }
 .mt-brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: .08em; }
 .mt-dept-badge {
   font-size: 11px; font-weight: 700; font-family: var(--mt-mono);
