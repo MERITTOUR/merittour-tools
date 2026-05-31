@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR 통합 업무 허브</title>
+<script src="../../shared/gate.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -2754,10 +2755,16 @@ const RESORT_DEFAULTS=[
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  insCompany:'', insProduct:'', insFee:0, insCover:'',
+  insCompany:'', insProduct:'', insMemo:'',   // 여행자보험: 보험료는 인별 상이 → 금액칸 없이 안내 메모만
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
-  airfares:[]              // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
+  airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
+  airlineNotes:[           // [{airline, note}] 항공사별 조건 참고 메모 (담당자 참고용)
+    {airline:'티웨이항공(TW)', note:'체크인 카운터 B (2026.01.22 이후) · 온라인 체크인 출발 24시간 전부터'},
+    {airline:'대한항공(KE)', note:'온라인 체크인 출발 48시간 전부터'},
+    {airline:'아시아나항공(OZ)', note:'인천 제2터미널 (2026.01.14 이후) · 온라인 체크인 출발 48시간 전부터'},
+    {airline:'에어부산(BX)', note:'온라인 체크인 출발 48시간 전부터'}
+  ]
 };
 
 let resortMaster=[], commonMaster={};
@@ -2798,6 +2805,9 @@ function loadResortMaster(){
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
+  // 구버전 호환: 보장한도(insCover) → 안내메모(insMemo) 이관, 사용 안 하는 insFee 제거
+  if(commonMaster.insCover && !commonMaster.insMemo){ commonMaster.insMemo=commonMaster.insCover; }
+  delete commonMaster.insCover; delete commonMaster.insFee;
 }
 function saveResortMaster(){
   try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
@@ -2946,13 +2956,10 @@ function renderResortMaster(){
       <div class="rm-row"><label>상품명</label>
         <input class="rm-input text" type="text" value="${(commonMaster.insProduct||'').replace(/"/g,'&quot;')}" placeholder="상품명"
           onchange="updateCommon('insProduct',this.value,this)"></div>
-      <div class="rm-row"><label>1인 보험료</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.insFee?Number(commonMaster.insFee).toLocaleString():''}" placeholder="0"
-          onchange="updateCommon('insFee',this.value,this)"><span class="rm-unit">원</span></div></div>
       <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
-        <label>보장 한도</label>
-        <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
-          onchange="updateCommon('insCover',this.value,this)"></div>
+        <label>안내 메모 <span class="muted" style="font-size:10px;font-weight:400">— 보험료는 인별 상이. 보장 한도·연령별 기준·가입 주의사항 등 참고 메모</span></label>
+        <textarea class="rm-input wide" rows="3" style="resize:vertical;line-height:1.5;font-family:var(--sans)" placeholder="예) 보장 한도, 연령별 보험료 기준, 가입 시 주의사항 등을 적어두세요"
+          onchange="updateCommon('insMemo',this.value,this)">${(commonMaster.insMemo||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</textarea></div>
     </div>
   <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율</span></div>
@@ -2986,9 +2993,19 @@ function renderResortMaster(){
       <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="요금(원)" style="width:90px">
       <button class="btn-sm" onclick="addAirfare()">+ 추가</button>
     </div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">📌 항공사별 조건 메모 <span class="card-sub" style="font-weight:400">— 체크인·수하물·발권·취소 등 항공사별 참고사항(담당자 참고용)</span></div>
+    <div id="airline-note-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-start">
+      <input class="rm-input text" id="an-airline" placeholder="항공사(티웨이항공)" style="width:140px">
+      <input class="rm-input text" id="an-note" placeholder="조건 메모 (예: 체크인 카운터 B · 온라인 체크인 24시간 전)" style="flex:1;min-width:220px">
+      <button class="btn-sm" onclick="addAirlineNote()">+ 추가</button>
+    </div>
   </div>`;
   renderMonthlyRates();
   renderAirfares();
+  renderAirlineNotes();
 }
 
 /* 월별 환율 테이블 렌더 (통화별: 엔=YYYY-MM, 달러=YYYY-MM|USD, 링깃=YYYY-MM|MYR) */
@@ -3061,6 +3078,39 @@ function addAirfare(){
 }
 function delAirfare(i){ commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares(); }
 
+/* ── 항공사별 조건 메모 (담당자 참고용) ── */
+function anEsc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function anEscAttr(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function renderAirlineNotes(){
+  const box=document.getElementById('airline-note-rows'); if(!box) return;
+  const arr=commonMaster.airlineNotes||[];
+  box.innerHTML = arr.length
+    ? arr.map((a,i)=>`<div class="rm-row" style="align-items:flex-start;gap:6px">
+        <input class="rm-input text" type="text" value="${anEscAttr(a.airline)}" style="width:140px;font-weight:600"
+          onchange="editAirlineNote(${i},'airline',this.value)">
+        <input class="rm-input text" type="text" value="${anEscAttr(a.note)}" style="flex:1;min-width:200px"
+          onchange="editAirlineNote(${i},'note',this.value)">
+        <button class="btn-sm" style="padding:4px 9px;color:var(--red);border-color:var(--red)" onclick="delAirlineNote(${i})">×</button>
+      </div>`).join('')
+    : '<div class="muted" style="font-size:11px">등록된 항공사 메모가 없습니다.</div>';
+}
+function addAirlineNote(){
+  const airline=document.getElementById('an-airline').value.trim();
+  const note=document.getElementById('an-note').value.trim();
+  if(!airline && !note) return;
+  if(!commonMaster.airlineNotes) commonMaster.airlineNotes=[];
+  commonMaster.airlineNotes.push({airline,note});
+  saveResortMaster(); renderAirlineNotes();
+  document.getElementById('an-airline').value='';
+  document.getElementById('an-note').value='';
+}
+function editAirlineNote(i,field,val){
+  if(!commonMaster.airlineNotes||!commonMaster.airlineNotes[i]) return;
+  commonMaster.airlineNotes[i][field]=val.trim();
+  saveResortMaster();
+}
+function delAirlineNote(i){ commonMaster.airlineNotes.splice(i,1); saveResortMaster(); renderAirlineNotes(); }
+
 function flashSaved(el, resortKey){
   if(resortKey){
     const s=document.getElementById('saved-'+resortKey);
@@ -3096,7 +3146,7 @@ function updateResort(key, field, val, el){
   if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
-  if(['insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  if(['mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
   saveResortMaster();
 }
