@@ -230,6 +230,14 @@ tr:hover td{background:#EEF3FA}
 .rm-group{margin-bottom:14px}
 .rm-group:last-child{margin-bottom:0}
 .rm-group-label{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.rm-hint{font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4}
+/* 취소 행: 흐리게 (금액 정보는 보존) */
+.bk-row-cancel{background:repeating-linear-gradient(45deg,var(--surface2),var(--surface2) 10px,var(--surface) 10px,var(--surface) 20px)}
+.bk-row-cancel td{color:var(--text3)}
+.bk-row-cancel td b{color:var(--text2);font-weight:600}
+/* 취소 필터 칩 (레드 계열) */
+.bk-chip-cancel{border-color:#FCA5A5!important;color:#991B1B!important}
+.bk-chip-cancel.on{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important}
 .rm-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
 .rm-row label{font-size:12px;color:var(--text2);flex-shrink:0}
 .rm-input{width:120px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--mono);text-align:right;background:var(--surface2);color:var(--text)}
@@ -465,7 +473,7 @@ tr:hover td{background:#EEF3FA}
 <div class="section" id="sec-booking">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">③ 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분 · 구분/호텔/명단/비고 일괄 수정</div></div>
+      <div><div class="card-title">③ 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분 · 구분/호텔/명단/비고 일괄 수정 · 취소건은 구분 칩 「취소」로 조회</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박 (D-30/7/1)</button>
         <button class="btn-sm" onclick="openTeamColorLegend()">팀 색상 보기</button>
@@ -525,7 +533,8 @@ tr:hover td{background:#EEF3FA}
     </div>
     <div class="note" style="margin-top:1rem">
       <b>팀 구분</b> · 비고란에 <code>팀:홍길동</code> 형식이 있으면 자동으로 팀 배지가 붙습니다. 배지(또는 "팀 지정" 버튼)를 클릭하면 모달에서 팀을 지정·변경·해제할 수 있습니다.<br>
-      <b>일괄 수정</b> · 행 앞 체크박스로 여러 건을 고르면 상단에 일괄 수정 바가 나타납니다. 구분·호텔·명단을 한 번에 바꾸거나, 비고를 추가·덮어쓰기할 수 있습니다. 수정값은 브라우저에 저장되며(원본 엠클릭 데이터는 그대로), <b>비고 수정 시 <span style="color:var(--amber2)">●</span> 표시</b>가 붙습니다. "수정 초기화"로 원본으로 되돌립니다.
+      <b>일괄 수정</b> · 행 앞 체크박스로 여러 건을 고르면 상단에 일괄 수정 바가 나타납니다. 구분·호텔·명단을 한 번에 바꾸거나, 비고를 추가·덮어쓰기할 수 있습니다. 수정값은 브라우저에 저장되며(원본 엠클릭 데이터는 그대로), <b>비고 수정 시 <span style="color:var(--amber2)">●</span> 표시</b>가 붙습니다. "수정 초기화"로 원본으로 되돌립니다.<br>
+      <b>취소건 조회</b> · 취소건은 평소 숨겨져 있고, 구분 칩의 <span style="color:var(--red2);font-weight:700">취소</span>를 켜면 표시됩니다. 취소 패널티·잔여 미수 등 금액 정보가 남아있을 수 있어 보존하며, 줄무늬·회색으로 구분 표시합니다. 취소 행은 통계·요금검증·블록 재고 등 집계에는 포함되지 않고, 일괄 수정 대상에서도 제외됩니다.
     </div>
   </div>
 </div>
@@ -623,7 +632,7 @@ tr:hover td{background:#EEF3FA}
     </div>
     <div class="sum-grid" id="verify-summary"></div>
     <div class="note">
-      <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 출국월 환율 + 항공요금합 + 회원관리비합(₩50,000/인) + 원화기타.
+      <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 출국월 환율 + 항공요금합 + 회원관리비합(리조트 마스터 숙소별 값, 기본 ₩50,000/인) + 원화기타.
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.
     </div>
     <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
@@ -881,7 +890,8 @@ let resMerged=[], ilhaengMerged=[], arrivalMerged=[], apisMerged=[];
 let resPending=0, ilhaengPending=0, arrivalPending=0, apisPending=0;
 let resCount=0, ilhaengCount=0, arrivalCount=0, apisCount=0;
 
-let teams = [];        // 통합 결과: 팀(eventSeq) 단위
+let teams = [];        // 통합 결과: 팀(eventSeq) 단위 (유효 예약만 — 통계·집계용)
+let cancelledTeams = []; // 취소(구분=취소) 팀 — 예약관리 조회 전용. 통계·집계에는 미포함
 let arrivalMap = {};   // eventSeq → 현지도착 보완
 let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
 let teamAssign = {};   // eventSeq → 사용자 지정 팀명
@@ -1259,6 +1269,42 @@ function analyze(){
   applyEditOverrides();
   teams.forEach((t,i)=>t.no=i+1);
 
+  // ── 취소(구분=취소) 팀 빌드 — 통계·집계 제외, 예약관리 조회 전용 ──
+  // 취소건에는 취소 패널티(취소 수수료)·잔여 미수 등이 남을 수 있어 버리지 않고 별도 보존.
+  cancelledTeams = [];
+  resData.filter(r=>String(r['구분']||'').trim()==='취소' && !r['cancCd']).forEach(r=>{
+    const seq=String(r['eventSeq']||'').trim();
+    const prodName=String(r['상품명']||'');
+    const {accom,roomType,region,golf,nights}=parseProduct(prodName);
+    const remark=String(r['비고']||'');
+    cancelledTeams.push({
+      eventSeq: seq,
+      status: '취소',
+      cancelled: true,
+      hotelY: String(r['호텔']||'').trim().toUpperCase()==='Y',
+      listY: String(r['명단']||'').trim().toUpperCase()==='Y',
+      eventNo: String(r['행사번호']||'').trim()||'-',
+      repName: String(r['대표고객']||'').trim(),
+      repPhone: '',
+      memberType: String(r['회원권구분']||'').trim()||'-',
+      dep: fmtDate(r['출발일자']), arr: fmtDate(r['도착일자']),
+      period: String(r['기간']||'').trim() || (nights?`${nights}박`:''),
+      origin: String(r['출발지']||'').trim(),
+      flight: String(r['항공']||'').trim(),
+      prodName, accom, roomType, region, golf, nights,
+      pax: num(r['예약']),
+      sales: num(r['판매금액']),    // 취소 후 남은 청구액(패널티 등)일 수 있음
+      due: num(r['미수금액']),      // 취소 패널티 미수 등
+      remark,
+      teamAuto: parseTeamName(remark),
+      special: remarkSpecial(remark),
+      pax_list: [],
+      apisOrigin:'', pnrList:[],
+      raw: r
+    });
+  });
+  cancelledTeams.forEach((t,i)=>t.no=i+1);
+
   // 탭 해제
   ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit'].forEach(s=>
     document.getElementById('nav-'+s).classList.remove('locked'));
@@ -1299,12 +1345,13 @@ function bkClearSearch(){ const el=document.getElementById('bk-search'); if(el){
 function bkClearDate(){ document.getElementById('bk-date-from').value=''; document.getElementById('bk-date-to').value=''; renderBooking(); }
 function bkRenderChips(){
   const mk=(grp,opts)=>opts.map(o=>`<span class="bk-chip ${bkFilter[grp]===o.v?'on':''}" onclick="bkSetFilter('${grp}','${o.v}')">${o.l}</span>`).join('');
-  // 구분: 복수 선택 (전체 = 아무것도 선택 안 함)
+  // 구분: 복수 선택 (전체 = 아무것도 선택 안 함). 취소는 켤 때만 합류
   const stOpts=['견적','대기','확정','정산'];
   const c1=document.getElementById('bk-chip-status');
   if(c1) c1.innerHTML='<span class="bk-chip-lbl">구분</span>'+
     `<span class="bk-chip ${bkFilter.status.size===0?'on':''}" onclick="bkToggleStatus('전체')">전체</span>`+
-    stOpts.map(v=>`<span class="bk-chip ${bkFilter.status.has(v)?'on':''}" onclick="bkToggleStatus('${v}')">${v}</span>`).join('');
+    stOpts.map(v=>`<span class="bk-chip ${bkFilter.status.has(v)?'on':''}" onclick="bkToggleStatus('${v}')">${v}</span>`).join('')+
+    `<span class="bk-chip bk-chip-cancel ${bkFilter.status.has('취소')?'on':''}" onclick="bkToggleStatus('취소')" title="취소건은 평소 숨김 — 클릭하면 표시됩니다">취소${cancelledTeams.length?` (${cancelledTeams.length})`:''}</span>`;
   const c2=document.getElementById('bk-chip-hotel'); if(c2) c2.innerHTML='<span class="bk-chip-lbl">호텔</span>'+mk('hotel',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
   const c3=document.getElementById('bk-chip-list'); if(c3) c3.innerHTML='<span class="bk-chip-lbl">명단</span>'+mk('list',[{v:'전체',l:'전체'},{v:'Y',l:'Y'},{v:'N',l:'N'}]);
   const c4=document.getElementById('bk-chip-quick'); if(c4) c4.innerHTML='<span class="bk-chip-lbl">빠른필터</span>'+
@@ -1315,7 +1362,9 @@ function bkFilteredTeams(){
   const q=(document.getElementById('bk-search')?.value||'').trim().toLowerCase();
   const from=document.getElementById('bk-date-from')?.value||'';
   const to=document.getElementById('bk-date-to')?.value||'';
-  return teams.filter(t=>{
+  // 취소 칩이 켜져 있을 때만 취소 팀을 소스에 합류 (기본 숨김)
+  const src = bkFilter.status.has('취소') ? teams.concat(cancelledTeams) : teams;
+  return src.filter(t=>{
     if(bkFilter.status.size>0 && !bkFilter.status.has(t.status)) return false;
     if(bkFilter.hotel!=='전체' && (t.hotelY?'Y':'N')!==bkFilter.hotel) return false;
     if(bkFilter.list!=='전체' && (t.listY?'Y':'N')!==bkFilter.list) return false;
@@ -1357,7 +1406,9 @@ function renderBooking(){
   document.getElementById('booking-thead').innerHTML=thead;
   bkRenderChips();
   const fteams=bkFilteredTeams();
-  const filtered = fteams.length!==teams.length;
+  const showCancel = bkFilter.status.has('취소');
+  const baseCount = showCancel ? teams.length+cancelledTeams.length : teams.length;
+  const filtered = fteams.length!==baseCount;
   // 검색창 클리어 버튼 표시
   const sv=(document.getElementById('bk-search')?.value||'').length>0;
   const clr=document.getElementById('bk-clear'); if(clr) clr.style.display=sv?'block':'none';
@@ -1374,7 +1425,7 @@ function renderBooking(){
     <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>`;
   // 결과 카운트
   const rc=document.getElementById('bk-result-count');
-  if(rc) rc.textContent = filtered ? `${fteams.length} / ${teams.length}건 표시` : `전체 ${teams.length}건`;
+  if(rc) rc.textContent = filtered ? `${fteams.length} / ${baseCount}건 표시` : `전체 ${baseCount}건`;
 
   const list=sortTeams(fteams,'booking');
   document.getElementById('booking-tbody').innerHTML = (list.length?list:[]).map(t=>{
@@ -1384,8 +1435,12 @@ function renderBooking(){
       : `<button class="btn-sm" style="padding:2px 8px;font-size:10px" onclick="openTeamModal('${t.eventSeq}')">팀 지정</button>`;
     const hotelY = t.hotelY ? '<span class="ystamp">Y</span>' : '<span class="nstamp">N</span>';
     const listY = t.listY ? '<span class="ystamp">Y</span>' : '<span class="nstamp">N</span>';
-    return `<tr>
-      <td class="center"><input type="checkbox" class="chk sel-booking" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
+    const isCancel = t.cancelled===true;
+    const chkCell = isCancel
+      ? `<td class="center"><input type="checkbox" class="chk" disabled title="취소건은 일괄 수정 대상에서 제외됩니다"></td>`
+      : `<td class="center"><input type="checkbox" class="chk sel-booking" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>`;
+    return `<tr class="${isCancel?'bk-row-cancel':''}">
+      ${chkCell}
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center">${hotelY}</td>
@@ -1757,9 +1812,9 @@ function resortUnitFor(accom){
   if(!r){
     // 못 찾으면 야마나미 골프텔 기본 단가로 대체 표시
     const y=resortMaster.find(x=>x.key==='yamanami_golf');
-    return {stay:y?y.stay:0, transfer:y?y.transfer:0, matched:false};
+    return {stay:y?y.stay:0, transfer:y?y.transfer:0, mgmt:y?(y.mgmt||0):0, matched:false};
   }
-  return {stay:r.stay, transfer:r.transfer, matched:true};
+  return {stay:r.stay, transfer:r.transfer, mgmt:r.mgmt||0, matched:true};
 }
 /* 출국월 환율 조회 (월별 환율 미등록 시 0 → 기준 미등록 처리) */
 function rateForMonth(depDate){
@@ -1794,7 +1849,7 @@ function calcExpected(t){
   const yenKRW = Math.round(yenSum*rate/100);  // 100엔당 환율
   const airfare = airfareFor(t);
   const airTotal = airfare!=null ? airfare*pax : null;
-  const mgmtTotal = (commonMaster.mgmtKRW||0)*pax;
+  const mgmtTotal = (u.mgmt||0)*pax;
   const krwEtc = vAdjust[t.eventSeq]?.krwEtc||0;
   const expected = airTotal!=null ? (yenKRW+airTotal+mgmtTotal+krwEtc) : null;
   return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,expected};
@@ -2333,58 +2388,58 @@ const STORE_COMMON='mt_notify_commonMaster';
    name은 엠클릭 표 숙소명과 일치(블록 현황·출발일정 조회 연결). */
 const RESORT_DEFAULTS=[
   {key:'yamanami_golf', name:'아소 야마나미 골프텔', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:15000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':55,'소형트윈':50}, aliases:[], assign:false, memo:''},
   {key:'yamanami_bessou', name:'아소 야마나미 관내별장', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'yamanami_dome', name:'아소 야마나미 돔하우스', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'kuzu', name:'야마나미 쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
-   stay:14000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:14000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
-   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
-   stay:16000, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'mutsuki', name:'무츠키 료칸', region:'벳푸', golf:'벳푸', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'shirosato', name:'시로사토CC 골프텔', region:'이바라키', golf:'시로사토CC', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일6박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'fukuroda', name:'후쿠로다노타키CC 골프텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'월7박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
-   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{'트윈':35}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
-   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
   {key:'kokusai', name:'국제공항CC 골프텔', region:'미야자키', golf:'국제공항CC', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'kumamoto_city', name:'구마모토 시내 호텔', region:'구마모토', golf:'-', holes:0,
-   stay:0, transfer:6000, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
   {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
-   stay:0, transfer:0, mgmt:0, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
@@ -2422,6 +2477,13 @@ function loadResortMaster(){
       const s = saved && saved.find(x=>x.key===def.key);
       return s ? {...def, ...s} : {...def};
     });
+    // 1회성 마이그레이션: 과거 mgmt 기본값(0) 시절 저장본 → 50,000원으로 끌어올림
+    // (회원관리비를 의도적으로 0으로 비운 숙소는 mgmtMigrated 플래그 이후 그대로 유지됨)
+    if(!localStorage.getItem('mt_notify_mgmtMigrated')){
+      resortMaster.forEach(r=>{ if(!r.mgmt) r.mgmt=50000; });
+      try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
+      saveResortMaster();
+    }
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
@@ -2511,7 +2573,11 @@ function renderResortMaster(){
             <div class="rm-group-label">요금 (엔)</div>
             ${rmNumRow('체재비',r.key,'stay',r.stay,'/인박')}
             ${rmNumRow('송영비',r.key,'transfer',r.transfer,'/인')}
-            ${rmNumRow('회원관리비',r.key,'mgmt',r.mgmt,'')}
+          </div>
+          <div class="rm-group">
+            <div class="rm-group-label">회원관리비 (원)</div>
+            ${rmNumRow('회원관리비',r.key,'mgmt',r.mgmt,'원/인')}
+            <div class="rm-hint">기본 50,000원/인. 회원관리비를 받지 않는 숙소만 0으로 비우세요.</div>
           </div>
           <div class="rm-group">
             <div class="rm-group-label">그린피 (엔)</div>
@@ -2577,12 +2643,6 @@ function renderResortMaster(){
         <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
           onchange="updateCommon('insCover',this.value,this)"></div>
     </div>
-  <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">💰 회원관리비 (원화 고정)</div>
-    <div class="rm-row"><label>1인 회원관리비</label><div style="display:flex;align-items:center">
-      <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.mgmtKRW?Number(commonMaster.mgmtKRW).toLocaleString():''}" placeholder="50000"
-        onchange="updateCommon('mgmtKRW',this.value,this)"><span class="rm-unit">원</span></div></div>
-  </div>
   <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율</span></div>
     <div id="monthly-rate-rows"></div>
