@@ -134,6 +134,16 @@ th.sortable:hover{background:var(--surface4);color:var(--accent)}
 .air-pax-row td{padding-top:3px;padding-bottom:3px;border-bottom:0.5px solid var(--surface3);background:var(--surface2)}
 .air-pax-row .pax-name{font-size:12px}
 .air-pax-row:hover td{background:var(--surface3)}
+/* 아코디언: 명단 행 기본 숨김, 팀 행 클릭으로 토글 */
+tr.pax-hidden{display:none}
+.team-toggle{cursor:pointer}
+.team-toggle:hover td{background:var(--surface2)}
+.exp-caret{display:inline-block;width:14px;color:var(--text3);font-size:10px;transition:transform .12s;user-select:none}
+.team-toggle.open .exp-caret{transform:rotate(90deg);color:var(--accent)}
+.pax-subhead td{background:var(--surface3);color:var(--text3);font-size:10px;font-weight:600;letter-spacing:.03em;padding:4px 8px}
+/* 비고 섹션 태그: 해당 섹션 메모 강조 / 공통 메모 흐림 */
+.rmk-hit{display:inline-block;background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber);border-radius:5px;padding:1px 7px;font-weight:600;font-size:11px;margin:1px 0}
+.rmk-common{color:var(--text3);font-size:11px}
 .v-adj{width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);text-align:right;background:var(--surface2);color:var(--text)}
 .v-adj:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
 td{padding:6px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;vertical-align:middle}
@@ -199,6 +209,7 @@ tr:hover td{background:#EEF3FA}
 .sum-box .sum-val{font-size:20px;font-weight:700;color:var(--navy);font-family:var(--mono)}
 .sum-box .sum-val.red{color:var(--red)}
 .sum-box .sum-val.green{color:var(--green2)}
+.sum-box .sum-val.amber{color:var(--amber2)}
 
 /* AIRCOVER passenger sub-table */
 .pax-sub{font-size:11px;color:var(--text2)}
@@ -543,17 +554,21 @@ tr:hover td{background:#EEF3FA}
 <div class="section" id="sec-insurance">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑥ 보험 정보</div><div class="card-sub">팀별 여권 정보(번호·만료일·발행국가) · 여행자보험 가입 확인 · 여권 만료 임박 경고</div></div>
+      <div><div class="card-title">⑥ 보험 정보</div><div class="card-sub">DB손해보험 여행자보험 — 전원 기본 가입(필수). 가입 정보는 생년월일·성별만 필요 · 제외 요청자만 개인 단위로 제외</div></div>
       <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="expandAllPax('ins',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('ins',false)">전체 접기</button>
         <button class="btn-sm" onclick="filterIns('all')">전체</button>
-        <button class="btn-sm" onclick="filterIns('expiry')">만료 임박</button>
-        <button class="btn-sm" onclick="filterIns('noins')">보험 미가입</button>
+        <button class="btn-sm" onclick="filterIns('exclude')">제외자만</button>
+        <button class="btn-sm" onclick="filterIns('missing')">정보 누락만</button>
       </div>
     </div>
     <div class="sum-grid" id="ins-summary"></div>
     <div class="tbl-wrap"><table id="ins-table"><thead id="ins-thead"></thead><tbody id="ins-tbody"></tbody></table></div>
     <div class="note" style="margin-top:1rem">
-      <b>여권 만료 경고</b> · 출국일 기준 잔여 유효기간이 6개월 미만이면 경고가 표시됩니다(일본 입국 권장 기준). <b>보험 가입</b> 체크는 수동 확인용이며 브라우저에 저장됩니다.
+      <b>전원 기본 가입</b> · DB손해보험 여행자보험은 일행 전원이 기본 가입됩니다. 가입에는 <b>생년월일·성별</b>만 필요하며 여권 정보는 쓰이지 않습니다(여권 검수는 ③ 데이터 검수, 여권 상세는 ⑦ 항공 정보).<br>
+      <b>제외 처리</b> · 손님이 가입을 원치 않는 경우에만 해당 개인의 「제외」를 체크하세요. 개인 단위로 브라우저에 저장됩니다.<br>
+      <b>정보 누락</b> · 생년월일 또는 성별이 비어 있으면 가입 처리가 안 되므로 <span style="color:var(--amber2);font-weight:700">누락</span>으로 표시됩니다. 엠클릭에서 채운 뒤 다시 업로드하세요.
     </div>
   </div>
 </div>
@@ -564,14 +579,23 @@ tr:hover td{background:#EEF3FA}
     <div class="card-head">
       <div><div class="card-title">⑦ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 출국 1주일 전 안내</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-sm" onclick="filterAir('all')" id="airf-all">전체</button>
-        <button class="btn-sm" onclick="filterAir('pnr')" id="airf-pnr">PNR 있음</button>
-        <button class="btn-sm" onclick="filterAir('d7')" id="airf-d7">출국 D-7 이내</button>
+        <button class="btn-sm" onclick="expandAllPax('air',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('air',false)">전체 접기</button>
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박</button>
         <button class="btn-sm" onclick="exportAligo('air')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
       </div>
     </div>
     <div class="sum-grid" id="air-summary"></div>
+    <div class="bk-filterbar">
+      <div class="bk-search-row">
+        <span class="bk-search-ico">🔍</span>
+        <input type="text" id="air-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 영문명 · PNR · 항공편 · 항공사 검색  ( / 키로 포커스 )" oninput="renderAir()">
+        <button class="bk-clear" id="air-clear" onclick="airClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
+      </div>
+      <div class="bk-chip-row">
+        <span class="bk-chip-grp" id="air-chip-quick"></span>
+      </div>
+    </div>
     <div class="tbl-wrap">
       <table id="air-table">
         <thead id="air-thead"></thead>
@@ -579,7 +603,8 @@ tr:hover td{background:#EEF3FA}
       </table>
     </div>
     <div class="note" style="margin-top:1rem">
-      <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 APIS·일행별예약에서 자동 보완되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.
+      <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 APIS·일행별예약에서 자동 보완되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.<br>
+      <b>점검 칩</b> · 입력 누락·최신화 누락 건을 잡기 위한 필터입니다. <b>PNR 미등록</b>(미발권), <b>사전좌석 Y</b>(좌석 요청 처리 필요), <b>출발·귀국편 누락</b>(편명 미입력), <b>항공사 불일치</b>(예약리스트의 항공 표기와 APIS 항공사가 어긋남 — 최신화 누락 의심).
     </div>
   </div>
 </div>
@@ -587,7 +612,12 @@ tr:hover td{background:#EEF3FA}
 <!-- ════════ ⑧ 송영 / ⑨ 숙소 / ⑩ 골프 / ⑪ 식사 ════════ -->
 <div class="section" id="sec-transfer">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑧ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑧ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="expandAllPax('transferOut',true);expandAllPax('transferRet',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('transferOut',false);expandAllPax('transferRet',false)">전체 접기</button>
+      </div>
+    </div>
     <div class="sum-grid" id="transfer-summary"></div>
 
     <div class="tf-part-head">🛬 출국 송영표 <span class="tf-part-sub">공항 → 숙소 (입국편 · 현지 도착시간 기준)</span></div>
@@ -601,21 +631,36 @@ tr:hover td{background:#EEF3FA}
 </div>
 <div class="section" id="sec-accom">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑨ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑨ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="expandAllPax('accom',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('accom',false)">전체 접기</button>
+      </div>
+    </div>
     <div class="sum-grid" id="accom-summary"></div>
     <div class="tbl-wrap"><table id="accom-table"><thead id="accom-thead"></thead><tbody id="accom-tbody"></tbody></table></div>
   </div>
 </div>
 <div class="section" id="sec-golf">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑩ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑩ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="expandAllPax('golf',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('golf',false)">전체 접기</button>
+      </div>
+    </div>
     <div class="sum-grid" id="golf-summary"></div>
     <div class="tbl-wrap"><table id="golf-table"><thead id="golf-thead"></thead><tbody id="golf-tbody"></tbody></table></div>
   </div>
 </div>
 <div class="section" id="sec-dinner">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑪ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div></div>
+    <div class="card-head"><div><div class="card-title">⑪ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="expandAllPax('dinner',true)">명단 전체 펼치기</button>
+        <button class="btn-sm" onclick="expandAllPax('dinner',false)">전체 접기</button>
+      </div>
+    </div>
     <div class="sum-grid" id="dinner-summary"></div>
     <div class="tbl-wrap"><table id="dinner-table"><thead id="dinner-thead"></thead><tbody id="dinner-tbody"></tbody></table></div>
   </div>
@@ -1014,6 +1059,47 @@ function parseTeamName(remark){
 /* 비고에서 팀 표기 제외한 특이사항만 */
 function remarkSpecial(remark){
   return String(remark||'').replace(/팀\s*[:：]\s*[^\s\/,·\|]+/i,'').replace(/^[\s\/,·\|]+|[\s\/,·\|]+$/g,'').trim();
+}
+/* ── 비고 섹션 태그 파싱 ──
+   비고를 / 구분으로 쪼개, "골프:내용" 같은 섹션 접두어 조각을 분류.
+   접두어 없는 조각은 공통(common)으로. 팀: 조각은 제외(팀 배지로 따로 처리).
+   반환: { golf:[...], accom:[...], air:[...], transfer:[...], dinner:[...], ins:[...], common:[...] } */
+const REMARK_SEC_ALIAS={
+  '골프':'golf','라운딩':'golf','골프장':'golf',
+  '숙소':'accom','호텔':'accom','객실':'accom','룸':'accom',
+  '항공':'air','비행':'air','좌석':'air','pnr':'air','PNR':'air',
+  '송영':'transfer','픽업':'transfer','이동':'transfer','버스':'transfer','카트':'transfer',
+  '식사':'dinner','식당':'dinner','조식':'dinner','중식':'dinner','석식':'dinner','저녁':'dinner',
+  '보험':'ins'
+};
+function parseRemarkSections(remark){
+  const out={golf:[],accom:[],air:[],transfer:[],dinner:[],ins:[],common:[]};
+  let s=String(remark||'');
+  // 팀: 조각 제거 (팀 배지로 별도 처리)
+  s=s.replace(/팀\s*[:：]\s*[^\s\/,·\|]+/ig,'');
+  // / 또는 · 또는 | 또는 , 로 분리 (전각 콤마 포함)
+  const parts=s.split(/[\/·\|,，]+/).map(x=>x.trim()).filter(Boolean);
+  parts.forEach(part=>{
+    const m=part.match(/^([^\s:：]+)\s*[:：]\s*(.+)$/);
+    if(m){
+      const key=m[1].trim();
+      const sec=REMARK_SEC_ALIAS[key]||REMARK_SEC_ALIAS[key.toLowerCase()];
+      if(sec){ out[sec].push(m[2].trim()); return; }
+    }
+    out.common.push(part);  // 접두어 없거나 미인식 → 공통
+  });
+  return out;
+}
+/* 특정 섹션용 비고 셀 HTML — 해당 섹션 메모는 진하게, 공통은 흐리게 */
+function remarkCellFor(t, section){
+  const r=parseRemarkSections(t.remark);
+  const own=r[section]||[];
+  const common=r.common||[];
+  if(!own.length && !common.length) return '<span class="muted">-</span>';
+  let html='';
+  if(own.length) html+=own.map(x=>`<span class="rmk-hit">${x}</span>`).join(' ');
+  if(common.length) html+=(own.length?' ':'')+common.map(x=>`<span class="rmk-common">${x}</span>`).join(' ');
+  return html;
 }
 
 /* ── 일괄 수정 오버라이드 적용 (구분·호텔·명단·비고) ──
@@ -1467,10 +1553,93 @@ function renderBooking(){
 }
 
 /* ════════════════════════════════════════════════════════════
+   공통: 팀 명단 아코디언 토글 (전 섹션 공용)
+   팀 행에 onclick="togglePax(this,'섹션:seq')", 명단 행에 data-pax="섹션:seq" class="pax-hidden"
+════════════════════════════════════════════════════════════ */
+function togglePax(rowEl, key){
+  const open = rowEl.classList.toggle('open');
+  document.querySelectorAll(`tr[data-pax="${CSS.escape(key)}"]`).forEach(r=>{
+    r.classList.toggle('pax-hidden', !open);
+  });
+}
+/* 섹션 전체 펼치기/접기 */
+function expandAllPax(section, open){
+  document.querySelectorAll(`tr.team-toggle[data-sec="${section}"]`).forEach(r=>{
+    r.classList.toggle('open', open);
+  });
+  document.querySelectorAll(`tr[data-pax^="${section}:"]`).forEach(r=>{
+    r.classList.toggle('pax-hidden', !open);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
    ⑦ 항공 정보 렌더
 ════════════════════════════════════════════════════════════ */
 let airFilter='all';
+const airQuick=new Set();  // 점검 칩: nopnr/seat/flightmiss/airmismatch
 function filterAir(f){ airFilter=f; renderAir(); }
+function airToggleQuick(v){ if(airQuick.has(v)) airQuick.delete(v); else airQuick.add(v); renderAir(); }
+function airClearSearch(){ const el=document.getElementById('air-search'); if(el){ el.value=''; renderAir(); el.focus(); } }
+/* 항공사 불일치: 예약리스트 항공(t.flight) 표기와 APIS 항공사(t.airlines)가 어긋나는지.
+   - 약어/표기 차이를 흡수하기 위해 영문·코드·한글 별칭을 정규화해 비교.
+   - 양쪽 중 한쪽이라도 비면 '불일치'로 보지 않음(누락은 별도 칩). */
+const AIRLINE_ALIAS={
+  'TW':'티웨이','티웨이항공':'티웨이','TWAY':'티웨이','TWAYAIR':'티웨이',
+  'OZ':'아시아나','아시아나항공':'아시아나','ASIANA':'아시아나',
+  'KE':'대한','대한항공':'대한','KOREANAIR':'대한','KOREAN':'대한',
+  'BX':'에어부산','AIRBUSAN':'에어부산',
+  '7C':'제주','제주항공':'제주','JEJUAIR':'제주','JEJU':'제주',
+  'LJ':'진에어','JINAIR':'진에어',
+  'RS':'에어서울','AIRSEOUL':'에어서울',
+  'ZE':'이스타','이스타항공':'이스타','EASTARJET':'이스타',
+  'TG':'타이','타이항공':'타이','THAI':'타이','THAIAIRWAYS':'타이',
+  'VN':'베트남','베트남항공':'베트남','VIETNAM':'베트남','VIETNAMAIRLINES':'베트남'
+};
+function normAirline(s){
+  const raw=String(s||'').trim();
+  // 원문 그대로가 별칭에 있으면 우선 사용 (한글 '대한항공' 등은 공백/항공 제거 전에 매칭)
+  if(AIRLINE_ALIAS[raw]) return AIRLINE_ALIAS[raw];
+  if(AIRLINE_ALIAS[raw.toUpperCase()]) return AIRLINE_ALIAS[raw.toUpperCase()];
+  let x=raw.toUpperCase().replace(/\s|항공|AIR(LINES?)?/g,'').trim();
+  return AIRLINE_ALIAS[x]||x;
+}
+/* 정규화값 → IATA 코드 (티웨이→TW 등). 표시용 코드 병기에 사용 */
+const NORM_TO_CODE={'티웨이':'TW','아시아나':'OZ','대한':'KE','에어부산':'BX','제주':'7C','진에어':'LJ','에어서울':'RS','이스타':'ZE','타이':'TG','베트남':'VN'};
+function airlineCode(s){
+  const raw=String(s||'').trim();
+  // 이미 코드면 그대로
+  if(/^[A-Z0-9]{2}$/i.test(raw)) return raw.toUpperCase();
+  return NORM_TO_CODE[normAirline(raw)]||'';
+}
+/* 항공사 표시명: "티웨이(TW)" 형태. 한글명 우선, 코드 병기 */
+function airlineLabel(s){
+  const raw=String(s||'').trim(); if(!raw) return '';
+  const code=airlineCode(raw);
+  // 한글명(또는 정규화된 이름) + 코드 병기. 원문이 코드뿐이면 정규화 이름을 앞에.
+  const norm=normAirline(raw);
+  const name=/^[A-Z0-9]{2}$/i.test(raw) ? norm : raw.replace(/\s*항공\s*$/,'')||norm;
+  return code && code!==name ? `${name}(${code})` : (name||raw);
+}
+function airMismatch(t){
+  const listSide=normAirline(t.flight);
+  if(!listSide || !(t.airlines&&t.airlines.length)) return false;
+  // APIS 항공사 집합 중 하나라도 예약리스트 표기와 같으면 일치
+  const apisSet=t.airlines.map(normAirline).filter(Boolean);
+  if(!apisSet.length) return false;
+  return !apisSet.includes(listSide);
+}
+function airFlightMissing(t){
+  return !(t.apisDepFlight && t.apisDepFlight!=='-') || !(t.apisRetFlight && t.apisRetFlight!=='-');
+}
+function airRenderChips(){
+  const c=document.getElementById('air-chip-quick'); if(!c) return;
+  const chip=(v,l)=>`<span class="bk-chip ${airQuick.has(v)?'on':''}" onclick="airToggleQuick('${v}')">${l}</span>`;
+  c.innerHTML='<span class="bk-chip-lbl">점검</span>'+
+    chip('nopnr','PNR 미등록')+chip('seat','사전좌석 Y')+
+    chip('flightmiss','출발·귀국편 누락')+chip('airmismatch','항공사 불일치')+
+    `<span class="bk-chip-sep"></span><span class="bk-chip-lbl">출국</span>`+
+    `<span class="bk-chip ${airFilter==='d7'?'on':''}" onclick="filterAir('${airFilter==='d7'?'all':'d7'}')">D-7 이내</span>`;
+}
 const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
 function renderAir(){
   const thead='<tr>'+
@@ -1488,26 +1657,48 @@ function renderAir(){
     sortTh('사전좌석','seat','air')+
     '<th class="center">인원</th>'+
     sortTh('PNR','pnr','air')+
-    sortTh('출국 안내','dday','air')+'</tr>';
+    sortTh('출국 안내','dday','air')+'<th>비고 특이사항</th></tr>';
   document.getElementById('air-thead').innerHTML=thead;
-  let rows=[...teams];
-  if(airFilter==='pnr') rows=rows.filter(t=>t.pnrList&&t.pnrList.length);
-  if(airFilter==='d7') rows=rows.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; });
+  airRenderChips();
+
+  const q=(document.getElementById('air-search')?.value||'').trim().toLowerCase();
+  const cl=document.getElementById('air-clear'); if(cl) cl.style.display=q?'flex':'none';
+  let rows=teams.filter(t=>{
+    if(airFilter==='d7'){ const d=daysUntil(t.dep); if(!(d!==null && d>=0 && d<=7)) return false; }
+    if(airQuick.has('nopnr') && (t.pnrList&&t.pnrList.length)) return false;
+    if(airQuick.has('seat') && !t.seatReq) return false;
+    if(airQuick.has('flightmiss') && !airFlightMissing(t)) return false;
+    if(airQuick.has('airmismatch') && !airMismatch(t)) return false;
+    if(q){
+      const hay=[t.repName,t.eventNo,t.apisOrigin,t.origin,t.flight,(t.airlines||[]).join(' '),
+                 t.apisDepFlight,t.apisRetFlight,(t.pnrList||[]).join(' '),
+                 ...t.pax_list.map(p=>`${p.name} ${p.engFull}`)].map(x=>(x||'').toString().toLowerCase()).join(' ');
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
   rows=sortTeams(rows,'air');
 
   const withPnr=teams.filter(t=>t.pnrList&&t.pnrList.length).length;
   const noPnr=teams.filter(t=>!(t.pnrList&&t.pnrList.length)).length;
   const d7=teams.filter(t=>{ const d=daysUntil(t.dep); return d!==null && d>=0 && d<=7; }).length;
+  const mismatch=teams.filter(airMismatch).length;
+  const flightMiss=teams.filter(airFlightMissing).length;
   document.getElementById('air-summary').innerHTML=`
     <div class="sum-box"><div class="sum-label">PNR 등록 팀</div><div class="sum-val">${withPnr}건</div></div>
     <div class="sum-box"><div class="sum-label">PNR 미등록 팀</div><div class="sum-val ${noPnr>0?'red':''}">${noPnr}건</div></div>
+    <div class="sum-box"><div class="sum-label">편명 누락 팀</div><div class="sum-val ${flightMiss>0?'amber':''}">${flightMiss}건</div></div>
+    <div class="sum-box"><div class="sum-label">항공사 불일치 팀</div><div class="sum-val ${mismatch>0?'amber':''}">${mismatch}건</div></div>
     <div class="sum-box"><div class="sum-label">출국 D-7 이내</div><div class="sum-val ${d7>0?'red':''}">${d7}건</div></div>`;
 
   document.getElementById('air-tbody').innerHTML = rows.map(t=>{
     const pnrHtml = (t.pnrList&&t.pnrList.length)
       ? '<div class="pnr-cell">'+t.pnrList.map(p=>`<span class="pnr-tag">${p}</span>`).join('')+(t.pnrList.length>1?'<div class="muted" style="font-size:9px;margin-top:2px">발권 분리 '+t.pnrList.length+'건</div>':'')+'</div>'
       : '<span class="muted">미발권</span>';
-    const airlineHtml = (t.airlines&&t.airlines.length)?t.airlines.join('<br>'):`<span class="muted">${t.flight||'-'}</span>`;
+    const mm=airMismatch(t);
+    const airlineHtml = (t.airlines&&t.airlines.length)
+      ? t.airlines.map(airlineLabel).join('<br>')+(mm?` <span class="tag tag-status-대기" style="font-size:9px" title="예약리스트 항공: ${t.flight||'-'}">≠ ${airlineLabel(t.flight)||'-'}</span>`:'')
+      : `<span class="muted">${airlineLabel(t.flight)||t.flight||'-'}</span>`;
     const seatCell = t.seatReq?'<span class="ystamp">Y</span>':'<span class="nstamp">N</span>';
     const d=daysUntil(t.dep);
     let notify='<span class="muted">-</span>';
@@ -1516,25 +1707,28 @@ function renderAir(){
       else if(d<=7) notify=`<span class="tag tag-status-대기">D-${d} 출국안내</span>`;
       else notify=`<span class="muted">D-${d}</span>`;
     }
-    // 팀 헤더 행
-    const headRow=`<tr class="air-team-row">
-      <td class="center"><input type="checkbox" class="chk sel-air" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)"></td>
-      <td class="center">${t.no}</td>
+    const key=`air:${t.eventSeq}`;
+    const caret=t.pax_list.length?`<span class="exp-caret">▸</span>`:'<span class="exp-caret" style="opacity:.25">·</span>';
+    // 팀 헤더 행 (클릭으로 명단 토글)
+    const headRow=`<tr class="air-team-row team-toggle" data-sec="air" data-pax-key="${key}" onclick="if(event.target.type!=='checkbox')togglePax(this,'${key}')">
+      <td class="center"><input type="checkbox" class="chk sel-air" data-seq="${t.eventSeq}" ${selectedSeqs.has(t.eventSeq)?'checked':''} onchange="toggleSel('${t.eventSeq}',this.checked)" onclick="event.stopPropagation()"></td>
+      <td class="center">${caret}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
       <td class="center">${t.apisOrigin||t.origin}</td>
       <td style="font-size:11px">${airlineHtml}</td>
-      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'-'}</td>
-      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisRetFlight||'-'}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'<span class="muted">-</span>'}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisRetFlight||'<span class="muted">-</span>'}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
       <td class="center">${seatCell}</td>
       <td class="num">${t.pax}</td>
       <td>${pnrHtml}</td>
       <td class="center">${notify}</td>
+      <td>${remarkCellFor(t,'air')}</td>
     </tr>`;
-    // 일행 하위 행 (대표자 포함 전원, 들여쓰기)
+    // 일행 하위 행 (기본 숨김 — 클릭 시 펼침)
     const paxRows = t.pax_list.length
       ? t.pax_list.map(p=>{
           const bd=p.birth?p.birth.slice(2).replace(/-/g,''):'';
@@ -1542,7 +1736,7 @@ function renderAir(){
           const exp=p.expiry?`~${p.expiry.slice(2).replace(/-/g,'')}`:'';
           const seat=p.seat==='Y'?'<span class="pnr-tag" style="background:var(--amber-dim);color:var(--amber2);border-color:var(--amber)">좌석요청</span>':'';
           const cntry=(p.country&&p.country!=='KR')?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
-          return `<tr class="air-pax-row">
+          return `<tr class="air-pax-row pax-hidden" data-pax="${key}">
             <td></td><td></td><td></td><td></td>
             <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
             <td colspan="2" style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
@@ -1550,80 +1744,107 @@ function renderAir(){
             <td class="center" style="font-family:var(--mono);font-size:11px">${bd}</td>
             <td colspan="2" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span> ${cntry}</td>
             <td class="center">${seat}</td>
-            <td colspan="3"></td>
+            <td colspan="4"></td>
           </tr>`;
         }).join('')
-      : `<tr class="air-pax-row"><td colspan="4"></td><td colspan="11" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+      : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
     return headRow+paxRows;
   }).join('');
   attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
-   ⑥ 보험 정보
+   ⑥ 보험 정보 — DB손해보험 여행자보험 (전원 기본 가입·필수)
+   · 가입 정보는 생년월일·성별만. 여권 정보는 사용하지 않음.
+   · 기본값 = 전원 가입. 제외 요청자만 개인 단위로 제외 처리.
 ════════════════════════════════════════════════════════════ */
-const STORE_INS='mt_notify_insDone';
-let insDone={};
+const STORE_INS_EXCLUDE='mt_notify_insExclude';
+let insExclude={};   // 개인 키("eventSeq#idx") → true (보험 제외자)
 let insFilter='all';
 function filterIns(f){ insFilter=f; renderInsurance(); }
-/* 여권 만료까지 출국일 기준 잔여 개월 */
-function monthsToExpiry(expiry, depDate){
-  if(!expiry||!depDate) return null;
-  const e=new Date(expiry+'T00:00:00'), d=new Date(depDate+'T00:00:00');
-  if(isNaN(e)||isNaN(d)) return null;
-  return (e-d)/(86400000*30.4);
+function insPaxKey(seq,idx){ return `${seq}#${idx}`; }
+function insIsExcluded(seq,idx){ return !!insExclude[insPaxKey(seq,idx)]; }
+/* 보험 가입에 필요한 정보(생년월일·성별) 누락 여부 */
+function insInfoMissing(p){ return !String(p.birth||'').trim() || !String(p.gender||'').trim(); }
+/* 만 나이 (출발일 기준. 출발일 없으면 오늘 기준) */
+function ageAt(birth, refDate){
+  if(!birth) return null;
+  const b=new Date(birth+'T00:00:00'); if(isNaN(b)) return null;
+  const r=refDate? new Date(refDate+'T00:00:00') : new Date();
+  if(isNaN(r)) return null;
+  let age=r.getFullYear()-b.getFullYear();
+  const m=r.getMonth()-b.getMonth();
+  if(m<0 || (m===0 && r.getDate()<b.getDate())) age--;
+  return age;
 }
-const INS_HDR=['No','구분','행사번호','대표고객','출발일자','일행 명단 (영문 · 여권번호 · 만료일 · 국가)','여권 경고','보험가입'];
+
+const INS_HDR=['No','구분','행사번호','대표고객','출발일자','일행 명단 (생년월일 · 성별 · 만나이)','보험 상태','비고 특이사항','제외'];
 function renderInsurance(){
   document.getElementById('ins-thead').innerHTML='<tr>'+INS_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-  // 만료 임박 판정: 팀 내 6개월 미만 여권 보유
-  const hasExpiryWarn=t=>t.pax_list.some(p=>{ const m=monthsToExpiry(p.expiry,t.dep); return m!==null && m<6; });
-  let rows=[...teams];
-  if(insFilter==='expiry') rows=rows.filter(hasExpiryWarn);
-  if(insFilter==='noins') rows=rows.filter(t=>!insDone[t.eventSeq]);
 
-  const warnTeams=teams.filter(hasExpiryWarn).length;
-  const insCnt=teams.filter(t=>insDone[t.eventSeq]).length;
-  const foreignCnt=teams.filter(t=>t.pax_list.some(p=>p.country && p.country!=='KR')).length;
+  // 전체 개인 집계 (가입 = 제외 안 됨, 누락 = 생년월일/성별 빠짐)
+  let totalPax=0, excludedPax=0, missingPax=0;
+  teams.forEach(t=>t.pax_list.forEach((p,idx)=>{
+    totalPax++;
+    if(insIsExcluded(t.eventSeq,idx)) excludedPax++;
+    if(insInfoMissing(p)) missingPax++;
+  }));
+  const insuredPax = totalPax - excludedPax;
+
+  // 팀 필터: 제외자 보유 팀 / 누락자 보유 팀
+  const teamHasExclude=t=>t.pax_list.some((p,idx)=>insIsExcluded(t.eventSeq,idx));
+  const teamHasMissing=t=>t.pax_list.some(p=>insInfoMissing(p));
+  let rows=[...teams];
+  if(insFilter==='exclude') rows=rows.filter(teamHasExclude);
+  if(insFilter==='missing') rows=rows.filter(teamHasMissing);
+
   document.getElementById('ins-summary').innerHTML=`
-    <div class="sum-box"><div class="sum-label">총 팀</div><div class="sum-val">${teams.length}건</div></div>
-    <div class="sum-box"><div class="sum-label">여권 만료 임박 팀</div><div class="sum-val ${warnTeams>0?'red':''}">${warnTeams}건</div></div>
-    <div class="sum-box"><div class="sum-label">외국 여권 포함 팀</div><div class="sum-val">${foreignCnt}건</div></div>
-    <div class="sum-box"><div class="sum-label">보험 가입(수동)</div><div class="sum-val green">${insCnt}/${teams.length}</div></div>`;
+    <div class="sum-box"><div class="sum-label">총 인원</div><div class="sum-val">${totalPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">가입 (기본)</div><div class="sum-val green">${insuredPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">제외</div><div class="sum-val ${excludedPax>0?'red':''}">${excludedPax}명</div></div>
+    <div class="sum-box"><div class="sum-label">정보 누락 (생년월일·성별)</div><div class="sum-val ${missingPax>0?'amber':''}">${missingPax}명</div></div>`;
 
   document.getElementById('ins-tbody').innerHTML = rows.map(t=>{
-    const warn=hasExpiryWarn(t);
-    const warnCell = warn?'<span class="tag tag-status-취소">6개월 미만</span>':'<span class="muted">OK</span>';
-    const checked=insDone[t.eventSeq]?'checked':'';
-    // 팀 헤더 행
-    const headRow=`<tr class="air-team-row">
-      <td class="center">${t.no}</td>
+    const excl=t.pax_list.filter((p,idx)=>insIsExcluded(t.eventSeq,idx)).length;
+    const miss=t.pax_list.filter(p=>insInfoMissing(p)).length;
+    const headStatus = t.pax_list.length
+      ? (excl===t.pax_list.length
+          ? '<span class="tag tag-status-취소">전원 제외</span>'
+          : (excl>0 ? `<span class="tag tag-status-대기">${t.pax_list.length-excl}명 가입 · ${excl}명 제외</span>`
+                    : '<span class="tag tag-status-정산">전원 가입</span>'))
+      : '<span class="muted">명단 없음</span>';
+    const key=`ins:${t.eventSeq}`;
+    const caret=t.pax_list.length?`<span class="exp-caret">▸</span>`:'<span class="exp-caret" style="opacity:.25">·</span>';
+    const headRow=`<tr class="air-team-row team-toggle" data-sec="ins" data-pax-key="${key}" onclick="if(event.target.type!=='checkbox')togglePax(this,'${key}')">
+      <td class="center">${caret}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
       <td>${t.dep}</td>
-      <td class="muted" style="font-size:11px">${t.pax_list.length?`일행 ${t.pax_list.length}명 ▾`:'명단 없음 (APIS·일행별 미연동)'}</td>
-      <td class="center">${warnCell}</td>
-      <td class="center"><input type="checkbox" class="chk" ${checked} onchange="toggleIns('${t.eventSeq}',this.checked)"></td>
+      <td class="muted" style="font-size:11px">${t.pax_list.length?`일행 ${t.pax_list.length}명${miss?` · <span style="color:var(--amber2)">누락 ${miss}</span>`:''}`:'명단 없음 (APIS·일행별 미연동)'}</td>
+      <td class="center">${headStatus}</td>
+      <td>${remarkCellFor(t,'ins')}</td>
+      <td></td>
     </tr>`;
-    // 일행 하위 행 (항공과 동일 패턴 — 영문명·여권번호·만료일·국가·만료경고)
     const paxRows = t.pax_list.length
-      ? t.pax_list.map(p=>{
-          const m=monthsToExpiry(p.expiry,t.dep);
-          const pWarn=(m!==null && m<6);
-          const pass=p.passport?p.passport:'<span class="muted">여권 미등록</span>';
-          const expHtml=p.expiry
-            ? `<span class="${pWarn?'':'muted'}" style="${pWarn?'color:var(--red);font-weight:700':''}">~${p.expiry}${pWarn&&m!==null?` (${m<0?'만료':m.toFixed(1)+'개월'})`:''}</span>`
-            : '<span class="muted">만료일 미등록</span>';
-          const cntry=(p.country&&p.country!=='KR')?`<span class="pnr-tag" style="background:var(--purple-dim);color:var(--purple2);border-color:var(--purple2)">${p.country}</span>`:'';
-          const warnTag=pWarn?'<span class="tag tag-status-취소" style="font-size:9px">만료 임박</span>':'';
-          return `<tr class="air-pax-row">
+      ? t.pax_list.map((p,idx)=>{
+          const excluded=insIsExcluded(t.eventSeq,idx);
+          const missing=insInfoMissing(p);
+          const birth = p.birth ? p.birth : '<span class="tag tag-status-대기" style="font-size:9px">생년월일 없음</span>';
+          const gender = p.gender ? p.gender : '<span class="tag tag-status-대기" style="font-size:9px">성별 없음</span>';
+          const age = ageAt(p.birth, t.dep);
+          const ageHtml = age!==null ? `<span class="pnr-tag" style="background:var(--accent-dim);color:var(--accent2);border-color:var(--accent)">만 ${age}세</span>` : '';
+          const status = excluded
+            ? '<span class="tag tag-status-취소">제외</span>'
+            : (missing ? '<span class="tag tag-status-대기">정보 누락</span>' : '<span class="tag tag-status-정산">가입</span>');
+          return `<tr class="air-pax-row pax-hidden${excluded?' bk-row-cancel':''}" data-pax="${key}">
             <td></td><td></td><td></td>
             <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
             <td style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
-            <td style="font-family:var(--mono);font-size:11px">여권 ${pass} &nbsp; ${expHtml} ${cntry}</td>
-            <td class="center">${warnTag}</td>
+            <td style="font-family:var(--mono);font-size:11px">${birth} &nbsp;·&nbsp; ${gender} &nbsp; ${ageHtml}</td>
+            <td class="center">${status}</td>
             <td></td>
+            <td class="center"><input type="checkbox" class="chk" ${excluded?'checked':''} onchange="toggleInsExclude('${t.eventSeq}',${idx},this.checked)" onclick="event.stopPropagation()" title="가입을 원치 않는 손님만 체크"></td>
           </tr>`;
         }).join('')
       : '';
@@ -1631,19 +1852,47 @@ function renderInsurance(){
   }).join('');
   attachTopScrollbars();
 }
-function toggleIns(seq,val){
-  if(val) insDone[seq]=true; else delete insDone[seq];
-  try{ localStorage.setItem(STORE_INS,JSON.stringify(insDone)); }catch(e){}
-  const cnt=teams.filter(t=>insDone[t.eventSeq]).length;
-  const boxes=document.querySelectorAll('#ins-summary .sum-val');
-  if(boxes[3]) boxes[3].textContent=`${cnt}/${teams.length}`;
+function toggleInsExclude(seq,idx,val){
+  const k=insPaxKey(seq,idx);
+  if(val) insExclude[k]=true; else delete insExclude[k];
+  try{ localStorage.setItem(STORE_INS_EXCLUDE,JSON.stringify(insExclude)); }catch(e){}
+  renderInsurance();
+}
+
+/* 송영/숙소/골프/식사 공통: 팀 명단 하위 행 HTML (기본 숨김)
+   colspanFull = 해당 표의 전체 컬럼 수. 명단은 [이름 · 영문 · 성별 · 생년월일]만 간단히. */
+function paxAccordionRows(t, section, colspanFull){
+  const key=`${section}:${t.eventSeq}`;
+  if(!t.pax_list.length){
+    return `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="${colspanFull}" class="muted" style="font-size:11px">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+  }
+  return `<tr class="pax-subhead pax-hidden" data-pax="${key}"><td colspan="${colspanFull}">└ 일행 명단 ${t.pax_list.length}명 — 이름 · 영문 · 성별 · 생년월일</td></tr>`
+    + t.pax_list.map(p=>{
+        const bd=p.birth||'';
+        return `<tr class="air-pax-row pax-hidden" data-pax="${key}">
+          <td colspan="${colspanFull}" style="font-size:11px;padding-left:18px">
+            <span class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</span>
+            &nbsp; <span style="font-family:var(--mono)">${p.engFull||'<span class="muted">영문명 없음</span>'}</span>
+            &nbsp;·&nbsp; ${p.gender||'<span class="muted">-</span>'}
+            &nbsp;·&nbsp; <span style="font-family:var(--mono)">${bd||'<span class="muted">생년월일 없음</span>'}</span>
+          </td>
+        </tr>`;
+      }).join('');
+}
+/* 팀 행 첫 칸에 펼침 화살표 + 클릭 토글 속성 부여용 */
+function teamRowAttrs(t, section){
+  const key=`${section}:${t.eventSeq}`;
+  return `class="team-toggle" data-sec="${section}" onclick="togglePax(this,'${key}')"`;
+}
+function caretFor(t){
+  return t.pax_list.length?`<span class="exp-caret">▸</span>`:'<span class="exp-caret" style="opacity:.25">·</span>';
 }
 
 /* ════════════════════════════════════════════════════════════
    ⑧ 송영 정보
 ════════════════════════════════════════════════════════════ */
-const TRANSFER_OUT_HDR=['No','구분','행사번호','대표고객','인원','출발지','입국편','한국 출발','현지 도착','현지 도착일','숙소'];
-const TRANSFER_RET_HDR=['No','구분','행사번호','대표고객','인원','출발지','귀국편','현지 출발','현지 출발일','숙소'];
+const TRANSFER_OUT_HDR=['No','구분','행사번호','대표고객','인원','출발지','입국편','한국 출발','현지 도착','현지 도착일','숙소','비고 특이사항'];
+const TRANSFER_RET_HDR=['No','구분','행사번호','대표고객','인원','출발지','귀국편','현지 출발','현지 출발일','숙소','비고 특이사항'];
 function renderTransfer(){
   const accomTeams=teams.filter(t=>t.accom);
   const totPax=accomTeams.reduce((s,t)=>s+t.pax,0);
@@ -1657,8 +1906,8 @@ function renderTransfer(){
   document.getElementById('transfer-out-thead').innerHTML='<tr>'+TRANSFER_OUT_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   document.getElementById('transfer-out-tbody').innerHTML = accomTeams.map(t=>{
     const depFlight=t.arrDepFlight||t.apisDepFlight||'-';
-    return `<tr>
-      <td class="center">${t.no}</td>
+    const headRow=`<tr ${teamRowAttrs(t,'transferOut')}>
+      <td class="center">${caretFor(t)}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
@@ -1669,15 +1918,17 @@ function renderTransfer(){
       <td class="center" style="font-family:var(--mono)">${t.arrTimeJP||'-'}</td>
       <td class="center">${t.arrDateLocal||'-'}</td>
       <td>${accomTag(t.accom)}</td>
+      <td>${remarkCellFor(t,'transfer')}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="11" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
+    return headRow+paxAccordionRows(t,'transferOut',TRANSFER_OUT_HDR.length);
+  }).join('') || `<tr><td colspan="12" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
 
   // 귀국 송영표
   document.getElementById('transfer-ret-thead').innerHTML='<tr>'+TRANSFER_RET_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   document.getElementById('transfer-ret-tbody').innerHTML = accomTeams.map(t=>{
     const retFlight=t.arrRetFlight||t.apisRetFlight||'-';
-    return `<tr>
-      <td class="center">${t.no}</td>
+    const headRow=`<tr ${teamRowAttrs(t,'transferRet')}>
+      <td class="center">${caretFor(t)}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
@@ -1687,15 +1938,17 @@ function renderTransfer(){
       <td class="center" style="font-family:var(--mono)">${t.retTimeJP||'-'}</td>
       <td class="center">${t.depDateLocal||'-'}</td>
       <td>${accomTag(t.accom)}</td>
+      <td>${remarkCellFor(t,'transfer')}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="10" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
+    return headRow+paxAccordionRows(t,'transferRet',TRANSFER_RET_HDR.length);
+  }).join('') || `<tr><td colspan="11" class="center muted" style="padding:24px">송영 대상(숙박 예약) 팀이 없습니다.</td></tr>`;
   attachTopScrollbars();
 }
 
 /* ════════════════════════════════════════════════════════════
    ⑨ 숙소 정보
 ════════════════════════════════════════════════════════════ */
-const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입','기간','인원','출발일자','도착일자'];
+const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입','기간','인원','출발일자','도착일자','비고 특이사항'];
 const ACCOM_ORDER=['아소 야마나미 골프텔','아소 야마나미 관내별장','아소 야마나미 돔하우스','야마나미 쿠주힐즈','간지호텔','시즈노야도 료칸','포틴힐즈CC 골프텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC 골프텔','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 시내 호텔','구마모토 시내 호텔','국제공항CC 골프텔','닐라이스프링스 리조트'];
 function renderAccom(){
   document.getElementById('accom-thead').innerHTML='<tr>'+ACCOM_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
@@ -1719,10 +1972,10 @@ function renderAccom(){
     if(t.accom!==prev){
       prev=t.accom;
       const grp=sorted.filter(x=>x.accom===t.accom);
-      header=`<tr class="tr-section"><td colspan="10">◎ ${t.accom} — ${grp.length}건 · ${grp.reduce((s,x)=>s+x.pax,0)}명</td></tr>`;
+      header=`<tr class="tr-section"><td colspan="11">◎ ${t.accom} — ${grp.length}건 · ${grp.reduce((s,x)=>s+x.pax,0)}명</td></tr>`;
     }
-    return header+`<tr>
-      <td class="center">${t.no}</td>
+    const headRow=`<tr ${teamRowAttrs(t,'accom')}>
+      <td class="center">${caretFor(t)}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
@@ -1732,7 +1985,9 @@ function renderAccom(){
       <td class="num">${t.pax}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
+      <td>${remarkCellFor(t,'accom')}</td>
     </tr>`;
+    return header+headRow+paxAccordionRows(t,'accom',ACCOM_HDR.length);
   }).join('');
   attachTopScrollbars();
 }
@@ -1740,7 +1995,7 @@ function renderAccom(){
 /* ════════════════════════════════════════════════════════════
    ⑩ 골프 정보
 ════════════════════════════════════════════════════════════ */
-const GOLF_HDR=['No','구분','행사번호','대표고객','출발지','지역','골프장','상품명','기간','인원','출발일자','도착일자'];
+const GOLF_HDR=['No','구분','행사번호','대표고객','출발지','지역','골프장','상품명','기간','인원','출발일자','도착일자','비고 특이사항'];
 function renderGolf(){
   document.getElementById('golf-thead').innerHTML='<tr>'+GOLF_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const golfTeams=teams.filter(t=>t.accom);
@@ -1750,8 +2005,9 @@ function renderGolf(){
   document.getElementById('golf-summary').innerHTML=Object.entries(byCourse).sort((a,b)=>b[1].teams-a[1].teams).map(([c,v])=>
     `<div class="sum-box"><div class="sum-label">${c}</div><div class="sum-val">${v.teams}건 · ${v.pax}명</div></div>`).join('');
 
-  document.getElementById('golf-tbody').innerHTML = golfTeams.map(t=>`<tr>
-      <td class="center">${t.no}</td>
+  document.getElementById('golf-tbody').innerHTML = golfTeams.map(t=>{
+    const headRow=`<tr ${teamRowAttrs(t,'golf')}>
+      <td class="center">${caretFor(t)}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
@@ -1763,7 +2019,10 @@ function renderGolf(){
       <td class="num">${t.pax}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
-    </tr>`).join('');
+      <td>${remarkCellFor(t,'golf')}</td>
+    </tr>`;
+    return headRow+paxAccordionRows(t,'golf',GOLF_HDR.length);
+  }).join('');
   attachTopScrollbars();
 }
 
@@ -1782,8 +2041,9 @@ function renderDinner(){
     <div class="sum-box"><div class="sum-label">식사 대상 인원</div><div class="sum-val">${totPax}명</div></div>
     <div class="sum-box"><div class="sum-label">연인박(인×박)</div><div class="sum-val">${totNights.toLocaleString()}</div></div>`;
 
-  document.getElementById('dinner-tbody').innerHTML = accomTeams.map(t=>`<tr>
-      <td class="center">${t.no}</td>
+  document.getElementById('dinner-tbody').innerHTML = accomTeams.map(t=>{
+    const headRow=`<tr ${teamRowAttrs(t,'dinner')}>
+      <td class="center">${caretFor(t)}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
@@ -1792,8 +2052,10 @@ function renderDinner(){
       <td class="num">${t.pax}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
-      <td class="muted">${t.special||'-'}</td>
-    </tr>`).join('');
+      <td>${remarkCellFor(t,'dinner')}</td>
+    </tr>`;
+    return headRow+paxAccordionRows(t,'dinner',DINNER_HDR.length);
+  }).join('');
   attachTopScrollbars();
 }
 
@@ -2797,7 +3059,7 @@ function savePersist(){
   try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides)); }catch(e){}
 }
 function loadPersist(){
-  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insDone=JSON.parse(localStorage.getItem(STORE_INS)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insDone={}; vAdjust={}; editOverrides={}; }
+  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insExclude={}; vAdjust={}; editOverrides={}; }
 }
 
 /* ════════════════════════════════════════════════════════════
