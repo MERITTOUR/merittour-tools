@@ -84,6 +84,9 @@ a{color:inherit}
 .btn-primary:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
 .btn-sm{padding:5px 12px;font-size:11px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .2s}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent2)}
+.btn-sm.btn-on{background:var(--accent);border-color:var(--accent);color:#fff}
+.hd-sep{width:1px;height:18px;background:var(--border);margin:0 2px}
+.hd-lbl{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.02em}
 
 /* TABLE */
 .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
@@ -555,12 +558,13 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head">
       <div><div class="card-title">⑥ 보험 정보</div><div class="card-sub">DB손해보험 여행자보험 — 전원 기본 가입(필수). 가입 정보는 생년월일·성별만 필요 · 제외 요청자만 개인 단위로 제외</div></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-sm" onclick="expandAllPax('ins',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('ins',false)">전체 접기</button>
-        <button class="btn-sm" onclick="filterIns('all')">전체</button>
-        <button class="btn-sm" onclick="filterIns('exclude')">제외자만</button>
-        <button class="btn-sm" onclick="filterIns('missing')">정보 누락만</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm" id="ins-pax-toggle" onclick="toggleAllPax(this,['ins'])">명단 전체 펼치기</button>
+        <span class="hd-sep"></span>
+        <span class="hd-lbl">표시</span>
+        <button class="btn-sm ins-filter-btn" data-f="all" onclick="filterIns('all')">전체</button>
+        <button class="btn-sm ins-filter-btn" data-f="exclude" onclick="filterIns('exclude')">제외자만</button>
+        <button class="btn-sm ins-filter-btn" data-f="missing" onclick="filterIns('missing')">정보 누락만</button>
       </div>
     </div>
     <div class="sum-grid" id="ins-summary"></div>
@@ -579,8 +583,7 @@ tr:hover td{background:#EEF3FA}
     <div class="card-head">
       <div><div class="card-title">⑦ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 출국 1주일 전 안내</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-sm" onclick="expandAllPax('air',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('air',false)">전체 접기</button>
+        <button class="btn-sm" id="air-pax-toggle" onclick="toggleAllPax(this,['air'])">명단 전체 펼치기</button>
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박</button>
         <button class="btn-sm" onclick="exportAligo('air')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
       </div>
@@ -589,7 +592,7 @@ tr:hover td{background:#EEF3FA}
     <div class="bk-filterbar">
       <div class="bk-search-row">
         <span class="bk-search-ico">🔍</span>
-        <input type="text" id="air-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 영문명 · PNR · 항공편 · 항공사 검색  ( / 키로 포커스 )" oninput="renderAir()">
+        <input type="text" id="air-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 영문명 · PNR · 항공편 · 항공사 · 출발지(인천·ICN) 검색  ( / 키로 포커스 )" oninput="renderAir()">
         <button class="bk-clear" id="air-clear" onclick="airClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
       </div>
       <div class="bk-chip-row">
@@ -604,7 +607,8 @@ tr:hover td{background:#EEF3FA}
     </div>
     <div class="note" style="margin-top:1rem">
       <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 APIS·일행별예약에서 자동 보완되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.<br>
-      <b>점검 칩</b> · 입력 누락·최신화 누락 건을 잡기 위한 필터입니다. <b>PNR 미등록</b>(미발권), <b>사전좌석 Y</b>(좌석 요청 처리 필요), <b>출발·귀국편 누락</b>(편명 미입력), <b>항공사 불일치</b>(예약리스트의 항공 표기와 APIS 항공사가 어긋남 — 최신화 누락 의심).
+      <b>점검 칩</b> · 입력 누락·최신화 누락 건을 잡기 위한 필터입니다. <b>PNR 미등록</b>(미발권), <b>사전좌석 Y</b>(좌석 요청 처리 필요), <b>출발·귀국편 누락</b>(편명 미입력), <b>항공사 불일치</b>(예약리스트의 항공 표기와 APIS 항공사가 어긋남 — 최신화 누락 의심).<br>
+      <b>출발지 칩</b> · 인천·김해·대구 등 출발 공항별로 거를 수 있습니다(데이터에 있는 출발지로 자동 생성, 복수 선택 가능).
     </div>
   </div>
 </div>
@@ -614,8 +618,7 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head"><div><div class="card-title">⑧ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn-sm" onclick="expandAllPax('transferOut',true);expandAllPax('transferRet',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('transferOut',false);expandAllPax('transferRet',false)">전체 접기</button>
+        <button class="btn-sm" id="transfer-pax-toggle" onclick="toggleAllPax(this,['transferOut','transferRet'])">명단 전체 펼치기</button>
       </div>
     </div>
     <div class="sum-grid" id="transfer-summary"></div>
@@ -633,8 +636,7 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head"><div><div class="card-title">⑨ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn-sm" onclick="expandAllPax('accom',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('accom',false)">전체 접기</button>
+        <button class="btn-sm" id="accom-pax-toggle" onclick="toggleAllPax(this,['accom'])">명단 전체 펼치기</button>
       </div>
     </div>
     <div class="sum-grid" id="accom-summary"></div>
@@ -645,8 +647,7 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head"><div><div class="card-title">⑩ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn-sm" onclick="expandAllPax('golf',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('golf',false)">전체 접기</button>
+        <button class="btn-sm" id="golf-pax-toggle" onclick="toggleAllPax(this,['golf'])">명단 전체 펼치기</button>
       </div>
     </div>
     <div class="sum-grid" id="golf-summary"></div>
@@ -657,8 +658,7 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head"><div><div class="card-title">⑪ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn-sm" onclick="expandAllPax('dinner',true)">명단 전체 펼치기</button>
-        <button class="btn-sm" onclick="expandAllPax('dinner',false)">전체 접기</button>
+        <button class="btn-sm" id="dinner-pax-toggle" onclick="toggleAllPax(this,['dinner'])">명단 전체 펼치기</button>
       </div>
     </div>
     <div class="sum-grid" id="dinner-summary"></div>
@@ -1571,14 +1571,42 @@ function expandAllPax(section, open){
     r.classList.toggle('pax-hidden', !open);
   });
 }
+/* 단일 토글 버튼: 현재 상태를 보고 전체 펼침↔접힘 전환, 라벨도 갱신.
+   sections: 토글 대상 섹션 키 배열(송영처럼 표 2개면 복수). */
+function toggleAllPax(btn, sections){
+  // 현재 하나라도 펼쳐져 있으면 → 전체 접기, 아니면 → 전체 펼치기
+  const anyOpen = sections.some(sec =>
+    document.querySelector(`tr.team-toggle[data-sec="${sec}"].open`) !== null);
+  const open = !anyOpen;
+  sections.forEach(sec => expandAllPax(sec, open));
+  if(btn) btn.textContent = open ? '명단 전체 접기' : '명단 전체 펼치기';
+}
 
 /* ════════════════════════════════════════════════════════════
    ⑦ 항공 정보 렌더
 ════════════════════════════════════════════════════════════ */
 let airFilter='all';
 const airQuick=new Set();  // 점검 칩: nopnr/seat/flightmiss/airmismatch
+const airOrigin=new Set(); // 출발지 칩 (비어있으면 전체)
 function filterAir(f){ airFilter=f; renderAir(); }
 function airToggleQuick(v){ if(airQuick.has(v)) airQuick.delete(v); else airQuick.add(v); renderAir(); }
+function airToggleOrigin(v){ if(v==='전체'){ airOrigin.clear(); } else { if(airOrigin.has(v)) airOrigin.delete(v); else airOrigin.add(v); } renderAir(); }
+function airOriginOf(t){ return (t.apisOrigin||t.origin||'').trim(); }
+/* 공항 한글명 ↔ IATA 코드 (출발지 코드 검색용) */
+const AIRPORT_CODE={
+  '인천':'ICN','김해':'PUS','부산':'PUS','대구':'TAE','제주':'CJU','청주':'CJA',
+  '무안':'MWX','김포':'GMP','광주':'KWJ','양양':'YNY','울산':'USN','여수':'RSU',
+  '하노이':'HAN','다낭':'DAD','방콕':'BKK','쿠알라룸푸르':'KUL','나리타':'NRT','후쿠오카':'FUK','구마모토':'KMJ'
+};
+/* 출발지 표기에 대응하는 검색 토큰들(한글명 + 코드, 양방향) */
+function originSearchTokens(s){
+  const raw=String(s||'').trim(); if(!raw) return '';
+  const toks=[raw];
+  if(AIRPORT_CODE[raw]) toks.push(AIRPORT_CODE[raw]);
+  // 입력이 코드면 한글명도 토큰에 추가
+  for(const [kor,code] of Object.entries(AIRPORT_CODE)){ if(code===raw.toUpperCase()) toks.push(kor); }
+  return toks.join(' ');
+}
 function airClearSearch(){ const el=document.getElementById('air-search'); if(el){ el.value=''; renderAir(); el.focus(); } }
 /* 항공사 불일치: 예약리스트 항공(t.flight) 표기와 APIS 항공사(t.airlines)가 어긋나는지.
    - 약어/표기 차이를 흡수하기 위해 영문·코드·한글 별칭을 정규화해 비교.
@@ -1634,11 +1662,21 @@ function airFlightMissing(t){
 function airRenderChips(){
   const c=document.getElementById('air-chip-quick'); if(!c) return;
   const chip=(v,l)=>`<span class="bk-chip ${airQuick.has(v)?'on':''}" onclick="airToggleQuick('${v}')">${l}</span>`;
+  // 출발지: 데이터에 실제 존재하는 값으로 동적 생성 (인천·김해·대구 우선 정렬)
+  const ORDER=['인천','김해','대구','제주','청주','무안'];
+  const origins=[...new Set(teams.map(airOriginOf).filter(Boolean))]
+    .sort((a,b)=>{ const ia=ORDER.indexOf(a), ib=ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b); });
+  const originChips = origins.length
+    ? `<span class="bk-chip-sep"></span><span class="bk-chip-lbl">출발지</span>`+
+      `<span class="bk-chip ${airOrigin.size===0?'on':''}" onclick="airToggleOrigin('전체')">전체</span>`+
+      origins.map(o=>{ const n=teams.filter(t=>airOriginOf(t)===o).length; const c=AIRPORT_CODE[o]?` ${AIRPORT_CODE[o]}`:''; return `<span class="bk-chip ${airOrigin.has(o)?'on':''}" onclick="airToggleOrigin('${o}')">${o}${c} (${n})</span>`; }).join('')
+    : '';
   c.innerHTML='<span class="bk-chip-lbl">점검</span>'+
     chip('nopnr','PNR 미등록')+chip('seat','사전좌석 Y')+
     chip('flightmiss','출발·귀국편 누락')+chip('airmismatch','항공사 불일치')+
     `<span class="bk-chip-sep"></span><span class="bk-chip-lbl">출국</span>`+
-    `<span class="bk-chip ${airFilter==='d7'?'on':''}" onclick="filterAir('${airFilter==='d7'?'all':'d7'}')">D-7 이내</span>`;
+    `<span class="bk-chip ${airFilter==='d7'?'on':''}" onclick="filterAir('${airFilter==='d7'?'all':'d7'}')">D-7 이내</span>`+
+    originChips;
 }
 const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
 function renderAir(){
@@ -1665,12 +1703,14 @@ function renderAir(){
   const cl=document.getElementById('air-clear'); if(cl) cl.style.display=q?'flex':'none';
   let rows=teams.filter(t=>{
     if(airFilter==='d7'){ const d=daysUntil(t.dep); if(!(d!==null && d>=0 && d<=7)) return false; }
+    if(airOrigin.size>0 && !airOrigin.has(airOriginOf(t))) return false;
     if(airQuick.has('nopnr') && (t.pnrList&&t.pnrList.length)) return false;
     if(airQuick.has('seat') && !t.seatReq) return false;
     if(airQuick.has('flightmiss') && !airFlightMissing(t)) return false;
     if(airQuick.has('airmismatch') && !airMismatch(t)) return false;
     if(q){
-      const hay=[t.repName,t.eventNo,t.apisOrigin,t.origin,t.flight,(t.airlines||[]).join(' '),
+      const hay=[t.repName,t.eventNo,originSearchTokens(airOriginOf(t)),t.flight,
+                 (t.airlines||[]).map(a=>`${a} ${airlineLabel(a)} ${airlineCode(a)}`).join(' '),
                  t.apisDepFlight,t.apisRetFlight,(t.pnrList||[]).join(' '),
                  ...t.pax_list.map(p=>`${p.name} ${p.engFull}`)].map(x=>(x||'').toString().toLowerCase()).join(' ');
       if(!hay.includes(q)) return false;
@@ -1751,6 +1791,7 @@ function renderAir(){
     return headRow+paxRows;
   }).join('');
   attachTopScrollbars();
+  const tg=document.getElementById('air-pax-toggle'); if(tg) tg.textContent='명단 전체 펼치기';
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1761,7 +1802,14 @@ function renderAir(){
 const STORE_INS_EXCLUDE='mt_notify_insExclude';
 let insExclude={};   // 개인 키("eventSeq#idx") → true (보험 제외자)
 let insFilter='all';
-function filterIns(f){ insFilter=f; renderInsurance(); }
+function filterIns(f){ insFilter=f; renderInsurance(); syncInsUI(); }
+function syncInsUI(){
+  document.querySelectorAll('.ins-filter-btn').forEach(b=>{
+    b.classList.toggle('btn-on', b.dataset.f===insFilter);
+  });
+  // 필터로 행이 다시 그려지면 펼침 상태가 초기화되므로 토글 라벨도 펼치기로
+  const tg=document.getElementById('ins-pax-toggle'); if(tg) tg.textContent='명단 전체 펼치기';
+}
 function insPaxKey(seq,idx){ return `${seq}#${idx}`; }
 function insIsExcluded(seq,idx){ return !!insExclude[insPaxKey(seq,idx)]; }
 /* 보험 가입에 필요한 정보(생년월일·성별) 누락 여부 */
@@ -1851,6 +1899,7 @@ function renderInsurance(){
     return headRow+paxRows;
   }).join('');
   attachTopScrollbars();
+  syncInsUI();
 }
 function toggleInsExclude(seq,idx,val){
   const k=insPaxKey(seq,idx);
