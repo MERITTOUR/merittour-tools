@@ -168,6 +168,7 @@ tr:hover td{background:#EEF3FA}
 .tag-shiz{background:#CCFBF1;color:#0F766E;border:1px solid #5EEAD4}
 .tag-kuzu{background:#E8EDF5;color:#3E4F6B;border:1px solid #B4C0D6}
 .tag-excl{background:#F1F5F9;color:#64748B;border:1px solid #CBD5E1}
+.tag-agency{background:#FEF3E2;color:#B45309;border:1px solid #FCD9A8}
 .tag-team{font-family:var(--mono);font-weight:700;cursor:pointer}
 .ystamp{display:inline-block;width:18px;text-align:center;font-weight:700;color:var(--green2)}
 .nstamp{display:inline-block;width:18px;text-align:center;color:var(--text3)}
@@ -563,7 +564,7 @@ tr:hover td{background:#EEF3FA}
     <div class="bk-filterbar">
       <div class="bk-search-row">
         <span class="bk-search-ico">🔍</span>
-        <input type="text" id="bk-search" class="bk-search-input" placeholder="이름 · 행사번호 · 연락처 · 회원권 · 출발지 검색  ( / 키로 포커스 )" oninput="renderBooking()">
+        <input type="text" id="bk-search" class="bk-search-input" placeholder="이름 · 행사번호 · 연락처 · 회원권 · 출발지 · 여행사 검색  ( / 키로 포커스 )" oninput="renderBooking()">
         <button class="bk-clear" id="bk-clear" onclick="bkClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
       </div>
       <div class="bk-chip-row">
@@ -1067,6 +1068,7 @@ function won(v){ return '₩'+num(v).toLocaleString(); }
 /* 상품명 → 숙소/룸타입/지역/골프장 분류 (호텔블록 mapProduct 기준 전체 이식) */
 function parseProduct(name){
   name=String(name||'');
+  const isAgency=/^\s*여행사/.test(name);   // 상품명이 "여행사"로 시작 → 여행사 상품
   let s=name.trim().replace(/^여행사\s*/,'').replace(/^\[[^\]]*\]\s*/,'');
   const up=s.toUpperCase();
   let accom='', roomType='', region='', golf='';
@@ -1106,7 +1108,7 @@ function parseProduct(name){
   else if(s.indexOf('국제공항')>=0){ accom='국제공항CC 골프텔'; roomType='트윈'; region='미야자키'; golf='국제공항CC'; }
 
   const m=name.match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
-  return {accom, roomType, region, golf, nights};
+  return {accom, roomType, region, golf, nights, isAgency};
 }
 /* 숙소 → 태그 색상 (야마나미 직영 계열 블루, 그 외 회색) */
 function accomTag(accom){
@@ -1314,7 +1316,7 @@ function analyze(){
   valid.forEach(r=>{
     const seq=String(r['eventSeq']||'').trim();
     const prodName=String(r['상품명']||'');
-    const {accom,roomType,region,golf,nights}=parseProduct(prodName);
+    const {accom,roomType,region,golf,nights,isAgency}=parseProduct(prodName);
     const remark=String(r['비고']||'');
     const dep=fmtDate(r['출발일자']);
     const arr=fmtDate(r['도착일자']);
@@ -1330,7 +1332,7 @@ function analyze(){
       dep, arr, period,
       origin: String(r['출발지']||'').trim(),
       flight: String(r['항공']||'').trim(),
-      prodName, accom, roomType, region, golf, nights,
+      prodName, accom, roomType, region, golf, nights, isAgency,
       pax: num(r['예약']),
       sales: num(r['판매금액']),
       due: num(r['미수금액']),
@@ -1429,7 +1431,7 @@ function analyze(){
   resData.filter(r=>String(r['구분']||'').trim()==='취소' && !r['cancCd']).forEach(r=>{
     const seq=String(r['eventSeq']||'').trim();
     const prodName=String(r['상품명']||'');
-    const {accom,roomType,region,golf,nights}=parseProduct(prodName);
+    const {accom,roomType,region,golf,nights,isAgency}=parseProduct(prodName);
     const remark=String(r['비고']||'');
     cancelledTeams.push({
       eventSeq: seq,
@@ -1445,7 +1447,7 @@ function analyze(){
       period: String(r['기간']||'').trim() || (nights?`${nights}박`:''),
       origin: String(r['출발지']||'').trim(),
       flight: String(r['항공']||'').trim(),
-      prodName, accom, roomType, region, golf, nights,
+      prodName, accom, roomType, region, golf, nights, isAgency,
       pax: num(r['예약']),
       sales: num(r['판매금액']),    // 취소 후 남은 청구액(패널티 등)일 수 있음
       due: num(r['미수금액']),      // 취소 패널티 미수 등
@@ -1527,7 +1529,7 @@ function bkFilteredTeams(){
     if(from && t.dep && t.dep<from) return false;
     if(to && t.dep && t.dep>to) return false;
     if(q){
-      const hay=[t.repName,t.eventNo,t.repPhone,t.memberType,t.apisOrigin,t.origin,t.prodName,t.accom,weekday(t.dep),(teamAssign[t.eventSeq]||t.teamAuto||'')].map(x=>(x||'').toString().toLowerCase()).join(' ');
+      const hay=[t.repName,t.eventNo,t.repPhone,t.memberType,t.apisOrigin,t.origin,t.prodName,t.accom,weekday(t.dep),(teamAssign[t.eventSeq]||t.teamAuto||''),(t.isAgency?'여행사 여행사상품':'')].map(x=>(x||'').toString().toLowerCase()).join(' ');
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -1571,12 +1573,14 @@ function renderBooking(){
   const totDue=fteams.reduce((s,t)=>s+t.due,0);
   const dueTeams=fteams.filter(t=>t.due>0).length;
   const totPax=fteams.reduce((s,t)=>s+t.pax,0);
+  const agencyCnt=fteams.filter(t=>t.isAgency).length;
   document.getElementById('booking-summary').innerHTML=`
     <div class="sum-box"><div class="sum-label">예약 건수${filtered?' (필터)':''}</div><div class="sum-val">${fteams.length}건</div></div>
     <div class="sum-box"><div class="sum-label">총 인원</div><div class="sum-val">${totPax}명</div></div>
     <div class="sum-box"><div class="sum-label">총 판매금액</div><div class="sum-val">${won(totSales)}</div></div>
     <div class="sum-box"><div class="sum-label">총 미수금액</div><div class="sum-val ${totDue>0?'red':'green'}">${won(totDue)}</div></div>
-    <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>`;
+    <div class="sum-box"><div class="sum-label">미수 발생 팀</div><div class="sum-val ${dueTeams>0?'red':''}">${dueTeams}건</div></div>
+    <div class="sum-box"><div class="sum-label">여행사 상품</div><div class="sum-val" style="color:${agencyCnt>0?'#B45309':'var(--text3)'}">${agencyCnt}건</div></div>`;
   // 결과 카운트
   const rc=document.getElementById('bk-result-count');
   if(rc) rc.textContent = filtered ? `${fteams.length} / ${baseCount}건 표시` : `전체 ${baseCount}건`;
@@ -1609,7 +1613,7 @@ function renderBooking(){
       <td class="center">${weekday(t.dep)}</td>
       <td class="center">${t.apisOrigin||t.origin}</td>
       <td>${t.flight}</td>
-      <td>${accomTag(t.accom)} <span class="muted" style="font-size:10px">${t.roomType}</span></td>
+      <td>${accomTag(t.accom)} <span class="muted" style="font-size:10px">${t.roomType}</span>${t.isAgency?' <span class="tag tag-agency" title="여행사 상품">여행사</span>':''}</td>
       <td class="num">${t.pax}</td>
       <td class="num">${won(t.sales)}</td>
       <td class="num" style="color:${t.due>0?'var(--red)':'var(--text3)'}">${t.due>0?won(t.due):'-'}</td>
