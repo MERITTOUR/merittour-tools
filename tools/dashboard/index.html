@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR 통합 업무 허브</title>
-<script src="../../shared/gate.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -33,12 +31,12 @@ a{color:inherit}
 
 /* HEADER */
 .header{background:var(--surface);border-bottom:2px solid var(--navy);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
-.logo-bar{width:4px;height:22px;background:var(--navy);border-radius:2px;margin-right:2px}
+.logo-bar{width:4px;height:30px;background:var(--navy);border-radius:2px;margin-right:2px}
 .logo{display:flex;align-items:center;gap:12px}
 .logo:hover{opacity:.7;transition:opacity .15s}
-.logo-img{height:20px;width:auto;display:block}
+.logo-img{height:26px;width:auto;display:block}
 .logo-img path,.logo-img polygon,.logo-img rect{fill:var(--navy)}
-.logo-divider{width:1px;height:16px;background:var(--border2)}
+.logo-divider{width:1px;height:22px;background:var(--border2)}
 .logo-text{font-size:14px;font-weight:700;letter-spacing:.01em;color:var(--navy)}
 .logo-sub{font-size:12px;color:var(--text2);font-weight:500}
 .header-right{display:flex;align-items:center;gap:6px}
@@ -361,9 +359,56 @@ tr:hover td{background:#EEF3FA}
 /* 공지 모달 */
 .notice-canvas-wrap{background:#e9edf2;padding:18px;border-radius:10px;overflow:auto;max-height:60vh}
 .notice{width:720px;margin:0 auto;background:#fff;font-family:var(--sans);color:var(--text)}
+/* ── 항공 발권 안내문 (고객 발송용) ── */
+.tn-canvas-wrap{background:#e9edf2;padding:18px;border-radius:10px;overflow:auto;max-height:64vh}
+.tn-doc{width:760px;margin:0 auto;background:#fff;color:#2a2f3a;font-family:var(--sans);line-height:1.7;font-size:16px}
+.tn-hd{background:#1a2332;color:#fff;padding:44px 48px 38px}
+.tn-brand{font-size:12px;letter-spacing:.22em;color:#9fb0c8;font-weight:600;margin-bottom:22px}
+.tn-tag{display:inline-block;font-size:12px;letter-spacing:.04em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#dbe4f0;padding:4px 13px;border-radius:4px;margin-bottom:16px}
+.tn-title{font-family:var(--sans);font-weight:700;font-size:30px;letter-spacing:-.01em;margin:0 0 10px;color:#fff}
+.tn-sub{font-size:15px;color:#aebccf;font-weight:300}
+.tn-bd{padding:38px 48px 30px}
+.tn-teambox{border:1px solid #e2e7ee;border-radius:10px;overflow:hidden;margin-bottom:30px}
+.tn-teambox-hd{background:#f4f6fa;font-size:13px;font-weight:700;color:#1a2332;padding:11px 16px;border-bottom:1px solid #e2e7ee}
+.tn-teamtbl{width:100%;border-collapse:collapse;font-size:14px}
+.tn-teamtbl th{background:#fafbfd;text-align:left;font-weight:600;color:#5a6678;padding:9px 16px;border-bottom:1px solid #eef1f6}
+.tn-teamtbl td{padding:9px 16px;border-bottom:1px solid #f1f4f8;color:#2a2f3a}
+.tn-teamtbl tr:last-child td{border-bottom:none}
+.tn-c{text-align:center}
+.tn-datebox{background:#f6f9fc;border:1px solid #dde6f0;border-radius:12px;padding:26px 28px;text-align:center;margin-bottom:34px}
+.tn-datebox-lbl{font-size:13px;letter-spacing:.05em;color:#6b7787;font-weight:600;margin-bottom:8px}
+.tn-datebox-val{font-family:var(--sans);font-size:28px;font-weight:700;color:#1a2332;margin-bottom:7px}
+.tn-datebox-note{font-size:14px;color:#5a6678}
+.tn-sec{display:flex;gap:18px;margin-bottom:26px}
+.tn-sec-no{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#1a2332;color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+.tn-sec-bd{flex:1}
+.tn-sec-t{font-size:17px;font-weight:700;color:#1a2332;margin-bottom:7px}
+.tn-sec-bd p{margin:0;font-size:16px;color:#3a4150}
+.tn-doc b{color:#1a2332;font-weight:700}
+.tn-warn{border:1px solid #f0d4d4;border-left:4px solid #DC2626;background:#fdf6f6;border-radius:8px;padding:20px 24px;margin-top:32px}
+.tn-warn-t{font-size:15px;font-weight:700;color:#DC2626;margin-bottom:12px}
+.tn-warn ul{margin:0;padding-left:20px}
+.tn-warn li{font-size:15px;color:#4a5160;margin-bottom:9px}
+.tn-warn li:last-child{margin-bottom:0}
+.tn-warn b{color:#b91c1c}
+.tn-ft{background:#1a2332;color:#fff;padding:34px 48px;text-align:center}
+.tn-ft-lbl{font-size:12px;letter-spacing:.18em;color:#9fb0c8;font-weight:600;margin-bottom:12px}
+.tn-ft-tel{font-family:var(--sans);font-size:26px;font-weight:700;letter-spacing:.04em;color:#fff;margin-bottom:8px}
+.tn-ft-sub{font-size:13px;color:#aebccf;margin-bottom:22px}
+.tn-ft-org{font-size:11px;letter-spacing:.1em;color:#5d6b80;border-top:1px solid rgba(255,255,255,.1);padding-top:18px}
+/* 대기 전환 안내문 */
+.cn-greet{font-size:16px;color:#3a4150;margin:0 0 24px}
+.cn-infobox{background:#f6f9fc;border:1px solid #dde6f0;border-radius:12px;padding:20px 26px;margin-bottom:30px}
+.cn-info-row{display:flex;padding:7px 0;border-bottom:1px solid #e7eef6;font-size:16px}
+.cn-info-row:last-child{border-bottom:none}
+.cn-info-lbl{flex:0 0 80px;color:#6b7787;font-weight:600}
+.cn-info-val{flex:1;color:#1a2332;font-weight:700}
+.cn-list{margin:10px 0;padding-left:20px}
+.cn-list li{font-size:16px;color:#3a4150;margin-bottom:6px}
+.cn-note{font-size:14px;color:#5a6678;margin:10px 0 0}
 .notice-hd{background:var(--navy);color:#fff;padding:24px 30px}
 .notice-hd .ntag{display:inline-block;font-size:11px;letter-spacing:2px;color:#9ec9ef;border:1px solid rgba(158,201,239,.4);padding:3px 10px;border-radius:4px;margin-bottom:10px}
-.notice-hd h2{margin:0;font-family:'Noto Serif KR',serif;font-size:24px;font-weight:700}
+.notice-hd h2{margin:0;font-family:var(--sans);font-size:24px;font-weight:700}
 .notice-hd .nperiod{margin-top:7px;font-size:13px;color:rgba(255,255,255,.85)}
 .notice-bd{padding:20px 30px}
 .ntbl{width:100%;border-collapse:collapse;font-size:12px}
@@ -376,6 +421,23 @@ tr:hover td{background:#EEF3FA}
 .nst-x{color:#cfd6de;font-weight:700}
 .notice-ft{padding:14px 30px;background:#f7f9fb;border-top:1px solid #e3e8ee;font-size:11px;color:var(--text2)}
 .notice-ft b{color:var(--navy)}
+/* 출발 가능 일정형 공지 카드 */
+.np-doc .notice-bd{padding:24px 30px}
+.np-sec{margin-bottom:22px}
+.np-sec:last-child{margin-bottom:0}
+.np-sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:11px;padding-bottom:8px;border-bottom:2px solid #eef2f7}
+.np-sec-name{font-size:16px;font-weight:700;color:var(--navy)}
+.np-sec-route{font-size:12px;color:#8b97a6;font-weight:500}
+.np-cards{display:flex;flex-wrap:wrap;gap:9px}
+.np-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:128px;padding:11px 14px;border:1px solid #e2e8f0;border-left:3px solid var(--green2);border-radius:8px;background:#fbfdfc}
+.np-card.soon{border-left-color:var(--amber2);background:#fefcf8}
+.np-date{font-size:15px;font-weight:700;color:#28303d}
+.np-dow{font-size:12px;color:#8b97a6;font-weight:500}
+.np-span{font-size:12px;color:#5a6678}
+.np-st{font-size:11px;font-weight:700;padding:1px 9px;border-radius:20px;margin-top:2px}
+.np-ok{background:var(--green-dim);color:var(--green2)}
+.np-soon{background:var(--amber-dim);color:var(--amber2)}
+.np-empty{padding:30px;text-align:center;color:#8b97a6;font-size:13px}
 </style>
 </head>
 <body>
@@ -383,7 +445,7 @@ tr:hover td{background:#EEF3FA}
 <!-- HEADER -->
 <div class="header">
   <a class="logo" href="../../sales/" title="영업 도구 홈으로" style="text-decoration:none;cursor:pointer">
-    <svg class="logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31" height="20" aria-label="MERITTOUR"><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48"/><rect x="277.51" y="9.89" width="9.7" height="48.33"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z"/></g></svg>
+    <svg class="logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31" height="26" aria-label="MERITTOUR"><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48"/><rect x="277.51" y="9.89" width="9.7" height="48.33"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z"/></g></svg>
     <div class="logo-divider"></div>
     <div class="logo-sub">통합 업무 허브 <span style="font-size:10px;color:var(--text3);font-weight:400">· 엠클릭 보조</span></div>
   </a>
@@ -472,9 +534,8 @@ tr:hover td{background:#EEF3FA}
 <div class="section" id="sec-resort">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율·여행자보험 — 입력 즉시 자동 저장·공유됩니다</div></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="badge" id="rm-sync-badge" title="공유 동기화 상태">동기화 확인 중…</span>
+      <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율·여행자보험 — 입력 즉시 자동 저장됩니다</div></div>
+      <div style="display:flex;gap:8px">
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
     </div>
@@ -483,13 +544,6 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head"><div><div class="card-title">공통 마스터</div><div class="card-sub">환율 · 여행자보험</div></div></div>
     <div id="common-master"></div>
-  </div>
-  <div class="card">
-    <div class="card-head">
-      <div><div class="card-title">변경 이력</div><div class="card-sub">리조트·공통 마스터가 저장될 때마다 기록됩니다 (최신순)</div></div>
-      <button class="btn-sm" onclick="rmRefreshHistory()">새로고침</button>
-    </div>
-    <div id="rm-history"></div>
   </div>
 </div>
 
@@ -595,6 +649,7 @@ tr:hover td{background:#EEF3FA}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" id="air-pax-toggle" onclick="toggleAllPax(this,['air'])">명단 전체 펼치기</button>
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박</button>
+        <button class="btn-sm" onclick="openTicketNotice()" style="border-color:var(--accent);color:var(--accent)">🎫 발권 안내문</button>
         <button class="btn-sm" onclick="exportAligo('air')" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알리고 양식</button>
       </div>
     </div>
@@ -688,7 +743,8 @@ tr:hover td{background:#EEF3FA}
     <div class="sum-grid" id="verify-summary"></div>
     <div class="note">
       <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 출국월 환율 + 항공요금합 + 회원관리비합(리조트 마스터 숙소별 값, 기본 ₩50,000/인) + 원화기타.
-      환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.
+      환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.<br>
+      <b>패키지가(1인)</b> · 벳푸 박수별·나가노 기간별처럼 <b>항공까지 합쳐 단일가로 안내</b>하는 상품은, 팀별 <b>패키지가(1인)</b> 칸에 1인 원화 총액을 넣으세요. 입력 시 분해식(체재비·송영비·항공·환율) 대신 <b>패키지가 × 인원</b>으로 산출되며, 숙소 옆에 「패키지」 배지가 붙고 분해 항목은 흐리게 표시됩니다.
     </div>
     <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
   </div>
@@ -723,7 +779,9 @@ tr:hover td{background:#EEF3FA}
       <div class="card-head">
         <div><div class="card-title">일별 블록 현황 (보유 − 사용 = 잔여)</div><div class="card-sub" id="blk-status-sub"></div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn-sm" onclick="openNotice()" style="border-color:var(--accent);color:var(--accent)">📤 예약가능일자 공지 PNG</button>
+          <button class="btn-sm" onclick="openNotice()" style="border-color:var(--accent);color:var(--accent)">📤 예약 가능 일정 공지 PNG</button>
+          <button class="btn-sm" onclick="blkExportExcel()" title="내부 공유용 — 잔여 숫자 매트릭스, 마감 빨강·임박 주황">📊 현황 엑셀</button>
+          <button class="btn-sm" onclick="blkExportPng()" title="내부 공유용 — 날짜 전체가 잘리지 않는 PNG">🖼 현황 PNG</button>
         </div>
       </div>
       <div class="sum-grid" id="blk-summary"></div>
@@ -1606,7 +1664,11 @@ function airOriginOf(t){ return (t.apisOrigin||t.origin||'').trim(); }
 const AIRPORT_CODE={
   '인천':'ICN','김해':'PUS','부산':'PUS','대구':'TAE','제주':'CJU','청주':'CJA',
   '무안':'MWX','김포':'GMP','광주':'KWJ','양양':'YNY','울산':'USN','여수':'RSU',
-  '하노이':'HAN','다낭':'DAD','방콕':'BKK','쿠알라룸푸르':'KUL','나리타':'NRT','후쿠오카':'FUK','구마모토':'KMJ'
+  '하노이':'HAN','다낭':'DAD','방콕':'BKK','쿠알라룸푸르':'KUL',
+  // 일본 도착 공항 (메리트투어 골프 노선)
+  '나리타':'NRT','도쿄':'NRT','후쿠오카':'FUK','구마모토':'KMJ',
+  '니가타':'KIJ','나가노':'KIJ','미야자키':'KMI','나고야':'NGO','중부':'NGO',
+  '오이타':'OIT','벳푸':'FUK','이바라키':'NRT'
 };
 /* 출발지 표기에 대응하는 검색 토큰들(한글명 + 코드, 양방향) */
 function originSearchTokens(s){
@@ -1616,6 +1678,17 @@ function originSearchTokens(s){
   // 입력이 코드면 한글명도 토큰에 추가
   for(const [kor,code] of Object.entries(AIRPORT_CODE)){ if(code===raw.toUpperCase()) toks.push(kor); }
   return toks.join(' ');
+}
+/* 공항명/코드 → IATA 코드 정규화 (인천·icn → ICN, 구마모토 → KMJ).
+   매핑에 없으면 영문 3자 코드로 보이면 대문자로, 아니면 원문 유지. */
+function airportCode(s){
+  const raw=String(s||'').trim(); if(!raw) return '';
+  if(AIRPORT_CODE[raw]) return AIRPORT_CODE[raw];        // 한글명 매칭
+  const up=raw.toUpperCase();
+  if(/^[A-Z]{3}$/.test(up)) return up;                   // 이미 IATA 코드
+  // 괄호·공백 섞인 표기에서 한글 공항명 추출 시도 (예: "인천 (니가타)")
+  for(const [kor,code] of Object.entries(AIRPORT_CODE)){ if(raw.indexOf(kor)>=0) return code; }
+  return up;                                              // 못 찾으면 대문자 원문
 }
 function airClearSearch(){ const el=document.getElementById('air-search'); if(el){ el.value=''; renderAir(); el.focus(); } }
 /* 항공사 불일치: 예약리스트 항공(t.flight) 표기와 APIS 항공사(t.airlines)가 어긋나는지.
@@ -2133,9 +2206,9 @@ function resortUnitFor(accom){
   if(!r){
     // 못 찾으면 야마나미 골프텔 기본 단가로 대체 표시
     const y=resortMaster.find(x=>x.key==='yamanami_golf');
-    return {stay:y?y.stay:0, transfer:y?y.transfer:0, mgmt:y?(y.mgmt||0):0, matched:false};
+    return {stay:y?y.stay:0, transfer:y?y.transfer:0, mgmt:y?(y.mgmt||0):0, arrCode:y?(y.arrCode||''):'', matched:false};
   }
-  return {stay:r.stay, transfer:r.transfer, mgmt:r.mgmt||0, matched:true};
+  return {stay:r.stay, transfer:r.transfer, mgmt:r.mgmt||0, arrCode:r.arrCode||'', matched:true};
 }
 /* 출국월 환율 조회 (월별 환율 미등록 시 0 → 기준 미등록 처리) */
 function rateForMonth(depDate){
@@ -2144,17 +2217,21 @@ function rateForMonth(depDate){
   const mr=commonMaster.monthlyRates||{};
   return mr[ym]!=null ? mr[ym] : 0;
 }
-/* 항공요금 조회 (월 × 출발지 × 도착지 × 박수) */
+/* 항공요금 조회 (월 × 출발지 × 도착지 × 박수)
+   - 저장값·팀값을 모두 IATA 코드로 정규화해 비교(인천/ICN, 구마모토/KMJ 표기 차이 흡수).
+   - 도착지는 ① 숙소 마스터 도착공항(arrCode) → ② APIS 도착지 정규화 순으로 결정. */
 function airfareFor(t){
   const arr=commonMaster.airfares||[]; if(!arr.length) return null;
   const ym=(t.dep||'').slice(0,7);
-  const origin=t.apisOrigin||t.origin||'';
-  const dest=t.apisDest||'';
+  const origin=airportCode(t.apisOrigin||t.origin||'');
+  // 숙소 도착공항 우선, 없으면 APIS 도착지
+  const u=resortUnitFor(t.accom);
+  const dest=airportCode(u.arrCode || t.apisDest || '');
   const m=String(t.period).match(/(\d+)박/); const nights=m?parseInt(m[1]):t.nights;
-  // 정확 일치 → 도착지 무시 → 출발지만, 단계적 완화
-  let f=arr.find(a=>a.month===ym&&a.origin===origin&&a.dest===dest&&a.nights===nights);
-  if(!f) f=arr.find(a=>a.month===ym&&a.origin===origin&&a.nights===nights);
-  if(!f) f=arr.find(a=>a.month===ym&&a.origin===origin);
+  // 정확 일치 → 도착지 무시 → 출발지만, 단계적 완화 (모두 코드 기준 비교)
+  let f=arr.find(a=>a.month===ym&&airportCode(a.origin)===origin&&airportCode(a.dest)===dest&&a.nights===nights);
+  if(!f) f=arr.find(a=>a.month===ym&&airportCode(a.origin)===origin&&a.nights===nights);
+  if(!f) f=arr.find(a=>a.month===ym&&airportCode(a.origin)===origin);
   return f?f.fare:null;
 }
 /* 팀별 예상 판매금액 계산 */
@@ -2172,15 +2249,20 @@ function calcExpected(t){
   const airTotal = airfare!=null ? airfare*pax : null;
   const mgmtTotal = (u.mgmt||0)*pax;
   const krwEtc = vAdjust[t.eventSeq]?.krwEtc||0;
-  const expected = airTotal!=null ? (yenKRW+airTotal+mgmtTotal+krwEtc) : null;
-  return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,expected};
+  // 패키지가(1인 원화 총액): 입력 시 분해식 대신 패키지가×인원을 예상 판매금액으로 사용.
+  // 벳푸 박수별·나가노 기간별처럼 항공까지 합산된 단일 안내가에 대응(환율·항공요금 계산 우회).
+  const pkgUnit = vAdjust[t.eventSeq]?.pkgPrice||0;
+  const isPkg = pkgUnit>0;
+  const pkgTotal = isPkg ? pkgUnit*pax : null;
+  const expected = isPkg ? pkgTotal : (airTotal!=null ? (yenKRW+airTotal+mgmtTotal+krwEtc) : null);
+  return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,pkgUnit,isPkg,pkgTotal,expected};
 }
 
 /* 팀별 검증 보정값 (엔화기타·원화기타) */
 let vAdjust={};
 const STORE_VADJ='mt_notify_vAdjust';
 
-const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','예상 판매금액','실제 판매금액','차액','상태'];
+const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','패키지가(1인)','예상 판매금액','실제 판매금액','차액','상태'];
 function renderVerify(){
   document.getElementById('verify-thead').innerHTML='<tr>'+VERIFY_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   let list=teams.filter(t=>t.accom).map(t=>({t, c:calcExpected(t)}));
@@ -2230,18 +2312,19 @@ function renderVerify(){
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td><b>${t.repName}</b></td>
-      <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''}</td>
+      <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''} ${c.isPkg?'<span class="tag" style="background:var(--accent-dim);color:var(--accent);font-size:9px">패키지</span>':''}</td>
       <td class="center">${c.nights}박</td>
       <td class="num">${c.pax}</td>
-      <td class="num">¥${c.stayTotal.toLocaleString()}</td>
-      <td class="num">¥${c.transferTotal.toLocaleString()}</td>
-      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.yenEtc?Number(ad.yenEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','yenEtc',this.value)"></td>
-      <td class="num">${c.rate?c.rate.toLocaleString():'<span class="muted">미등록</span>'}</td>
-      <td class="num">${c.rate?'₩'+c.yenKRW.toLocaleString():'-'}</td>
-      <td class="num">${c.airTotal!=null?'₩'+c.airTotal.toLocaleString():'<span class="muted">미등록</span>'}</td>
-      <td class="num">₩${c.mgmtTotal.toLocaleString()}</td>
-      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.krwEtc?Number(ad.krwEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','krwEtc',this.value)"></td>
-      <td class="num">${c.expected!=null?'<b>₩'+c.expected.toLocaleString()+'</b>':'<span class="muted">산출 불가</span>'}</td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>¥${c.stayTotal.toLocaleString()}</td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>¥${c.transferTotal.toLocaleString()}</td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.yenEtc?Number(ad.yenEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','yenEtc',this.value)"${c.isPkg?' style="opacity:.35"':''}></td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>${c.rate?c.rate.toLocaleString():'<span class="muted">미등록</span>'}</td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>${c.rate?'₩'+c.yenKRW.toLocaleString():'-'}</td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>${c.airTotal!=null?'₩'+c.airTotal.toLocaleString():'<span class="muted">미등록</span>'}</td>
+      <td class="num"${c.isPkg?' style="opacity:.35"':''}>₩${c.mgmtTotal.toLocaleString()}</td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.krwEtc?Number(ad.krwEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','krwEtc',this.value)"${c.isPkg?' style="opacity:.35"':''}></td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.pkgPrice?Number(ad.pkgPrice).toLocaleString():''}" placeholder="0" title="1인 패키지가(원). 입력 시 항공·체재비·환율 대신 이 금액×인원으로 산출" onchange="setVAdj('${t.eventSeq}','pkgPrice',this.value)"></td>
+      <td class="num">${c.expected!=null?'<b>₩'+c.expected.toLocaleString()+'</b>'+(c.isPkg?'<br><span class="muted" style="font-size:9px">₩'+c.pkgUnit.toLocaleString()+'×'+c.pax+'명</span>':''):'<span class="muted">산출 불가</span>'}</td>
       <td class="num">${won(t.sales)}</td>
       <td class="num">${diffCell}</td>
       <td class="center">${statusCell}</td>
@@ -2704,173 +2787,50 @@ function openTeamColorLegend(){
 const STORE_RESORT='mt_notify_resortMaster';
 const STORE_COMMON='mt_notify_commonMaster';
 
-/* ════════════════════════════════════════════════════════════
-   리조트 마스터 공유 — Supabase 연동
-   - 마스터(resort_master id=1) JSON 한 행 + 변경 이력(resort_master_history)
-   - 로드: localStorage로 즉시 표시 → Supabase 최신본으로 덮어쓰기
-   - 저장: localStorage 캐시 + Supabase 업서트(version+1, updated_by=이름) + 이력 insert
-   - 낙관적 잠금: 저장 직전 서버 version이 내가 가진 것보다 크면 경고
-   ════════════════════════════════════════════════════════════ */
-const SB_URL = 'https://mbfmiynwycvhsoepdnxe.supabase.co';
-const SB_KEY = 'sb_publishable_KedVKzbMxyIJxY5a-kXt8Q_rw8wuyZ3';
-let sb = null;                 // supabase 클라이언트
-let rmVersion = 0;             // 내가 마지막으로 읽은 마스터 버전
-let rmSyncState = 'init';      // init | local | synced | offline | conflict | saving
-let rmHistory = [];            // 변경 이력 캐시
-
-function sbInit(){
-  try{
-    if(window.supabase && window.supabase.createClient){
-      sb = window.supabase.createClient(SB_URL, SB_KEY);
-      return true;
-    }
-  }catch(e){}
-  return false;
+/* ── 리조트 마스터 변경이력 (세부 추적: 대상·항목·전→후) ──
+   localStorage 별도 키, 최근 100건 링버퍼. 값이 실제로 바뀐 경우만 기록. */
+const STORE_CHLOG='mt_notify_changeLog';
+const CHLOG_MAX=100;
+let changeLog=[];
+function loadChangeLog(){
+  try{ changeLog=JSON.parse(localStorage.getItem(STORE_CHLOG)||'[]'); if(!Array.isArray(changeLog)) changeLog=[]; }
+  catch(e){ changeLog=[]; }
 }
-function currentUserName(){
-  try{ return (window.MT_USER && window.MT_USER.get()) || ''; }catch(e){ return ''; }
+function saveChangeLog(){
+  try{ localStorage.setItem(STORE_CHLOG,JSON.stringify(changeLog.slice(0,CHLOG_MAX))); }catch(e){}
 }
-function rmSetSync(state){ rmSyncState=state; renderRmSyncBadge(); }
-
-/* Supabase에서 마스터 1행 읽어 적용 (성공 시 true) */
-async function sbLoadMaster(){
-  if(!sb && !sbInit()) { rmSetSync('offline'); return false; }
-  try{
-    const { data, error } = await sb.from('resort_master').select('data,version,updated_at,updated_by').eq('id',1).single();
-    if(error) throw error;
-    rmVersion = data.version || 0;
-    const payload = data.data || {};
-    // 서버에 내용이 있으면 적용 (빈 객체면 로컬 유지)
-    if(payload && (Array.isArray(payload.resortMaster) || payload.commonMaster)){
-      applyMasterPayload(payload);
-    }
-    rmLastUpdated = { at:data.updated_at, by:data.updated_by };
-    rmSetSync('synced');
-    return true;
-  }catch(e){ console.warn('Supabase 로드 실패:', e.message||e); rmSetSync('offline'); return false; }
+/* 변경 1건 기록. target=대상(숙소명/공통), field=항목 라벨, before/after=전·후 값.
+   before==after면 기록하지 않음(빈→빈 포함). */
+function logChange(target, field, before, after){
+  const b=(before==null||before==='')?'(없음)':String(before);
+  const a=(after==null||after==='')?'(없음)':String(after);
+  if(b===a) return;
+  changeLog.unshift({ts:new Date().toISOString(), target, field, before:b, after:a});
+  if(changeLog.length>CHLOG_MAX) changeLog.length=CHLOG_MAX;
+  saveChangeLog();
+  if(document.getElementById('chlog-body')) renderChangeLog();
 }
-
-/* 서버 payload를 resortMaster/commonMaster에 병합 적용 */
-function applyMasterPayload(payload){
-  try{
-    if(Array.isArray(payload.resortMaster)){
-      resortMaster = RESORT_DEFAULTS.map(def=>{
-        const s = payload.resortMaster.find(x=>x.key===def.key);
-        return s ? {...def, ...s} : {...def};
-      });
-    }
-    if(payload.commonMaster && typeof payload.commonMaster==='object'){
-      commonMaster = {...COMMON_DEFAULTS, ...payload.commonMaster};
-      if(commonMaster.insCover && !commonMaster.insMemo) commonMaster.insMemo=commonMaster.insCover;
-      delete commonMaster.insCover; delete commonMaster.insFee;
-    }
-    // 로컬에도 캐시
-    try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
-  }catch(e){ console.warn('payload 적용 실패', e); }
+function chlogTime(iso){
+  try{ const d=new Date(iso); const p=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }catch(e){ return iso; }
 }
-let rmLastUpdated = null;
-
-/* Supabase에 저장 (낙관적 잠금 + 이력 기록). 성공 시 true */
-async function sbSaveMaster(){
-  if(!sb && !sbInit()){ rmSetSync('offline'); return false; }
-  rmSetSync('saving');
-  try{
-    // 1) 서버 현재 버전 확인 (낙관적 잠금)
-    const { data: cur, error: e1 } = await sb.from('resort_master').select('version').eq('id',1).single();
-    if(e1) throw e1;
-    const serverV = cur.version || 0;
-    if(serverV > rmVersion){
-      rmSetSync('conflict');
-      const ok = confirm('다른 사람이 먼저 리조트 마스터를 수정했습니다.\n\n[확인] 최신 내용을 불러옵니다(내 변경은 취소됨).\n[취소] 일단 그대로 두기(내가 다시 저장하면 상대 변경을 덮어씁니다).');
-      if(ok){ await sbLoadMaster(); renderResortMaster(); if(typeof blkSyncFromResort==='function') blkSyncFromResort(); return false; }
-      // 취소 시: rmVersion을 서버 기준으로 올려 강제 저장 허용
-      rmVersion = serverV;
-    }
-    // 2) 업서트 (version+1)
-    const newV = (serverV>rmVersion?serverV:rmVersion) + 1;
-    const payload = { resortMaster, commonMaster };
-    const by = currentUserName() || '(이름미설정)';
-    const nowIso = new Date().toISOString();
-    const { error: e2 } = await sb.from('resort_master')
-      .update({ data:payload, version:newV, updated_at:nowIso, updated_by:by }).eq('id',1);
-    if(e2) throw e2;
-    rmVersion = newV;
-    rmLastUpdated = { at:nowIso, by };
-    // 3) 이력 추가 (실패해도 저장 자체는 성공 처리)
-    try{ await sb.from('resort_master_history').insert({ data:payload, version:newV, changed_by:by, changed_at:nowIso }); }catch(e){}
-    rmSetSync('synced');
-    return true;
-  }catch(e){ console.warn('Supabase 저장 실패:', e.message||e); rmSetSync('offline'); return false; }
+function renderChangeLog(){
+  const box=document.getElementById('chlog-body'); if(!box) return;
+  if(!changeLog.length){ box.innerHTML='<div class="muted" style="font-size:11px;padding:8px">변경 이력이 없습니다.</div>'; return; }
+  box.innerHTML='<div class="tbl-wrap" style="max-height:260px;overflow-y:auto"><table style="font-size:11px"><thead><tr>'+
+    '<th style="width:130px">시각</th><th style="width:130px">대상</th><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead><tbody>'+
+    changeLog.map(c=>`<tr><td class="muted" style="font-family:var(--mono)">${chlogTime(c.ts)}</td>`+
+      `<td>${c.target||'공통'}</td><td>${c.field||''}</td>`+
+      `<td class="muted">${c.before}</td>`+
+      `<td style="color:var(--accent);font-weight:600">${c.after}</td></tr>`).join('')+
+    '</tbody></table></div>';
 }
-
-/* 변경 이력 목록 조회 (최신순) */
-async function sbLoadHistory(limit){
-  if(!sb && !sbInit()) return [];
-  try{
-    const { data, error } = await sb.from('resort_master_history')
-      .select('id,version,changed_at,changed_by').order('changed_at',{ascending:false}).limit(limit||30);
-    if(error) throw error;
-    rmHistory = data||[];
-    return rmHistory;
-  }catch(e){ console.warn('이력 조회 실패:', e.message||e); return []; }
+function clearChangeLog(){
+  if(!changeLog.length){ alert('비울 이력이 없습니다.'); return; }
+  if(!confirm('변경 이력을 모두 비울까요? (되돌릴 수 없습니다)')) return;
+  changeLog=[]; saveChangeLog(); renderChangeLog();
 }
-
-/* 동기화 상태 배지 렌더 */
-function renderRmSyncBadge(){
-  const el=document.getElementById('rm-sync-badge'); if(!el) return;
-  const map={
-    init:  {t:'동기화 확인 중…', c:'var(--text3)', bg:'var(--surface3)', bd:'var(--border)'},
-    local: {t:'로컬 표시 중…',   c:'var(--amber)',  bg:'var(--amber-dim)', bd:'var(--amber)'},
-    saving:{t:'저장 중…',        c:'var(--accent)', bg:'var(--accent-dim)',bd:'var(--accent)'},
-    synced:{t:'공유 동기화됨',    c:'var(--green)',  bg:'var(--green-dim)', bd:'var(--green)'},
-    offline:{t:'오프라인(로컬만)',c:'var(--red)',    bg:'var(--red-dim)',   bd:'var(--red)'},
-    conflict:{t:'충돌 감지',      c:'var(--red)',    bg:'var(--red-dim)',   bd:'var(--red)'}
-  };
-  const m=map[rmSyncState]||map.init;
-  let label=m.t;
-  if(rmSyncState==='synced' && rmLastUpdated && rmLastUpdated.at){
-    label = '공유 동기화됨 · ' + fmtHistTime(rmLastUpdated.at) + (rmLastUpdated.by?(' / '+rmLastUpdated.by):'');
-  }
-  el.textContent=label;
-  el.style.color=m.c; el.style.background=m.bg; el.style.borderColor=m.bd;
-}
-
-/* 이력 시각 포맷: "MM/DD HH:MM" (로컬) */
-function fmtHistTime(iso){
-  try{
-    const d=new Date(iso);
-    const p=n=>String(n).padStart(2,'0');
-    return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-  }catch(e){ return iso||''; }
-}
-
-/* 변경 이력 목록 렌더 */
-function renderRmHistory(){
-  const box=document.getElementById('rm-history'); if(!box) return;
-  if(rmSyncState==='offline'){
-    box.innerHTML='<div class="muted" style="font-size:12px">공유 서버에 연결되지 않아 이력을 불러올 수 없습니다. (로컬에서만 동작 중)</div>';
-    return;
-  }
-  if(!rmHistory.length){
-    box.innerHTML='<div class="muted" style="font-size:12px">아직 변경 이력이 없습니다.</div>';
-    return;
-  }
-  box.innerHTML='<div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table style="font-size:12px"><thead><tr>'
-    +'<th style="width:130px">시각</th><th style="width:120px">수정자</th><th style="width:70px">버전</th></tr></thead><tbody>'
-    + rmHistory.map(h=>`<tr><td style="font-family:var(--mono)">${fmtHistTime(h.changed_at)}</td>`
-        +`<td>${escHtmlRm(h.changed_by||'-')}</td>`
-        +`<td class="center" style="font-family:var(--mono)">v${h.version||'-'}</td></tr>`).join('')
-    +'</tbody></table></div>';
-}
-function escHtmlRm(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
-
-/* 이력 새로고침 버튼 */
-async function rmRefreshHistory(){
-  await sbLoadHistory(30);
-  renderRmHistory();
-}
-
-
 
 /* 기본값 — 실제 판매 상품 18개 숙소. 단가는 사이님이 화면에서 입력(localStorage 저장).
    rooms: 룸타입별 보유 블록 (호텔 블록 보유 마스터 통합). aliases: 엠클릭 표기 별칭. assign: 임의배정형(블록 안 깜).
@@ -2878,70 +2838,64 @@ async function rmRefreshHistory(){
 const RESORT_DEFAULTS=[
   {key:'yamanami_golf', name:'아소 야마나미 골프텔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':55,'소형트윈':50}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':55,'소형트윈':50}, aliases:[], assign:false, memo:''},
   {key:'yamanami_bessou', name:'아소 야마나미 관내별장', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'yamanami_dome', name:'아소 야마나미 돔하우스', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'kuzu', name:'야마나미 쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:14000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
+   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
+   depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'mutsuki', name:'무츠키 료칸', region:'벳푸', golf:'벳푸', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
+   depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'shirosato', name:'시로사토CC 골프텔', region:'이바라키', golf:'시로사토CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일6박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
+   depart:'일6박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'fukuroda', name:'후쿠로다노타키CC 골프텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'월7박', airOut:'인천', airIn:'나리타', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
+   depart:'월7박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{'트윈':35}, aliases:[], assign:false, memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{'트윈':35}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', rooms:{}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
   {key:'kokusai', name:'국제공항CC 골프텔', region:'미야자키', golf:'국제공항CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
+   depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'미야자키', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
+   depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
   {key:'kumamoto_city', name:'구마모토 시내 호텔', region:'구마모토', golf:'-', holes:0,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
+   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
   {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
+   depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', arrCode:'KUL', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  insCompany:'', insProduct:'', insMemo:'',   // 여행자보험: 보험료는 인별 상이 → 금액칸 없이 안내 메모만
+  insCompany:'', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
-  airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
-  airlineNotes:[           // [{airline, note}] 항공사별 조건 참고 메모 (담당자 참고용)
-    {airline:'티웨이항공(TW)', note:'체크인 카운터 B (2026.01.22 이후) · 온라인 체크인 출발 24시간 전부터'},
-    {airline:'대한항공(KE)', note:'온라인 체크인 출발 48시간 전부터'},
-    {airline:'아시아나항공(OZ)', note:'인천 제2터미널 (2026.01.14 이후) · 온라인 체크인 출발 48시간 전부터'},
-    {airline:'에어부산(BX)', note:'온라인 체크인 출발 48시간 전부터'}
-  ]
+  airfares:[]              // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
 };
 
 let resortMaster=[], commonMaster={};
@@ -2977,22 +2931,25 @@ function loadResortMaster(){
     if(!localStorage.getItem('mt_notify_mgmtMigrated')){
       resortMaster.forEach(r=>{ if(!r.mgmt) r.mgmt=50000; });
       try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
-      // 로컬 캐시에만 반영 (서버 동기화는 sbLoadMaster 이후 사용자 저장 시)
-      try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); }catch(e){}
+      saveResortMaster();
     }
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
-  // 구버전 호환: 보장한도(insCover) → 안내메모(insMemo) 이관, 사용 안 하는 insFee 제거
-  if(commonMaster.insCover && !commonMaster.insMemo){ commonMaster.insMemo=commonMaster.insCover; }
-  delete commonMaster.insCover; delete commonMaster.insFee;
+  // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
+  if(!localStorage.getItem('mt_notify_airfareCodeMigrated')){
+    (commonMaster.airfares||[]).forEach(a=>{
+      if(a.origin) a.origin=airportCode(a.origin);
+      if(a.dest) a.dest=airportCode(a.dest);
+      if(a.airline) a.airline=(airlineCode(a.airline)||String(a.airline).toUpperCase());
+    });
+    try{ localStorage.setItem('mt_notify_airfareCodeMigrated','1'); }catch(e){}
+    saveResortMaster();
+  }
+  loadChangeLog();
 }
 function saveResortMaster(){
   try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
-  // Supabase 공유 저장 (비동기, 화면은 막지 않음)
-  if(typeof sbSaveMaster==='function'){
-    sbSaveMaster().then(ok=>{ if(ok && typeof sbLoadHistory==='function'){ sbLoadHistory(30).then(()=>{ if(typeof renderRmHistory==='function') renderRmHistory(); }); } }).catch(()=>{});
-  }
 }
 function resetResortMaster(){
   if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·보험·보유블록 정보가 사라집니다)')) return;
@@ -3105,6 +3062,10 @@ function renderResortMaster(){
             <div class="rm-row"><label>도착 공항</label>
               <input class="rm-input text" style="width:170px" type="text" value="${(r.airIn||'').replace(/"/g,'&quot;')}" placeholder="예: 구마모토"
                 onchange="updateResort('${r.key}','airIn',this.value,this)"></div>
+            <div class="rm-row"><label>요금 도착코드</label>
+              <input class="rm-input text" style="width:90px;text-transform:uppercase;font-family:var(--mono)" type="text" value="${(r.arrCode||'').replace(/"/g,'&quot;')}" placeholder="KMJ"
+                onchange="updateResort('${r.key}','arrCode',this.value,this)" title="항공요금 검증에 쓰이는 도착공항 IATA 코드. 벳푸=FUK, 이바라키=NRT, 나가노=KIJ 등"></div>
+            <div class="rm-hint">요금 도착코드: 항공요금 테이블 매칭용 공항 코드(벳푸→FUK, 이바라키→NRT, 나가노→KIJ).</div>
           </div>
           <div class="rm-group">
             <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
@@ -3138,10 +3099,13 @@ function renderResortMaster(){
       <div class="rm-row"><label>상품명</label>
         <input class="rm-input text" type="text" value="${(commonMaster.insProduct||'').replace(/"/g,'&quot;')}" placeholder="상품명"
           onchange="updateCommon('insProduct',this.value,this)"></div>
+      <div class="rm-row"><label>1인 보험료</label><div style="display:flex;align-items:center">
+        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.insFee?Number(commonMaster.insFee).toLocaleString():''}" placeholder="0"
+          onchange="updateCommon('insFee',this.value,this)"><span class="rm-unit">원</span></div></div>
       <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
-        <label>안내 메모 <span class="muted" style="font-size:10px;font-weight:400">— 보험료는 인별 상이. 보장 한도·연령별 기준·가입 주의사항 등 참고 메모</span></label>
-        <textarea class="rm-input wide" rows="3" style="resize:vertical;line-height:1.5;font-family:var(--sans)" placeholder="예) 보장 한도, 연령별 보험료 기준, 가입 시 주의사항 등을 적어두세요"
-          onchange="updateCommon('insMemo',this.value,this)">${(commonMaster.insMemo||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</textarea></div>
+        <label>보장 한도</label>
+        <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
+          onchange="updateCommon('insCover',this.value,this)"></div>
     </div>
   <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율</span></div>
@@ -3163,8 +3127,8 @@ function renderResortMaster(){
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
       <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
       <input class="rm-input text" id="af-airline" placeholder="항공사(TW)" style="width:80px">
-      <input class="rm-input text" id="af-origin" placeholder="출발지(인천)" style="width:85px">
-      <input class="rm-input text" id="af-dest" placeholder="도착지(구마모토)" style="width:95px">
+      <input class="rm-input text" id="af-origin" placeholder="출발지(ICN·인천)" style="width:95px">
+      <input class="rm-input text" id="af-dest" placeholder="도착지(KMJ·구마모토)" style="width:105px">
       <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:55px">
       <input class="rm-input text" id="af-flightout" placeholder="출국편(TW295)" style="width:95px" onchange="afAutoReturn()">
       <input class="rm-input text" id="af-flightin" placeholder="귀국편(TW296)" style="width:95px">
@@ -3177,17 +3141,14 @@ function renderResortMaster(){
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">📌 항공사별 조건 메모 <span class="card-sub" style="font-weight:400">— 체크인·수하물·발권·취소 등 항공사별 참고사항(담당자 참고용)</span></div>
-    <div id="airline-note-rows"></div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-start">
-      <input class="rm-input text" id="an-airline" placeholder="항공사(티웨이항공)" style="width:140px">
-      <input class="rm-input text" id="an-note" placeholder="조건 메모 (예: 체크인 카운터 B · 온라인 체크인 24시간 전)" style="flex:1;min-width:220px">
-      <button class="btn-sm" onclick="addAirlineNote()">+ 추가</button>
+    <div class="cm-box-title">🕘 변경 이력 <span class="card-sub" style="font-weight:400">— 리조트 마스터·환율·항공요금의 세부 변경 기록 (최근 ${CHLOG_MAX}건, 최신순)</span>
+      <button class="btn-sm" style="margin-left:auto;padding:2px 10px;color:var(--red);border-color:var(--red)" onclick="clearChangeLog()">이력 비우기</button>
     </div>
+    <div id="chlog-body"></div>
   </div>`;
   renderMonthlyRates();
   renderAirfares();
-  renderAirlineNotes();
+  renderChangeLog();
 }
 
 /* 월별 환율 테이블 렌더 (통화별: 엔=YYYY-MM, 달러=YYYY-MM|USD, 링깃=YYYY-MM|MYR) */
@@ -3211,11 +3172,18 @@ function addMonthlyRate(){
   if(!m||!r){ alert('출국월과 환율을 모두 입력해주세요.'); return; }
   commonMaster.monthlyRates=commonMaster.monthlyRates||{};
   const key = cur==='JPY' ? m : (m+'|'+cur);  // 엔은 하위호환 위해 통화 없이
+  const before=commonMaster.monthlyRates[key];
   commonMaster.monthlyRates[key]=r;
+  const curName=cur==='JPY'?'엔':cur==='USD'?'달러':'링깃';
+  logChange('공통', `환율 ${m}·${curName}`, before?Number(before).toLocaleString()+'원':'', Number(r).toLocaleString()+'원');
   saveResortMaster(); renderMonthlyRates();
   document.getElementById('mr-month').value=''; document.getElementById('mr-rate').value='';
 }
-function delMonthlyRate(key){ delete commonMaster.monthlyRates[key]; saveResortMaster(); renderMonthlyRates(); }
+function delMonthlyRate(key){
+  const before=commonMaster.monthlyRates[key];
+  delete commonMaster.monthlyRates[key]; saveResortMaster(); renderMonthlyRates();
+  logChange('공통', `환율 ${key} 삭제`, before?Number(before).toLocaleString()+'원':'', '(삭제)');
+}
 
 /* 항공요금 테이블 렌더 */
 function renderAirfares(){
@@ -3240,58 +3208,36 @@ function afAutoReturn(){
 }
 function addAirfare(){
   const month=document.getElementById('af-month').value;
-  const airline=document.getElementById('af-airline').value.trim();
-  const origin=document.getElementById('af-origin').value.trim();
-  const dest=document.getElementById('af-dest').value.trim();
+  const airlineRaw=document.getElementById('af-airline').value.trim();
+  const originRaw=document.getElementById('af-origin').value.trim();
+  const destRaw=document.getElementById('af-dest').value.trim();
   const nights=num(document.getElementById('af-nights').value);
-  const flightOut=document.getElementById('af-flightout').value.trim();
-  const flightIn=document.getElementById('af-flightin').value.trim();
+  const flightOut=document.getElementById('af-flightout').value.trim().toUpperCase();
+  const flightIn=document.getElementById('af-flightin').value.trim().toUpperCase();
   const tripType=document.getElementById('af-trip').value;
   const fare=num(document.getElementById('af-fare').value);
-  if(!month||!origin||!dest||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다.'); return; }
+  if(!month||!originRaw||!destRaw||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다.'); return; }
+  // 입력값 정규화: 항공사→코드(TW), 출발지·도착지→IATA 코드(ICN·KMJ)
+  const airline=(airlineCode(airlineRaw)||airlineRaw.toUpperCase());
+  const origin=airportCode(originRaw);
+  const dest=airportCode(destRaw);
   commonMaster.airfares=commonMaster.airfares||[];
   // 같은 키(월·노선·박수) 있으면 덮어쓰기
   const idx=commonMaster.airfares.findIndex(a=>a.month===month&&a.origin===origin&&a.dest===dest&&a.nights===nights);
   const rec={month,airline,origin,dest,nights,flightOut,flightIn:(tripType==='편도'?'':flightIn),tripType,fare};
+  const beforeFare = idx>=0 ? commonMaster.airfares[idx].fare : '';
   if(idx>=0) commonMaster.airfares[idx]=rec;
   else commonMaster.airfares.push(rec);
+  logChange('공통', `항공요금 ${airline} ${origin}→${dest} ${nights}박`,
+    beforeFare!==''?'₩'+Number(beforeFare).toLocaleString():'', '₩'+Number(fare).toLocaleString());
   saveResortMaster(); renderAirfares();
   ['af-airline','af-origin','af-dest','af-nights','af-flightout','af-flightin','af-fare'].forEach(id=>document.getElementById(id).value='');
 }
-function delAirfare(i){ commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares(); }
-
-/* ── 항공사별 조건 메모 (담당자 참고용) ── */
-function anEsc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
-function anEscAttr(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function renderAirlineNotes(){
-  const box=document.getElementById('airline-note-rows'); if(!box) return;
-  const arr=commonMaster.airlineNotes||[];
-  box.innerHTML = arr.length
-    ? arr.map((a,i)=>`<div class="rm-row" style="align-items:flex-start;gap:6px">
-        <input class="rm-input text" type="text" value="${anEscAttr(a.airline)}" style="width:140px;font-weight:600"
-          onchange="editAirlineNote(${i},'airline',this.value)">
-        <input class="rm-input text" type="text" value="${anEscAttr(a.note)}" style="flex:1;min-width:200px"
-          onchange="editAirlineNote(${i},'note',this.value)">
-        <button class="btn-sm" style="padding:4px 9px;color:var(--red);border-color:var(--red)" onclick="delAirlineNote(${i})">×</button>
-      </div>`).join('')
-    : '<div class="muted" style="font-size:11px">등록된 항공사 메모가 없습니다.</div>';
+function delAirfare(i){
+  const a=commonMaster.airfares[i];
+  commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares();
+  if(a) logChange('공통', `항공요금 ${a.airline||''} ${a.origin}→${a.dest} ${a.nights}박 삭제`, '₩'+Number(a.fare).toLocaleString(), '(삭제)');
 }
-function addAirlineNote(){
-  const airline=document.getElementById('an-airline').value.trim();
-  const note=document.getElementById('an-note').value.trim();
-  if(!airline && !note) return;
-  if(!commonMaster.airlineNotes) commonMaster.airlineNotes=[];
-  commonMaster.airlineNotes.push({airline,note});
-  saveResortMaster(); renderAirlineNotes();
-  document.getElementById('an-airline').value='';
-  document.getElementById('an-note').value='';
-}
-function editAirlineNote(i,field,val){
-  if(!commonMaster.airlineNotes||!commonMaster.airlineNotes[i]) return;
-  commonMaster.airlineNotes[i][field]=val.trim();
-  saveResortMaster();
-}
-function delAirlineNote(i){ commonMaster.airlineNotes.splice(i,1); saveResortMaster(); renderAirlineNotes(); }
 
 function flashSaved(el, resortKey){
   if(resortKey){
@@ -3301,8 +3247,15 @@ function flashSaved(el, resortKey){
 }
 function updateResort(key, field, val, el){
   const r=resortMaster.find(x=>x.key===key); if(!r) return;
-  const textFields=['memo','depart','airOut','airIn'];
+  const textFields=['memo','depart','airOut','airIn','arrCode'];
   let syncBlk=false;
+  // 변경 전 값 캡처 (이력용)
+  const fieldLabel={stay:'체재비(엔)',transfer:'송영비(엔)',mgmt:'회원관리비(원)',arrCode:'도착공항',
+    airOut:'출발지',airIn:'도착지',depart:'출발 패턴',aliases:'별칭',assign:'임의배정',memo:'메모',
+    greenWeekday:'그린피 평일',greenWeekend:'그린피 주말',add9h:'추가 9홀',bfast:'조식',lunch:'중식',dinner:'석식'};
+  let before, label;
+  if(field.startsWith('room:')){ const rt=field.slice(5); before=(r.rooms&&r.rooms[rt])||''; label='보유블록('+rt+')'; }
+  else { before=r[field]; label=fieldLabel[field]||field; }
   if(field.startsWith('room:')){           // 룸타입별 보유: "room:트윈"
     const rt=field.slice(5);
     r.rooms=r.rooms||{};
@@ -3310,16 +3263,25 @@ function updateResort(key, field, val, el){
     if(n>0) r.rooms[rt]=n; else delete r.rooms[rt];
     if(el) el.value = n? n.toLocaleString():'';
     syncBlk=true;
+    logChange(r.name, label, before, (n>0?n:''));
   } else if(field==='aliases'){            // 별칭(쉼표 구분)
     r.aliases=String(val).split(',').map(s=>s.trim()).filter(Boolean);
     syncBlk=true;
+    logChange(r.name, label, (Array.isArray(before)?before.join(', '):before), r.aliases.join(', '));
   } else if(field==='assign'){             // 임의배정 체크
     r.assign=!!val; syncBlk=true;
+    logChange(r.name, label, (before?'예':'아니오'), (r.assign?'예':'아니오'));
+  } else if(field==='arrCode'){            // 도착공항 코드 (대문자 정규화)
+    r.arrCode=airportCode(val);
+    if(el) el.value=r.arrCode;
+    logChange(r.name, label, before, r.arrCode);
   } else if(textFields.includes(field)){
     r[field]=val;
+    logChange(r.name, label, before, val);
   } else {
     r[field]=num(val);
     if(el) el.value = r[field]?Number(r[field]).toLocaleString():'';
+    logChange(r.name, label, before, r[field]);
   }
   saveResortMaster(); flashSaved(el, key);
   // 보유·별칭·임의배정 변경 → 호텔 블록 데이터 재동기화 + 재렌더
@@ -3328,8 +3290,11 @@ function updateResort(key, field, val, el){
   if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
-  if(['mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  const cLabel={insCompany:'보험사',insProduct:'보험상품',insFee:'보험료',insCover:'보장내용',mgmtKRW:'회원관리비(원)'};
+  const before=commonMaster[field];
+  if(['insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
+  logChange('공통', cLabel[field]||field, before, commonMaster[field]);
   saveResortMaster();
 }
 
@@ -3768,7 +3733,82 @@ function blkRenderStatus(){
   document.getElementById('blk-mtx').innerHTML=head+body;
 }
 
-/* ── 전기카트 ── */
+/* ── 블록 현황 내부 공유용 내보내기 (엑셀 / 안 잘리는 PNG) ── */
+/* 현황 매트릭스 데이터 산출 (엑셀·PNG 공용): 행=호텔·룸타입, 열=1~말일, 값=잔여/사용 */
+function blkStatusMatrix(){
+  if(!blkParsed) return null;
+  const {days,month}=blkParsed;
+  const usage=blkUsageMap();
+  let units=blkDisplayUnits();
+  if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
+  units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
+  const rows=[];
+  units.forEach(u=>{
+    const rooms=usage[u]||{};
+    const assign=blkIsAssignUnit(u);
+    Object.keys(rooms).sort().forEach(rm=>{
+      const blk=assign?null:blkBlockForUnit(u,rm);
+      const cells=days.map(d=>{
+        const used=rooms[rm][d.day]||0;
+        if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null};
+        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const rem=(blk+over)-used;
+        return {kind:'rem', used, rem, txt:used===0?'':rem};
+      });
+      rows.push({hotel:u, room:rm, blk, assign, cells});
+    });
+  });
+  return {month, days, rows};
+}
+function blkExportExcel(){
+  if(!blkParsed){ alert('먼저 블록 현황을 표시해주세요.'); return; }
+  const mtx=blkStatusMatrix(); if(!mtx||!mtx.rows.length){ alert('표시할 데이터가 없습니다.'); return; }
+  const {month,days,rows}=mtx;
+  // AOA 구성: 헤더 2행(날짜/요일) + 데이터. 셀값은 잔여 숫자, 마감/임박은 상태 텍스트 병기.
+  const header1=['호텔 · 룸타입','보유'].concat(days.map(d=>parseInt(d.day)));
+  const header2=['',''].concat(days.map(d=>d.dow));
+  const aoa=[header1, header2];
+  rows.forEach(r=>{
+    const row=[`${r.hotel} · ${r.room}`, r.assign?'배정':(r.blk==null?'-':r.blk)];
+    r.cells.forEach(c=>{
+      if(c.used===0){ row.push(''); return; }       // 사용 없는 날은 공란
+      if(c.kind!=='rem'){ row.push(c.used); return; } // 임의배정·미등록은 사용수
+      // 잔여 + 상태 표기 (색 대신 텍스트)
+      if(c.rem<=0) row.push(`${c.rem} 마감`);
+      else if(c.rem<=3) row.push(`${c.rem} 임박`);
+      else row.push(c.rem);
+    });
+    aoa.push(row);
+  });
+  // 안내 행 + 빈 행
+  aoa.push([]);
+  aoa.push(['※ 숫자=잔여(보유−사용) · "마감"=잔여 0 이하 · "임박"=잔여 1~3 · 공란=사용 없음 · 배정=임의배정형']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:26},{wch:6}].concat(days.map(()=>({wch:7})));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,month);
+  XLSX.writeFile(wb,`블록현황_${month.replace('-','')}.xlsx`);
+  if(typeof showToast==='function') showToast('블록 현황 엑셀 생성 완료');
+}
+function blkExportPng(){
+  if(!blkParsed){ alert('먼저 블록 현황을 표시해주세요.'); return; }
+  const tbl=document.getElementById('blk-mtx');
+  if(!tbl){ alert('표시할 데이터가 없습니다.'); return; }
+  // 잘림 방지: 테이블의 실제 전체 폭(scrollWidth)을 캡처 폭으로 지정.
+  // 스크롤 컨테이너(.tbl-wrap)의 max-height·overflow를 일시 해제해 세로도 전부 캡처.
+  const wrap=tbl.closest('.tbl-wrap');
+  const prev = wrap ? {mh:wrap.style.maxHeight, ov:wrap.style.overflow} : null;
+  if(wrap){ wrap.style.maxHeight='none'; wrap.style.overflow='visible'; }
+  const fullW=tbl.scrollWidth+4, fullH=tbl.scrollHeight+4;
+  html2canvas(tbl,{scale:2,backgroundColor:'#ffffff',width:fullW,height:fullH,windowWidth:fullW+40,windowHeight:fullH+40,scrollX:0,scrollY:0}).then(canvas=>{
+    const a=document.createElement('a');
+    a.download=`블록현황_${blkParsed.month.replace('-','')}.png`;
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  }).catch(e=>{ alert('이미지 생성 실패: '+e.message); }).finally(()=>{
+    if(wrap&&prev){ wrap.style.maxHeight=prev.mh; wrap.style.overflow=prev.ov; }
+  });
+}
 function blkRenderCart(){
   if(!blkParsed) return;
   const {days}=blkParsed;
@@ -3984,7 +4024,7 @@ function blkRenderWait(){
     <div class="sum-box"><div class="sum-label">대기 팀</div><div class="sum-val">${waits.length}건</div></div>
     <div class="sum-box"><div class="sum-label">전환 가능</div><div class="sum-val green" id="blk-wait-ok">-</div></div>
   </div>`;
-  html+='<div class="tbl-wrap"><table class="blk-mtx" style="width:100%"><thead><tr><th class="rowhd">대표고객</th><th>숙소</th><th>출발일</th><th>인원</th><th>해당 풀 / 정원</th><th>출발일 잔여</th><th>판정</th></tr></thead><tbody>';
+  html+='<div class="tbl-wrap"><table class="blk-mtx" style="width:100%"><thead><tr><th class="rowhd">대표고객</th><th>숙소</th><th>출발일</th><th>인원</th><th>해당 풀 / 정원</th><th>출발일 잔여</th><th>판정</th><th>안내문</th></tr></thead><tbody>';
   let okCnt=0;
   waits.forEach(t=>{
     // 팀 숙소(accom) → 풀 매칭
@@ -3993,7 +4033,7 @@ function blkRenderWait(){
     let pool=blkPools.find(p=>!p.exclude && blkPoolMatch(p,accom,room));
     const dep=t.dep||'';
     const day=dep?dep.slice(8,10):'';
-    let verdict, vcolor, remCell='-', poolCell='-';
+    let verdict, vcolor, remCell='-', poolCell='-', canConvert=false;
     if(!accom){ verdict='숙소 미확인'; vcolor='var(--text3)'; }
     else if(!pool){ verdict='확인 필요(풀 없음)'; vcolor='var(--amber2)'; poolCell=accom; }
     else {
@@ -4006,10 +4046,13 @@ function blkRenderWait(){
         const used=blkPoolUsedByDay(pool);
         const rem=cap-(used[day]||0);
         remCell=`${rem}실`;
-        if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; }
+        if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; canConvert=true; }
         else { verdict='✕ 잔여 부족'; vcolor='var(--red)'; }
       }
     }
+    const btn = canConvert
+      ? `<button class="btn-sm" style="padding:3px 9px;border-color:var(--accent);color:var(--accent)" onclick="openConvertNotice('${t.eventSeq}')">🎫 안내문</button>`
+      : '<span class="muted">-</span>';
     html+=`<tr>
       <td class="rowhd"><b>${t.repName||'-'}</b></td>
       <td>${accom||'<span class="muted">미확인</span>'} <span class="muted">${room}</span></td>
@@ -4018,6 +4061,7 @@ function blkRenderWait(){
       <td style="font-size:11px">${poolCell}</td>
       <td class="center">${remCell}</td>
       <td class="center" style="color:${vcolor};font-weight:700">${verdict}</td>
+      <td class="center">${btn}</td>
     </tr>`;
   });
   html+='</tbody></table></div>';
@@ -4037,55 +4081,79 @@ function blkSwitch(name){
   if(name==='wait') blkRenderWait();
 }
 
-/* ── 예약가능일자 공지 PNG ── */
+/* ── 예약 가능 일정 공지 PNG (출발 일정형 · 고객 발송용) ──
+   매트릭스 대신 풀별 "○일(요일)·○박○일·출발지·가능/임박" 카드. 잔여 숫자 미노출. */
 function openNotice(){
   if(!blkParsed){ alert('먼저 엠클릭 표를 붙여넣어 주세요.'); return; }
-  document.getElementById('notice-sub').textContent=`${blkParsed.month} · ${blkHotelFilter.size?[...blkHotelFilter].join(', '):'전체 호텔'}`;
+  document.getElementById('notice-sub').textContent=`${blkParsed.month} · 출발 가능 일정`;
   renderNotice();
   document.getElementById('notice-modal-bg').classList.add('open');
 }
-function noticeSymbol(rem){
-  if(rem<=0) return '<span class="nst-x">✕</span>';
-  if(rem<=3) return `<span class="nst-soon">△${rem}</span>`;
-  return `<span class="nst-ok">○${rem}</span>`;
+/* 풀별 출발 가능 일정 산출 (blkRenderDepart와 동일 계산, 데이터만 반환) */
+function noticeDepartList(minRem){
+  if(!blkParsed) return [];
+  const {month}=blkParsed;
+  const [y,m]=month.split('-').map(Number);
+  const lastDay=new Date(y,m,0).getDate();
+  const WK=['일','월','화','수','목','금','토'];
+  const out=[];
+  blkPools.filter(p=>!p.exclude && blkDepPoolSel.has(p.name)).forEach(pool=>{
+    if(blkIsAssignPool(pool)) return;          // 임의배정형은 고객 공지에서 제외
+    const cap=blkPoolCap(pool); if(cap==null) return;
+    const used=blkPoolUsedByDay(pool);
+    const dep=resortDepartForPool(pool);
+    const pats=blkParseDepart(dep.depart);
+    const isFree=pats.some(p=>p.free);
+    const departs=[];
+    if(isFree){
+      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0);
+        if(rem>=minRem) departs.push({day:d,dow:WK[new Date(y,m-1,d).getDay()],nights:0,label:'자유(1박~)',rem}); }
+    } else {
+      for(let d=1;d<=lastDay;d++){
+        const dow=new Date(y,m-1,d).getDay();
+        pats.forEach(p=>{
+          if(p.free||p.dow!==dow) return;
+          let mn=Infinity,valid=true;
+          for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,cap-(used[String(cd).padStart(2,'0')]||0)); }
+          if(valid&&mn>=minRem) departs.push({day:d,dow:WK[dow],nights:p.nights,label:p.label,rem:mn});
+        });
+      }
+    }
+    if(departs.length) out.push({pool:pool.name, airOut:dep.airOut, airIn:dep.airIn, departs});
+  });
+  return out;
 }
 function renderNotice(){
   if(!blkParsed) return;
-  const {days,month}=blkParsed;
-  const hideX=document.getElementById('notice-hide-x').checked;
-  const hideEmpty=document.getElementById('notice-hide-empty').checked;
-  const usage=blkUsageMap();
-  let units=blkDisplayUnits().filter(u=>!blkIsAssignUnit(u));
-  if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
-  // 행 구성: 호텔·룸타입
-  const rowDefs=[];
-  units.forEach(u=>{ const rooms=usage[u]||{}; Object.keys(rooms).sort().forEach(rm=>{ const blk=blkBlockForUnit(u,rm); if(blk!=null) rowDefs.push({u,rm,blk,used:rooms[rm]}); }); });
-  // 표시할 날짜: 빈날 숨김 옵션
-  let showDays=days;
-  if(hideEmpty){
-    showDays=days.filter(d=>rowDefs.some(rd=>(rd.used[d.day]||0)>0 || true));
-  }
+  const {month}=blkParsed;
   const [y,mm]=month.split('-');
-  let html=`<div class="notice" id="notice-body">
-    <div class="notice-hd"><div class="ntag">RESERVATION</div><h2>예약 가능일자 안내</h2><div class="nperiod">${y}년 ${parseInt(mm)}월 · 메리트투어</div></div>
-    <div class="notice-bd"><table class="ntbl"><thead><tr><th class="nrowhd">호텔 · 객실</th>`;
-  showDays.forEach(d=>{ html+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
-  html+='</tr></thead><tbody>';
-  rowDefs.forEach(rd=>{
-    html+=`<tr><td class="nrowhd">${rd.u} <span style="color:#94a0b0;font-weight:500">${rd.rm}</span></td>`;
-    showDays.forEach(d=>{
-      const used=rd.used[d.day]||0;
-      const over=blkOver[`${rd.u}|${rd.rm}|${d.day}`]||0;
-      const rem=(rd.blk+over)-used;
-      let cell;
-      if(rem<=0){ cell=hideX?'<span class="nst-x">·</span>':noticeSymbol(rem); }
-      else cell=noticeSymbol(rem);
-      html+=`<td>${cell}</td>`;
+  const hideSoon=document.getElementById('notice-hide-x') && document.getElementById('notice-hide-x').checked; // 임박 숨기기(가능만)
+  const minRem = hideSoon ? 4 : 1;   // 가능만 보기면 4실 이상(=임박 제외)
+  const list=noticeDepartList(minRem);
+  let body='';
+  if(!list.length){
+    body='<div class="np-empty">현재 안내 가능한 출발 일정이 없습니다.</div>';
+  } else {
+    list.forEach(sec=>{
+      const route=[sec.airOut,sec.airIn].filter(Boolean).join(' → ');
+      body+=`<div class="np-sec"><div class="np-sec-hd"><span class="np-sec-name">${sec.pool}</span>${route?`<span class="np-sec-route">${route}</span>`:''}</div><div class="np-cards">`;
+      sec.departs.forEach(x=>{
+        const soon=x.rem<=3;
+        const stat=soon?'<span class="np-st np-soon">임박</span>':'<span class="np-st np-ok">가능</span>';
+        const span=x.nights>0?`${x.nights}박${x.nights+1}일`:'자유 일정';
+        body+=`<div class="np-card ${soon?'soon':''}">
+          <div class="np-date">${y%100}.${parseInt(mm)}.${x.day} <span class="np-dow">(${x.dow})</span></div>
+          <div class="np-span">${span}</div>
+          ${stat}
+        </div>`;
+      });
+      body+='</div></div>';
     });
-    html+='</tr>';
-  });
-  html+=`</tbody></table></div>
-    <div class="notice-ft"><b>○ 여유 · △ 임박(잔여 1~3) · ✕ 마감</b> &nbsp;|&nbsp; 숫자는 잔여 객실 수입니다. 예약 문의: 메리트투어</div></div>`;
+  }
+  const html=`<div class="notice np-doc" id="notice-body">
+    <div class="notice-hd"><div class="ntag">RESERVATION</div><h2>예약 가능 일정 안내</h2><div class="nperiod">${y}년 ${parseInt(mm)}월 · 메리트투어</div></div>
+    <div class="notice-bd">${body}</div>
+    <div class="notice-ft"><b>가능 · 임박</b> &nbsp;|&nbsp; 임박은 마감이 가까운 일정입니다. 예약 문의: 메리트투어 02-365-9800</div></div>`;
   document.getElementById('notice-canvas').innerHTML=html;
 }
 function downloadNotice(){
@@ -4094,12 +4162,201 @@ function downloadNotice(){
   html2canvas(el,{scale:2,backgroundColor:'#ffffff'}).then(canvas=>{
     const a=document.createElement('a');
     const ym=(blkParsed?blkParsed.month:'').replace('-','');
-    a.download=`예약가능일자_${ym}.png`;
+    a.download=`예약가능일정_${ym}.png`;
     a.href=canvas.toDataURL('image/png');
     a.click();
   }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
 }
 
+/* ════════════════════════════════════════════════════════════
+   항공 발권 안내문 (고객 발송용 WebP) — 항공 정보 카드에서 호출
+   선택 팀이 있으면 팀 정보 표기, 없으면 일반 공지형.
+   디자인: 공지 표준(네이비 헤더·푸터 + 화이트 본문 + 신호색)
+════════════════════════════════════════════════════════════ */
+function openTicketNotice(){
+  if(!teams.length){ alert('먼저 통합 분석을 실행해주세요.'); return; }
+  // 기본 발권일: 오늘로 세팅(미입력 방지)
+  const di=document.getElementById('tn-date');
+  if(di && !di.value){ di.value=new Date().toISOString().slice(0,10); }
+  renderTicketNotice();
+  document.getElementById('ticket-notice-bg').classList.add('open');
+}
+/* 발권일(YYYY-MM-DD) → "2026년 8월 14일(목)" 한글 표기 */
+function tnDateLabel(v){
+  if(!v) return '';
+  const d=new Date(v+'T00:00:00'); if(isNaN(d)) return v;
+  const dow=['일','월','화','수','목','금','토'][d.getDay()];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${dow})`;
+}
+function renderTicketNotice(){
+  const dateVal=document.getElementById('tn-date').value;
+  const dateLabel=tnDateLabel(dateVal) || '추후 안내';
+  // 선택 팀 정보 (있으면 상단에 노선·출발일 요약)
+  const sel=teams.filter(t=>selectedSeqs.has(t.eventSeq));
+  let teamBox='';
+  if(sel.length){
+    const rows=sel.map(t=>{
+      const u=resortUnitFor(t.accom);
+      const dest=t.airIn || (resortMaster.find(r=>r.name===t.accom)||{}).airIn || '';
+      const m=String(t.period||'').match(/(\d+)박/); const nights=m?m[1]+'박':'';
+      return `<tr><td>${t.repName||'-'}</td><td>${t.prodName||t.accom||'-'}</td><td>${t.dep||'-'}</td><td class="tn-c">${nights}</td></tr>`;
+    }).join('');
+    teamBox=`<div class="tn-teambox">
+      <div class="tn-teambox-hd">대상 행사</div>
+      <table class="tn-teamtbl"><thead><tr><th>대표자</th><th>상품</th><th>출발일</th><th class="tn-c">기간</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  const html=`<div class="tn-doc" id="ticket-notice-body">
+    <div class="tn-hd">
+      <div class="tn-brand">MERITTOUR · NOTICE</div>
+      <div class="tn-tag">항공 발권 안내</div>
+      <h1 class="tn-title">항공권 발권 진행 안내</h1>
+      <div class="tn-sub">회원님의 안정적인 여행을 위한 발권 일정과 유의사항을 안내드립니다</div>
+    </div>
+    <div class="tn-bd">
+      ${teamBox}
+      <div class="tn-datebox">
+        <div class="tn-datebox-lbl">발권 예정일</div>
+        <div class="tn-datebox-val">${dateLabel}</div>
+        <div class="tn-datebox-note">위 일자에 항공권 발권이 일괄 진행됩니다.</div>
+      </div>
+
+      <div class="tn-sec">
+        <div class="tn-sec-no">01</div>
+        <div class="tn-sec-bd">
+          <div class="tn-sec-t">발권 이후 변경·취소 시 유의사항</div>
+          <p>항공권은 발권이 완료되면 항공사 규정이 적용됩니다. 발권 이후 <b>명단 변경 또는 예약 취소</b> 시에는 항공사에서 정한 <b>패널티가 부과</b>될 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="tn-sec">
+        <div class="tn-sec-no">02</div>
+        <div class="tn-sec-bd">
+          <div class="tn-sec-t">명단 변경 = 취소 후 재발권</div>
+          <p>저비용 항공권(LCC) 및 일부 항공권은 <b>탑승객 이름 변경 자체가 불가</b>합니다. 부득이하게 변경이 필요한 경우 기존 항공권을 취소하고 신규로 재발권하는 절차로 진행되며, 이때 <b>취소 패널티(최대 100%)와 신규 발권 비용</b>이 함께 발생할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="tn-sec">
+        <div class="tn-sec-no">03</div>
+        <div class="tn-sec-bd">
+          <div class="tn-sec-t">패널티 적용 기준</div>
+          <p>취소 패널티는 여행사 수수료가 아닌 <b>항공사가 부과하는 금액</b>이며, 발권 완료 시점부터 출발일까지의 잔여 기간과 무관하게 발생할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="tn-warn">
+        <div class="tn-warn-t">⚠ 발권 전 확인 부탁드립니다</div>
+        <ul>
+          <li>여권 정보가 잘못된 상태로 발권되면 변경에 동일한 패널티가 적용되므로, 제출하신 <b>여권 사본이 만료 전 최신본</b>인지 다시 한 번 확인 부탁드립니다.</li>
+          <li>발권 이후의 명단 변경·취소는 <b>패널티 발생 가능성</b>이 있으니, 변경 사항은 발권 예정일 이전에 미리 알려주시기 바랍니다.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tn-ft">
+      <div class="tn-ft-lbl">예약 문의</div>
+      <div class="tn-ft-tel">02-365-9800</div>
+      <div class="tn-ft-sub">merittour.co.kr · 평일 09:00 – 18:00</div>
+      <div class="tn-ft-org">MERITTOUR · MEMBERSHIP GOLF RESERVATION CENTER</div>
+    </div>
+  </div>`;
+  document.getElementById('ticket-notice-canvas').innerHTML=html;
+}
+function downloadTicketNotice(){
+  const el=document.getElementById('ticket-notice-body');
+  if(!el){ alert('안내문 내용이 없습니다.'); return; }
+  html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
+    const a=document.createElement('a');
+    const d=(document.getElementById('tn-date').value||'').replace(/-/g,'');
+    a.download=`항공발권안내_${d||'공지'}.webp`;
+    a.href=canvas.toDataURL('image/webp',0.92);
+    a.click();
+  }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
+}
+
+/* ════════════════════════════════════════════════════════════
+   대기 전환 안내문 (고객 발송용 WebP) — 대기 점검 표에서 호출
+   "오래 기다려주셔서 감사합니다 / 확정 전환 가능 / 예약금·명단 회신 시 확정"
+════════════════════════════════════════════════════════════ */
+let convertNoticeTeam=null;
+function openConvertNotice(eventSeq){
+  const t=(teams||[]).find(x=>String(x.eventSeq)===String(eventSeq));
+  if(!t){ alert('팀 정보를 찾을 수 없습니다.'); return; }
+  convertNoticeTeam=t;
+  renderConvertNotice();
+  document.getElementById('convert-notice-bg').classList.add('open');
+}
+function cnDateLabel(v){
+  if(!v) return '';
+  const d=new Date(v+'T00:00:00'); if(isNaN(d)) return v;
+  const dow=['일','월','화','수','목','금','토'][d.getDay()];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${dow})`;
+}
+function renderConvertNotice(){
+  const t=convertNoticeTeam; if(!t) return;
+  const m=String(t.period||'').match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
+  const span=nights>0?`${nights}박${nights+1}일`:'';
+  const depLabel=cnDateLabel(t.dep)||'-';
+  const prod=t.prodName||t.accom||'-';
+  const html=`<div class="tn-doc cn-doc" id="convert-notice-body">
+    <div class="tn-hd">
+      <div class="tn-brand">MERITTOUR · NOTICE</div>
+      <div class="tn-tag">예약 확정 안내</div>
+      <h1 class="tn-title">대기 예약 확정 전환 안내</h1>
+      <div class="tn-sub">기다려 주신 예약이 확정 가능 상태가 되었습니다</div>
+    </div>
+    <div class="tn-bd">
+      <p class="cn-greet"><b>${t.repName||'고객'}님</b>, 오래 기다려 주셔서 진심으로 감사드립니다.<br>
+      신청해 주신 아래 일정의 <b>대기 예약이 확정으로 전환 가능</b>해졌음을 안내드립니다.</p>
+
+      <div class="cn-infobox">
+        <div class="cn-info-row"><span class="cn-info-lbl">상품</span><span class="cn-info-val">${prod}</span></div>
+        <div class="cn-info-row"><span class="cn-info-lbl">출발일</span><span class="cn-info-val">${depLabel}</span></div>
+        ${span?`<div class="cn-info-row"><span class="cn-info-lbl">일정</span><span class="cn-info-val">${span}</span></div>`:''}
+        <div class="cn-info-row"><span class="cn-info-lbl">인원</span><span class="cn-info-val">${t.pax||'-'}명</span></div>
+      </div>
+
+      <div class="tn-sec">
+        <div class="tn-sec-no">!</div>
+        <div class="tn-sec-bd">
+          <div class="tn-sec-t">예약 확정 방법</div>
+          <p>아래 <b>두 가지를 회신</b>해 주시면 예약이 확정됩니다.</p>
+          <ul class="cn-list">
+            <li><b>예약금</b> 입금</li>
+            <li>참가자 <b>명단</b> (영문 성함·생년월일 등) 전달</li>
+          </ul>
+          <p class="cn-note">예약금과 명단이 확인되는 시점에 예약이 확정 처리됩니다.</p>
+        </div>
+      </div>
+
+      <div class="tn-warn">
+        <div class="tn-warn-t">⚠ 안내 말씀</div>
+        <ul>
+          <li>대기 전환 자리는 <b>선착순으로 마감</b>될 수 있어, 가급적 빠른 회신을 부탁드립니다.</li>
+          <li>회신이 지연될 경우 다른 대기 고객님께 자리가 안내될 수 있는 점 양해 부탁드립니다.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tn-ft">
+      <div class="tn-ft-lbl">예약 문의</div>
+      <div class="tn-ft-tel">02-365-9800</div>
+      <div class="tn-ft-sub">merittour.co.kr · 평일 09:00 – 18:00</div>
+      <div class="tn-ft-org">MERITTOUR · MEMBERSHIP GOLF RESERVATION CENTER</div>
+    </div>
+  </div>`;
+  document.getElementById('convert-notice-canvas').innerHTML=html;
+}
+function downloadConvertNotice(){
+  const el=document.getElementById('convert-notice-body');
+  if(!el){ alert('안내문 내용이 없습니다.'); return; }
+  html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
+    const a=document.createElement('a');
+    const nm=(convertNoticeTeam&&convertNoticeTeam.repName)||'대기전환';
+    a.download=`대기전환안내_${nm}.webp`;
+    a.href=canvas.toDataURL('image/webp',0.92);
+    a.click();
+  }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
+}
 /* ── 표 상단 동기화 가로 스크롤바 ── */
 /* 넘치는 .tbl-wrap 위에, 하단 스크롤바와 동기화되는 상단 스크롤바를 부착.
    가로로 넘칠 때만 생기고, 안 넘치면 안 생김. 윈도우 리사이즈·내용 변경 시 갱신. */
@@ -4141,20 +4398,6 @@ setTimeout(attachTopScrollbars, 300);
 /* ── 초기화 ── */
 blkLoad();
 renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
-
-/* 리조트 마스터 Supabase 공유: 로컬로 즉시 표시한 뒤 서버 최신본으로 동기화 */
-(async function rmCloudSync(){
-  rmSetSync('local');
-  const ok = await sbLoadMaster();
-  if(ok){
-    renderResortMaster();
-    if(typeof blkSyncFromResort==='function'){ blkSyncFromResort(); if(blkParsed) blkRender(); }
-    await sbLoadHistory(30);
-    renderRmHistory();
-  }
-  renderRmSyncBadge();
-})();
-
 (function blkRestore(){
   try{
     const savedMonth=localStorage.getItem(BLK_STORE.month);
@@ -4168,13 +4411,12 @@ renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
 <div class="modal-bg" id="notice-modal-bg">
   <div class="modal" style="max-width:820px">
     <div class="modal-head">
-      <div><div class="modal-title">📤 예약가능일자 공지 이미지</div><div class="card-sub" id="notice-sub">선택한 호텔 기준</div></div>
+      <div><div class="modal-title">📤 예약 가능 일정 공지 이미지</div><div class="card-sub" id="notice-sub">출발 가능 일정 기준</div></div>
       <button class="modal-close" onclick="document.getElementById('notice-modal-bg').classList.remove('open')">×</button>
     </div>
     <div class="modal-body">
       <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-        <label class="exp-chk" style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="notice-hide-x" onchange="renderNotice()"> 마감(✕)일 숨기기</label>
-        <label class="exp-chk" style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="notice-hide-empty" checked onchange="renderNotice()"> 블록 없는 날 숨기기</label>
+        <label class="exp-chk" style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="notice-hide-x" onchange="renderNotice()"> 임박 제외(가능 일정만)</label>
         <button class="btn-sm" onclick="downloadNotice()" style="border-color:var(--accent);color:var(--accent);margin-left:auto">📷 PNG 다운로드</button>
       </div>
       <div class="notice-canvas-wrap"><div id="notice-canvas"></div></div>
@@ -4182,7 +4424,39 @@ renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
   </div>
 </div>
 
-<!-- ════════ 블록 예약 상세 사이드 (간이) ════════ -->
+<!-- ════════ 항공 발권 안내문 모달 ════════ -->
+<div class="modal-bg" id="ticket-notice-bg">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-head">
+      <div><div class="modal-title">🎫 항공 발권 안내문</div><div class="card-sub">발권 예정일을 입력하면 고객 발송용 안내문이 생성됩니다 · 체크한 팀이 있으면 대상 행사가 표기됩니다</div></div>
+      <button class="modal-close" onclick="document.getElementById('ticket-notice-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <label style="font-size:13px;display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--navy)">발권 예정일
+          <input type="date" id="tn-date" class="bk-date-input" onchange="renderTicketNotice()"></label>
+        <button class="btn-sm" onclick="downloadTicketNotice()" style="border-color:var(--accent);color:var(--accent);margin-left:auto">🖼 WebP 다운로드</button>
+      </div>
+      <div class="tn-canvas-wrap"><div id="ticket-notice-canvas"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 대기 전환 안내문 모달 ════════ -->
+<div class="modal-bg" id="convert-notice-bg">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-head">
+      <div><div class="modal-title">🎫 대기 전환 안내문</div><div class="card-sub">대기 예약이 확정 전환 가능해진 고객님께 보내는 안내문입니다</div></div>
+      <button class="modal-close" onclick="document.getElementById('convert-notice-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn-sm" onclick="downloadConvertNotice()" style="border-color:var(--accent);color:var(--accent);margin-left:auto">🖼 WebP 다운로드</button>
+      </div>
+      <div class="tn-canvas-wrap"><div id="convert-notice-canvas"></div></div>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="blk-detail-bg">
   <div class="modal" style="max-width:520px">
     <div class="modal-head"><div class="modal-title" id="blk-detail-title">블록 상세</div><button class="modal-close" onclick="document.getElementById('blk-detail-bg').classList.remove('open')">×</button></div>
