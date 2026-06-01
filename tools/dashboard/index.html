@@ -898,6 +898,7 @@ tr:hover td{background:#EEF3FA}
           <button class="btn-sm" onclick="blkExportPng()" title="내부 공유용 — 날짜 전체가 잘리지 않는 PNG">🖼 현황 PNG</button>
         </div>
       </div>
+      <div id="blk-monthnav" style="display:none;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap"></div>
       <div class="sum-grid" id="blk-summary"></div>
       <div class="blk-toolbar" style="margin-top:.5rem">
         <label>호텔 필터</label><div class="blk-chips" id="blk-hotel-chips"></div>
@@ -2810,11 +2811,15 @@ function vcalUnregisterMonth(ym){
 function renderVcalRegBar(){
   const bar=document.getElementById('vcal-reg-bar'); if(!bar) return;
   const ms=Object.keys(vcalBlocks).sort();
-  if(!ms.length){ bar.style.display='none'; return; }
-  bar.style.display='flex';
-  document.getElementById('vcal-reg-chips').innerHTML=ms.map(ym=>
-    `<span class="blk-chip blk-chip-on" style="cursor:default">${ym} ✓ <span style="cursor:pointer;color:var(--red);font-weight:700;margin-left:4px" onclick="vcalUnregisterMonth('${ym}')" title="등록 해제">×</span></span>`
-  ).join('');
+  if(!ms.length){ bar.style.display='none'; }
+  else {
+    bar.style.display='flex';
+    document.getElementById('vcal-reg-chips').innerHTML=ms.map(ym=>
+      `<span class="blk-chip blk-chip-on" style="cursor:default">${ym} ✓ <span style="cursor:pointer;color:var(--red);font-weight:700;margin-left:4px" onclick="vcalUnregisterMonth('${ym}')" title="등록 해제">×</span></span>`
+    ).join('');
+  }
+  // 현황 표가 떠 있으면 월 전환 네비도 갱신
+  if(typeof blkParsed!=='undefined' && blkParsed && typeof blkRenderMonthNav==='function') blkRenderMonthNav();
 }
 
 function renderVcal(){
@@ -4179,9 +4184,16 @@ function blkRender(){
     return;
   }
   blkParsed={rows, days:blkDays(month,rows), month};
+  blkRenderAll();
+}
+/* blkParsed가 세팅된 상태에서 현황·시뮬·출발조회 등 일괄 렌더 (붙여넣기/등록월 로드 공용) */
+function blkRenderAll(){
+  if(!blkParsed) return;
+  const rows=blkParsed.rows;
   const hotels=[...new Set(rows.map(r=>r.hotel))];
   document.getElementById('blk-paste-meta').textContent=`✓ ${hotels.length}개 호텔 · ${rows.length}개 셀 인식`;
   document.getElementById('blk-status-result').style.display='block';
+  blkRenderMonthNav();
   blkRenderHotelChips();
   blkRenderStatus();
   blkRenderCart();
@@ -4192,6 +4204,35 @@ function blkRender(){
   blkRenderWait();
   blkCheckUnmapped();
   if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();  // 블록 갱신 시 달력 가능여부 반영
+}
+
+/* ── 등록월 전환 네비 (현황 표를 등록해둔 달끼리 좌우 전환) ── */
+function blkRenderMonthNav(){
+  const nav=document.getElementById('blk-monthnav'); if(!nav) return;
+  const ms=(typeof vcalBlocks!=='undefined')?Object.keys(vcalBlocks).sort():[];
+  // 등록월이 2개 미만이면 전환 의미 없음 → 숨김
+  if(ms.length<2){ nav.style.display='none'; return; }
+  nav.style.display='flex';
+  const cur=blkParsed?blkParsed.month:'';
+  const idx=ms.indexOf(cur);
+  const prev=idx>0?ms[idx-1]:'';
+  const next=(idx>=0&&idx<ms.length-1)?ms[idx+1]:'';
+  const mlabel=ym=>{ const m=parseInt(ym.split('-')[1]); return m+'월'; };
+  let html=`<span style="font-size:12px;font-weight:700;color:var(--accent2)">등록월 전환</span>
+    <button class="btn-sm" onclick="blkLoadMonth('${prev}')" ${prev?'':'disabled'} style="${prev?'':'opacity:.4;cursor:not-allowed'}">‹</button>`;
+  html+=ms.map(ym=>`<button class="btn-sm" onclick="blkLoadMonth('${ym}')" style="${ym===cur?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${mlabel(ym)}</button>`).join('');
+  html+=`<button class="btn-sm" onclick="blkLoadMonth('${next}')" ${next?'':'disabled'} style="${next?'':'opacity:.4;cursor:not-allowed'}">›</button>`;
+  if(idx<0) html+=`<span class="muted" style="font-size:11px;margin-left:6px">※ 지금 보는 ${cur||'표'}는 미등록 상태입니다(붙여넣기 원본)</span>`;
+  nav.innerHTML=html;
+}
+/* 등록해둔 달을 현재 현황 표로 로드 (그 달 기준으로 합계·필터·출발조회까지 전환) */
+function blkLoadMonth(ym){
+  if(!ym || typeof vcalBlocks==='undefined' || !vcalBlocks[ym]) return;
+  blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
+  // 출발년월 셀렉터도 동기화(엑셀·PNG 파일명 등에서 사용)
+  const msel=document.getElementById('blk-month'); if(msel) msel.value=ym;
+  blkRenderAll();
+  // 현황 표로 스크롤 위치 유지(상단 고정)
 }
 
 /* 미분류 호텔 경고 */
