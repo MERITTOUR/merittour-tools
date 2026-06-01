@@ -536,7 +536,10 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head">
       <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율·여행자보험 — 입력 즉시 자동 저장됩니다</div></div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="exportMaster()" style="border-color:var(--accent);color:var(--accent)">📤 마스터 내보내기</button>
+        <button class="btn-sm" onclick="document.getElementById('master-import-file').click()" style="border-color:var(--accent);color:var(--accent)">📥 마스터 불러오기</button>
+        <input type="file" id="master-import-file" accept="application/json,.json" style="display:none" onchange="importMaster(this)">
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
     </div>
@@ -2963,6 +2966,62 @@ function resetResortMaster(){
   if(typeof blkSyncFromResort==='function') blkSyncFromResort();
   renderResortMaster();
   if(blkParsed) blkRender();
+}
+
+/* ── 마스터 내보내기 / 불러오기 (직원 간 공통 마스터 공유) ──
+   공통 마스터(리조트 마스터 + 환율 + 항공요금 + 변경이력)를 JSON 파일로 주고받아 같은 기준값을 공유.
+   팀 지정·발권 체크·요금 보정 등 개인 작업값은 포함하지 않음. */
+const MASTER_EXPORT_TYPE='merittour-master';
+const MASTER_EXPORT_VER=1;
+function exportMaster(){
+  const payload={
+    _type:MASTER_EXPORT_TYPE, _ver:MASTER_EXPORT_VER,
+    exportedAt:new Date().toISOString(),
+    resortMaster, commonMaster, changeLog
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  const d=new Date(); const p=n=>String(n).padStart(2,'0');
+  a.download=`메리트투어_마스터_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.json`;
+  a.href=URL.createObjectURL(blob);
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  if(typeof showToast==='function') showToast('마스터 파일을 내보냈습니다');
+}
+function importMaster(input){
+  const file=input.files&&input.files[0];
+  input.value=''; // 같은 파일 다시 선택 가능하도록 초기화
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    let data;
+    try{ data=JSON.parse(e.target.result); }
+    catch(err){ alert('파일을 읽을 수 없습니다. 올바른 마스터 JSON 파일인지 확인해주세요.'); return; }
+    // 형식 검증
+    if(!data || data._type!==MASTER_EXPORT_TYPE || !Array.isArray(data.resortMaster) || typeof data.commonMaster!=='object'){
+      alert('메리트투어 마스터 파일 형식이 아닙니다. 「마스터 내보내기」로 만든 파일을 선택해주세요.'); return;
+    }
+    const when = data.exportedAt ? chlogTime(data.exportedAt) : '(시각 정보 없음)';
+    if(!confirm(`현재 마스터를 불러온 파일로 교체할까요?\n\n· 내보낸 시각: ${when}\n· 숙소 ${data.resortMaster.length}개\n\n현재 입력해 둔 요금·환율·항공요금이 이 파일 내용으로 덮어쓰기 됩니다.`)) return;
+    // 적용: 기본값과 병합(누락 필드 보호)
+    resortMaster = RESORT_DEFAULTS.map(def=>{
+      const s = data.resortMaster.find(x=>x.key===def.key);
+      return s ? {...def, ...s} : {...def};
+    });
+    commonMaster = {...COMMON_DEFAULTS, ...data.commonMaster};
+    // 변경이력 병합(불러온 이력 + 현재 이력, 최신순, 100건)
+    if(Array.isArray(data.changeLog)){
+      changeLog = data.changeLog.concat(changeLog).slice(0,CHLOG_MAX);
+      saveChangeLog();
+    }
+    saveResortMaster();
+    if(typeof blkSyncFromResort==='function') blkSyncFromResort();
+    logChange('공통','마스터 일괄 불러오기', '', `${when} 기준 (숙소 ${data.resortMaster.length}개)`);
+    renderResortMaster();
+    if(blkParsed) blkRender();
+    alert(`마스터를 불러왔습니다.\n(내보낸 시각: ${when})`);
+  };
+  reader.readAsText(file);
 }
 
 /* 리조트 마스터 아코디언 열림 상태 */
