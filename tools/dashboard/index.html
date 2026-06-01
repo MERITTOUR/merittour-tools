@@ -442,6 +442,49 @@ tr:hover td{background:#EEF3FA}
 .np-ok{background:var(--green-dim);color:var(--green2)}
 .np-soon{background:var(--amber-dim);color:var(--amber2)}
 .np-empty{padding:30px;text-align:center;color:#8b97a6;font-size:13px}
+/* ── 요금 달력 ── */
+.verify-viewtoggle{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.vt-btn{padding:7px 14px;background:var(--surface);border:none;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;font-family:var(--sans)}
+.vt-btn+.vt-btn{border-left:1px solid var(--border2)}
+.vt-btn.active{background:var(--accent);color:#fff}
+.vcal-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.vcal-month{font-size:16px;font-weight:700;color:var(--navy);font-family:var(--mono);min-width:110px;text-align:center}
+.vcal-legend{display:flex;align-items:center;gap:10px;margin-left:auto;font-size:11px;color:var(--text2)}
+.vcal-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.vcal-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.vcal-table th{padding:7px 4px;font-size:12px;color:var(--text2);font-weight:600;border-bottom:2px solid var(--border2)}
+.vcal-table th.sun{color:var(--red)} .vcal-table th.sat{color:var(--accent)}
+.vcal-cell{height:78px;vertical-align:top;border:1px solid var(--border);padding:5px 6px;background:var(--surface);transition:background .15s}
+.vcal-cell.empty{background:var(--surface2);border-color:var(--border)}
+.vcal-cell.has{cursor:pointer}
+.vcal-cell.has:hover{background:var(--accent-dim)}
+.vcal-cell.sel{background:var(--accent-dim);outline:2px solid var(--accent);outline-offset:-2px}
+.vcal-daynum{font-size:13px;font-weight:700;color:var(--text)}
+.vcal-cell.sun .vcal-daynum{color:var(--red)} .vcal-cell.sat .vcal-daynum{color:var(--accent)}
+.vcal-teambadge{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#fff;background:var(--green2);border-radius:10px;padding:1px 8px}
+.vcal-pkgbadge{display:inline-block;margin-top:4px;margin-left:3px;font-size:10px;font-weight:700;color:#fff;background:var(--accent);border-radius:10px;padding:1px 6px}
+.vcal-paxline{font-size:10px;color:var(--text3);margin-top:3px}
+#vcal-detail{margin-top:16px}
+.vcal-detail-head{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
+.vcal-group{border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.vcal-group-head{background:var(--surface2);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.vcal-group-title{font-size:14px;font-weight:700;color:var(--navy)}
+.vcal-group-meta{font-size:12px;color:var(--text2)}
+.vcal-base{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+.vcal-base-val{font-family:var(--mono);font-weight:700;color:var(--accent2);font-size:14px}
+.vcal-base-input{width:120px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-family:var(--mono);font-size:13px;text-align:right}
+.vcal-apply-btn{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.vcal-apply-btn:disabled{background:var(--border2);cursor:not-allowed}
+.vcal-preset-chk{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer}
+.vcal-tlist{width:100%;border-collapse:collapse}
+.vcal-tlist th{font-size:11px;color:var(--text2);font-weight:600;text-align:left;padding:7px 10px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.vcal-tlist td{padding:8px 10px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+.vcal-tlist tr:last-child td{border-bottom:none}
+.vcal-tlist .num{text-align:right;font-family:var(--mono)}
+.vcal-tlist .center{text-align:center}
+.vcal-diff-pos{color:var(--red);font-weight:700} .vcal-diff-neg{color:var(--accent2);font-weight:700} .vcal-diff-ok{color:var(--green2);font-weight:700}
+.vcal-empty{padding:30px;text-align:center;color:var(--text3);font-size:13px}
+@media(max-width:640px){.vcal-cell{height:62px}.vcal-base{width:100%;margin-left:0}}
 </style>
 </head>
 <body>
@@ -741,10 +784,16 @@ tr:hover td{background:#EEF3FA}
   <div class="card">
     <div class="card-head">
       <div><div class="card-title">④ 요금 검증</div><div class="card-sub">리조트 마스터 단가 × 월별 환율 + 항공요금으로 예상 판매금액을 산출해 실제와 대조</div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-sm" onclick="filterVerify('all')">전체</button>
-        <button class="btn-sm" onclick="filterVerify('diff')">차액 있음만</button>
-        <button class="btn-sm" onclick="filterVerify('big')">큰 차이만</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="verify-viewtoggle">
+          <button class="vt-btn active" id="vt-table" onclick="setVerifyView('table')">📋 표 보기</button>
+          <button class="vt-btn" id="vt-cal" onclick="setVerifyView('calendar')">📅 요금 달력</button>
+        </div>
+        <span id="verify-table-filters" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="filterVerify('all')">전체</button>
+          <button class="btn-sm" onclick="filterVerify('diff')">차액 있음만</button>
+          <button class="btn-sm" onclick="filterVerify('big')">큰 차이만</button>
+        </span>
       </div>
     </div>
     <div class="sum-grid" id="verify-summary"></div>
@@ -753,7 +802,25 @@ tr:hover td{background:#EEF3FA}
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.<br>
       <b>패키지가(1인)</b> · 벳푸 박수별·나가노 기간별처럼 <b>항공까지 합쳐 단일가로 안내</b>하는 상품은, 팀별 <b>패키지가(1인)</b> 칸에 1인 원화 총액을 넣으세요. 입력 시 분해식(체재비·송영비·항공·환율) 대신 <b>패키지가 × 인원</b>으로 산출되며, 숙소 옆에 「패키지」 배지가 붙고 분해 항목은 흐리게 표시됩니다. 동일한 패키지가는 <b>리조트 마스터 → 패키지가 프리셋</b>(숙소+박수)에 등록하면, 칸을 비워둬도 해당 팀에 자동 적용됩니다(「패키지·프리셋」 배지). 팀별 직접 입력값이 있으면 그게 우선입니다.
     </div>
-    <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
+    <div id="verify-view-table">
+      <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
+    </div>
+    <div id="verify-view-calendar" style="display:none">
+      <div class="vcal-bar">
+        <button class="btn-sm" onclick="vcalMonthShift(-1)">‹ 이전달</button>
+        <span class="vcal-month" id="vcal-month-label"></span>
+        <button class="btn-sm" onclick="vcalMonthShift(1)">다음달 ›</button>
+        <span class="vcal-legend">
+          <span class="vcal-dot" style="background:var(--green2)"></span>출발 팀
+          <span class="vcal-dot" style="background:var(--accent)"></span>패키지 적용
+        </span>
+      </div>
+      <div class="note" style="margin-bottom:10px">
+        날짜를 클릭하면 그날 출발하는 팀이 <b>숙소·박수·출발지 조합별</b>로 묶여 펼쳐집니다. 같은 조합 안에서 적용할 팀을 체크한 뒤 <b>그 조합의 기준 투어피(1인)</b>를 일괄 적용하면, 선택한 팀의 패키지가가 동일하게 채워집니다. 「프리셋에도 등록」을 켜면 앞으로 같은 조합(숙소+박수)의 신규 예약에도 자동 적용됩니다.
+      </div>
+      <div id="vcal-grid"></div>
+      <div id="vcal-detail"></div>
+    </div>
   </div>
 </div>
 
@@ -2518,7 +2585,196 @@ function setVAdj(seq, field, val){
   vAdjust[seq]=vAdjust[seq]||{};
   vAdjust[seq][field]=num(val);
   try{ localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
-  renderVerify();
+  refreshVerifyView();
+}
+
+/* ════════════════════════════════════════════════════════════
+   요금 달력 — ④ 요금 검증의 두 번째 뷰
+   날짜 × 숙소·박수·출발지 조합으로 팀을 묶어 기준 투어피를 일괄 적용
+════════════════════════════════════════════════════════════ */
+let verifyView='table';
+let vcalMonth=null;            // 'YYYY-MM'
+let vcalSelDate=null;          // 'YYYY-MM-DD'
+const VCAL_CHK=new Set();      // 현재 펼친 날짜에서 체크된 eventSeq
+
+function refreshVerifyView(){
+  if(verifyView==='calendar') renderVcal(); else renderVerify();
+}
+function setVerifyView(v){
+  verifyView=v;
+  document.getElementById('vt-table').classList.toggle('active',v==='table');
+  document.getElementById('vt-cal').classList.toggle('active',v==='calendar');
+  document.getElementById('verify-view-table').style.display = v==='table'?'':'none';
+  document.getElementById('verify-view-calendar').style.display = v==='calendar'?'':'none';
+  document.getElementById('verify-table-filters').style.display = v==='table'?'flex':'none';
+  if(v==='calendar') renderVcal();
+}
+
+/* 검증 대상 팀(숙소 있는 팀)에서 출발월 목록 추출 */
+function vcalMonths(){
+  const ms=new Set();
+  teams.filter(t=>t.accom&&t.dep).forEach(t=>ms.add(t.dep.slice(0,7)));
+  return [...ms].sort();
+}
+function vcalMonthShift(d){
+  const ms=vcalMonths(); if(!ms.length) return;
+  let i=ms.indexOf(vcalMonth);
+  if(i<0) i=0;
+  i=Math.max(0,Math.min(ms.length-1,i+d));
+  vcalMonth=ms[i]; vcalSelDate=null; VCAL_CHK.clear();
+  renderVcal();
+}
+/* 조합 키: 숙소|박수|출발지 */
+function vcalComboKey(t){
+  const m=String(t.period).match(/(\d+)박/); const n=m?m[1]:(t.nights||'');
+  return `${t.accom}||${n}||${t.origin||''}`;
+}
+function vcalNights(t){
+  const m=String(t.period).match(/(\d+)박/); return m?parseInt(m[1]):(t.nights||0);
+}
+
+function renderVcal(){
+  const grid=document.getElementById('vcal-grid');
+  const ms=vcalMonths();
+  if(!ms.length){ grid.innerHTML='<div class="vcal-empty">검증 대상(숙소·출발일 있는) 팀이 없습니다. 통합 분석을 먼저 실행해주세요.</div>'; document.getElementById('vcal-detail').innerHTML=''; document.getElementById('vcal-month-label').textContent='—'; return; }
+  if(!vcalMonth||!ms.includes(vcalMonth)) vcalMonth=ms[0];
+  document.getElementById('vcal-month-label').textContent=vcalMonth;
+
+  // 날짜별 팀 집계
+  const byDate={};
+  teams.filter(t=>t.accom&&t.dep&&t.dep.slice(0,7)===vcalMonth).forEach(t=>{
+    (byDate[t.dep]=byDate[t.dep]||[]).push(t);
+  });
+
+  const [y,mo]=vcalMonth.split('-').map(Number);
+  const first=new Date(y,mo-1,1); const startDow=first.getDay();
+  const days=new Date(y,mo,0).getDate();
+  const dows=['일','월','화','수','목','금','토'];
+  let html='<table class="vcal-table"><thead><tr>'+dows.map((d,i)=>`<th class="${i===0?'sun':i===6?'sat':''}">${d}</th>`).join('')+'</tr></thead><tbody><tr>';
+  for(let i=0;i<startDow;i++) html+='<td class="vcal-cell empty"></td>';
+  let col=startDow;
+  for(let d=1;d<=days;d++){
+    const dateStr=`${vcalMonth}-${String(d).padStart(2,'0')}`;
+    const dow=(startDow+d-1)%7;
+    const ts=byDate[dateStr]||[];
+    const dowCls=dow===0?'sun':dow===6?'sat':'';
+    if(ts.length){
+      const pax=ts.reduce((s,t)=>s+(t.pax||0),0);
+      const hasPkg=ts.some(t=>calcExpected(t).isPkg);
+      const selCls=vcalSelDate===dateStr?'sel':'';
+      html+=`<td class="vcal-cell has ${dowCls} ${selCls}" onclick="vcalSelect('${dateStr}')">
+        <div class="vcal-daynum">${d}</div>
+        <div><span class="vcal-teambadge">${ts.length}팀</span>${hasPkg?'<span class="vcal-pkgbadge">P</span>':''}</div>
+        <div class="vcal-paxline">${pax}명</div></td>`;
+    } else {
+      html+=`<td class="vcal-cell ${dowCls}"><div class="vcal-daynum" style="color:var(--text3)">${d}</div></td>`;
+    }
+    col++;
+    if(col%7===0 && d<days) html+='</tr><tr>';
+  }
+  while(col%7!==0){ html+='<td class="vcal-cell empty"></td>'; col++; }
+  html+='</tr></tbody></table>';
+  grid.innerHTML=html;
+
+  if(vcalSelDate && byDate[vcalSelDate]) renderVcalDetail(vcalSelDate, byDate[vcalSelDate]);
+  else document.getElementById('vcal-detail').innerHTML='<div class="vcal-empty">날짜를 클릭하면 그날 출발 팀이 조합별로 표시됩니다.</div>';
+}
+
+function vcalSelect(dateStr){
+  vcalSelDate = (vcalSelDate===dateStr)?null:dateStr;
+  VCAL_CHK.clear();
+  renderVcal();
+}
+
+function renderVcalDetail(dateStr, ts){
+  // 조합별 그룹핑
+  const groups={};
+  ts.forEach(t=>{ const k=vcalComboKey(t); (groups[k]=groups[k]||[]).push(t); });
+  let html=`<div class="vcal-detail-head">${dateStr} 출발 · ${ts.length}팀 / ${ts.reduce((s,t)=>s+(t.pax||0),0)}명</div>`;
+  Object.entries(groups).forEach(([key,gts],gi)=>{
+    const [accom,nights,origin]=key.split('||');
+    // 그룹 기준 투어피(1인): 우선 패키지/프리셋이 있으면 그 단가, 없으면 분해식 1인가의 최빈/대표값
+    let baseUnit=0, baseFrom='';
+    const units=gts.map(t=>{ const c=calcExpected(t); return c.expected!=null&&t.pax?Math.round(c.expected/t.pax):null; }).filter(v=>v!=null);
+    const pkgUnits=gts.map(t=>calcExpected(t)).filter(c=>c.isPkg).map(c=>c.pkgUnit);
+    if(pkgUnits.length){ baseUnit=pkgUnits[0]; baseFrom='패키지'; }
+    else if(units.length){
+      // 최빈값
+      const freq={}; units.forEach(u=>freq[u]=(freq[u]||0)+1);
+      baseUnit=Number(Object.entries(freq).sort((a,b)=>b[1]-a[1])[0][0]); baseFrom='산출';
+    }
+    const gid=`vcg${gi}`;
+    html+=`<div class="vcal-group">
+      <div class="vcal-group-head">
+        <span class="vcal-group-title">${accom}</span>
+        <span class="vcal-group-meta">${nights}박 · 출발 ${origin||'-'} · ${gts.length}팀 / ${gts.reduce((s,t)=>s+(t.pax||0),0)}명</span>
+        <span class="vcal-base">
+          기준 투어피(1인)
+          <input type="text" inputmode="numeric" class="vcal-base-input" id="${gid}-base" value="${baseUnit?baseUnit.toLocaleString():''}" placeholder="0">
+          <label class="vcal-preset-chk"><input type="checkbox" id="${gid}-preset" checked> 프리셋에도 등록(${accom}·${nights}박)</label>
+          <button class="vcal-apply-btn" onclick="vcalApply('${gid}','${accom.replace(/'/g,"\\'")}','${nights}')">체크 팀에 적용</button>
+        </span>
+      </div>
+      <table class="vcal-tlist">
+        <thead><tr>
+          <th class="center"><input type="checkbox" onchange="vcalCheckAll('${gid}',this.checked)"></th>
+          <th>대표고객</th><th>구분</th><th class="num">인원</th>
+          <th class="num">현재 패키지가(1인)</th><th class="num">예상 판매</th><th class="num">실제 판매</th><th class="num">차액</th>
+        </tr></thead><tbody>`;
+    gts.forEach(t=>{
+      const c=calcExpected(t);
+      const cur=vAdjust[t.eventSeq]?.pkgPrice||0;
+      const expUnit=c.expected!=null&&t.pax?Math.round(c.expected/t.pax):null;
+      let diffCell='<span class="muted">-</span>';
+      if(c.expected!=null){
+        const diff=t.sales-c.expected;
+        const cls=Math.abs(diff)<=1?'vcal-diff-ok':(diff>0?'vcal-diff-pos':'vcal-diff-neg');
+        diffCell=`<span class="${cls}">${diff>0?'+':''}${won(diff)}</span>`;
+      }
+      html+=`<tr>
+        <td class="center"><input type="checkbox" class="${gid}-chk" data-seq="${t.eventSeq}" onchange="vcalCheck('${t.eventSeq}',this.checked)" ${VCAL_CHK.has(String(t.eventSeq))?'checked':''}></td>
+        <td><b>${t.repName}</b> ${c.isPkg?'<span class="tag" style="background:var(--accent-dim);color:var(--accent);font-size:9px">패키지</span>':''}</td>
+        <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
+        <td class="num">${t.pax}</td>
+        <td class="num">${cur?'₩'+cur.toLocaleString():'<span class="muted">-</span>'}${!cur&&expUnit?'<br><span class="muted" style="font-size:10px">산출 ₩'+expUnit.toLocaleString()+'</span>':''}</td>
+        <td class="num">${c.expected!=null?'₩'+c.expected.toLocaleString():'<span class="muted">산출불가</span>'}</td>
+        <td class="num">${won(t.sales)}</td>
+        <td class="num">${diffCell}</td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('vcal-detail').innerHTML=html;
+}
+
+function vcalCheck(seq,on){ if(on) VCAL_CHK.add(String(seq)); else VCAL_CHK.delete(String(seq)); }
+function vcalCheckAll(gid,on){
+  document.querySelectorAll('.'+gid+'-chk').forEach(c=>{ c.checked=on; vcalCheck(c.dataset.seq,on); });
+}
+function vcalApply(gid,accom,nights){
+  const base=num(document.getElementById(gid+'-base').value);
+  if(!base){ alert('기준 투어피(1인)를 입력해주세요.'); return; }
+  const seqs=[...document.querySelectorAll('.'+gid+'-chk')].filter(c=>c.checked).map(c=>c.dataset.seq);
+  if(!seqs.length){ alert('적용할 팀을 한 팀 이상 체크해주세요.'); return; }
+  const toPreset=document.getElementById(gid+'-preset').checked;
+  if(!confirm(`${seqs.length}개 팀에 패키지가 ₩${base.toLocaleString()}/인을 적용합니다.${toPreset?`\n또한 「${accom} ${nights}박」 프리셋으로 등록(신규 예약 자동 적용)합니다.`:''}\n진행할까요?`)) return;
+  // 1) 선택 팀에 즉시 적용
+  seqs.forEach(seq=>{ vAdjust[seq]=vAdjust[seq]||{}; vAdjust[seq].pkgPrice=base; });
+  try{ localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
+  // 2) 프리셋 등록(미래 신규 예약 자동 적용)
+  if(toPreset){
+    commonMaster.pkgPresets=commonMaster.pkgPresets||[];
+    const n=Number(nights);
+    const idx=commonMaster.pkgPresets.findIndex(p=>p.accom===accom&&Number(p.nights)===n);
+    const before=idx>=0?commonMaster.pkgPresets[idx].price:'';
+    const rec={accom,nights:n,price:base};
+    if(idx>=0) commonMaster.pkgPresets[idx]=rec; else commonMaster.pkgPresets.push(rec);
+    logChange('공통',`패키지가 프리셋 ${accom} ${n}박(달력 적용)`, before!==''?'₩'+Number(before).toLocaleString():'', '₩'+base.toLocaleString());
+    saveResortMaster();
+    if(typeof renderPkgPresets==='function') renderPkgPresets();
+  }
+  VCAL_CHK.clear();
+  renderVcal();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2617,7 +2873,7 @@ function applyBulkRemark(){
 /* 편집 후 영향받는 표 일괄 재렌더 (선택 상태 유지) */
 function rerenderAfterEdit(){
   renderBooking(); renderAir(); renderInsurance(); renderTransfer();
-  renderAccom(); renderGolf(); renderDinner(); renderVerify();
+  renderAccom(); renderGolf(); renderDinner(); refreshVerifyView();
   // 체크 상태 복원
   selectedSeqs.forEach(seq=>{ document.querySelectorAll(`.sel-booking[data-seq="${seq}"],.sel-air[data-seq="${seq}"]`).forEach(c=>c.checked=true); });
   updateBulkBar();
@@ -2993,7 +3249,7 @@ function toggleSellStop(key){
   if(typeof blkSyncFromResort==='function') blkSyncFromResort();
   renderResortMaster();
   if(blkParsed){ blkRender(); }
-  if(typeof teams!=='undefined' && teams.length && typeof renderVerify==='function') renderVerify();
+  if(typeof teams!=='undefined' && teams.length && typeof refreshVerifyView==='function') refreshVerifyView();
   if(typeof showToast==='function') showToast(r.sellStop?`${r.name} 판매중지`:`${r.name} 판매재개`);
 }
 
@@ -3372,13 +3628,13 @@ function addPkgPreset(){
   if(idx>=0) commonMaster.pkgPresets[idx]=rec; else commonMaster.pkgPresets.push(rec);
   logChange('공통', `패키지가 프리셋 ${accom} ${nights}박`, before!==''?'₩'+Number(before).toLocaleString():'', '₩'+Number(price).toLocaleString());
   saveResortMaster(); renderPkgPresets();
-  if(typeof teams!=='undefined' && teams.length && typeof renderVerify==='function') renderVerify(); // 검증 즉시 반영
+  if(typeof teams!=='undefined' && teams.length && typeof refreshVerifyView==='function') refreshVerifyView(); // 검증 즉시 반영
   document.getElementById('pp-nights').value=''; document.getElementById('pp-price').value='';
 }
 function delPkgPreset(i){
   const p=commonMaster.pkgPresets[i];
   commonMaster.pkgPresets.splice(i,1); saveResortMaster(); renderPkgPresets();
-  if(typeof teams!=='undefined' && teams.length && typeof renderVerify==='function') renderVerify();
+  if(typeof teams!=='undefined' && teams.length && typeof refreshVerifyView==='function') refreshVerifyView();
   if(p) logChange('공통', `패키지가 프리셋 ${p.accom} ${p.nights}박 삭제`, '₩'+Number(p.price).toLocaleString(), '(삭제)');
 }
 
