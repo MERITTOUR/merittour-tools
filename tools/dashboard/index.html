@@ -2790,12 +2790,17 @@ function vcalRegisterMonth(){
   if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows || !blkParsed.rows.length){
     alert('먼저 호텔 블록 표를 붙여넣어 주세요.'); return;
   }
-  const ym=blkParsed.month;
+  // 월별호텔수배현황 표는 날짜에 월 표시가 없어 셀렉터가 틀려도 모를 수 있음 → 등록 시 월을 한 번 더 확정
+  const guess=blkParsed.month;
+  const input=prompt(`이 블록 표가 몇 월인지 확인해주세요 (YYYY-MM).\n날짜에 월 표시가 없는 표는 위 「출발년월」이 실제와 다를 수 있습니다.`, guess);
+  if(input===null) return;                       // 취소
+  const ym=input.trim();
+  if(!/^\d{4}-\d{2}$/.test(ym)){ alert('YYYY-MM 형식으로 입력해주세요. (예: 2026-07)'); return; }
   const dup=!!vcalBlocks[ym];
-  vcalBlocks[ym]=blkParsed.rows.slice();   // 스냅샷 복사(이후 다른 달 붙여넣어도 유지)
+  vcalBlocks[ym]=blkParsed.rows.slice();          // 스냅샷 복사
   renderVcalRegBar();
   if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
-  alert(`${ym} 블록을 요금 달력에 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n새로고침 시 초기화됩니다.`);
+  alert(`${ym} 블록을 요금 달력에 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n월말~월초 연박 가능여부를 보려면 인접한 달도 등록해주세요.\n새로고침 시 초기화됩니다.`);
 }
 function vcalUnregisterMonth(ym){
   delete vcalBlocks[ym];
@@ -4602,7 +4607,7 @@ function blkRenderDepart(){
   const [y,m]=month.split('-').map(Number);
   const lastDay=new Date(y,m,0).getDate();
   const WK=['일','월','화','수','목','금','토'];
-  let html='';
+  let html=`<div style="margin-bottom:12px;padding:8px 14px;background:var(--accent-dim);border-radius:8px;font-size:13px;font-weight:700;color:var(--accent2)">📅 ${y}년 ${m}월 블록 기준</div>`;
   blkPools.filter(p=>!p.exclude && !blkSellStopUnit(p.name) && blkDepPoolSel.has(p.name)).forEach(pool=>{
     const cap=blkPoolCap(pool);
     const used=blkPoolUsedByDay(pool);
@@ -4645,13 +4650,13 @@ function blkRenderDepart(){
       html+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+departs.map(x=>{
         const cls=x.rem<=2?'b-a':'b-g';
         const color=x.rem<=2?'var(--amber2)':'var(--green2)';
-        return `<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:${x.rem<=2?'var(--amber-dim)':'var(--green-dim)'};color:${color};font-weight:600;border:1px solid ${x.rem<=2?'var(--amber)':'var(--green)'}">${parseInt(x.day)}일(${x.dow}) ${x.label} · ${x.rem}실</span>`;
+        return `<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:${x.rem<=2?'var(--amber-dim)':'var(--green-dim)'};color:${color};font-weight:600;border:1px solid ${x.rem<=2?'var(--amber)':'var(--green)'}">${m}/${parseInt(x.day)}(${x.dow}) ${x.label} · ${x.rem}실</span>`;
       }).join('')+'</div>';
     }
     // 일자별 잔여 (막힌 출발편도 그날 잔여 확인용)
     if(!assign && cap!=null){
-      html+='<div style="margin-top:10px"><div class="muted" style="font-size:11px;margin-bottom:4px">일자별 잔여 (출발편 막혀도 그날 단독 잔여 확인):</div><div class="tbl-wrap"><table class="blk-mtx"><thead><tr>';
-      for(let d=1;d<=lastDay;d++){ const wk=[0,6].includes(new Date(y,m-1,d).getDay()); html+=`<th class="${wk?'wk':''}">${d}</th>`; }
+      html+=`<div style="margin-top:10px"><div class="muted" style="font-size:11px;margin-bottom:4px">일자별 잔여 <b style="color:var(--accent2)">(${m}월)</b> (출발편 막혀도 그날 단독 잔여 확인):</div><div class="tbl-wrap"><table class="blk-mtx"><thead><tr>`;
+      for(let d=1;d<=lastDay;d++){ const wk=[0,6].includes(new Date(y,m-1,d).getDay()); html+=`<th class="${wk?'wk':''}">${m}/${d}</th>`; }
       html+='</tr></thead><tbody><tr>';
       for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0); const c=rem<=0?'b-r':rem<=3?'b-a':'b-g'; html+=`<td class="${c}">${rem}</td>`; }
       html+='</tr></tbody></table></div></div>';
