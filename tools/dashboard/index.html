@@ -748,7 +748,7 @@ tr:hover td{background:#EEF3FA}
     <div class="note">
       <b>계산식</b> · 예상 판매금액 = (체재비합 + 송영비합 + 엔화기타) × 출국월 환율 + 항공요금합 + 회원관리비합(리조트 마스터 숙소별 값, 기본 ₩50,000/인) + 원화기타.
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.<br>
-      <b>패키지가(1인)</b> · 벳푸 박수별·나가노 기간별처럼 <b>항공까지 합쳐 단일가로 안내</b>하는 상품은, 팀별 <b>패키지가(1인)</b> 칸에 1인 원화 총액을 넣으세요. 입력 시 분해식(체재비·송영비·항공·환율) 대신 <b>패키지가 × 인원</b>으로 산출되며, 숙소 옆에 「패키지」 배지가 붙고 분해 항목은 흐리게 표시됩니다.
+      <b>패키지가(1인)</b> · 벳푸 박수별·나가노 기간별처럼 <b>항공까지 합쳐 단일가로 안내</b>하는 상품은, 팀별 <b>패키지가(1인)</b> 칸에 1인 원화 총액을 넣으세요. 입력 시 분해식(체재비·송영비·항공·환율) 대신 <b>패키지가 × 인원</b>으로 산출되며, 숙소 옆에 「패키지」 배지가 붙고 분해 항목은 흐리게 표시됩니다. 동일한 패키지가는 <b>리조트 마스터 → 패키지가 프리셋</b>(숙소+박수)에 등록하면, 칸을 비워둬도 해당 팀에 자동 적용됩니다(「패키지·프리셋」 배지). 팀별 직접 입력값이 있으면 그게 우선입니다.
     </div>
     <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
   </div>
@@ -2258,11 +2258,21 @@ function calcExpected(t){
   const krwEtc = vAdjust[t.eventSeq]?.krwEtc||0;
   // 패키지가(1인 원화 총액): 입력 시 분해식 대신 패키지가×인원을 예상 판매금액으로 사용.
   // 벳푸 박수별·나가노 기간별처럼 항공까지 합산된 단일 안내가에 대응(환율·항공요금 계산 우회).
-  const pkgUnit = vAdjust[t.eventSeq]?.pkgPrice||0;
+  // 우선순위: 팀 직접 입력(vAdjust.pkgPrice) → 마스터 프리셋(숙소+박수 매칭).
+  const pkgManual = vAdjust[t.eventSeq]?.pkgPrice||0;
+  const pkgPreset = pkgManual>0 ? 0 : pkgPresetFor(t.accom, nights);
+  const pkgUnit = pkgManual>0 ? pkgManual : pkgPreset;
+  const pkgFromPreset = !(pkgManual>0) && pkgPreset>0;
   const isPkg = pkgUnit>0;
   const pkgTotal = isPkg ? pkgUnit*pax : null;
   const expected = isPkg ? pkgTotal : (airTotal!=null ? (yenKRW+airTotal+mgmtTotal+krwEtc) : null);
-  return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,pkgUnit,isPkg,pkgTotal,expected};
+  return {nights,pax,unit:u,stayTotal,transferTotal,yenEtc,yenSum,rate,yenKRW,airfare,airTotal,mgmtTotal,krwEtc,pkgUnit,isPkg,pkgFromPreset,pkgTotal,expected};
+}
+/* 패키지가 프리셋 조회 (숙소+박수 매칭). 없으면 0 */
+function pkgPresetFor(accom, nights){
+  const arr=commonMaster.pkgPresets||[]; if(!arr.length||!accom) return 0;
+  const f=arr.find(p=>p.accom===accom && Number(p.nights)===Number(nights));
+  return f? Number(f.price)||0 : 0;
 }
 
 /* 팀별 검증 보정값 (엔화기타·원화기타) */
@@ -2319,7 +2329,7 @@ function renderVerify(){
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td><b>${t.repName}</b></td>
-      <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''} ${c.isPkg?'<span class="tag" style="background:var(--accent-dim);color:var(--accent);font-size:9px">패키지</span>':''}</td>
+      <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''} ${c.isPkg?`<span class="tag" style="background:var(--accent-dim);color:var(--accent);font-size:9px">패키지${c.pkgFromPreset?'·프리셋':''}</span>`:''}</td>
       <td class="center">${c.nights}박</td>
       <td class="num">${c.pax}</td>
       <td class="num"${c.isPkg?' style="opacity:.35"':''}>¥${c.stayTotal.toLocaleString()}</td>
@@ -2330,7 +2340,7 @@ function renderVerify(){
       <td class="num"${c.isPkg?' style="opacity:.35"':''}>${c.airTotal!=null?'₩'+c.airTotal.toLocaleString():'<span class="muted">미등록</span>'}</td>
       <td class="num"${c.isPkg?' style="opacity:.35"':''}>₩${c.mgmtTotal.toLocaleString()}</td>
       <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.krwEtc?Number(ad.krwEtc).toLocaleString():''}" placeholder="0" onchange="setVAdj('${t.eventSeq}','krwEtc',this.value)"${c.isPkg?' style="opacity:.35"':''}></td>
-      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.pkgPrice?Number(ad.pkgPrice).toLocaleString():''}" placeholder="0" title="1인 패키지가(원). 입력 시 항공·체재비·환율 대신 이 금액×인원으로 산출" onchange="setVAdj('${t.eventSeq}','pkgPrice',this.value)"></td>
+      <td class="num"><input type="text" inputmode="numeric" class="v-adj" value="${ad.pkgPrice?Number(ad.pkgPrice).toLocaleString():''}" placeholder="${c.pkgFromPreset?'프리셋 '+c.pkgUnit.toLocaleString():'0'}" title="1인 패키지가(원). 비우면 마스터 프리셋(숙소+박수) 자동 적용. 직접 입력 시 이 값이 우선." onchange="setVAdj('${t.eventSeq}','pkgPrice',this.value)"></td>
       <td class="num">${c.expected!=null?'<b>₩'+c.expected.toLocaleString()+'</b>'+(c.isPkg?'<br><span class="muted" style="font-size:9px">₩'+c.pkgUnit.toLocaleString()+'×'+c.pax+'명</span>':''):'<span class="muted">산출 불가</span>'}</td>
       <td class="num">${won(t.sales)}</td>
       <td class="num">${diffCell}</td>
@@ -2902,7 +2912,8 @@ const COMMON_DEFAULTS={
   insCompany:'', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
-  airfares:[]              // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
+  airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
+  pkgPresets:[]            // [{accom, nights, price}] 패키지가 프리셋 (숙소+박수 → 1인 원화 총액). 검증에서 팀 패키지가 미입력 시 자동 적용
 };
 
 let resortMaster=[], commonMaster={};
@@ -3050,7 +3061,7 @@ function rmNumRow(label, rkey, field, val, unit){
 /* 룸타입별 보유 입력 행들 + 새 룸타입 추가 */
 function rmRoomsRows(r){
   const rooms=r.rooms||{};
-  const keys=Object.keys(rooms);
+  const keys=sortRoomTypes(Object.keys(rooms));
   let html = keys.length
     ? keys.map(rt=>`<div class="rm-row"><label>${rt}</label><div style="display:flex;align-items:center">
         <input class="rm-input" type="text" inputmode="numeric" value="${rooms[rt]?Number(rooms[rt]).toLocaleString():''}" placeholder="0"
@@ -3204,6 +3215,16 @@ function renderResortMaster(){
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">📦 패키지가 프리셋 <span class="card-sub" style="font-weight:400">— 숙소 × 박수 · 1인 원화 총액 (항공까지 합친 단일 안내가). 요금 검증에서 패키지가 미입력 팀에 자동 적용</span></div>
+    <div id="pkgpreset-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+      <select class="rm-input" id="pp-accom" style="width:200px;text-align:left;font-family:var(--sans)"></select>
+      <input class="rm-input" id="pp-nights" type="text" inputmode="numeric" placeholder="박수" style="width:55px">
+      <input class="rm-input" id="pp-price" type="text" inputmode="numeric" placeholder="1인 패키지가(원)" style="width:130px">
+      <button class="btn-sm" onclick="addPkgPreset()">+ 추가</button>
+    </div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">🕘 변경 이력 <span class="card-sub" style="font-weight:400">— 리조트 마스터·환율·항공요금의 세부 변경 기록 (최근 ${CHLOG_MAX}건, 최신순)</span>
       <button class="btn-sm" style="margin-left:auto;padding:2px 10px;color:var(--red);border-color:var(--red)" onclick="clearChangeLog()">이력 비우기</button>
     </div>
@@ -3211,6 +3232,7 @@ function renderResortMaster(){
   </div>`;
   renderMonthlyRates();
   renderAirfares();
+  renderPkgPresets();
   renderChangeLog();
 }
 
@@ -3300,6 +3322,44 @@ function delAirfare(i){
   const a=commonMaster.airfares[i];
   commonMaster.airfares.splice(i,1); saveResortMaster(); renderAirfares();
   if(a) logChange('공통', `항공요금 ${a.airline||''} ${a.origin}→${a.dest} ${a.nights}박 삭제`, '₩'+Number(a.fare).toLocaleString(), '(삭제)');
+}
+
+/* ── 패키지가 프리셋 (숙소 × 박수 → 1인 원화 총액) ── */
+function renderPkgPresets(){
+  // 숙소 select 채우기 (리조트 마스터 숙소 목록)
+  const sel=document.getElementById('pp-accom');
+  if(sel){
+    sel.innerHTML='<option value="">숙소 선택</option>'+resortMaster.map(r=>`<option value="${r.name.replace(/"/g,'&quot;')}">${r.name}</option>`).join('');
+  }
+  const box=document.getElementById('pkgpreset-rows'); if(!box) return;
+  const arr=commonMaster.pkgPresets||[];
+  box.innerHTML = arr.length
+    ? '<div class="tbl-wrap" style="max-height:200px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>숙소</th><th>박수</th><th>1인 패키지가</th><th></th></tr></thead><tbody>'+
+      arr.map((p,i)=>`<tr><td>${p.accom}</td><td class="center">${p.nights}박</td><td class="num">₩${Number(p.price).toLocaleString()}</td>
+        <td class="center"><button class="btn-sm" style="padding:1px 7px;color:var(--red);border-color:var(--red)" onclick="delPkgPreset(${i})">×</button></td></tr>`).join('')+
+      '</tbody></table></div>'
+    : '<div class="muted" style="font-size:11px">등록된 패키지가 프리셋이 없습니다. 나가노·벳푸처럼 항공 포함 단일가 상품을 등록하면 요금 검증에 자동 적용됩니다.</div>';
+}
+function addPkgPreset(){
+  const accom=document.getElementById('pp-accom').value;
+  const nights=num(document.getElementById('pp-nights').value);
+  const price=num(document.getElementById('pp-price').value);
+  if(!accom||!nights||!price){ alert('숙소·박수·패키지가를 모두 입력해주세요.'); return; }
+  commonMaster.pkgPresets=commonMaster.pkgPresets||[];
+  const idx=commonMaster.pkgPresets.findIndex(p=>p.accom===accom&&Number(p.nights)===nights);
+  const before = idx>=0 ? commonMaster.pkgPresets[idx].price : '';
+  const rec={accom,nights,price};
+  if(idx>=0) commonMaster.pkgPresets[idx]=rec; else commonMaster.pkgPresets.push(rec);
+  logChange('공통', `패키지가 프리셋 ${accom} ${nights}박`, before!==''?'₩'+Number(before).toLocaleString():'', '₩'+Number(price).toLocaleString());
+  saveResortMaster(); renderPkgPresets();
+  if(typeof teams!=='undefined' && teams.length && typeof renderVerify==='function') renderVerify(); // 검증 즉시 반영
+  document.getElementById('pp-nights').value=''; document.getElementById('pp-price').value='';
+}
+function delPkgPreset(i){
+  const p=commonMaster.pkgPresets[i];
+  commonMaster.pkgPresets.splice(i,1); saveResortMaster(); renderPkgPresets();
+  if(typeof teams!=='undefined' && teams.length && typeof renderVerify==='function') renderVerify();
+  if(p) logChange('공통', `패키지가 프리셋 ${p.accom} ${p.nights}박 삭제`, '₩'+Number(p.price).toLocaleString(), '(삭제)');
 }
 
 function flashSaved(el, resortKey){
@@ -3693,6 +3753,15 @@ function blkIsAssignUnit(unit){
 
 function blkClsRemain(r){ if(r<=0) return 'b-r'; if(r<=3) return 'b-a'; return 'b-g'; }
 
+/* 룸타입 표시 순서: 트윈 → 소형트윈 → 패밀리룸 → 그 외(가나다). 트윈이 항상 위로. */
+const ROOM_ORDER={'트윈':0,'소형트윈':1,'패밀리룸':2};
+function sortRoomTypes(keys){
+  return keys.slice().sort((a,b)=>{
+    const oa=ROOM_ORDER[a]!=null?ROOM_ORDER[a]:99, ob=ROOM_ORDER[b]!=null?ROOM_ORDER[b]:99;
+    return oa-ob || a.localeCompare(b,'ko');
+  });
+}
+
 function blkRenderStatus(){
   if(!blkParsed) return;
   const {days,month}=blkParsed;
@@ -3768,7 +3837,7 @@ function blkRenderStatus(){
   units.forEach(u=>{
     const rooms=usage[u]||{};
     const assign=blkIsAssignUnit(u);
-    Object.keys(rooms).sort().forEach((rm,ri)=>{
+    sortRoomTypes(Object.keys(rooms)).forEach((rm,ri)=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
       const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block">보유 ${blk}</span>`);
       let rowTot=0, minRem=Infinity, hasUse=false;
@@ -3809,7 +3878,7 @@ function blkStatusMatrix(){
   units.forEach(u=>{
     const rooms=usage[u]||{};
     const assign=blkIsAssignUnit(u);
-    Object.keys(rooms).sort().forEach(rm=>{
+    sortRoomTypes(Object.keys(rooms)).forEach(rm=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
       const cells=days.map(d=>{
         const used=rooms[rm][d.day]||0;
@@ -3930,7 +3999,7 @@ function blkRenderSim(){
   let html='';
   units.forEach(u=>{
     const rooms=usage[u]||{};
-    Object.keys(rooms).sort().forEach(rm=>{
+    sortRoomTypes(Object.keys(rooms)).forEach(rm=>{
       const blk=blkBlockForUnit(u,rm);
       if(blk==null) return;
       const used=rooms[rm][day]||0;
