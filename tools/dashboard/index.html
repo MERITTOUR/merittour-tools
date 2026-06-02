@@ -1613,9 +1613,11 @@ function analyze(){
   });
   cancelledTeams.forEach((t,i)=>t.no=i+1);
 
-  // 탭 해제
-  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit'].forEach(s=>
-    document.getElementById('nav-'+s).classList.remove('locked'));
+  // 탭 해제 (비활성 섹션 insurance·transfer·accom·golf·dinner 은 잠금 유지)
+  ['booking','air','verify','audit','doc'].forEach(s=>{
+    const el=document.getElementById('nav-'+s);
+    if(el) el.classList.remove('locked');
+  });
 
   // 세션 배지
   const deps=teams.map(t=>t.dep).filter(Boolean).sort();
