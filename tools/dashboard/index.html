@@ -52,6 +52,8 @@ a{color:inherit}
 .nav-tab .nav-dot{flex-shrink:0;width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .2s}
 .nav-tab.active .nav-dot{background:var(--accent)}
 .nav-tab.locked{opacity:.4;cursor:not-allowed}
+.nav-sep{flex-shrink:0;align-self:center;width:1px;height:22px;background:var(--text3);opacity:.3;margin:0 8px}
+.nav-soon{flex-shrink:0;font-size:9px;font-weight:600;line-height:1;padding:2px 5px;border-radius:8px;background:var(--text3);color:#fff;opacity:.7}
 
 /* LAYOUT */
 .wrap{max-width:1400px;margin:0 auto;padding:1.5rem}
@@ -538,15 +540,17 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab active" id="nav-upload" onclick="gotoSection('upload')"><div class="nav-dot"></div> 업로드</div>
   <div class="nav-tab" id="nav-resort" onclick="gotoSection('resort')"><div class="nav-dot"></div> ① 리조트 마스터</div>
   <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ② 호텔 블록</div>
-  <div class="nav-tab locked" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ③ 데이터 검수</div>
-  <div class="nav-tab locked" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ④ 요금 검증</div>
-  <div class="nav-tab locked" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ⑤ 예약 관리</div>
-  <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> ⑥ 보험 정보</div>
-  <div class="nav-tab locked" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑦ 항공 정보</div>
-  <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> ⑧ 송영 정보</div>
-  <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> ⑨ 숙소 정보</div>
-  <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> ⑩ 골프 정보</div>
-  <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> ⑪ 식사 정보</div>
+  <div class="nav-tab" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ③ 데이터 검수</div>
+  <div class="nav-tab" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ④ 요금 검증</div>
+  <div class="nav-tab" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ⑤ 예약 관리</div>
+  <div class="nav-tab" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑥ 항공 정보</div>
+  <div class="nav-tab" id="nav-doc" onclick="gotoSection('doc')"><div class="nav-dot"></div> ⑦ 확정서 생성</div>
+  <div class="nav-sep" title="준비 중 — 추후 활성화"></div>
+  <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> 보험 정보 <span class="nav-soon">준비중</span></div>
+  <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> 송영 정보 <span class="nav-soon">준비중</span></div>
+  <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> 숙소 정보 <span class="nav-soon">준비중</span></div>
+  <div class="nav-tab locked" id="nav-golf" onclick="gotoSection('golf')"><div class="nav-dot"></div> 골프 정보 <span class="nav-soon">준비중</span></div>
+  <div class="nav-tab locked" id="nav-dinner" onclick="gotoSection('dinner')"><div class="nav-dot"></div> 식사 정보 <span class="nav-soon">준비중</span></div>
 </div>
 
 <div class="wrap">
@@ -1106,6 +1110,39 @@ tr:hover td{background:#EEF3FA}
     <div class="modal-foot">
       <span class="muted" style="font-size:11px">체크한 팀은 알리고 양식으로 바로 내보낼 수 있습니다</span>
       <button class="btn-primary" style="padding:8px 18px" onclick="exportAligoFromModal()">✉ 선택 팀 알리고 양식</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 확정서 생성 (문서 발송 생성기) -->
+<div class="section" id="sec-doc">
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text1)">⑦ 확정서 생성</div>
+        <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택하고 보낼 문서 종류를 골라 고객 발송용 HTML을 생성합니다.</div>
+      </div>
+      <div class="muted" style="font-size:11px">업로드한 4종 파일(예약리스트·일행별예약·APIS·현지도착)을 사용합니다</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">문서 종류</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-ghost doc-kind" data-kind="quote" onclick="docPickKind('quote')">견적서</button>
+      <button class="btn-ghost doc-kind" data-kind="itinerary" onclick="docPickKind('itinerary')">일정표만 보내기</button>
+      <button class="btn-primary doc-kind active" data-kind="confirm" onclick="docPickKind('confirm')">확정서로 보내기</button>
+    </div>
+    <div class="muted" style="font-size:11px;margin-top:8px" id="doc-kind-desc">확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택</div>
+      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%">
+    </div>
+    <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
+      먼저 <b>업로드</b> 탭에서 파일을 올리면 팀 목록이 표시됩니다. (기능은 2단계에서 연결됩니다)
     </div>
   </div>
 </div>
@@ -3962,6 +3999,24 @@ function gotoSection(name){
   if(nav) nav.classList.add('active');
   window.scrollTo(0,0);
   setTimeout(()=>{ try{ attachTopScrollbars(); }catch(e){} }, 50);
+}
+
+/* ⑦ 확정서 생성 — 문서 종류 선택 (1단계: UI만) */
+var _docKind='confirm';
+function docPickKind(kind){
+  _docKind=kind;
+  document.querySelectorAll('.doc-kind').forEach(b=>{
+    const on=b.dataset.kind===kind;
+    b.classList.toggle('active',on);
+    b.className=(on?'btn-primary':'btn-ghost')+' doc-kind'+(on?' active':'');
+  });
+  const desc={
+    quote:'견적서: 요금 안내 중심. 예약 확정 전 단계에 보냅니다.',
+    itinerary:'일정표: 요금·계좌를 제외하고 항공·일정·안내사항만 포함합니다.',
+    confirm:'확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.'
+  };
+  const el=document.getElementById('doc-kind-desc');
+  if(el) el.textContent=desc[kind]||'';
 }
 function resetAll(){
   if(!confirm('업로드한 파일과 분석 결과를 모두 초기화할까요?\n(팀 지정·발권 체크는 유지됩니다)')) return;
