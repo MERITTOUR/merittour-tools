@@ -6,6 +6,7 @@
 <title>MERITTOUR 통합 업무 허브</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -54,6 +55,13 @@ a{color:inherit}
 .nav-tab.locked{opacity:.4;cursor:not-allowed;user-select:none}
 .nav-sep{flex-shrink:0;align-self:center;width:1px;height:22px;background:var(--text3);opacity:.3;margin:0 8px}
 .nav-soon{flex-shrink:0;font-size:9px;font-weight:600;line-height:1;padding:2px 5px;border-radius:8px;background:var(--text3);color:#fff;opacity:.7}
+.doc-seg-wrap{display:inline-flex;gap:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;flex-wrap:wrap}
+.doc-seg{border:none;background:transparent;color:var(--text2);font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .18s;white-space:nowrap}
+.doc-seg:hover{color:var(--text);background:rgba(46,90,136,.07)}
+.doc-seg .doc-seg-ic{font-size:13px;opacity:.55;transition:opacity .18s}
+.doc-seg.active{background:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(26,35,50,.18)}
+.doc-seg.active:hover{background:var(--accent);color:#fff}
+.doc-seg.active .doc-seg-ic{opacity:1}
 
 /* LAYOUT */
 .wrap{max-width:1400px;margin:0 auto;padding:1.5rem}
@@ -1128,21 +1136,39 @@ tr:hover td{background:#EEF3FA}
 
   <div class="card" style="margin-bottom:14px">
     <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">문서 종류</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-ghost doc-kind" data-kind="quote" onclick="docPickKind('quote')">견적서</button>
-      <button class="btn-ghost doc-kind" data-kind="itinerary" onclick="docPickKind('itinerary')">일정표만 보내기</button>
-      <button class="btn-primary doc-kind active" data-kind="confirm" onclick="docPickKind('confirm')">확정서로 보내기</button>
+    <div class="doc-seg-wrap">
+      <button class="doc-seg" data-kind="quote" onclick="docPickKind('quote')"><span class="doc-seg-ic">₩</span>견적서</button>
+      <button class="doc-seg" data-kind="itinerary" onclick="docPickKind('itinerary')"><span class="doc-seg-ic">🗓</span>일정표만 보내기</button>
+      <button class="doc-seg active" data-kind="confirm" onclick="docPickKind('confirm')"><span class="doc-seg-ic">✓</span>확정서로 보내기</button>
     </div>
     <div class="muted" style="font-size:11px;margin-top:8px" id="doc-kind-desc">확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.</div>
   </div>
 
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택</div>
-      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" oninput="docRenderTeams()" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" id="doc-count" style="font-weight:400;font-size:11px"></span></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span class="muted" id="doc-sel-count" style="font-size:11px">선택 0팀</span>
+        <button class="btn-sm" onclick="docExportAligo()" style="border-color:var(--accent);color:var(--accent)">✉ 선택 팀 알림톡 양식 (확정서 링크)</button>
+        <button class="btn-sm" onclick="docBulkGenerate()" style="border-color:var(--accent);color:var(--accent)">⬇ 선택 팀 확정서 일괄 생성 (ZIP)</button>
+      </div>
+    </div>
+    <div class="bk-search-row" style="margin-bottom:8px">
+      <span class="bk-search-ico">🔍</span>
+      <input type="text" id="doc-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 연락처 · 출발지 · 상품명 · 담당자 검색  ( / 키로 포커스 )" oninput="docRenderTeams()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+      <select id="doc-seller" onchange="docRenderTeams()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text)">
+        <option value="">담당자 전체</option>
+      </select>
+      <span class="muted" style="font-size:12px">출발일</span>
+      <input type="date" id="doc-date-from" class="bk-date-input" onchange="docRenderTeams()">
+      <span class="muted" style="font-size:12px">~</span>
+      <input type="date" id="doc-date-to" class="bk-date-input" onchange="docRenderTeams()">
+      <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="doc-chk-all" onchange="docToggleAll(this.checked)"> 전체 선택</label>
     </div>
     <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
-      먼저 <b>업로드</b> 탭에서 파일을 올리면 팀 목록이 표시됩니다. (기능은 2단계에서 연결됩니다)
+      먼저 <b>업로드</b> 탭에서 파일을 올리면 팀 목록이 표시됩니다.
     </div>
   </div>
 </div>
@@ -1491,6 +1517,7 @@ function analyze(){
       remark,
       teamAuto: parseTeamName(remark),
       special: remarkSpecial(remark),
+      seller: String(r['판매자']||'').trim(),
       pax_list: [],
       raw: r
     });
@@ -1920,7 +1947,7 @@ function airRenderChips(){
     `<span class="bk-chip ${airFilter==='d7'?'on':''}" onclick="filterAir('${airFilter==='d7'?'all':'d7'}')">D-7 이내</span>`+
     originChips;
 }
-const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
+const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','한국출발','현지도착','귀국편','현지출발','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
 function renderAir(){
   const thead='<tr>'+
     '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+
@@ -2001,7 +2028,10 @@ function renderAir(){
       <td class="center">${t.apisOrigin||t.origin}</td>
       <td style="font-size:11px">${airlineHtml}</td>
       <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'<span class="muted">-</span>'}</td>
+      <td class="center" style="font-size:11px">${t.arrDepTime||'<span class="muted">-</span>'}</td>
+      <td class="center" style="font-size:11px">${t.arrTimeJP||'<span class="muted">-</span>'}</td>
       <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisRetFlight||'<span class="muted">-</span>'}</td>
+      <td class="center" style="font-size:11px">${t.retTimeJP||'<span class="muted">-</span>'}</td>
       <td>${t.dep}</td>
       <td>${t.arr}</td>
       <td class="center">${seatCell}</td>
@@ -2021,15 +2051,15 @@ function renderAir(){
           return `<tr class="air-pax-row pax-hidden" data-pax="${key}">
             <td></td><td></td><td></td><td></td>
             <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
-            <td colspan="2" style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
+            <td colspan="3" style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'} ${cntry}</td>
             <td class="center" style="font-size:11px">${p.gender||''}</td>
             <td class="center" style="font-family:var(--mono);font-size:11px">${bd}</td>
-            <td colspan="2" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span> ${cntry}</td>
+            <td colspan="4" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span></td>
             <td class="center">${seat}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
           </tr>`;
         }).join('')
-      : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+      : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="14" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
     return headRow+paxRows;
   }).join('');
   attachTopScrollbars();
@@ -4005,14 +4035,12 @@ function gotoSection(name){
   setTimeout(()=>{ try{ attachTopScrollbars(); }catch(e){} }, 50);
 }
 
-/* ⑦ 확정서 생성 — 문서 종류 선택 (1단계: UI만) */
+/* ⑦ 확정서 생성 — 문서 종류 선택 */
 var _docKind='confirm';
 function docPickKind(kind){
   _docKind=kind;
-  document.querySelectorAll('.doc-kind').forEach(b=>{
-    const on=b.dataset.kind===kind;
-    b.classList.toggle('active',on);
-    b.className=(on?'btn-primary':'btn-ghost')+' doc-kind'+(on?' active':'');
+  document.querySelectorAll('.doc-seg').forEach(b=>{
+    b.classList.toggle('active', b.dataset.kind===kind);
   });
   const desc={
     quote:'견적서: 요금 안내 중심. 예약 확정 전 단계에 보냅니다.',
@@ -5213,60 +5241,152 @@ function docNights(t){
 }
 
 /* ── 팀 목록 렌더 ── */
+function docFilteredTeams(){
+  const q=(document.getElementById('doc-search')?.value||'').trim().toLowerCase();
+  const seller=(document.getElementById('doc-seller')?.value||'');
+  const df=(document.getElementById('doc-date-from')?.value||'');
+  const dt=(document.getElementById('doc-date-to')?.value||'');
+  let list=teams.slice();
+  if(q) list=list.filter(t=>[docEventLabel(t),t.repName,t.repPhone,t.prodName,t.origin,t.seller].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q));
+  if(seller) list=list.filter(t=>t.seller===seller);
+  if(df) list=list.filter(t=>(t.dep||'')>=df);
+  if(dt) list=list.filter(t=>(t.dep||'')<=dt);
+  list.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
+  return list;
+}
+
 function docRenderTeams(){
   const box=document.getElementById('doc-team-list');
   if(!box) return;
+  // 담당자 셀렉트 채우기 (1회)
+  const sel=document.getElementById('doc-seller');
+  if(sel && sel.options.length<=1 && teams.length){
+    const sellers=[...new Set(teams.map(t=>t.seller).filter(Boolean))].sort();
+    sellers.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+  }
   if(!teams || !teams.length){
     box.innerHTML='먼저 <b>업로드</b> 탭에서 파일을 올리면 팀 목록이 표시됩니다.';
     box.style.textAlign='center'; box.style.padding='20px'; return;
   }
-  const q=(document.getElementById('doc-search')?.value||'').trim().toLowerCase();
-  let list=teams.slice();
-  if(q){
-    list=list.filter(t=>[docEventLabel(t),t.repName,t.prodName,t.origin].
-      map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q));
-  }
-  // 출발일 빠른 순
-  list.sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
-  if(!list.length){ box.innerHTML='<div style="padding:20px;text-align:center" class="muted">검색 결과가 없습니다.</div>'; return; }
-  box.style.textAlign='left'; box.style.padding='0';
-  let h='<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  h+='<thead><tr style="border-bottom:1px solid var(--line);color:var(--text2)">'+
+  const list=docFilteredTeams();
+  const cnt=document.getElementById('doc-count'); if(cnt) cnt.textContent=`(${list.length}팀)`;
+  if(!list.length){ box.innerHTML='<div style="padding:20px;text-align:center" class="muted">검색 결과가 없습니다.</div>'; docUpdateSelCount(); return; }
+  box.style.textAlign='left'; box.style.padding='0'; box.style.overflowX='auto';
+  let h='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid var(--line);color:var(--text2)">'+
+     '<th style="text-align:center;padding:8px 6px">☑</th>'+
      '<th style="text-align:left;padding:8px 10px">행사번호</th>'+
      '<th style="text-align:left;padding:8px 10px">대표고객</th>'+
      '<th style="text-align:center;padding:8px 10px">출발일</th>'+
      '<th style="text-align:center;padding:8px 10px">기간</th>'+
      '<th style="text-align:left;padding:8px 10px">상품명</th>'+
      '<th style="text-align:center;padding:8px 10px">인원</th>'+
+     '<th style="text-align:center;padding:8px 10px">담당자</th>'+
      '<th style="text-align:center;padding:8px 10px">생성</th></tr></thead><tbody>';
   list.forEach(t=>{
     h+=`<tr style="border-bottom:1px solid var(--line)">`+
+       `<td style="text-align:center;padding:8px 6px"><input type="checkbox" class="doc-chk" data-seq="${t.eventSeq}" ${docSelSeqs.has(String(t.eventSeq))?'checked':''} onchange="docToggleSel('${t.eventSeq}',this.checked)"></td>`+
        `<td style="padding:8px 10px;font-family:var(--mono)">${docEventLabel(t)}</td>`+
        `<td style="padding:8px 10px;font-weight:600">${t.repName||'-'}</td>`+
        `<td style="padding:8px 10px;text-align:center">${docDot(t.dep)}</td>`+
        `<td style="padding:8px 10px;text-align:center">${t.period||'-'}</td>`+
        `<td style="padding:8px 10px;color:var(--text2)">${t.prodName||'-'}</td>`+
        `<td style="padding:8px 10px;text-align:center">${t.pax||'-'}</td>`+
+       `<td style="padding:8px 10px;text-align:center">${t.seller||'-'}</td>`+
        `<td style="padding:8px 10px;text-align:center"><button class="btn-primary" style="padding:5px 12px;font-size:12px" onclick="docGenerate('${t.eventSeq}')">생성 →</button></td>`+
        `</tr>`;
   });
   h+='</tbody></table>';
   box.innerHTML=h;
+  docUpdateSelCount();
 }
 
-/* ── 문서 생성 ── */
+/* 선택 상태 관리 */
+var docSelSeqs=new Set();
+function docToggleSel(seq,on){ if(on)docSelSeqs.add(String(seq)); else docSelSeqs.delete(String(seq)); docUpdateSelCount(); }
+function docToggleAll(on){
+  const list=docFilteredTeams();
+  list.forEach(t=>{ if(on)docSelSeqs.add(String(t.eventSeq)); else docSelSeqs.delete(String(t.eventSeq)); });
+  document.querySelectorAll('.doc-chk').forEach(c=>c.checked=on);
+  docUpdateSelCount();
+}
+function docUpdateSelCount(){ const el=document.getElementById('doc-sel-count'); if(el) el.textContent=`선택 ${docSelSeqs.size}팀`; }
+
+/* ── 단건 문서 생성 ── */
+/* GitHub 업로드용 파일명: 확정서는 {행사번호}.html, 견적·일정은 종류 접미사 */
+function docFileName(t, kind){
+  const no=docEventLabel(t).replace(/[^0-9A-Za-z\-]/g,''); // 행사번호 그대로(영문·숫자·하이픈)
+  if(kind==='confirm') return `${no}.html`;
+  return `${no}_${kind}.html`;  // quote / itinerary
+}
 function docGenerate(eventSeqStr){
   const t=teams.find(x=>String(x.eventSeq)===String(eventSeqStr));
   if(!t){ showToast('팀을 찾을 수 없습니다','error'); return; }
   const kind=_docKind||'confirm';
   const html=docBuildHTML(t, kind);
   const kindName={quote:'견적서',itinerary:'일정표',confirm:'확정서'}[kind];
-  // 파일명: 영문 (한글 파일명 다운로드 실패 회피)
-  const depFlat=(t.dep||'').replace(/-/g,'');
-  const kindEng={quote:'quote',itinerary:'itinerary',confirm:'confirm'}[kind];
-  const fname=`${depFlat}_${docRegionEng(t)}_${kindEng}.html`;
-  docDownload(fname, html);
+  docDownload(docFileName(t,kind), html);
   showToast(`${t.repName} 님 ${kindName} 생성 완료`);
+}
+
+/* ── 선택 팀 일괄 생성 (ZIP) ── */
+async function docBulkGenerate(){
+  if(!docSelSeqs.size){ showToast('먼저 팀을 체크해주세요','error'); return; }
+  if(typeof JSZip==='undefined'){ showToast('ZIP 라이브러리 로드 실패 (네트워크 확인)','error'); return; }
+  const kind=_docKind||'confirm';
+  const kindName={quote:'견적서',itinerary:'일정표',confirm:'확정서'}[kind];
+  const sel=teams.filter(t=>docSelSeqs.has(String(t.eventSeq)));
+  const zip=new JSZip();
+  const folder=zip.folder('confirm');
+  sel.forEach(t=>{ folder.file(docFileName(t,kind), docBuildHTML(t,kind)); });
+  showToast(`${sel.length}팀 ${kindName} 생성 중…`);
+  const blob=await zip.generateAsync({type:'blob'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href=url; a.download=`confirm_${kind}_${today}.zip`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  showToast(`${sel.length}팀 ${kindName} ZIP 생성 완료`);
+}
+
+/* ── 확정서 링크 (GitHub Pages) ── */
+const DOC_BASE_URL='https://merittour.github.io/confirm/';
+function docConfirmURL(t){ return DOC_BASE_URL+docFileName(t,'confirm'); }
+
+/* ── 알림톡 양식 (xlsx) — 선택 팀을 개인 단위로 펼침 + 확정서 링크 ──
+   헤더: PNR 안내 템플릿 구조 + 확정서 링크 열
+   PNR 원칙: 콤마(반각/전각) 분리된 다건 전부 기재 */
+function docExportAligo(){
+  if(!docSelSeqs.size){ showToast('먼저 팀을 체크해주세요','error'); return; }
+  if(typeof XLSX==='undefined'){ showToast('엑셀 라이브러리 로드 실패','error'); return; }
+  const sel=teams.filter(t=>docSelSeqs.has(String(t.eventSeq)));
+  const header=['메시지 수신 휴대폰 번호','#{고객명}','#{출발일자}','#{도착일자}','#{상품명}','#{출발지}','#{도착지}','#{출발편}','#{귀국편}','#{PNR}','#{확정서링크}'];
+  const rows=[header];
+  sel.forEach(t=>{
+    const url=docConfirmURL(t);
+    const dest=docDest(t);
+    const list=(t.pax_list&&t.pax_list.length)?t.pax_list:[{name:t.repName,phone:t.repPhone,pnr:'',depFlight:t.arrDepFlight,retFlight:t.arrRetFlight}];
+    list.forEach(p=>{
+      const phone=(p.phone||t.repPhone||'').toString().replace(/[^0-9]/g,'');
+      if(!phone) return; // 번호 없으면 발송 불가 → 제외
+      // PNR 다건 정규화 (반각/전각 콤마 → 콤마 구분 유지)
+      const pnr=(p.pnr||'').toString().replace(/，/g,',').split(',').map(s=>s.trim()).filter(Boolean).join(', ');
+      rows.push([
+        phone, p.name||t.repName||'', docDot(t.dep), docDot(t.arr),
+        t.prodName||'', t.origin||'', dest,
+        p.depFlight||t.arrDepFlight||'', p.retFlight||t.arrRetFlight||'',
+        pnr, url
+      ]);
+    });
+  });
+  if(rows.length<=1){ showToast('발송 가능한 휴대번호가 없습니다','error'); return; }
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:16},{wch:10},{wch:12},{wch:12},{wch:36},{wch:8},{wch:14},{wch:10},{wch:10},{wch:18},{wch:46}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'알림톡');
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb,`aligo_confirm_${today}.xlsx`);
+  showToast(`${sel.length}팀 / ${rows.length-1}명 알림톡 양식 생성 완료`);
 }
 
 /* 지역 영문 (파일명용) */
