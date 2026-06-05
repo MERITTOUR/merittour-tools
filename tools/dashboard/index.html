@@ -575,7 +575,7 @@ tr:hover td{background:#EEF3FA}
   <div class="nav-tab" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ⑤ 예약 관리</div>
   <div class="nav-tab" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑥ 항공 정보</div>
   <div class="nav-tab" id="nav-doc" onclick="gotoSection('doc')"><div class="nav-dot"></div> ⑦ 확정서 생성</div>
-  <div class="nav-tab locked" id="nav-settle" onclick="gotoSection('settle')"><div class="nav-dot"></div> ⑧ 정산</div>
+  <div class="nav-tab" id="nav-settle" onclick="gotoSection('settle')"><div class="nav-dot"></div> ⑧ 정산</div>
   <div class="nav-sep" title="준비 중 — 추후 활성화"></div>
   <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> 보험 정보 <span class="nav-soon">준비중</span></div>
   <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> 송영 정보 <span class="nav-soon">준비중</span></div>
@@ -1196,8 +1196,13 @@ tr:hover td{background:#EEF3FA}
       </div>
     </div>
 
+    <div id="st-empty" class="muted" style="font-size:13px;padding:24px;text-align:center">
+      먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 정산이 표시됩니다.<br>
+      <span style="font-size:11px">업로드 전에도 <b>① 리조트 마스터</b>의 현지정산단가와 항공요금 테이블의 발권원가는 미리 입력해둘 수 있습니다.</span>
+    </div>
+
     <!-- A. 현지정산 (¥) -->
-    <div id="st-view-local">
+    <div id="st-view-local" style="display:none">
       <div class="note">
         <b>사이젠 現地精算表 대조용</b> · 숙박비 = 인원 × 박수 × <b>현지정산단가</b>(① 리조트 마스터의 숙소별 값), 송영비 = 인원 × 송영 단가.
         체재·송영 면제와 단가 보정은 「개인별 명세」에서 반영됩니다. 사이젠과 동일하게 <b>항공조인·구마모토 시내</b> 상품은 제외합니다.
@@ -1749,7 +1754,7 @@ function analyze(){
   cancelledTeams.forEach((t,i)=>t.no=i+1);
 
   // 탭 해제
-  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit','settle'].forEach(s=>
+  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit'].forEach(s=>
     document.getElementById('nav-'+s).classList.remove('locked'));
 
   // 세션 배지
@@ -4150,7 +4155,7 @@ function gotoSection(name){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
   if(nav) nav.classList.add('active');
-  if(name==='settle' && typeof renderSettleAll==='function' && teams.length) renderSettleAll();
+  if(name==='settle' && typeof renderSettleAll==='function') renderSettleAll();
   window.scrollTo(0,0);
   setTimeout(()=>{ try{ attachTopScrollbars(); }catch(e){} }, 50);
 }
@@ -5412,13 +5417,22 @@ function settleProfitTeams(rows){
 
 /* ── 전체 렌더 (업로드 직후 / 탭 진입 / 마스터 변경 시) ── */
 function renderSettleAll(){
-  if(!teams.length) return;
+  if(!teams.length){ settleGoto(settleTab, true); return; }
   stFillSelects();
   settleGoto(settleTab, true);
 }
 function settleGoto(tab, keep){
   settleTab=tab;
   document.querySelectorAll('.st-tab').forEach(b=>b.classList.toggle('active',b.dataset.st===tab));
+  const empty=document.getElementById('st-empty');
+  if(!teams.length){
+    if(empty) empty.style.display='';
+    ['local','profit','person','mclick'].forEach(v=>{
+      const el=document.getElementById('st-view-'+v); if(el) el.style.display='none';
+    });
+    return;
+  }
+  if(empty) empty.style.display='none';
   ['local','profit','person','mclick'].forEach(v=>{
     const el=document.getElementById('st-view-'+v);
     if(el) el.style.display = v===tab?'':'none';
