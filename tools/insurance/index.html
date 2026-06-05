@@ -1,214 +1,221 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MERITTOUR · 보험코드매칭</title>
-<link rel="stylesheet" href="../../shared/core.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERITTOUR 보험코드 매칭</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  /* shared 토큰 + 원본 도구가 인라인으로 쓰는 변수명 호환 alias */
-  :root {
-    --text-faint: var(--mt-text3);
-    --text-dim:   var(--mt-text2);
-    --text:       var(--mt-text);
-    --card:       var(--mt-surface);
-    --card-2:     var(--mt-surface2);
-    --border:     var(--mt-border);
-    --warn:       var(--mt-red-dark);
-    --ok:         var(--mt-green);
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#EEF2F8;--surface:#FFFFFF;--surface2:#F5F8FC;--surface3:#E8EDF5;--surface4:#DCE3EF;
+  --border:#D2DBE8;--border2:#B4C0D6;
+  --accent:#2E5A88;--accent2:#234A73;--accent3:#1B3A5C;--accent-dim:#E3ECF6;
+  --green:#059669;--green2:#047857;--green-dim:#D1FAE5;
+  --amber:#D97706;--amber2:#B45309;--amber-dim:#FEF3C7;
+  --red:#DC2626;--red2:#B91C1C;--red-dim:#FEE2E2;
+  --teal:#0D9488;--teal2:#0F766E;--teal-dim:#CCFBF1;
+  --navy:#1a2332;
+  --text:#1E2A45;--text2:#4A5A80;--text3:#8A97B8;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Noto Sans KR',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;font-size:13px;line-height:1.55}
+a{color:inherit}
 
-  body { background: var(--mt-bg); margin: 0; }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
-  .intro { font-size: 13px; color: var(--mt-text2); margin: 4px 0 18px; line-height: 1.6; }
-  .intro .src { color: var(--mt-text3); font-size: 12px; }
+/* HEADER (dashboard 패턴) */
+.header{background:var(--surface);border-bottom:2px solid var(--navy);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo:hover{opacity:.7;transition:opacity .15s}
+.logo-img{height:22px;width:auto;display:block}
+.logo-img path,.logo-img polygon,.logo-img rect{fill:var(--navy)}
+.logo-divider{width:1px;height:22px;background:var(--border2)}
+.logo-sub{font-size:13px;color:var(--text2);font-weight:500}
+.logo-tagline{font-size:10px;color:var(--text3);font-weight:400;margin-left:4px}
+.header-right{display:flex;align-items:center;gap:8px}
+.ghost-btn{background:transparent;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.ghost-btn:hover{border-color:var(--accent);color:var(--accent2)}
+.badge-ver{font-size:10px;padding:2px 7px;border-radius:20px;font-family:var(--mono);background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent);letter-spacing:.04em}
 
-  h2 { font-size: 13px; font-weight: 700; color: var(--mt-text2); text-transform: uppercase;
-    letter-spacing: .12em; margin: 22px 0 10px; padding-left: 9px; border-left: 3px solid var(--mt-point); }
+/* WRAP */
+.wrap{max-width:1200px;margin:0 auto;padding:24px 24px 80px}
 
-  /* 입력 드롭존 */
-  .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 20px; }
-  @media(max-width:720px){ .inputs { grid-template-columns: 1fr; } }
-  .drop {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    background: var(--mt-surface); border: 2px dashed var(--mt-border2); border-radius: var(--mt-radius-lg);
-    padding: 28px 20px; text-align: center; color: var(--mt-text3); cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-  .drop:hover { border-color: var(--mt-accent); }
-  .drop.active, .drop.filled { border-color: var(--mt-green); background: var(--mt-green-dim); }
-  .drop-icon { font-size: 11px; font-family: var(--mt-mono); color: var(--mt-point2); letter-spacing: .08em; }
-  .drop-title { font-size: 15px; font-weight: 600; color: var(--mt-brand); margin-top: 2px; }
-  .drop-hint { font-size: 12px; color: var(--mt-text3); }
-  .drop-files { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; justify-content: center; max-width: 100%; }
-  .drop-files .file-chip {
-    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-family: var(--mt-mono);
-    background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px;
-    padding: 3px 8px; color: var(--mt-text2);
-  }
-  .drop-files .file-chip .x { color: var(--mt-text3); cursor: pointer; padding-left: 4px; }
-  .drop-files .file-chip .x:hover { color: var(--mt-red); }
-  .drop input[type=file] { display: none; }
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(30,42,69,.04)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.card-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.card-sub{font-size:12px;color:var(--text2);line-height:1.5}
 
-  /* 실행 컨트롤 */
-  .actions { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-  .actions button { font-family: var(--mt-sans); font-size: 13px; font-weight: 500; padding: 8px 16px;
-    border-radius: var(--mt-radius); cursor: pointer; border: 1px solid var(--mt-accent);
-    background: var(--mt-accent); color: #fff; transition: all .15s; }
-  .actions button:hover:not(:disabled){ background: var(--mt-accent2); border-color: var(--mt-accent2); }
-  .actions button.secondary { background: var(--mt-surface); color: var(--mt-text2); border-color: var(--mt-border2); }
-  .actions button.secondary:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
-  .actions button:disabled { opacity: .45; cursor: not-allowed; }
-  .status { font-size: 12px; color: var(--mt-text3); margin-left: 6px; }
+/* SECTION TITLE (between cards) */
+h2.sect{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.12em;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+h2.sect::before{content:'';width:3px;height:13px;background:var(--accent);border-radius:2px}
+h2.sect:first-of-type{margin-top:4px}
 
-  /* 결과 영역 */
-  .results { display: none; }
-  .results.show { display: block; }
+/* UPLOAD GRID */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.upload-area{background:var(--surface2);border:1.5px dashed var(--border2);border-radius:8px;padding:22px 18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:6px;min-height:130px}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-dim)}
+.upload-area.dragover{border-color:var(--accent);background:var(--accent-dim);border-style:solid}
+.upload-area.has-file{border-color:var(--green);border-style:solid;background:var(--green-dim)}
+.upload-icon{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1.2px;margin-bottom:2px}
+.upload-area.has-file .upload-icon{color:var(--green2)}
+.upload-title{font-size:14px;font-weight:600;color:var(--navy)}
+.upload-sub{font-size:11px;color:var(--text2);line-height:1.5}
+.upload-files{font-size:11px;color:var(--green2);font-family:var(--mono);word-break:break-all;margin-top:4px}
+.upload-area input[type=file]{display:none}
 
-  /* 요약 카드 */
-  .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 4px 0 18px; }
-  @media(max-width:900px){ .summary { grid-template-columns: repeat(3, 1fr); } }
-  @media(max-width:600px){ .summary { grid-template-columns: 1fr 1fr; } }
-  .stat-card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg);
-    padding: 12px 14px; box-shadow: var(--mt-shadow); }
-  .stat-card.ok { border-left: 3px solid var(--mt-green); }
-  .stat-card.warn { border-left: 3px solid var(--mt-amber); }
-  .stat-label { font-size: 11px; color: var(--mt-text3); letter-spacing: .04em; }
-  .stat-value { font-size: 20px; font-weight: 700; color: var(--mt-brand); font-family: var(--mt-mono); margin-top: 4px; }
-  .codes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+/* ACTIONS */
+.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+button{font-family:var(--sans);background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+button:hover{background:var(--accent2)}
+button:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed}
+button.secondary{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+button.secondary:hover{background:var(--surface3);border-color:var(--accent);color:var(--accent2)}
+.status{font-size:12px;color:var(--text2);font-family:var(--mono)}
 
-  /* 경고 박스 */
-  .warn-box { background: var(--mt-amber-dim); border-left: 3px solid var(--mt-amber); border-radius: var(--mt-radius);
-    padding: 12px 14px; margin: 8px 0; }
-  .warn-box h3 { font-size: 13px; color: var(--mt-amber-dark); margin: 0 0 6px; font-weight: 600; }
-  .warn-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: var(--mt-text2); line-height: 1.7; }
+/* RESULTS */
+.results{display:none}
+.results.show{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-  .section-header { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 10px; flex-wrap: wrap; gap: 8px; }
-  .section-header h2 { font-size: 13px; }
+/* SUMMARY */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+.sum-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.sum-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:6px}
+.sum-val{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--navy);letter-spacing:-.02em}
+.sum-val.green{color:var(--green2)}
+.sum-val.red{color:var(--red2)}
+.sum-val.amber{color:var(--amber2)}
+.sum-val .unit{font-size:12px;color:var(--text3);font-weight:400;margin-left:2px}
+.sum-box.plan .sum-val{font-size:14px;line-height:1.4}
+.sum-box.plan .codes{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
 
-  /* 행사번호별 그룹 */
-  .group {
-    background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg);
-    margin-bottom: 10px; overflow: hidden; box-shadow: var(--mt-shadow);
-  }
-  .group-head {
-    padding: 10px 16px; background: var(--mt-surface2); border-bottom: 1px solid var(--mt-border);
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px;
-  }
-  .group-no   { font-family: var(--mt-mono); color: var(--mt-brand); font-weight: 600; }
-  .group-name { color: var(--mt-text); flex: 1; min-width: 200px; }
-  .group-codes{ display: flex; gap: 4px; flex-wrap: wrap; }
-  .group-meta { display: flex; gap: 12px; margin-left: auto; align-items: center; }
-  .group-count{ font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); }
-  .group-amount{ font-family: var(--mt-mono); color: var(--mt-point2); font-weight: 600; font-size: 13px; }
+/* BADGE (plan code) */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em}
+.badge.B06{background:var(--green-dim);color:var(--green2);border:1px solid var(--green)}
+.badge.B07{background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber)}
+.badge.B08{background:var(--teal-dim);color:var(--teal2);border:1px solid var(--teal)}
+.badge.B05{background:var(--red-dim);color:var(--red2);border:1px solid var(--red)}
 
-  .group table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  .group th { background: var(--mt-surface3); color: var(--mt-text2); font-weight: 600; text-align: left;
-    padding: 7px 12px; border-bottom: 1px solid var(--mt-border); white-space: nowrap; font-size: 11px; }
-  .group td { padding: 6px 12px; border-bottom: 1px solid var(--mt-surface3); color: var(--mt-text); }
-  .group tr:last-child td { border-bottom: none; }
-  .group td.no   { font-family: var(--mt-mono); color: var(--mt-text3); width: 40px; }
-  .group td.name { font-weight: 500; }
-  .group td.bd   { font-family: var(--mt-mono); color: var(--mt-text2); }
-  .group td.dep  { font-family: var(--mt-mono); color: var(--mt-text2); font-size: 11px; }
-  .group td.prem { font-family: var(--mt-mono); text-align: right; }
-  .group td.code { text-align: center; }
+/* WARNING BOX */
+.warn-box{background:var(--amber-dim);border:1px solid var(--amber);border-radius:8px;padding:14px 18px;margin-bottom:14px}
+.warn-box h3{color:var(--amber2);font-size:13px;font-weight:700;margin-bottom:8px}
+.warn-list{font-size:12px;color:var(--text)}
+.warn-list li{padding:3px 0;list-style:none;font-family:var(--mono)}
+.warn-hint{margin-top:8px;font-size:11px;color:var(--text2);font-style:italic}
 
-  /* 플랜 배지 */
-  .badge { display: inline-block; font-size: 10px; font-family: var(--mt-mono); padding: 2px 7px;
-    border-radius: 10px; margin: 0 2px; letter-spacing: .04em; }
-  .badge.B05 { background: var(--mt-red-dim);   color: var(--mt-red-dark); }
-  .badge.B06 { background: var(--mt-green-dim); color: var(--mt-green-dark); }
-  .badge.B07 { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
-  .badge.B08 { background: var(--mt-accent-dim); color: var(--mt-accent); }
+/* GROUP / TABLE */
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.section-header h2.sect{margin:0}
+.group{margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(30,42,69,.04)}
+.group.pdf-only{border-color:var(--amber);border-style:dashed}
+.group-head{padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.group.pdf-only .group-head{background:var(--amber-dim)}
+.group-no{font-family:var(--mono);font-size:12px;color:var(--accent2);font-weight:700;background:var(--accent-dim);padding:3px 8px;border-radius:4px;border:1px solid var(--accent)}
+.group.pdf-only .group-no{color:var(--amber2);background:#FFF;border-color:var(--amber)}
+.group-name{font-size:13px;font-weight:500;color:var(--text)}
+.group-codes{display:flex;gap:6px}
+.group-meta{display:flex;align-items:baseline;gap:10px;margin-left:auto}
+.group-count{font-size:12px;color:var(--text2);font-weight:500}
+.group-amount{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--navy);letter-spacing:.02em}
 
-  /* 시스템 입력용 출력 */
-  .outputs { margin-top: 22px; }
-  .output-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--mt-border); margin-bottom: 0; }
-  .output-tabs .tab { padding: 0 16px; height: 38px; display: flex; align-items: center; font-size: 12px;
-    font-weight: 500; color: var(--mt-text3); cursor: pointer; border-bottom: 2px solid transparent;
-    background: none; border-top: none; border-left: none; border-right: none; font-family: var(--mt-sans); }
-  .output-tabs .tab:hover { color: var(--mt-text2); }
-  .output-tabs .tab.active { color: var(--mt-accent); border-bottom-color: var(--mt-accent); }
-  .output-area { background: var(--mt-surface2); border: 1px solid var(--mt-border); border-top: none;
-    border-radius: 0 0 var(--mt-radius) var(--mt-radius); padding: 14px; font-family: var(--mt-mono);
-    font-size: 12px; color: var(--mt-text); white-space: pre; overflow-x: auto; max-height: 320px; overflow-y: auto; }
-  .output-controls { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .output-controls button { font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: var(--mt-radius);
-    cursor: pointer; background: var(--mt-accent); color: #fff; border: 1px solid var(--mt-accent); }
-  .output-controls button.secondary { background: var(--mt-surface); color: var(--mt-text2); border-color: var(--mt-border2); }
-  .output-controls button:hover:not(.secondary){ background: var(--mt-accent2); }
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:10px 12px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;background:var(--surface2);border-bottom:1px solid var(--border);text-align:center}
+thead th.col-name{text-align:left}
+tbody td{padding:10px 12px;border-top:1px solid var(--border);color:var(--text);text-align:center;vertical-align:middle}
+tbody tr:hover td{background:var(--surface2)}
+td.no{color:var(--text3);font-family:var(--mono);font-size:12px;width:48px}
+td.name{font-weight:600;text-align:left;color:var(--navy)}
+td.bd,td.dep{color:var(--text2);font-family:var(--mono);font-size:12px}
+td.prem{font-family:var(--mono);font-size:13px;color:var(--navy);font-weight:600;white-space:nowrap}
+td.code{width:80px}
 
-  /* 진단 패널 */
-  .diag { margin-top: 20px; background: var(--mt-surface); border: 1px solid var(--mt-border);
-    border-radius: var(--mt-radius-lg); padding: 12px 16px; }
-  .diag summary { cursor: pointer; font-size: 12px; color: var(--mt-text2); font-weight: 500; list-style: none; }
-  .diag summary::-webkit-details-marker { display: none; }
-  .diag summary:hover { color: var(--mt-brand); }
-  .diag-content { margin-top: 12px; font-size: 12px; }
-  .diag-pdf { padding: 8px 0; border-bottom: 1px solid var(--mt-surface3); }
-  .diag-pdf:last-child { border-bottom: none; }
-  .diag-pdf.warn { background: var(--mt-amber-dim); padding-left: 10px; border-radius: 6px;
-    margin: 4px 0; border-bottom: none; }
-  .diag-pdf-name { font-family: var(--mt-mono); color: var(--mt-text2); font-size: 11px; }
-  .diag-pdf-info { color: var(--mt-text); margin-top: 3px; font-size: 12px; }
-  .diag-pdf-rows { margin-top: 4px; color: var(--mt-text3); font-size: 11px; line-height: 1.6; padding-left: 12px; }
-  .diag-tag { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-family: var(--mt-mono);
-    margin-right: 6px; letter-spacing: .04em; }
-  .diag-tag.list  { background: var(--mt-green-dim); color: var(--mt-green-dark); }
-  .diag-tag.cert  { background: var(--mt-accent-dim); color: var(--mt-accent); }
-  .diag-tag.empty { background: var(--mt-red-dim); color: var(--mt-red-dark); }
+/* OUTPUT */
+.output-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--sans);font-weight:500;transition:all .15s}
+.tab:hover{color:var(--accent2);border-color:var(--accent)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.output-area{background:var(--navy);border:1px solid var(--navy);border-radius:7px;padding:14px;font-family:var(--mono);font-size:12px;color:#E8EAF0;white-space:pre;overflow-x:auto;max-height:380px;overflow-y:auto;line-height:1.65}
+.output-controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 
-  /* 푸터 */
-  footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--mt-border);
-    font-size: 11px; color: var(--mt-text3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+/* DIAGNOSTIC */
+.diag{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.diag summary{padding:12px 18px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;list-style:none;font-weight:500}
+.diag summary::-webkit-details-marker{display:none}
+.diag summary:hover{background:var(--surface2);color:var(--accent2)}
+.diag[open] summary{border-bottom:1px solid var(--border);color:var(--navy)}
+.diag-content{padding:14px 18px;font-size:12px}
+.diag-pdf{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:8px}
+.diag-pdf-name{font-weight:600;color:var(--navy);margin-bottom:4px;font-family:var(--mono);font-size:11px}
+.diag-pdf-info{color:var(--text2);font-size:11px}
+.diag-pdf-rows{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--text3);max-height:120px;overflow-y:auto;padding:4px 0;line-height:1.6}
+.diag-pdf.warn{border-color:var(--amber)}
+.diag-pdf.warn .diag-pdf-name{color:var(--amber2)}
+.diag-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:600;margin-right:4px;background:var(--surface3);color:var(--text2)}
+.diag-tag.list{background:var(--green-dim);color:var(--green2)}
+.diag-tag.cert{background:var(--accent-dim);color:var(--accent2)}
+.diag-tag.empty{background:var(--red-dim);color:var(--red2)}
 
-  /* 토스트 */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--mt-brand); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 24px;
-    box-shadow: var(--mt-shadow-lg); z-index: 9999; opacity: 0; transition: opacity .2s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  .toast.error { background: var(--mt-red-dark); }
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:7px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:100;box-shadow:0 4px 12px rgba(30,42,69,.2)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--red2)}
+
+/* NOTE / FOOTER */
+.note{font-size:11px;color:var(--text2);background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:10px 14px;line-height:1.6}
+.note b{color:var(--navy)}
+.note .badge{font-size:10px;padding:1px 6px;margin:0 2px}
+.footer-tip{text-align:center;color:var(--text3);font-size:11px;margin-top:40px;font-family:var(--mono);letter-spacing:.06em}
+
+@media(max-width:700px){
+  .upload-grid{grid-template-columns:1fr}
+  .wrap{padding:16px 14px 60px}
+  .header{padding:0 1rem}
+  .logo-tagline{display:none}
+}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
+<div class="header">
+  <a class="logo" href="../../sales/" title="영업 도구 홈으로">
+    <svg class="logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31" aria-label="MERITTOUR"><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48"/><rect x="277.51" y="9.89" width="9.7" height="48.33"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z"/></g></svg>
+    <div class="logo-divider"></div>
+    <div class="logo-sub">보험코드 매칭<span class="logo-tagline">· DB손해보험 대조 · v2.0</span></div>
+  </a>
+  <div class="header-right">
+    <a class="ghost-btn" href="../../sales/">⌂ 홈</a>
+  </div>
+</div>
+
 <div class="wrap">
 
-  <div class="mt-header">
-    <div class="mt-brand-wrap">
-      <a href="../../sales/" class="mt-brand-link" title="영업 도구 홈으로"><img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="mt-brand-logo"></a>
-      <div class="mt-brand-sub">INTERNAL TOOLS</div>
-      <span class="mt-dept-badge">보험코드매칭</span>
-    </div>
-    <div class="mt-header-actions">
-      <a class="mt-btn mt-btn-ghost" href="../../sales/" title="영업 도구 홈">⌂ 홈</a>
+<!-- 입력 카드 -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <div class="card-title">입력 파일</div>
+      <div class="card-sub">엠클릭에서 다운로드한 일행별예약 엑셀과 DB손해보험에서 받은 가입증명서 PDF를 드래그하거나 클릭해서 선택하세요. 여러 날짜·여러 PDF 한꺼번에 업로드 가능합니다.</div>
     </div>
   </div>
 
-  <p class="intro">
-    DB손보 가입증명서 PDF와 일행별예약 엑셀을 매칭해 행사별 보험료를 산출합니다.
-    결과 엑셀은 <strong>통합 점검</strong> 도구에서도 자동 인식됩니다.<br>
-    <span class="src">매칭키: 한글이름 + 생년월일(YYMMDD). 단일가입자 PDF는 생년월일만으로 fallback 매칭됩니다.</span>
-  </p>
-
-  <h2>입력 파일</h2>
-  <div class="inputs">
-    <label class="drop" id="dropExcel">
-      <span class="drop-icon">[ STEP 1 / XLSX ]</span>
-      <span class="drop-title">일행별예약 엑셀</span>
-      <span class="drop-hint">여러 날짜 한 번에 드롭 가능 · 추가 드롭 시 누적</span>
-      <span class="drop-files" id="filesExcel"></span>
-      <input type="file" accept=".xlsx,.xls" id="inputExcel" multiple />
+  <div class="upload-grid">
+    <label class="upload-area" id="dropExcel">
+      <div class="upload-icon">[ STEP 1 / XLSX ]</div>
+      <div class="upload-title">일행별예약 엑셀</div>
+      <div class="upload-sub">여러 날짜 한번에 드롭 가능 · 추가 드롭하면 누적</div>
+      <div class="upload-files" id="filesExcel"></div>
+      <input type="file" accept=".xlsx,.xls" id="inputExcel" multiple>
     </label>
-    <label class="drop" id="dropPdf">
-      <span class="drop-icon">[ STEP 2 / PDF ]</span>
-      <span class="drop-title">DB손보 가입증명서 PDF</span>
-      <span class="drop-hint">여러 파일 한 번에 드래그 가능 · 추가 드롭 시 누적</span>
-      <span class="drop-files" id="filesPdf"></span>
-      <input type="file" accept=".pdf" id="inputPdf" multiple />
+    <label class="upload-area" id="dropPdf">
+      <div class="upload-icon">[ STEP 2 / PDF ]</div>
+      <div class="upload-title">DB손보 가입증명서 PDF</div>
+      <div class="upload-sub">여러 파일 한번에 드래그 가능 · 단일 가입자 PDF도 인식</div>
+      <div class="upload-files" id="filesPdf"></div>
+      <input type="file" accept=".pdf" id="inputPdf" multiple>
     </label>
   </div>
 
@@ -218,112 +225,68 @@
     <span class="status" id="status"></span>
   </div>
 
-  <section class="results" id="results">
-    <h2>요약</h2>
-    <div class="summary" id="summary"></div>
+  <div class="note" style="margin-top:14px">
+    <b>매칭 키</b> · 한글 이름 + 생년월일(YYMMDD)로 정확 매칭. 이름 추출 실패한 단일 가입자 PDF는 생년월일만으로 fallback 매칭됩니다.<br>
+    <b>플랜 코드</b> ·
+    <span class="badge B08">B08</span>만 0~14세
+    <span class="badge B06">B06</span>만 15~69세
+    <span class="badge B07">B07</span>만 70~79세
+    <span class="badge B05">B05</span>만 80~99세
+  </div>
+</div>
 
-    <div id="warnings"></div>
+<!-- 결과 -->
+<section class="results" id="results">
 
-    <div class="section-header">
-      <h2 style="margin:0;border:none;padding:0">행사번호별 결과</h2>
-      <button class="secondary" id="btnDownloadTop" type="button" style="font-family:var(--mt-sans);font-size:12.5px;padding:7px 14px;border-radius:8px;cursor:pointer;background:var(--mt-surface);color:var(--mt-text2);border:1px solid var(--mt-border2)">⬇ 전체 결과 .xlsx 다운로드</button>
-    </div>
-    <div id="groups"></div>
+  <h2 class="sect">매칭 요약</h2>
+  <div class="sum-grid" id="summary"></div>
+  <div id="warnings"></div>
 
-    <div class="outputs">
-      <h2 style="margin-bottom:8px">시스템 입력용 출력</h2>
-      <div class="output-tabs" id="outputTabs">
-        <button class="tab active" data-fmt="namecode">이름 / 생년월일 / 보험료 / 코드</button>
-        <button class="tab" data-fmt="excel">엑셀 표 (탭 구분 · 보험료·도착일 포함)</button>
+  <div class="section-header">
+    <h2 class="sect">행사번호별 결과</h2>
+    <button class="secondary" id="btnDownloadTop" type="button">⬇ 전체 결과 .xlsx 다운로드</button>
+  </div>
+  <div id="groups"></div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">시스템 입력용 출력</div>
+        <div class="card-sub">정산 시스템에 붙여넣을 형태로 변환됩니다. 탭을 눌러 원하는 포맷 선택 → 복사.</div>
       </div>
-      <div class="output-area" id="outputArea"></div>
-      <div class="output-controls">
-        <button id="btnCopy">📋 클립보드 복사</button>
-        <button class="secondary" id="btnDownload">⬇ 전체 결과 .xlsx 다운로드</button>
-      </div>
     </div>
+    <div class="output-tabs" id="outputTabs">
+      <button class="tab active" data-fmt="namecode">이름 / 생년월일 / 보험료 / 코드</button>
+      <button class="tab" data-fmt="excel">엑셀 표 (탭 구분 · 보험료·도착일 포함)</button>
+    </div>
+    <div class="output-area" id="outputArea"></div>
+    <div class="output-controls">
+      <button id="btnCopy">📋 클립보드 복사</button>
+      <button class="secondary" id="btnDownload">⬇ 전체 결과 .xlsx 다운로드</button>
+    </div>
+  </div>
 
-    <details class="diag" id="diagPanel">
-      <summary>🔍 파싱 진단 (펼쳐서 PDF별 추출 결과 확인)</summary>
-      <div id="diagContent"></div>
-    </details>
-  </section>
+  <details class="diag" id="diagPanel">
+    <summary>🔍 파싱 진단 — PDF별 추출 결과 확인</summary>
+    <div id="diagContent"></div>
+  </details>
 
-  <footer>
-    <span>DB손보 PLAN:
-      <span class="badge B08">B08</span> 0–14세
-      <span class="badge B06">B06</span> 15–69세
-      <span class="badge B07">B07</span> 70–79세
-      <span class="badge B05">B05</span> 80–99세
-    </span>
-    <span>매칭키: 한글이름 + 생년월일(YYMMDD)</span>
-  </footer>
+</section>
+
+<div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// PDF.js worker 설정 - 워커 로드 실패 시 fake worker 자동 폴백 (그래도 동작은 함)
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-
 const state = {
-  excelFiles: [],
-  pdfFiles: [],
-  excelRows: [],
-  pdfRows: [],
-  pdfDiag: [],
-  matched: [],
-  onlyExcel: [],
-  onlyPdf: [],
+  excelFiles: [], pdfFiles: [],
+  excelRows: [], pdfRows: [], pdfDiag: [],
+  matched: [], onlyExcel: [], onlyPdf: [],
 };
-
-// ---------- Drop zones ----------
-function setupDrop(zoneId, inputId, multiple, onFiles) {
-  const zone = document.getElementById(zoneId);
-  const input = document.getElementById(inputId);
-  zone.addEventListener('click', () => input.click());
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files);
-    onFiles(files);
-  });
-  input.addEventListener('change', e => onFiles(Array.from(e.target.files)));
-}
-
-setupDrop('dropExcel', 'inputExcel', true, files => {
-  const xlsxs = files.filter(f => /\.xlsx?$/i.test(f.name));
-  if (!xlsxs.length) { showToast('xlsx 파일이 아니에요', true); return; }
-  // 누적 (이름+크기로 중복 방지)
-  const existing = new Set(state.excelFiles.map(f => f.name + ':' + f.size));
-  for (const f of xlsxs) {
-    if (!existing.has(f.name + ':' + f.size)) state.excelFiles.push(f);
-  }
-  document.getElementById('dropExcel').classList.add('has-file');
-  document.getElementById('filesExcel').textContent = '✓ ' + state.excelFiles.length + '개: ' + state.excelFiles.map(f => f.name).join(', ');
-  updateMatchButton();
-});
-
-setupDrop('dropPdf', 'inputPdf', true, files => {
-  const pdfs = files.filter(f => /\.pdf$/i.test(f.name));
-  if (!pdfs.length) { showToast('PDF 파일이 아니에요', true); return; }
-  // 누적
-  const existing = new Set(state.pdfFiles.map(f => f.name + ':' + f.size));
-  for (const f of pdfs) {
-    if (!existing.has(f.name + ':' + f.size)) state.pdfFiles.push(f);
-  }
-  document.getElementById('dropPdf').classList.add('has-file');
-  document.getElementById('filesPdf').textContent = '✓ ' + state.pdfFiles.length + '개: ' + state.pdfFiles.map(f => f.name).join(', ');
-  updateMatchButton();
-});
-
-function updateMatchButton() {
-  document.getElementById('btnMatch').disabled = !(state.excelFiles.length && state.pdfFiles.length);
-}
-
-document.getElementById('btnReset').onclick = () => location.reload();
 
 // ---------- Helpers ----------
 function normalizeDate(v) {
@@ -336,6 +299,55 @@ function normalizeDate(v) {
   }
   return v.toString().trim();
 }
+function nfc(s) { return (s || '').toString().normalize('NFC').trim(); }
+function bd6ToBirth(bd6, gender) {
+  if (!bd6 || bd6.length !== 6) return '';
+  const yy = bd6.slice(0, 2), mm = bd6.slice(2, 4), dd = bd6.slice(4, 6);
+  const isCent21 = (gender === '3' || gender === '4');
+  return (isCent21 ? '20' + yy : '19' + yy) + '-' + mm + '-' + dd;
+}
+
+// ---------- Drop zones ----------
+function setupDrop(zoneId, inputId, onFiles) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  zone.addEventListener('click', e => {
+    if (e.target !== input) input.click();
+  });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    onFiles(Array.from(e.dataTransfer.files));
+  });
+  input.addEventListener('change', e => onFiles(Array.from(e.target.files)));
+}
+
+setupDrop('dropExcel', 'inputExcel', files => {
+  const xs = files.filter(f => /\.xlsx?$/i.test(f.name));
+  if (!xs.length) { showToast('xlsx 파일이 아니에요', true); return; }
+  const existing = new Set(state.excelFiles.map(f => f.name + ':' + f.size));
+  for (const f of xs) if (!existing.has(f.name + ':' + f.size)) state.excelFiles.push(f);
+  document.getElementById('dropExcel').classList.add('has-file');
+  document.getElementById('filesExcel').textContent = '✓ ' + state.excelFiles.length + '개: ' + state.excelFiles.map(f => f.name).join(', ');
+  updateMatchButton();
+});
+
+setupDrop('dropPdf', 'inputPdf', files => {
+  const ps = files.filter(f => /\.pdf$/i.test(f.name));
+  if (!ps.length) { showToast('PDF 파일이 아니에요', true); return; }
+  const existing = new Set(state.pdfFiles.map(f => f.name + ':' + f.size));
+  for (const f of ps) if (!existing.has(f.name + ':' + f.size)) state.pdfFiles.push(f);
+  document.getElementById('dropPdf').classList.add('has-file');
+  document.getElementById('filesPdf').textContent = '✓ ' + state.pdfFiles.length + '개: ' + state.pdfFiles.map(f => f.name).join(', ');
+  updateMatchButton();
+});
+
+function updateMatchButton() {
+  document.getElementById('btnMatch').disabled = !(state.excelFiles.length && state.pdfFiles.length);
+}
+
+document.getElementById('btnReset').onclick = () => location.reload();
 
 // ---------- Excel parsing ----------
 async function parseExcel(file) {
@@ -345,7 +357,7 @@ async function parseExcel(file) {
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
   if (!rows.length) throw new Error('엑셀이 비어있어요');
   const header = rows[0].map(h => (h || '').toString().trim());
-  const idx = name => header.indexOf(name);
+  const idx = n => header.indexOf(n);
   const cols = {
     no: idx('No'),
     departure: idx('출발일자'),
@@ -355,7 +367,6 @@ async function parseExcel(file) {
     booker: idx('예약자명'),
     customer: idx('고객명'),
     birth: idx('생년월일'),
-    gender: header.indexOf('성별'),  // 첫번째 성별 컬럼
   };
   if (cols.customer < 0 || cols.birth < 0 || cols.eventNo < 0) {
     throw new Error('엑셀 헤더에서 고객명/생년월일/행사번호 컬럼을 못 찾았어요');
@@ -364,10 +375,9 @@ async function parseExcel(file) {
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r[cols.customer]) continue;
-    const name = (r[cols.customer] || '').toString().trim();
+    const name = nfc(r[cols.customer]);
     const birth = normalizeDate(r[cols.birth]);
     if (!name || !birth) continue;
-    // 생년월일 → YYMMDD
     let bd6 = '';
     const m = birth.match(/(\d{2,4})[-./]?(\d{2})[-./]?(\d{2})/);
     if (m) {
@@ -375,8 +385,7 @@ async function parseExcel(file) {
       bd6 = y + m[2] + m[3];
     }
     out.push({
-      no: r[cols.no],
-      name, birth, bd6,
+      no: r[cols.no], name, birth, bd6,
       department: normalizeDate(r[cols.departure]),
       arrival: cols.arrival >= 0 ? normalizeDate(r[cols.arrival]) : '',
       eventNo: r[cols.eventNo],
@@ -397,7 +406,6 @@ async function parsePdf(file) {
     const page = await pdf.getPage(i);
     const tc = await page.getTextContent();
     const items = tc.items.filter(it => it.str.trim());
-    // Y 좌표(소수점 1자리 정도)로 그룹핑 — PDF.js의 미세한 좌표 차이 허용
     const lines = {};
     for (const it of items) {
       const y = Math.round(it.transform[5]);
@@ -412,52 +420,42 @@ async function parsePdf(file) {
     fullText += '\n';
   }
 
-  // PDF.js가 한국어를 글자별로 쪼개는 경우 대비:
-  // 한글과 한글 사이의 공백 제거 ("심 희 정" → "심희정")
+  // PDF.js가 한국어를 글자별로 쪼개는 경우 대비
   fullText = fullText.replace(/([가-힣])\s+(?=[가-힣])/g, '$1');
 
   const out = [];
-  // 명세 리스트 행 패턴 (한글 이름 양쪽엔 숫자/특수기호라 \s+ 유지)
   const rowRegex = /(\d+)\s+([가-힣]{2,6})\s+(\d{6})\s*-\s*(\d)\*+\s+([\d,]+)\s+(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(B0\d)/g;
   let m;
   while ((m = rowRegex.exec(fullText)) !== null) {
     out.push({
-      name: m[2],
+      name: nfc(m[2]),
       bd6: m[3],
       gender: m[4],
-      premium: m[5],   // 인별보험료
+      premium: m[5],
       plan: m[8],
       pdfFile: file.name,
       source: 'list',
     });
   }
 
-  // 명세 리스트가 없으면 단일 가입자로 처리
   if (out.length === 0) {
     const rrnMatch = fullText.match(/(\d{6})\s*-\s*(\d)\*+/);
     const planMatches = fullText.match(/\bB0\d\b/g);
     if (rrnMatch && planMatches) {
       const uniquePlans = [...new Set(planMatches)];
       if (uniquePlans.length === 1) {
-        // 이름은 best-effort: "성명 NN" 패턴, 단 "법정상속인" 같은 stop word 제외
         const STOP = ['법정상속인', '피보험자', '수익자', '계약자'];
         let name = null;
         const reAllNames = /성명\s*([가-힣]{2,5})/g;
         let nm;
         while ((nm = reAllNames.exec(fullText)) !== null) {
-          if (!STOP.includes(nm[1])) { name = nm[1]; break; }
+          if (!STOP.includes(nm[1])) { name = nfc(nm[1]); break; }
         }
-        // 단일 가입자 보험료: "총보험료 TOTAL PREMIUM ₩ 4,520" 형태에서 추출
         const premiumMatch = fullText.match(/총\s*보험료[^\d]+([\d,]+)/);
-        const premium = premiumMatch ? premiumMatch[1] : null;
         out.push({
-          name,
-          bd6: rrnMatch[1],
-          gender: rrnMatch[2],
-          premium,
-          plan: uniquePlans[0],
-          pdfFile: file.name,
-          source: 'cert',
+          name, bd6: rrnMatch[1], gender: rrnMatch[2],
+          premium: premiumMatch ? premiumMatch[1] : null,
+          plan: uniquePlans[0], pdfFile: file.name, source: 'cert',
         });
       } else {
         console.warn('[PDF 파싱 주의]', file.name, '명세 미발견 + 다중 플랜 감지', uniquePlans);
@@ -467,57 +465,45 @@ async function parsePdf(file) {
   return out;
 }
 
-// ---------- Match logic ----------
+// ---------- Match ----------
 function matchAll() {
-  // 1단계: 이름+생년6 매칭 (보통 케이스)
+  // 1단계: 이름+생년6
   const pdfByKey = {};
   for (const r of state.pdfRows) {
-    if (!r.name) continue;  // 이름 없는 행은 1단계 스킵
+    if (!r.name) continue;
     const k = r.name + '|' + r.bd6;
-    if (!pdfByKey[k]) pdfByKey[k] = [];
-    pdfByKey[k].push(r);
+    (pdfByKey[k] = pdfByKey[k] || []).push(r);
   }
   const matched = [], firstPassMissed = [];
-  const usedPdfRows = new Set();
+  const used = new Set();
   for (const er of state.excelRows) {
-    const k = er.name + '|' + er.bd6;
-    const cands = pdfByKey[k];
+    const cands = pdfByKey[er.name + '|' + er.bd6];
     if (cands && cands.length) {
-      const target = cands.find(c => !usedPdfRows.has(c)) || cands[0];
-      usedPdfRows.add(target);
-      matched.push({ ...er, plan: target.plan, gender: target.gender, premium: target.premium, pdfFile: target.pdfFile });
-    } else {
-      firstPassMissed.push(er);
-    }
+      const t = cands.find(c => !used.has(c)) || cands[0];
+      used.add(t);
+      matched.push({ ...er, plan: t.plan, gender: t.gender, premium: t.premium, pdfFile: t.pdfFile });
+    } else firstPassMissed.push(er);
   }
-
-  // 2단계: 이름 없는 단일가입자 PDF 또는 1단계 실패 건은 생년월일만으로 매칭
-  // (단일가입자 PDF는 행사도 1인이라 동일 생년월일 충돌 가능성 낮음)
+  // 2단계: bd6 only (cert만)
   const pdfByBd6 = {};
   for (const r of state.pdfRows) {
-    if (usedPdfRows.has(r)) continue;
-    pdfByBd6[r.bd6] = pdfByBd6[r.bd6] || [];
-    pdfByBd6[r.bd6].push(r);
+    if (used.has(r)) continue;
+    (pdfByBd6[r.bd6] = pdfByBd6[r.bd6] || []).push(r);
   }
   const onlyExcel = [];
   for (const er of firstPassMissed) {
-    const cands = pdfByBd6[er.bd6];
-    // 단일가입자 PDF(source:'cert')만 fallback 허용
-    const target = cands && cands.find(c => !usedPdfRows.has(c) && c.source === 'cert');
-    if (target) {
-      usedPdfRows.add(target);
-      matched.push({ ...er, plan: target.plan, gender: target.gender, premium: target.premium, pdfFile: target.pdfFile, fallback: true });
-    } else {
-      onlyExcel.push(er);
-    }
+    const t = (pdfByBd6[er.bd6] || []).find(c => !used.has(c) && c.source === 'cert');
+    if (t) {
+      used.add(t);
+      matched.push({ ...er, plan: t.plan, gender: t.gender, premium: t.premium, pdfFile: t.pdfFile, fallback: true });
+    } else onlyExcel.push(er);
   }
-
   state.matched = matched;
   state.onlyExcel = onlyExcel;
-  state.onlyPdf = state.pdfRows.filter(r => !usedPdfRows.has(r));
+  state.onlyPdf = state.pdfRows.filter(r => !used.has(r));
 }
 
-// ---------- Render ----------
+// ---------- Render results ----------
 function renderResults() {
   const sumEl = document.getElementById('summary');
   const planCount = {};
@@ -532,26 +518,11 @@ function renderResults() {
   const codeBadges = Object.keys(planCount).sort().map(p => `<span class="badge ${p}">${p}·${planCount[p]}</span>`).join('');
 
   sumEl.innerHTML = `
-    <div class="stat-card ok">
-      <div class="stat-label">매칭 OK</div>
-      <div class="stat-value">${state.matched.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
-    </div>
-    <div class="stat-card ${state.onlyExcel.length ? 'warn' : ''}">
-      <div class="stat-label">엑셀에만</div>
-      <div class="stat-value">${state.onlyExcel.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
-    </div>
-    <div class="stat-card ${state.onlyPdf.length ? 'warn' : ''}">
-      <div class="stat-label">PDF에만</div>
-      <div class="stat-value">${state.onlyPdf.length}<span style="font-size:13px;color:var(--text-faint);"> 명</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">보험료 합계</div>
-      <div class="stat-value">₩${totalPremium.toLocaleString()}</div>
-    </div>
-    <div class="stat-card plan">
-      <div class="stat-label">플랜 분포</div>
-      <div class="codes">${codeBadges || '<span style="color:var(--text-faint);">—</span>'}</div>
-    </div>
+    <div class="sum-box"><div class="sum-label">매칭 OK</div><div class="sum-val green">${state.matched.length}<span class="unit"> 명</span></div></div>
+    <div class="sum-box"><div class="sum-label">엑셀에만</div><div class="sum-val ${state.onlyExcel.length ? 'red' : ''}">${state.onlyExcel.length}<span class="unit"> 명</span></div></div>
+    <div class="sum-box"><div class="sum-label">PDF 단독</div><div class="sum-val ${state.onlyPdf.length ? 'amber' : ''}">${state.onlyPdf.length}<span class="unit"> 명</span></div></div>
+    <div class="sum-box"><div class="sum-label">보험료 합계</div><div class="sum-val">₩${totalPremium.toLocaleString()}</div></div>
+    <div class="sum-box plan"><div class="sum-label">플랜 분포</div><div class="codes">${codeBadges || '<span style="color:var(--text3)">—</span>'}</div></div>
   `;
 
   // 경고 박스
@@ -563,35 +534,25 @@ function renderResults() {
     warnEl.innerHTML += `<div class="warn-box">
       <h3>⚠️ 엑셀에 있는데 PDF에서 못 찾은 사람</h3>
       <ul class="warn-list">${list}</ul>
-      <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">→ 보험 미가입이거나, 해당 PDF가 아직 업로드되지 않았을 수 있어요</div>
-    </div>`;
-  }
-  if (state.onlyPdf.length) {
-    const list = state.onlyPdf.map(x =>
-      `<li>· ${x.name} (${x.bd6}) — ${x.plan} · ${x.pdfFile}</li>`).join('');
-    warnEl.innerHTML += `<div class="warn-box">
-      <h3>⚠️ PDF에 있는데 엑셀 명단에 없는 사람</h3>
-      <ul class="warn-list">${list}</ul>
-      <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">→ 이름 오타 가능성, 또는 다른 행사 PDF일 수 있어요</div>
+      <div class="warn-hint">→ 보험 미가입이거나, 해당 PDF가 아직 업로드되지 않았을 수 있어요</div>
     </div>`;
   }
 
-  // 행사번호별 그룹
+  // 행사별 그룹
   const groups = {};
   for (const m of state.matched) {
     const k = m.eventNo || '(미상)';
-    if (!groups[k]) groups[k] = { rows: [], eventName: m.eventName, booker: m.booker, department: m.department };
+    if (!groups[k]) groups[k] = { rows: [], eventName: m.eventName, booker: m.booker, department: m.department, arrival: m.arrival };
     groups[k].rows.push(m);
   }
   const groupsEl = document.getElementById('groups');
   groupsEl.innerHTML = '';
-  // 출발일 → 행사번호 순 정렬
   const sortedKeys = Object.keys(groups).sort((a, b) => {
-    const da = groups[a].department || '';
-    const db = groups[b].department || '';
+    const da = groups[a].department || '', db = groups[b].department || '';
     if (da !== db) return da < db ? -1 : 1;
     return a < b ? -1 : 1;
   });
+
   for (const k of sortedKeys) {
     const g = groups[k];
     const planMap = {};
@@ -607,13 +568,12 @@ function renderResults() {
     const rowsHtml = g.rows.map((r, i) => `
       <tr>
         <td class="no">${i + 1}</td>
-        <td class="name">${r.name}${r.fallback ? ' <span style="color:var(--text-faint);font-size:10px;">※</span>' : ''}</td>
+        <td class="name">${r.name}${r.fallback ? ' <span style="color:var(--text3);font-size:10px">※</span>' : ''}</td>
         <td class="bd">${r.birth}</td>
         <td class="dep">${r.department || ''}</td>
         <td class="prem">${r.premium ? '₩' + r.premium : '—'}</td>
         <td class="code"><span class="badge ${r.plan}">${r.plan}</span></td>
-      </tr>
-    `).join('');
+      </tr>`).join('');
     groupsEl.innerHTML += `
       <div class="group">
         <div class="group-head">
@@ -626,13 +586,49 @@ function renderResults() {
           </div>
         </div>
         <table>
-          <thead>
-            <tr><th>No</th><th class="col-name">고객명</th><th>생년월일</th><th>출발일</th><th>인별보험료</th><th>코드</th></tr>
-          </thead>
+          <thead><tr><th>No</th><th class="col-name">고객명</th><th>생년월일</th><th>출발일</th><th>인별보험료</th><th>코드</th></tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
-      </div>
-    `;
+      </div>`;
+  }
+
+  // PDF 단독 그룹
+  if (state.onlyPdf.length) {
+    const planMap = {};
+    let total = 0;
+    for (const r of state.onlyPdf) {
+      planMap[r.plan] = (planMap[r.plan] || 0) + 1;
+      if (r.premium) {
+        const n = parseInt(r.premium.replace(/,/g, ''), 10);
+        if (!isNaN(n)) total += n;
+      }
+    }
+    const codes = Object.keys(planMap).sort().map(p => `<span class="badge ${p}">${p}·${planMap[p]}</span>`).join('');
+    const rowsHtml = state.onlyPdf.map((r, i) => `
+      <tr>
+        <td class="no">${i + 1}</td>
+        <td class="name">${r.name || '<span style="color:var(--text3)">(이름없음)</span>'}</td>
+        <td class="bd">${bd6ToBirth(r.bd6, r.gender)}</td>
+        <td class="dep" style="color:var(--text3)">—</td>
+        <td class="prem">${r.premium ? '₩' + r.premium : '—'}</td>
+        <td class="code"><span class="badge ${r.plan}">${r.plan}</span></td>
+      </tr>`).join('');
+    groupsEl.innerHTML += `
+      <div class="group pdf-only">
+        <div class="group-head">
+          <span class="group-no">PDF 단독</span>
+          <span class="group-name">엑셀 명단 미확인 · 정산 시스템 입력 시 별도 확인 필요</span>
+          <div class="group-codes">${codes}</div>
+          <div class="group-meta">
+            <span class="group-count">${state.onlyPdf.length}명</span>
+            <span class="group-amount">₩${total.toLocaleString()}</span>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>No</th><th class="col-name">이름</th><th>생년월일</th><th>출발일</th><th>인별보험료</th><th>코드</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
   }
 
   renderOutput('namecode');
@@ -644,16 +640,15 @@ function renderDiag() {
   const el = document.getElementById('diagContent');
   if (!el) return;
   const html = ['<div class="diag-content">'];
-  // PDF별
   if (state.pdfDiag.length === 0) {
-    html.push('<div style="color:var(--text-faint);">PDF 없음</div>');
+    html.push('<div style="color:var(--text3)">PDF 없음</div>');
   } else {
     for (const d of state.pdfDiag) {
       const isWarn = d.rows.length === 0 || d.nameMissing > 0;
       const tagClass = d.source === 'list' ? 'list' : (d.source === 'cert' ? 'cert' : 'empty');
       const tagLabel = d.source === 'list' ? '명세표' : (d.source === 'cert' ? '단일가입자' : '추출 실패');
       const sample = d.rows.slice(0, 5).map(r =>
-        `${r.name || '(이름없음)'} · ${r.bd6} · ${r.plan}${r.source === 'cert' ? ' · cert' : ''}`
+        `${r.name || '(이름없음)'} · ${r.bd6} · ${r.plan}${r.premium ? ' · ₩' + r.premium : ''}${r.source === 'cert' ? ' · cert' : ''}`
       ).join('<br>');
       const more = d.rows.length > 5 ? `<br>… 외 ${d.rows.length - 5}명` : '';
       html.push(`
@@ -661,17 +656,15 @@ function renderDiag() {
           <div class="diag-pdf-name">${d.fileName}</div>
           <div class="diag-pdf-info">
             <span class="diag-tag ${tagClass}">${tagLabel}</span>
-            추출 ${d.rows.length}명${d.nameMissing ? ` · <span style="color:var(--warn);">이름 미추출 ${d.nameMissing}명</span>` : ''}
+            추출 ${d.rows.length}명${d.nameMissing ? ` · <span style="color:var(--amber2)">이름 미추출 ${d.nameMissing}명</span>` : ''}
           </div>
           ${d.rows.length ? `<div class="diag-pdf-rows">${sample}${more}</div>` : ''}
-        </div>
-      `);
+        </div>`);
     }
   }
-  // Fallback 매칭 안내
   const fallbacks = state.matched.filter(m => m.fallback);
   if (fallbacks.length) {
-    html.push(`<div style="margin-top:10px;padding:8px 12px;background:var(--card-2);border-radius:6px;font-size:11px;color:var(--text-dim);">
+    html.push(`<div style="margin-top:10px;padding:8px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text2)">
       ※ 생년월일만으로 fallback 매칭된 건: ${fallbacks.length}명
       (${fallbacks.map(f => f.name).join(', ')})
     </div>`);
@@ -683,13 +676,19 @@ function renderDiag() {
 // ---------- Output formats ----------
 function renderOutput(fmt) {
   const ms = state.matched;
+  const onlyPdf = state.onlyPdf;
   let txt = '';
   if (fmt === 'namecode') {
-    txt = ms.map(m => `${m.name}\t${m.birth}\t${m.premium || ''}\t${m.plan}`).join('\n');
+    const matchedLines = ms.map(m => `${m.name}\t${m.birth}\t${m.premium || ''}\t${m.plan}`);
+    const pdfOnlyLines = onlyPdf.map(r => `${r.name || '(이름없음)'}\t${bd6ToBirth(r.bd6, r.gender)}\t${r.premium || ''}\t${r.plan}`);
+    txt = matchedLines.join('\n');
+    if (pdfOnlyLines.length) txt += '\n--- PDF 단독 (엑셀 미확인) ---\n' + pdfOnlyLines.join('\n');
   } else if (fmt === 'excel') {
-    txt = ['행사번호\t고객명\t생년월일\t출발일\t도착일\t인별보험료\t코드'].concat(
-      ms.map(m => `${m.eventNo}\t${m.name}\t${m.birth}\t${m.department || ''}\t${m.arrival || ''}\t${m.premium || ''}\t${m.plan}`)
-    ).join('\n');
+    const head = '행사번호\t고객명\t생년월일\t출발일\t도착일\t인별보험료\t코드';
+    const matchedLines = ms.map(m => `${m.eventNo}\t${m.name}\t${m.birth}\t${m.department || ''}\t${m.arrival || ''}\t${m.premium || ''}\t${m.plan}`);
+    const pdfOnlyLines = onlyPdf.map(r =>
+      `[PDF 단독]\t${r.name || '(이름없음)'}\t${bd6ToBirth(r.bd6, r.gender)}\t\t\t${r.premium || ''}\t${r.plan}`);
+    txt = [head, ...matchedLines, ...pdfOnlyLines].join('\n');
   }
   document.getElementById('outputArea').textContent = txt;
 }
@@ -711,10 +710,10 @@ document.getElementById('btnCopy').onclick = async () => {
   }
 };
 
+// ---------- Download xlsx ----------
 function downloadXlsx() {
   const wb = XLSX.utils.book_new();
 
-  // 행사번호별 그룹핑 (출발일 → 행사번호 순)
   const groups = {};
   const groupOrder = [];
   for (const m of state.matched) {
@@ -726,88 +725,75 @@ function downloadXlsx() {
     groups[k].rows.push(m);
   }
   groupOrder.sort((a, b) => {
-    const da = groups[a].department || '';
-    const db = groups[b].department || '';
+    const da = groups[a].department || '', db = groups[b].department || '';
     if (da !== db) return da < db ? -1 : 1;
     return a < b ? -1 : 1;
   });
 
-  const matchedHeader = ['No', '출발일', '도착일', '행사번호', '행사명', '예약자', '고객명', '생년월일', '인별보험료', '코드', '엑셀파일', 'PDF파일'];
-  const matchedData = [];
-  let runningNo = 0;
-  let grandTotal = 0;
-  let grandCount = 0;
-  const subtotalRowIdxs = [];   // 소계 행 위치 (스타일링용)
+  const header = ['No', '출발일', '도착일', '행사번호', '행사명', '예약자', '고객명', '생년월일', '인별보험료', '코드', '엑셀파일', 'PDF파일'];
+  const data = [];
+  let no = 0, grandTotal = 0, grandCount = 0;
 
   for (const k of groupOrder) {
     const g = groups[k];
-    let groupTotal = 0;
+    let gt = 0;
     for (const m of g.rows) {
-      runningNo++;
+      no++;
       const prem = m.premium ? parseInt(m.premium.replace(/,/g, ''), 10) : null;
-      if (prem) groupTotal += prem;
-      matchedData.push([
-        runningNo, m.department, m.arrival, m.eventNo, m.eventName, m.booker, m.name, m.birth,
-        prem, m.plan, m.excelFile, m.pdfFile,
-      ]);
+      if (prem) gt += prem;
+      data.push([no, m.department, m.arrival, m.eventNo, m.eventName, m.booker, m.name, m.birth, prem, m.plan, m.excelFile, m.pdfFile]);
     }
-    // 소계 행
-    matchedData.push([
-      '', '', '', '', `↳ ${k} 소계 (${g.rows.length}명)`, '', '', '',
-      groupTotal, '', '', ''
-    ]);
-    subtotalRowIdxs.push(matchedData.length);
-    grandTotal += groupTotal;
-    grandCount += g.rows.length;
+    data.push(['', '', '', '', `↳ ${k} 소계 (${g.rows.length}명)`, '', '', '', gt, '', '', '']);
+    grandTotal += gt; grandCount += g.rows.length;
   }
-  // 전체 합계 행
-  matchedData.push([
-    '', '', '', '', `■ 전체 합계 (${grandCount}명)`, '', '', '',
-    grandTotal, '', '', ''
-  ]);
-  const grandTotalRowIdx = matchedData.length;
+  data.push(['', '', '', '', `■ 전체 합계 (${grandCount}명)`, '', '', '', grandTotal, '', '', '']);
 
-  const ws1 = XLSX.utils.aoa_to_sheet([matchedHeader, ...matchedData]);
-  ws1['!cols'] = [
-    {wch:5},{wch:12},{wch:12},{wch:14},{wch:30},{wch:10},{wch:10},{wch:12},
-    {wch:12},{wch:6},{wch:24},{wch:30}
-  ];
-
-  // 인별보험료(I열) 숫자 포맷 + 소계/합계 행 강조
-  for (let i = 2; i <= matchedData.length + 1; i++) {
-    const cell = ws1[`I${i}`];
-    if (cell && typeof cell.v === 'number') cell.z = '#,##0';
+  if (state.onlyPdf.length) {
+    let opTotal = 0;
+    data.push(['', '', '', '', '', '', '', '', '', '', '', '']);
+    data.push(['', '', '', '', '▼ PDF 단독 (엑셀 명단 미확인)', '', '', '', '', '', '', '']);
+    for (const r of state.onlyPdf) {
+      no++;
+      const prem = r.premium ? parseInt(r.premium.replace(/,/g, ''), 10) : null;
+      if (prem) opTotal += prem;
+      data.push([no, '', '', '', '[PDF 단독]', '', r.name || '(이름없음)', bd6ToBirth(r.bd6, r.gender), prem, r.plan, '', r.pdfFile]);
+    }
+    data.push(['', '', '', '', `↳ PDF 단독 소계 (${state.onlyPdf.length}명)`, '', '', '', opTotal, '', '', '']);
   }
 
+  const ws1 = XLSX.utils.aoa_to_sheet([header, ...data]);
+  ws1['!cols'] = [{wch:5},{wch:12},{wch:12},{wch:14},{wch:30},{wch:10},{wch:10},{wch:12},{wch:12},{wch:6},{wch:24},{wch:30}];
+  for (let i = 2; i <= data.length + 1; i++) {
+    const c = ws1[`I${i}`];
+    if (c && typeof c.v === 'number') c.z = '#,##0';
+  }
   XLSX.utils.book_append_sheet(wb, ws1, '매칭결과');
 
-  // 행사번호별 요약 시트
-  const summaryHeader = ['출발일', '도착일', '행사번호', '행사명', '예약자', '인원', '보험료 소계'];
-  const summaryData = groupOrder.map(k => {
+  // 요약 시트
+  const sumHeader = ['출발일', '도착일', '행사번호', '행사명', '예약자', '인원', '보험료 소계'];
+  const sumData = groupOrder.map(k => {
     const g = groups[k];
     const total = g.rows.reduce((s, r) => s + (r.premium ? parseInt(r.premium.replace(/,/g, ''), 10) : 0), 0);
     return [g.department, g.arrival, k, g.eventName, g.booker, g.rows.length, total];
   });
-  summaryData.push(['', '', '', '■ 전체 합계', '', grandCount, grandTotal]);
-  const ws2 = XLSX.utils.aoa_to_sheet([summaryHeader, ...summaryData]);
+  sumData.push(['', '', '', '■ 전체 합계', '', grandCount, grandTotal]);
+  if (state.onlyPdf.length) {
+    const opTotal = state.onlyPdf.reduce((s, r) => s + (r.premium ? parseInt(r.premium.replace(/,/g, ''), 10) : 0), 0);
+    sumData.push(['', '', '[PDF 단독]', '엑셀 명단 미확인', '', state.onlyPdf.length, opTotal]);
+  }
+  const ws2 = XLSX.utils.aoa_to_sheet([sumHeader, ...sumData]);
   ws2['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:32},{wch:10},{wch:6},{wch:14}];
-  for (let i = 2; i <= summaryData.length + 1; i++) {
+  for (let i = 2; i <= sumData.length + 1; i++) {
     const c = ws2[`G${i}`];
     if (c && typeof c.v === 'number') c.z = '#,##0';
   }
   XLSX.utils.book_append_sheet(wb, ws2, '행사별요약');
 
   if (state.onlyExcel.length) {
-    const data = [['고객명', '생년월일', '출발일', '도착일', '행사번호', '행사명', '엑셀파일']].concat(
+    const d = [['고객명', '생년월일', '출발일', '도착일', '행사번호', '행사명', '엑셀파일']].concat(
       state.onlyExcel.map(x => [x.name, x.birth, x.department, x.arrival, x.eventNo, x.eventName, x.excelFile])
     );
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), '엑셀에만');
-  }
-  if (state.onlyPdf.length) {
-    const data = [['이름', '생년월일6', '인별보험료', '플랜', 'PDF파일']].concat(
-      state.onlyPdf.map(x => [x.name, x.bd6, x.premium || '', x.plan, x.pdfFile])
-    );
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'PDF에만');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d), '엑셀에만');
   }
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   XLSX.writeFile(wb, `보험코드매칭_${today}.xlsx`);
@@ -836,17 +822,16 @@ document.getElementById('btnMatch').onclick = async () => {
       const rows = await parsePdf(f);
       state.pdfRows.push(...rows);
       state.pdfDiag.push({
-        fileName: f.name,
-        rows,
+        fileName: f.name, rows,
         source: rows.length ? rows[0].source : 'empty',
         nameMissing: rows.filter(r => !r.name).length,
       });
-      console.log(`[PDF 파싱] ${f.name}: ${rows.length}명 추출`);
+      console.log(`[PDF 파싱] ${f.name}: ${rows.length}명`);
       console.log('   →', JSON.stringify(rows.slice(0, 3)) + (rows.length > 3 ? ` ...외 ${rows.length-3}명` : ''));
       status.textContent = `PDF 파싱 중 (${state.pdfRows.length}명)…`;
     }
     matchAll();
-    status.textContent = `완료 · 엑셀 ${state.excelFiles.length}개(${state.excelRows.length}명), PDF ${state.pdfFiles.length}개(${state.pdfRows.length}명), 매칭 ${state.matched.length}명`;
+    status.textContent = `완료 · 엑셀 ${state.excelFiles.length}개(${state.excelRows.length}명) · PDF ${state.pdfFiles.length}개(${state.pdfRows.length}명) · 매칭 ${state.matched.length}명`;
     renderResults();
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
@@ -862,12 +847,11 @@ document.getElementById('btnMatch').onclick = async () => {
 function showToast(msg, isError) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.style.borderColor = isError ? 'var(--warn)' : 'var(--ok)';
-  t.style.color = isError ? 'var(--warn)' : 'var(--ok)';
+  t.classList.toggle('error', !!isError);
   t.classList.add('show');
   clearTimeout(t._tm);
   t._tm = setTimeout(() => t.classList.remove('show'), 2200);
-}</script>
-
+}
+</script>
 </body>
 </html>
