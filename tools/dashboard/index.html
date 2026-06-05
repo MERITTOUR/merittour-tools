@@ -84,6 +84,8 @@ a{color:inherit}
 .btn-primary{padding:11px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;font-family:var(--sans)}
 .btn-primary:hover{background:var(--accent2)}
 .btn-primary:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
+.btn-ghost{padding:10px 23px;background:#fff;color:var(--text2);border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:rgba(46,90,136,.05)}
 .btn-sm{padding:5px 12px;font-size:11px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .2s}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent2)}
 .btn-sm.btn-on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -521,11 +523,11 @@ tr:hover td{background:#EEF3FA}
 .st-tabs{display:flex;gap:4px;background:var(--surface2,#f1f4f9);border:1px solid var(--line);border-radius:8px;padding:3px}
 .st-tab{padding:6px 13px;font-size:12px;font-weight:600;color:var(--text3);border:none;background:transparent;border-radius:6px;cursor:pointer;white-space:nowrap}
 .st-tab.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(26,35,50,.12)}
-.st-chip{padding:4px 11px;font-size:11px;font-weight:600;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text3);cursor:pointer}
+.st-chip{padding:5px 12px;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text3);cursor:pointer}
 .st-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(46,90,136,.07)}
 .st-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin:12px 0}
 .st-card{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:#fff}
-.st-card .sc-name{font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px}
+.st-card .sc-name{font-size:13.5px;font-weight:700;color:var(--text1);margin-bottom:8px}
 .st-card .sc-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);padding:2px 0}
 .st-card .sc-row .v{font-family:var(--mono);font-weight:600;color:var(--text2)}
 .st-card .sc-total{border-top:1px solid var(--line);margin-top:7px;padding-top:7px;font-weight:700}
@@ -546,7 +548,8 @@ tr:hover td{background:#EEF3FA}
 .st-net .nv{font-family:var(--mono);font-weight:800;font-size:17px;color:var(--accent)}
 .st-diff-bad{color:var(--red2,#DC2626);font-weight:700}
 .st-diff-ok{color:var(--green2,#059669);font-weight:600}
-.st-sec-row td{background:var(--surface2,#f1f4f9);font-weight:700;font-size:11px;color:var(--text2);padding:6px 10px}
+.st-sec-row td{background:var(--surface2,#f1f4f9);font-weight:700;font-size:12.5px;color:var(--text1);padding:7px 10px}
+.st-accom{font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap}
 /* 항공요금 테이블 — 안내 요금(고객·블루) vs 발권원가(내부·보라) 구분 */
 .af-money{display:flex;flex-direction:column;gap:2px}
 .af-money-lab{font-size:9px;font-weight:800;letter-spacing:.02em}
@@ -5550,7 +5553,7 @@ function renderSettleLocal(){
       <td class="center">${r.t.status}</td><td class="center">${r.t.memberType}</td>
       <td>${r.t.repName}</td><td class="center">${r.t.dep}</td><td class="center">${r.t.arr}</td>
       <td class="center">${r.nights}</td><td class="center">${r.pax}</td>
-      <td>${r.t.accom}</td><td style="font-size:10px">${r.t.roomType||'-'}</td>
+      <td class="st-accom">${r.t.accom}</td><td style="font-size:11px">${r.t.roomType||'-'}</td>
       <td class="num">¥${(r.localRate||0).toLocaleString()}</td>
       <td class="num">¥${r.stay.toLocaleString()}</td><td class="num">¥${r.trans.toLocaleString()}</td>
       <td class="num" style="font-weight:700;color:var(--accent)">¥${r.total.toLocaleString()}</td></tr>`;
@@ -5618,7 +5621,7 @@ function renderSettleProfit(){
     <tr>
       <td class="center" style="font-family:var(--mono)">${i+1}</td>
       <td class="center" style="font-family:var(--mono)">${r.t.eventNo}</td>
-      <td>${r.t.repName}</td><td style="font-size:10px">${r.t.accom||'-'}</td>
+      <td>${r.t.repName}</td><td class="st-accom">${r.t.accom||'-'}</td>
       <td class="center">${r.t.dep}</td><td class="center">${r.ps[0].nights}</td><td class="center">${r.pax}</td>
       <td class="num">${stWon(r.t.sales)}</td>
       <td class="num">${r.annTotal!=null?stWon(r.annTotal):'<span class="muted">'+(r.missAnn?'기준 미등록':'-')+'</span>'}</td>
@@ -5706,7 +5709,7 @@ function renderSettlePerson(){
       <td style="font-size:11px">${r.t.repName}</td>
       <td>${r.p.isRep?'★ ':''}${r.p.name||'-'}${r.p.virtual?' <span class="st-badge b-land">가상</span>':''}</td>
       <td class="center" style="font-size:10px">${r.t.dep}</td><td class="center">${r.nights}</td>
-      <td style="font-size:10px">${r.t.accom||'-'}</td>
+      <td class="st-accom">${r.t.accom||'-'}</td>
       <td class="num"><input class="st-cellin yen" value="${r.localRate?Number(r.localRate).toLocaleString():''}" placeholder="0" onchange="settleEdit('${r.key}','localRate',this.value)">${r.ad.localRate!=null?'<span class="st-badge b-edit">개별</span>':''}</td>
       <td class="num">${stYen(r.stayYen)}</td>
       <td class="num"><input class="st-cellin yen" value="${r.transFee?Number(r.transFee).toLocaleString():''}" placeholder="0" onchange="settleEdit('${r.key}','transFee',this.value)">${r.ad.transFee!=null?'<span class="st-badge b-edit">개별</span>':''}</td>
