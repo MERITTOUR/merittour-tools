@@ -1216,12 +1216,12 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       <div class="note">
         <b>사이젠 現地精算表 대조용</b> · 숙박비 = 인원 × 박수 × <b>현지정산단가</b>(① 리조트 마스터의 숙소별 값), 송영비 = 인원 × 송영 단가.
         체재·송영 면제와 단가 보정은 「개인별 명세」에서 반영됩니다. 사이젠과 동일하게 <b>항공조인·구마모토 시내</b> 상품은 제외합니다.
-        차감(쿠폰·포인트·선납)을 입력하면 실정산액 = 총액 − 차감합계로 계산됩니다 — 사이젠 화면과 항목·금액이 같으면 정산이 맞은 것입니다.
+        차감(쿠폰·포인트·선납)을 입력하면 실정산액 = 총액 − 차감합계로 계산됩니다 — 사이젠 화면과 항목·금액이 같으면 정산이 맞은 것입니다. 처음에는 미선택 상태입니다 — 숙소 칩 또는 [전체 선택]을 누르면 표시됩니다. 정산표 엑셀은 선택과 무관하게 전체 데이터로 생성됩니다.
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0" id="st-local-filter"></div>
       <div class="sum-grid" id="st-local-summary"></div>
       <div class="st-cards" id="st-local-cards"></div>
-      <div class="cm-box" style="margin-top:4px">
+      <div class="cm-box" id="st-ded-box" style="margin-top:4px">
         <div class="cm-box-title">사전 지불 · 쿠폰 · 포인트 차감 관리 <span class="card-sub" style="font-weight:400">— 메리트투어 선납·차감분. 실정산액(총액 − 차감합계) 자동 계산</span></div>
         <div id="st-ded-rows"></div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
@@ -5478,14 +5478,28 @@ function stFillSelects(){
 
 /* ════════ A. 현지정산 (¥) ════════ */
 function renderSettleLocal(){
-  const all=settlePersons().filter(r=>!r.localEx);
-  const excluded=settlePersons().filter(r=>r.localEx).length;
-  // 숙소 필터 칩
+  const ps=settlePersons();
+  const all=ps.filter(r=>!r.localEx);
+  const excluded=ps.length-all.length;
+  // 숙소 필터 칩 — 기본 미선택. [전체 선택]↔[전체 해제] 토글
   const accoms=[...new Set(all.map(r=>r.t.accom))].sort();
+  [...stLocalFilter].forEach(a=>{ if(!accoms.includes(a)) stLocalFilter.delete(a); });
+  const allSel = accoms.length>0 && accoms.every(a=>stLocalFilter.has(a));
   document.getElementById('st-local-filter').innerHTML=
-    `<button class="st-chip ${stLocalFilter.size===0?'active':''}" onclick="stLocalChip('ALL')">전체</button>`+
+    `<button class="st-chip ${allSel?'active':''}" onclick="stLocalChip('ALL')">${allSel?'전체 해제':'전체 선택'}</button>`+
     accoms.map(a=>`<button class="st-chip ${stLocalFilter.has(a)?'active':''}" onclick="stLocalChip('${a.replace(/'/g,"\\'")}')">${a}</button>`).join('');
-  const rows=all.filter(r=>stLocalFilter.size===0||stLocalFilter.has(r.t.accom));
+  // 미선택: 안내만 표시하고 표 생성 생략 (첫 진입 렌더 부하 방지)
+  if(stLocalFilter.size===0){
+    document.getElementById('st-local-summary').innerHTML='';
+    document.getElementById('st-local-cards').innerHTML='';
+    document.getElementById('st-ded-box').style.display='none';
+    document.getElementById('st-local-thead').innerHTML='';
+    document.getElementById('st-local-tbody').innerHTML=
+      '<tr><td class="muted" style="padding:22px;text-align:center;font-size:12px">표시할 숙소를 선택하세요 — 위의 숙소 칩 또는 [전체 선택]을 누르면 명세가 표시됩니다.</td></tr>';
+    return;
+  }
+  document.getElementById('st-ded-box').style.display='';
+  const rows=all.filter(r=>stLocalFilter.has(r.t.accom));
 
   // 팀 집계
   const bySeq={};
@@ -5507,7 +5521,7 @@ function renderSettleLocal(){
 
   // 숙소별 카드 (사이젠 동일 구성)
   document.getElementById('st-local-cards').innerHTML=accoms
-    .filter(a=>stLocalFilter.size===0||stLocalFilter.has(a))
+    .filter(a=>stLocalFilter.has(a))
     .map(a=>{
       const grp=tRows.filter(r=>r.t.accom===a); if(!grp.length) return '';
       const s=grp.reduce((x,r)=>x+r.stay,0), tr=grp.reduce((x,r)=>x+r.trans,0);
@@ -5549,7 +5563,12 @@ function renderSettleLocal(){
   try{ attachTopScrollbars(); }catch(e){}
 }
 function stLocalChip(a){
-  if(a==='ALL') stLocalFilter.clear();
+  if(a==='ALL'){
+    const accoms=[...new Set(settlePersons().filter(r=>!r.localEx).map(r=>r.t.accom))];
+    const allSel=accoms.length>0 && accoms.every(x=>stLocalFilter.has(x));
+    stLocalFilter.clear();
+    if(!allSel) accoms.forEach(x=>stLocalFilter.add(x));
+  }
   else { if(stLocalFilter.has(a)) stLocalFilter.delete(a); else stLocalFilter.add(a); }
   renderSettleLocal();
 }
