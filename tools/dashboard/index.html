@@ -547,6 +547,16 @@ tr:hover td{background:#EEF3FA}
 .st-diff-bad{color:var(--red2,#DC2626);font-weight:700}
 .st-diff-ok{color:var(--green2,#059669);font-weight:600}
 .st-sec-row td{background:var(--surface2,#f1f4f9);font-weight:700;font-size:11px;color:var(--text2);padding:6px 10px}
+/* 항공요금 테이블 — 안내 요금(고객·블루) vs 발권원가(내부·보라) 구분 */
+.af-money{display:flex;flex-direction:column;gap:2px}
+.af-money-lab{font-size:9px;font-weight:800;letter-spacing:.02em}
+.af-sell .af-money-lab{color:var(--accent)}
+.af-sell .rm-input{border-color:rgba(46,90,136,.45)}
+.af-cost-box .af-money-lab{color:#7C3AED}
+.af-cost-box .rm-input{border-color:rgba(124,58,237,.45);background:rgba(124,58,237,.05)}
+.af-divider{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+td.af-cost-cell{background:rgba(124,58,237,.05)}
+th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 </style>
 </head>
 <body>
@@ -3899,7 +3909,7 @@ function renderResortMaster(){
   <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">✈️ 항공요금 테이블 <span class="card-sub" style="font-weight:400">— 월 × 항공사 × 출발지→도착지 × 박수 · 원화/인 (출국편 입력 시 귀국편 자동, 수정 가능)</span></div>
     <div id="airfare-rows"></div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
       <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
       <input class="rm-input text" id="af-airline" placeholder="항공사(TW)" style="width:80px">
       <input class="rm-input text" id="af-origin" placeholder="출발지(ICN·인천)" style="width:95px">
@@ -3911,9 +3921,16 @@ function renderResortMaster(){
         <option value="왕복">왕복</option>
         <option value="편도">편도</option>
       </select>
-      <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="안내 요금(원)" style="width:95px">
-      <input class="rm-input" id="af-cost" type="text" inputmode="numeric" placeholder="발권원가(원)" style="width:95px" title="실제 발권가. ⑧ 정산에서 항공수익 = 안내 요금 − 발권원가로 계산. 비워두면 정산에서 개인별 입력 필요">
-      <button class="btn-sm" onclick="addAirfare()">+ 추가</button>
+      <span class="af-divider"></span>
+      <div class="af-money af-sell">
+        <span class="af-money-lab">안내 요금 · 고객</span>
+        <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="원" style="width:100px" title="고객에게 안내하는 1인 항공요금. ④ 요금 검증의 예상 판매금액에 들어갑니다">
+      </div>
+      <div class="af-money af-cost-box">
+        <span class="af-money-lab">발권원가 · 내부</span>
+        <input class="rm-input" id="af-cost" type="text" inputmode="numeric" placeholder="원" style="width:100px" title="실제 발권가(내부). ⑧ 정산에서 항공수익 = 안내 요금 − 발권원가. 비워두면 정산에서 개인별 입력 필요">
+      </div>
+      <button class="btn-sm" onclick="addAirfare()" style="margin-bottom:1px">+ 추가</button>
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
@@ -3977,13 +3994,13 @@ function renderAirfares(){
   const box=document.getElementById('airfare-rows'); if(!box) return;
   const arr=commonMaster.airfares||[];
   box.innerHTML = arr.length
-    ? '<div class="tbl-wrap" style="max-height:240px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>월</th><th>항공사</th><th>노선</th><th>박수</th><th>출국편</th><th>귀국편</th><th>구분</th><th>안내 요금</th><th>발권원가</th><th>항공수익/인</th><th></th></tr></thead><tbody>'+
+    ? '<div class="tbl-wrap" style="max-height:240px;overflow-y:auto"><table style="font-size:11px"><thead><tr><th>월</th><th>항공사</th><th>노선</th><th>박수</th><th>출국편</th><th>귀국편</th><th>구분</th><th>안내 요금</th><th class="af-cost-cell">발권원가(내부)</th><th>항공수익/인</th><th></th></tr></thead><tbody>'+
       arr.map((a,i)=>{
         const profit=(a.cost&&a.fare)?a.fare-a.cost:null;
         return `<tr><td>${a.month}</td><td class="center">${a.airline||'-'}</td><td>${a.origin}→${a.dest}</td><td class="center">${a.nights}박</td>
         <td class="center" style="font-family:var(--mono)">${a.flightOut||'-'}</td><td class="center" style="font-family:var(--mono)">${a.tripType==='편도'?'<span class="muted">편도</span>':(a.flightIn||'-')}</td>
         <td class="center">${a.tripType||'왕복'}</td><td class="num">₩${Number(a.fare).toLocaleString()}</td>
-        <td class="num">${a.cost?'₩'+Number(a.cost).toLocaleString():'<span class="muted">미입력</span>'}</td>
+        <td class="num af-cost-cell">${a.cost?'₩'+Number(a.cost).toLocaleString():'<span class="muted">미입력</span>'}</td>
         <td class="num" style="${profit!=null?(profit<0?'color:var(--red2);font-weight:700':'color:var(--green2);font-weight:600'):''}">${profit!=null?'₩'+profit.toLocaleString():'-'}</td>
         <td class="center"><button class="btn-sm" style="padding:1px 7px;color:var(--red);border-color:var(--red)" onclick="delAirfare(${i})">×</button></td></tr>`;}).join('')+
       '</tbody></table></div>'
