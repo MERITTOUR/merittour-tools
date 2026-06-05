@@ -1180,13 +1180,33 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="muted" style="font-size:11px;margin-top:8px" id="doc-kind-desc">확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.</div>
   </div>
 
-  <div class="card">
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">입금 계좌 · 문의 전화 설정 <span class="muted" style="font-weight:400;font-size:11px">— 확정서·견적서 요금 박스와 푸터에 들어갑니다. 한 번 입력하면 저장됩니다</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input class="rm-input text" id="doc-acct-bank" placeholder="은행명" style="width:110px;text-align:left" onchange="docSaveAcct('bank',this.value)">
+      <input class="rm-input text" id="doc-acct-no" placeholder="계좌번호" style="width:190px;text-align:left" onchange="docSaveAcct('no',this.value)">
+      <input class="rm-input text" id="doc-acct-holder" placeholder="예금주" style="width:130px;text-align:left" onchange="docSaveAcct('holder',this.value)">
+      <input class="rm-input text" id="doc-acct-tel" placeholder="문의 전화 (예: 02-000-0000)" style="width:190px;text-align:left" onchange="docSaveAcct('tel',this.value)">
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택</div>
-      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%">
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 팀을 누르면 아래에 미리보기가 생성됩니다</span></div>
+      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
     </div>
     <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
-      먼저 <b>업로드</b> 탭에서 파일을 올리면 팀 목록이 표시됩니다. (기능은 2단계에서 연결됩니다)
+      먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.
+    </div>
+  </div>
+
+  <div class="card" id="doc-preview-card" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">미리보기 <span class="muted" id="doc-preview-info" style="font-weight:400;font-size:11px"></span></div>
+      <button class="btn-primary" style="padding:9px 20px" onclick="docExportJpg()">⬇ JPG 저장 (카카오톡 발송용)</button>
+    </div>
+    <div style="overflow-x:auto;background:var(--surface2);padding:18px;border-radius:10px;display:flex;justify-content:center">
+      <div id="doc-render"></div>
     </div>
   </div>
 </div>
@@ -1257,7 +1277,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         보험료는 <b>DB손해보험 가입증명서 PDF</b>를 올리면 피보험자 명세(성명·생년월일·인별보험료)를 읽어 자동 입력됩니다(<span class="st-badge b-pdf">PDF</span> 배지). PDF·일괄·개별은 같은 칸에 쓰며 마지막 입력이 적용됩니다.
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;align-items:center" id="st-person-filterbar">
-        <input id="st-p-search" placeholder="대표자·행사번호·성명 검색" style="font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;width:180px" oninput="renderSettlePerson()">
+        <input id="st-p-search" placeholder="대표자·행사번호·성명 검색" style="font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;width:180px" oninput="stSearchDeb()">
         <select class="rm-input" id="st-p-month" style="width:105px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
         <select class="rm-input" id="st-p-accom" style="width:160px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
         <select class="rm-input" id="st-p-origin" style="width:105px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
@@ -1785,6 +1805,7 @@ function analyze(){
   renderVerify();
   renderAudit();
   renderSettleAll();
+  renderDocTeams();
   gotoSection('audit');
 }
 
@@ -5203,8 +5224,8 @@ function downloadTicketNotice(){
   html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
     const a=document.createElement('a');
     const d=(document.getElementById('tn-date').value||'').replace(/-/g,'');
-    a.download=`항공발권안내_${d||'공지'}.webp`;
-    a.href=canvas.toDataURL('image/webp',0.92);
+    a.download=`항공발권안내_${d||'공지'}.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',0.92);
     a.click();
   }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
 }
@@ -5287,8 +5308,8 @@ function downloadConvertNotice(){
   html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
     const a=document.createElement('a');
     const nm=(convertNoticeTeam&&convertNoticeTeam.repName)||'대기전환';
-    a.download=`대기전환안내_${nm}.webp`;
-    a.href=canvas.toDataURL('image/webp',0.92);
+    a.download=`대기전환안내_${nm}.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',0.92);
     a.click();
   }).catch(e=>{ alert('이미지 생성 실패: '+e.message); });
 }
@@ -5296,9 +5317,18 @@ function downloadConvertNotice(){
 /* 넘치는 .tbl-wrap 위에, 하단 스크롤바와 동기화되는 상단 스크롤바를 부착.
    가로로 넘칠 때만 생기고, 안 넘치면 안 생김. 윈도우 리사이즈·내용 변경 시 갱신. */
 function attachTopScrollbars(){
-  document.querySelectorAll('.tbl-wrap').forEach(wrap=>{
+  // 성능: 화면에 보이는 표만 처리. 숨겨진 섹션의 큰 표(예약·보험 등)는 건너뛰어
+  // 분석 이후 전 섹션이 채워져도 클릭·입력마다 전체 레이아웃을 재계산하지 않게 함.
+  const wraps=[];
+  document.querySelectorAll('.tbl-wrap').forEach(w=>{ if(w.offsetParent!==null) wraps.push(w); });
+  // 1단계: 읽기 일괄 (scrollWidth/clientWidth) → 2단계: 쓰기 일괄 — 레이아웃 스래싱 방지
+  const jobs=[];
+  wraps.forEach(wrap=>{
     const tbl=wrap.querySelector('table'); if(!tbl) return;
-    const overflow = tbl.scrollWidth > wrap.clientWidth + 2;
+    jobs.push({wrap, sw:tbl.scrollWidth, cw:wrap.clientWidth});
+  });
+  jobs.forEach(({wrap,sw,cw})=>{
+    const overflow = sw > cw + 2;
     let top = wrap.previousElementSibling;
     const isTopBar = top && top.classList && top.classList.contains('tbl-topscroll');
     if(!overflow){ if(isTopBar) top.remove(); return; }
@@ -5313,23 +5343,190 @@ function attachTopScrollbars(){
       top.addEventListener('scroll',()=>{ if(lock)return; lock=true; wrap.scrollLeft=top.scrollLeft; lock=false; });
       wrap.addEventListener('scroll',()=>{ if(lock)return; lock=true; top.scrollLeft=wrap.scrollLeft; lock=false; });
     }
-    // 너비 동기화 (내용 폭만큼 더미 채움)
-    top.querySelector('.tbl-topscroll-inner').style.width = tbl.scrollWidth + 'px';
+    top.querySelector('.tbl-topscroll-inner').style.width = sw + 'px';
   });
 }
 /* 렌더 후 호출되도록 훅: 주요 렌더 함수 뒤에서 호출 + 리사이즈/탭전환 대응 */
-const _attachDebounced = (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(attachTopScrollbars,60); }; })();
+const _attachDebounced = (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(attachTopScrollbars,150); }; })();
 window.addEventListener('resize', _attachDebounced);
-// MutationObserver로 표 내용 바뀔 때 자동 부착
+// 단일 MutationObserver: 동적 표 생성·내용 변경 모두 상위 컨테이너 하나로 감지
 (function(){
-  const mo=new MutationObserver(_attachDebounced);
-  document.querySelectorAll('.tbl-wrap').forEach(w=>mo.observe(w,{childList:true,subtree:true}));
-  // 동적으로 생기는 tbl-wrap(출발조회·대기점검 등)도 잡도록 상위 컨테이너 관찰
   const main=document.querySelector('.wrap')||document.body;
-  new MutationObserver(()=>{ _attachDebounced(); }).observe(main,{childList:true,subtree:true});
+  new MutationObserver(_attachDebounced).observe(main,{childList:true,subtree:true});
 })();
 setTimeout(attachTopScrollbars, 300);
 
+
+
+/* ════════════════════════════════════════════════════════════
+   ⑦ 확정서 생성 — 견적서/일정표/확정서 (760px 표준 디자인폼 → JPG)
+   항공은 예약리스트·일행별예약 기준만 사용 (APIS 미사용 — 발송 시점에 미발권)
+════════════════════════════════════════════════════════════ */
+let _docTeam=null, _docAcct={};
+const DOC_KIND_LABEL={quote:'견 적 서', itinerary:'일 정 표', confirm:'확 정 서'};
+const DOC_KIND_FILE={quote:'견적서', itinerary:'일정표', confirm:'확정서'};
+const DOC_DEPOSIT_PP=300000;   // 예약금 1인당 30만원
+
+function docLoadAcct(){
+  try{ _docAcct=JSON.parse(localStorage.getItem('mt_doc_acct')||'{}'); }catch(e){ _docAcct={}; }
+  [['bank','doc-acct-bank'],['no','doc-acct-no'],['holder','doc-acct-holder'],['tel','doc-acct-tel']].forEach(([k,id])=>{
+    const el=document.getElementById(id); if(el) el.value=_docAcct[k]||'';
+  });
+}
+function docSaveAcct(k,v){
+  _docAcct[k]=String(v||'').trim();
+  try{ localStorage.setItem('mt_doc_acct',JSON.stringify(_docAcct)); }catch(e){}
+  if(_docTeam) docGenerate();   // 미리보기 즉시 반영
+}
+const docSearchDeb=(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(renderDocTeams,200); }; })();
+
+/* 팀 목록 */
+function renderDocTeams(){
+  const box=document.getElementById('doc-team-list'); if(!box) return;
+  if(!teams.length){
+    box.innerHTML='먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.';
+    return;
+  }
+  const q=(document.getElementById('doc-search').value||'').toLowerCase();
+  const list=teams.filter(t=>{
+    if(!q) return true;
+    return [t.eventNo,t.repName,t.prodName,t.accom].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
+  }).sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
+  const stColor={'견적':'#D97706','대기':'#D97706','확정':'#059669','정산':'#2E5A88'};
+  box.className=''; box.style.padding='0';
+  box.innerHTML = list.length ? `<div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table style="font-size:12px">
+    <thead><tr><th></th><th>구분</th><th>행사번호</th><th>대표고객</th><th>출발일</th><th>기간</th><th>인원</th><th>숙소</th><th>상품명</th></tr></thead><tbody>`+
+    list.map(t=>`<tr onclick="docPickTeam('${t.eventSeq}')" style="cursor:pointer;${_docTeam===t.eventSeq?'background:rgba(46,90,136,.08)':''}">
+      <td class="center"><input type="radio" name="doc-team" ${_docTeam===t.eventSeq?'checked':''}></td>
+      <td class="center"><span style="font-weight:700;color:${stColor[t.status]||'var(--text3)'}">${t.status}</span></td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.eventNo}</td>
+      <td style="font-weight:600">${t.repName}</td>
+      <td class="center">${t.dep}</td><td class="center">${t.period}</td><td class="center">${t.pax}명</td>
+      <td class="st-accom">${t.accom||'-'}</td>
+      <td style="font-size:11px;color:var(--text3)">${t.prodName||'-'}</td></tr>`).join('')+
+    '</tbody></table></div>'
+    : '<div class="muted" style="font-size:12px;padding:16px;text-align:center">검색 결과가 없습니다.</div>';
+}
+function docPickTeam(seq){
+  _docTeam=seq;
+  renderDocTeams();
+  docGenerate();
+}
+/* 문서 종류 변경 시 미리보기 재생성 */
+const _docPickKindOrig=docPickKind;
+docPickKind=function(kind){ _docPickKindOrig(kind); if(_docTeam) docGenerate(); };
+
+/* 팀의 항공편 표시값 (일행별예약 → 예약리스트 항공 칼럼 순. APIS 미사용) */
+function docFlights(t){
+  const p=(t.pax_list||[]).find(x=>x.depFlight||x.retFlight)||{};
+  return { dep: p.depFlight || t.flight || '', ret: p.retFlight || '' };
+}
+
+function docGenerate(){
+  const t=teams.find(x=>x.eventSeq===_docTeam);
+  if(!t) return;
+  document.getElementById('doc-preview-card').style.display='';
+  document.getElementById('doc-preview-info').textContent=`— ${DOC_KIND_FILE[_docKind]} · ${t.repName} (${t.eventNo})`;
+  document.getElementById('doc-render').innerHTML=docBuildHtml(t,_docKind);
+}
+
+/* 760px 표준 디자인폼 (네이비 헤더·푸터, Noto Serif 제목, 본문 16~17px) */
+function docBuildHtml(t,kind){
+  const NV='#1a2332', LN='#e2e7ef', TX='#2b3442', SUB='#5a6678', GREEN='#059669', RED='#DC2626';
+  const serif="'Noto Serif KR',serif", sans="'Noto Sans KR',sans-serif";
+  const fl=docFlights(t);
+  const deposit=DOC_DEPOSIT_PP*(t.pax||0);
+  const balance=Math.max(0,(t.sales||0)-deposit);
+  const won2=v=>'₩'+Number(v||0).toLocaleString();
+  const box=(label,val)=>`<div style="flex:1;min-width:150px;background:#f6f8fb;border:1px solid ${LN};border-radius:10px;padding:14px 16px">
+    <div style="font-size:12px;color:${SUB};font-weight:600;margin-bottom:5px">${label}</div>
+    <div style="font-size:17px;color:${TX};font-weight:700;line-height:1.35">${val}</div></div>`;
+  const secTitle=(no,txt)=>`<div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px">
+    <div style="width:26px;height:26px;border-radius:50%;background:${NV};color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:${sans}">${no}</div>
+    <div style="font-family:${serif};font-size:20px;font-weight:700;color:${NV}">${txt}</div></div>`;
+  const row=(l,v)=>`<div style="display:flex;border-bottom:1px solid ${LN};padding:11px 4px;font-size:16px">
+    <div style="width:130px;color:${SUB};font-weight:600;flex-shrink:0">${l}</div><div style="color:${TX};font-weight:500">${v}</div></div>`;
+
+  let n=1, body='';
+  // ① 항공 일정 — 출발·귀국 각각 기재 (동일 표현 금지 원칙)
+  body+=secTitle(n++,'항공 일정');
+  body+=row('출발', `${t.dep||'-'} · ${t.origin||''} 출발${fl.dep?` · <b>${fl.dep}</b>편`:''}`);
+  body+=row('귀국', `${t.arr||'-'}${fl.ret?` · <b>${fl.ret}</b>편`:''}`);
+  body+=`<div style="margin-top:12px;background:#f6f8fb;border-left:4px solid ${NV};border-radius:6px;padding:12px 16px;font-size:15px;color:${SUB};line-height:1.6">
+    항공 예약번호와 좌석 정보는 <b style="color:${TX}">발권 완료 후 알림톡으로 별도 안내</b>드립니다.</div>`;
+  // ② 숙박·일정
+  body+=secTitle(n++,'숙박 · 일정');
+  body+=row('숙소', `${t.accom||'-'}${t.roomType?` · ${t.roomType}`:''}`);
+  body+=row('기간', `${t.period||'-'} (${t.dep||''} ~ ${t.arr||''})`);
+  if(t.prodName) body+=row('상품', t.prodName);
+  // ③ 요금 안내 (일정표 제외)
+  if(kind!=='itinerary'){
+    body+=secTitle(n++, kind==='quote'?'견적 금액':'요금 안내');
+    body+=`<div style="border:1px solid ${LN};border-radius:12px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;border-bottom:1px solid ${LN}">
+        <span style="color:${SUB};font-weight:600">${kind==='quote'?'견적 금액 (총 '+t.pax+'명)':'총 금액 (총 '+t.pax+'명)'}</span>
+        <b style="color:${TX};font-size:18px">${t.sales?won2(t.sales):'별도 안내'}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;border-bottom:1px solid ${LN}">
+        <span style="color:${SUB};font-weight:600">예약금 <span style="font-size:13px">(1인 ${won2(DOC_DEPOSIT_PP)} × ${t.pax}명)</span></span>
+        <b style="color:${GREEN}">${won2(deposit)}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;background:#f6f8fb">
+        <span style="color:${SUB};font-weight:600">잔금</span>
+        <b style="color:${TX}">${t.sales?won2(balance):'별도 안내'}</b></div>
+    </div>`;
+    if(_docAcct.bank||_docAcct.no){
+      body+=`<div style="margin-top:12px;border:1px solid ${LN};border-radius:10px;padding:14px 18px;font-size:16px;color:${TX}">
+        <span style="color:${SUB};font-weight:600;margin-right:12px">입금 계좌</span>
+        <b>${_docAcct.bank||''} ${_docAcct.no||''}</b>${_docAcct.holder?` <span style="color:${SUB}">(예금주: ${_docAcct.holder})</span>`:''}</div>`;
+    }
+    if(kind==='quote'){
+      body+=`<div style="margin-top:12px;background:#fdf6f6;border-left:4px solid ${RED};border-radius:6px;padding:12px 16px;font-size:15px;color:${SUB};line-height:1.6">
+        본 견적서는 예약 확정 전 안내용입니다. 예약금 입금 시 예약이 확정됩니다.</div>`;
+    }
+  }
+  // ④ 안내사항
+  body+=secTitle(n++,'안내사항');
+  body+=`<div style="font-size:15.5px;color:${SUB};line-height:1.9">
+    · 여권 유효기간이 출발일 기준 <b style="color:${TX}">6개월 이상</b> 남아 있는지 확인 부탁드립니다.<br>
+    · 항공 발권 완료 후 예약번호를 알림톡으로 안내드립니다.<br>
+    · 일정·숙소는 현지 사정에 따라 일부 변경될 수 있습니다.</div>`;
+
+  return `<div id="doc-canvas" style="width:760px;background:#fff;font-family:${sans};color:${TX}">
+    <div style="background:${NV};padding:26px 34px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:${serif};font-size:22px;font-weight:700;color:#fff;letter-spacing:.06em">MERITTOUR</div>
+      <div style="border:1px solid rgba(255,255,255,.45);color:#fff;font-size:14px;font-weight:600;padding:6px 16px;border-radius:20px;letter-spacing:.18em">${DOC_KIND_LABEL[kind]}</div>
+    </div>
+    <div style="padding:34px 34px 40px">
+      <div style="font-family:${serif};font-size:25px;font-weight:700;color:${NV};line-height:1.4">${t.prodName||t.accom||'골프 투어'}</div>
+      <div style="font-size:16px;color:${SUB};margin-top:8px">${t.repName} 님${t.pax>1?` 외 ${t.pax-1}명`:''} · 행사번호 ${t.eventNo}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px">
+        ${box('출발일',t.dep||'-')}${box('기간',t.period||'-')}${box('인원',(t.pax||0)+'명')}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        ${box('출발지',t.origin||'-')}${box('숙소',(t.accom||'-')+(t.roomType?'<div style="font-size:13px;color:'+SUB+';font-weight:500;margin-top:2px">'+t.roomType+'</div>':''))}
+      </div>
+      ${body}
+    </div>
+    <div style="background:${NV};padding:22px 34px;display:flex;justify-content:space-between;align-items:center">
+      <div style="color:#fff;font-size:15px;font-weight:600">예약 문의 · MERITTOUR${_docAcct.tel?` <span style="font-size:17px;font-weight:700;margin-left:8px">${_docAcct.tel}</span>`:''}</div>
+      <div style="color:rgba(255,255,255,.55);font-size:12px">메리트투어</div>
+    </div>
+  </div>`;
+}
+
+function docExportJpg(){
+  const t=teams.find(x=>x.eventSeq===_docTeam);
+  const el=document.getElementById('doc-canvas');
+  if(!t||!el){ alert('먼저 팀을 선택해 미리보기를 생성해주세요.'); return; }
+  showToast('JPG 생성 중…');
+  html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
+    const a=document.createElement('a');
+    a.download=`${DOC_KIND_FILE[_docKind]}_${t.repName}_${t.dep}.jpg`;
+    a.href=canvas.toDataURL('image/jpeg',0.92);
+    a.click();
+    showToast(`${DOC_KIND_FILE[_docKind]} JPG 저장 완료`);
+  }).catch(e=>alert('이미지 생성 실패: '+e.message));
+}
+docLoadAcct();
 
 /* ════════════════════════════════════════════════════════════
    ⑧ 정산 — 현지정산(¥, 사이젠 대조) · 수익정산(₩) · 개인별 명세 · 엠클릭 대조
@@ -5726,6 +5923,7 @@ function renderSettlePerson(){
   }).join('');
   try{ attachTopScrollbars(); }catch(e){}
 }
+const stSearchDeb=(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(renderSettlePerson,200); }; })();
 /* Shift 범위 선택 */
 function settleChk(ev, idx, key, checked){
   if(ev.shiftKey && stLastIdx!=null && stVisibleKeys[stLastIdx]!=null){
