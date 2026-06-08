@@ -2686,9 +2686,29 @@ function filterAudit(f){ auditFilter=f; renderAudit(); }
 function engJoined(s){ return String(s||'').replace(/\s+/g,'').toUpperCase(); }
 /* 표시용: 공백을 가운데점으로 시각화 */
 function showSpace(s){ return String(s||'').replace(/ /g,'·'); }
+let _teamIdx=null,_teamIdxRefT=null,_teamIdxRefC=null;
+function teamOf(seq){
+  const T=(typeof teams!=='undefined'?teams:[]);
+  const C=(typeof cancelledTeams!=='undefined'?cancelledTeams:[]);
+  if(_teamIdxRefT!==T||_teamIdxRefC!==C){
+    _teamIdx=new Map();
+    C.forEach(t=>_teamIdx.set(String(t.eventSeq),t));
+    T.forEach(t=>_teamIdx.set(String(t.eventSeq),t)); // 유효 팀이 우선(나중 set이 덮어씀)
+    _teamIdxRefT=T; _teamIdxRefC=C;
+  }
+  return _teamIdx.get(String(seq))||null;
+}
 function repNameOf(seq){
-  const t=(typeof teams!=='undefined'?teams:[]).find(x=>String(x.eventSeq)===String(seq));
+  const t=teamOf(seq);
   return t?t.repName:'';
+}
+/* eventSeq → 행사번호(예: 260608-485514). 예약리스트 → 취소팀 → 현지도착 순 조회, 없으면 seq 폴백 */
+function eventNoOf(seq){
+  const t=teamOf(seq);
+  if(t && t.eventNo && t.eventNo!=='-') return t.eventNo;
+  const a=(typeof arrivalMap!=='undefined' && arrivalMap)?arrivalMap[String(seq)]:null;
+  if(a && a.eventNo) return a.eventNo;
+  return String(seq||'');
 }
 
 function buildAudit(){
@@ -2804,8 +2824,12 @@ function renderAudit(){
     </div>`;
   };
 
-  const colSeq={h:'행사번호',f:x=>x.seq};
+  const colSeq={h:'행사번호',f:x=>eventNoOf(x.seq)};
   const colRep={h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'};
+  const colProd={h:'상품명',f:x=>{
+    const t=teamOf(x.seq); const p=t&&t.prodName?String(t.prodName):'';
+    return p?'<div style="white-space:normal;max-width:200px;font-size:11px;color:var(--text3);line-height:1.4">'+p+'</div>':'<span class="muted">-</span>';
+  }};
   const colName={h:'손님',f:x=>x.name||'-'};
   const colDep={h:'출발일',f:x=>x.dep||'-'};
 
@@ -2813,24 +2837,24 @@ function renderAudit(){
   blocks.push(block('영문명 공백·특수문자',
     '엠클릭 외교부 여권검수 후 다시 붙이지 않아 공백이 남은 건. 발권·온라인 체크인 안내(붙여서)와 어긋납니다. 엠클릭에서 공백 제거 후 저장하세요.',
     I.engSpace,
-    [colSeq,colRep,colName,{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
+    [colSeq,colRep,colProd,colName,{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
     'severe'));
   blocks.push(block('영문명 파일 간 불일치',
     'APIS와 일행별예약에서 같은 사람의 영문명이 다른 건(한쪽만 붙여 저장했거나 철자 오타). 두 곳과 여권을 대조해 같은 값으로 통일하세요.',
     I.engMismatch,
-    [colSeq,colRep,colName,{h:'유형',f:x=>x.kind},{h:'현재(불일치)',f:x=>'<span style="color:var(--red)">'+x.cur+'</span>'},{h:'권장',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
+    [colSeq,colRep,colProd,colName,{h:'유형',f:x=>x.kind},{h:'현재(불일치)',f:x=>'<span style="color:var(--red)">'+x.cur+'</span>'},{h:'권장',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
     null));
   blocks.push(block('여권 만료 임박',
     '출발일 기준 잔여 6개월 미만(3개월 미만은 긴급). 손님께 여권 갱신 안내가 필요합니다.',
     I.expSoon,
-    [colSeq,colRep,colName,{h:'만료일',f:x=>'<span style="color:var(--red);font-weight:700">'+x.expiry+'</span>'},colDep,{h:'잔여',f:x=>x.days+'일'}],
+    [colSeq,colRep,colProd,colName,{h:'만료일',f:x=>'<span style="color:var(--red);font-weight:700">'+x.expiry+'</span>'},colDep,{h:'잔여',f:x=>x.days+'일'}],
     'severe'));
   blocks.push(block('여권 만료일 누락','만료일이 비어 있는 건. 발권·체크인 전 입력이 필요합니다.',
-    I.expMiss,[colSeq,colRep,colName,colDep],null));
+    I.expMiss,[colSeq,colRep,colProd,colName,colDep],null));
   blocks.push(block('여권번호 누락','여권번호가 비어 있는 건.',
-    I.ppMiss,[colSeq,colRep,colName,colDep],null));
+    I.ppMiss,[colSeq,colRep,colProd,colName,colDep],null));
   blocks.push(block('PNR 누락','APIS에 PNR이 비어 있는 건(미발권 또는 미입력).',
-    I.pnrMiss,[colSeq,colRep,colName,colDep],null));
+    I.pnrMiss,[colSeq,colRep,colProd,colName,colDep],null));
 
   const html=blocks.filter(Boolean).join('');
   box.innerHTML = html || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
