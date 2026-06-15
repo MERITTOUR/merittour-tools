@@ -6,6 +6,7 @@
 <title>MERITTOUR 통합 업무 허브</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -266,44 +267,6 @@ tr:hover td{background:#EEF3FA}
 .rm-input.text{text-align:left;font-family:var(--sans);width:150px}
 .rm-input.wide{width:100%;text-align:left;font-family:var(--sans)}
 .rm-input:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
-/* 공항 검색 선택 콤보박스 */
-.apt-pick{position:relative;display:inline-block}
-.apt-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);cursor:pointer;text-align:left;font-family:var(--sans);min-height:29px;box-sizing:border-box}
-.apt-trigger:hover{border-color:var(--accent)}
-.apt-pick.open .apt-trigger{border-color:var(--accent);background:var(--accent-dim)}
-.apt-trigger .apt-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.apt-trigger .apt-val.ph{color:var(--text3)}
-.apt-trigger .apt-caret{flex-shrink:0;color:var(--accent);font-size:9px}
-.apt-menu{position:absolute;z-index:60;top:calc(100% + 3px);left:0;min-width:200px;max-width:280px;background:var(--surface);border:1px solid var(--accent);border-radius:8px;box-shadow:0 8px 24px rgba(26,35,50,.16);display:none;overflow:hidden}
-.apt-pick.open .apt-menu{display:block}
-.apt-search-wrap{padding:7px;border-bottom:1px solid var(--border)}
-.apt-search{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:var(--sans);background:var(--surface2);color:var(--text);box-sizing:border-box}
-.apt-search:focus{outline:none;border-color:var(--accent)}
-.apt-list{max-height:230px;overflow-y:auto;padding:4px}
-.apt-grp-label{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;padding:7px 8px 3px}
-.apt-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:12px}
-.apt-opt:hover,.apt-opt.kbd{background:var(--accent-dim)}
-.apt-opt.sel{background:var(--accent);color:#fff}
-.apt-opt .apt-opt-code{font-family:var(--mono);font-size:11px;color:var(--text3)}
-.apt-opt.sel .apt-opt-code{color:rgba(255,255,255,.85)}
-.apt-opt .apt-chk{color:var(--accent);font-weight:800;opacity:0}
-.apt-opt.sel .apt-chk{opacity:1;color:#fff}
-.apt-empty{padding:12px 8px;text-align:center;color:var(--text3);font-size:11px}
-/* 출발지 다중 선택 칩(트리거 안) */
-.apt-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
-.apt-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent2);border-radius:14px;padding:1px 4px 1px 8px;font-size:11px;line-height:1.5}
-.apt-chip .apt-chip-x{cursor:pointer;color:var(--accent);font-weight:700;padding:0 2px;border-radius:50%}
-.apt-chip .apt-chip-x:hover{background:var(--accent);color:#fff}
-/* 고정 라벨(보험사 등) */
-.rm-fixed-val{font-size:13px;font-weight:700;color:var(--text);padding:5px 0}
-.rm-fixed-tag{font-size:10px;font-weight:700;background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent);border-radius:5px;padding:2px 7px;margin-left:6px}
-/* 시내 호텔 실제 호텔명 인라인 입력 (숙소 정보 탭) */
-.city-hotel-wrap{display:flex;flex-direction:column;gap:3px;margin-top:4px}
-.city-hotel-input{width:100%;max-width:180px;padding:3px 7px;border:1px dashed var(--border2);border-radius:5px;font-size:11px;font-family:var(--sans);background:var(--surface2);color:var(--text);box-sizing:border-box}
-.city-hotel-input:focus{outline:none;border-style:solid;border-color:var(--accent);background:var(--accent-dim)}
-.city-hotel-input::placeholder{color:var(--text3)}
-.city-hotel-lab{font-size:9px;color:var(--accent2);font-weight:700;letter-spacing:.02em}
-.city-hotel-name{font-size:11px;color:var(--accent2);font-weight:600}
 .rm-unit{font-size:10px;color:var(--text3);margin-left:4px;flex-shrink:0;width:34px;text-align:left}
 .rm-saved{font-size:10px;color:var(--green2);opacity:0;transition:opacity .3s}
 .rm-saved.show{opacity:1}
@@ -697,7 +660,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <div class="section" id="sec-resort">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율·여행자보험 — 입력 즉시 자동 저장됩니다</div></div>
+      <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율 — 입력 즉시 자동 저장됩니다</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" onclick="exportMaster()" style="border-color:var(--accent);color:var(--accent)">📤 마스터 내보내기</button>
         <button class="btn-sm" onclick="document.getElementById('master-import-file').click()" style="border-color:var(--accent);color:var(--accent)">📥 마스터 불러오기</button>
@@ -708,7 +671,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div id="resort-cards"></div>
   </div>
   <div class="card">
-    <div class="card-head"><div><div class="card-title">공통 마스터</div><div class="card-sub">환율 · 여행자보험</div></div></div>
+    <div class="card-head"><div><div class="card-title">공통 마스터</div><div class="card-sub">환율 · 항공요금</div></div></div>
     <div id="common-master"></div>
   </div>
 </div>
@@ -1202,7 +1165,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:16px;font-weight:700;color:var(--text1)">⑦ 확정서 생성</div>
-        <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택하고 보낼 문서 종류를 골라 고객 발송용 HTML을 생성합니다.</div>
+        <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택해 v7 확정서 HTML을 생성합니다. 개별 다운로드 또는 선택 팀 ZIP으로 받아 GitHub Pages에 올립니다.</div>
       </div>
       <div class="muted" style="font-size:11px">업로드한 4종 파일(예약리스트·일행별예약·APIS·현지도착)을 사용합니다</div>
     </div>
@@ -1212,8 +1175,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">문서 종류</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-ghost doc-kind" data-kind="quote" onclick="docPickKind('quote')">견적서</button>
-      <button class="btn-ghost doc-kind" data-kind="itinerary" onclick="docPickKind('itinerary')">일정표만 보내기</button>
-      <button class="btn-primary doc-kind active" data-kind="confirm" onclick="docPickKind('confirm')">확정서로 보내기</button>
+      <button class="btn-ghost doc-kind" data-kind="itinerary" onclick="docPickKind('itinerary')">일정표</button>
+      <button class="btn-primary doc-kind active" data-kind="confirm" onclick="docPickKind('confirm')">확정서</button>
     </div>
     <div class="muted" style="font-size:11px;margin-top:8px" id="doc-kind-desc">확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.</div>
   </div>
@@ -1241,10 +1204,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="card" id="doc-preview-card" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
       <div style="font-size:13px;font-weight:600;color:var(--text2)">미리보기 <span class="muted" id="doc-preview-info" style="font-weight:400;font-size:11px"></span></div>
-      <button class="btn-primary" style="padding:9px 20px" onclick="docExportJpg()">⬇ JPG 저장 (카카오톡 발송용)</button>
+      <button class="btn-primary" style="padding:9px 20px" onclick="docDownloadOne()">⬇ 이 팀 HTML 다운로드</button>
     </div>
-    <div style="overflow-x:auto;background:var(--surface2);padding:18px;border-radius:10px;display:flex;justify-content:center">
-      <div id="doc-render"></div>
+    <div style="background:var(--surface2);padding:12px;border-radius:10px">
+      <iframe id="doc-render-frame" style="width:100%;height:640px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
     </div>
   </div>
 </div>
@@ -2039,141 +2002,6 @@ const AIRPORT_CODE={
   '니가타':'KIJ','나가노':'KIJ','미야자키':'KMI','나고야':'NGO','중부':'NGO',
   '오이타':'OIT','벳푸':'FUK','이바라키':'NRT'
 };
-/* ── 공항 선택 콤보박스용 목록 (한글명+코드 단위, 그룹 구분) ──
-   같은 코드라도 한글명이 다르면 별도 항목으로 띄운다(벳푸=FUK, 후쿠오카=FUK 등).
-   지역명과 실제 이용 공항이 다른 메리트투어 상품 특성에 맞춤. */
-const AIRPORT_OPTS={
-  '국내 출발': [
-    ['인천','ICN'],['김해','PUS'],['대구','TAE'],['김포','GMP'],['제주','CJU'],
-    ['청주','CJA'],['무안','MWX'],['광주','KWJ'],['양양','YNY'],['울산','USN'],['여수','RSU']
-  ],
-  '일본 도착': [
-    ['구마모토','KMJ'],['후쿠오카','FUK'],['오이타','OIT'],
-    ['나고야','NGO'],['미야자키','KMI'],['니가타','KIJ'],['나리타','NRT']
-  ],
-  '해외 도착': [
-    ['쿠알라룸푸르','KUL'],['하노이','HAN'],['다낭','DAD'],['방콕','BKK']
-  ]
-};
-/* 코드/한글 표기 → "한글(코드)" 보기 라벨. 입력이 코드면 대표 한글명 역추적 */
-function aptLabel(v){
-  const raw=String(v||'').trim(); if(!raw) return '';
-  // 이미 한글명이면 그대로 + 코드
-  for(const list of Object.values(AIRPORT_OPTS)) for(const [kor,code] of list){ if(kor===raw) return `${kor} (${code})`; }
-  // 코드면 대표 한글명 찾기 (목록 첫 매칭)
-  const up=raw.toUpperCase();
-  for(const list of Object.values(AIRPORT_OPTS)) for(const [kor,code] of list){ if(code===up) return `${kor} (${code})`; }
-  return raw;
-}
-/* 단일 선택 공항 콤보박스 HTML.
-   onpick: 'aptOnPick' 같은 전역 함수명. 호출 시 (code, kor, ctx) 전달 */
-let _aptUID=0;
-function aptComboHTML(opts){
-  const {value='', groups=AIRPORT_OPTS, onpick, ctx='', placeholder='공항 선택', width=170}=opts;
-  const id='apt'+(++_aptUID);
-  const lab=value?aptLabel(value):'';
-  let menu='';
-  for(const [g,list] of Object.entries(groups)){
-    menu+=`<div class="apt-grp-label">${g}</div>`;
-    menu+=list.map(([kor,code])=>{
-      const sel=(value===kor||String(value).toUpperCase()===code)?' sel':'';
-      return `<div class="apt-opt${sel}" data-kor="${kor}" data-code="${code}" data-search="${kor} ${code}"
-        onmousedown="aptSelect('${id}','${code}','${kor}','${onpick||''}','${ctx}')">
-        <span>${kor}</span><span style="display:flex;gap:8px;align-items:center"><span class="apt-opt-code">${code}</span><span class="apt-chk">✓</span></span></div>`;
-    }).join('');
-  }
-  return `<div class="apt-pick" id="${id}" style="width:${width}px" data-onpick="${onpick||''}" data-ctx="${ctx}">
-    <div class="apt-trigger" data-ph="${placeholder}" onclick="aptToggle('${id}')">
-      <span class="apt-val${lab?'':' ph'}">${lab||placeholder}</span><span class="apt-caret">▼</span>
-    </div>
-    <div class="apt-menu">
-      <div class="apt-search-wrap"><input class="apt-search" type="text" placeholder="검색 (구마·KMJ)" oninput="aptFilter('${id}',this.value)" onclick="event.stopPropagation()"></div>
-      <div class="apt-list">${menu}</div>
-    </div>
-  </div>`;
-}
-function aptToggle(id){
-  const el=document.getElementById(id); if(!el) return;
-  const wasOpen=el.classList.contains('open');
-  document.querySelectorAll('.apt-pick.open').forEach(p=>p.classList.remove('open'));
-  if(!wasOpen){ el.classList.add('open'); const s=el.querySelector('.apt-search'); if(s){ s.value=''; aptFilter(id,''); setTimeout(()=>s.focus(),0); } }
-}
-function aptFilter(id,q){
-  const el=document.getElementById(id); if(!el) return;
-  const t=String(q||'').trim().toLowerCase();
-  let shownInGrp={};
-  el.querySelectorAll('.apt-opt').forEach(o=>{
-    const hay=(o.dataset.search||'').toLowerCase();
-    const show=!t||hay.indexOf(t)>=0;
-    o.style.display=show?'':'none';
-  });
-  // 그룹 라벨: 그 그룹에 보이는 항목 없으면 숨김
-  el.querySelectorAll('.apt-grp-label').forEach(lab=>{
-    let n=lab.nextElementSibling, any=false;
-    while(n && n.classList.contains('apt-opt')){ if(n.style.display!=='none'){any=true;break;} n=n.nextElementSibling; }
-    lab.style.display=any?'':'none';
-  });
-  // 빈 결과 메시지
-  let empty=el.querySelector('.apt-empty');
-  const anyVisible=[...el.querySelectorAll('.apt-opt')].some(o=>o.style.display!=='none');
-  if(!anyVisible){ if(!empty){ empty=document.createElement('div'); empty.className='apt-empty'; empty.textContent='검색 결과 없음'; el.querySelector('.apt-list').appendChild(empty);} empty.style.display=''; }
-  else if(empty) empty.style.display='none';
-}
-function aptSelect(id,code,kor,onpick,ctx){
-  const el=document.getElementById(id); if(!el) return;
-  el.classList.remove('open');
-  const val=el.querySelector('.apt-val'); if(val){ val.textContent=aptLabel(kor); val.classList.remove('ph'); }
-  el.querySelectorAll('.apt-opt').forEach(o=>o.classList.toggle('sel', o.dataset.code===code && o.dataset.kor===kor));
-  if(onpick && typeof window[onpick]==='function') window[onpick](code,kor,ctx);
-}
-/* 바깥 클릭 시 열린 콤보 닫기 */
-document.addEventListener('click',function(e){
-  if(!e.target.closest('.apt-pick')) document.querySelectorAll('.apt-pick.open').forEach(p=>p.classList.remove('open'));
-});
-/* ── 다중 선택 공항 콤보박스 (출발 공항용) ──
-   value: "인천 / 김해" 형태 문자열. onpick(valStr, ctx) 호출 */
-function aptMultiHTML(opts){
-  const {value='', onpick, ctx='', placeholder='출발 공항 선택', width=190}=opts;
-  const id='aptm'+(++_aptUID);
-  const sels=String(value||'').split('/').map(s=>s.trim()).filter(Boolean);
-  let menu='';
-  // 출발은 국내 위주지만 전체 그룹 노출(해외 출발 대비)
-  for(const [g,list] of Object.entries(AIRPORT_OPTS)){
-    menu+=`<div class="apt-grp-label">${g}</div>`;
-    menu+=list.map(([kor,code])=>{
-      const on=sels.includes(kor)?' sel':'';
-      return `<div class="apt-opt${on}" data-kor="${kor}" data-code="${code}" data-search="${kor} ${code}"
-        onmousedown="event.preventDefault();aptMultiToggle('${id}','${kor}','${onpick||''}','${ctx}')">
-        <span>${kor}</span><span style="display:flex;gap:8px;align-items:center"><span class="apt-opt-code">${code}</span><span class="apt-chk">✓</span></span></div>`;
-    }).join('');
-  }
-  return `<div class="apt-pick" id="${id}" style="width:${width}px" data-onpick="${onpick||''}" data-ctx="${ctx}" data-sels="${sels.join('/')}">
-    <div class="apt-trigger" onclick="aptToggle('${id}')">
-      <span class="apt-val">${aptMultiChips(sels)||'<span class="ph" style="color:var(--text3)">'+placeholder+'</span>'}</span><span class="apt-caret">▼</span>
-    </div>
-    <div class="apt-menu">
-      <div class="apt-search-wrap"><input class="apt-search" type="text" placeholder="검색 (인천·ICN)" oninput="aptFilter('${id}',this.value)" onclick="event.stopPropagation()"></div>
-      <div class="apt-list">${menu}</div>
-    </div>
-  </div>`;
-}
-function aptMultiChips(sels){
-  if(!sels.length) return '';
-  return '<span class="apt-chips">'+sels.map(s=>`<span class="apt-chip">${s}</span>`).join('')+'</span>';
-}
-function aptMultiToggle(id,kor,onpick,ctx){
-  const el=document.getElementById(id); if(!el) return;
-  let sels=String(el.dataset.sels||'').split('/').map(s=>s.trim()).filter(Boolean);
-  if(sels.includes(kor)) sels=sels.filter(s=>s!==kor); else sels.push(kor);
-  el.dataset.sels=sels.join('/');
-  // 트리거 칩 갱신
-  const val=el.querySelector('.apt-val');
-  if(val) val.innerHTML=aptMultiChips(sels)||'<span class="ph" style="color:var(--text3)">출발 공항 선택</span>';
-  // 옵션 선택 표시 갱신
-  el.querySelectorAll('.apt-opt').forEach(o=>o.classList.toggle('sel', sels.includes(o.dataset.kor)));
-  const valStr=sels.join(' / ');
-  if(onpick && typeof window[onpick]==='function') window[onpick](valStr,ctx);
-}
 /* 출발지 표기에 대응하는 검색 토큰들(한글명 + 코드, 양방향) */
 function originSearchTokens(s){
   const raw=String(s||'').trim(); if(!raw) return '';
@@ -2594,13 +2422,7 @@ function renderAccom(){
     const rs=accomTeams.filter(t=>t.accom===a);
     if(!rs.length) return '';
     const pax=rs.reduce((s,t)=>s+t.pax,0);
-    // 시내 호텔이면 실제 호텔명 입력 현황 병기
-    let sub='';
-    if(isCityHotel(a)){
-      const filled=rs.filter(t=>actualHotelOf(t)).length;
-      sub=`<div style="font-size:10px;color:${filled===rs.length?'var(--green2)':'var(--orange,#D97706)'};margin-top:2px">실제 호텔명 ${filled}/${rs.length} 입력</div>`;
-    }
-    return `<div class="sum-box"><div class="sum-label">${a}</div><div class="sum-val">${rs.length}건 · ${pax}명</div>${sub}</div>`;
+    return `<div class="sum-box"><div class="sum-label">${a}</div><div class="sum-val">${rs.length}건 · ${pax}명</div></div>`;
   }).filter(Boolean).join('');
   document.getElementById('accom-summary').innerHTML=boxes;
   // 숙소별 그룹핑 테이블
@@ -2621,7 +2443,7 @@ function renderAccom(){
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
-      <td>${accomTag(t.accom)}${cityHotelCell(t)}</td>
+      <td>${accomTag(t.accom)}</td>
       <td>${t.roomType||'-'}</td>
       <td class="center">${t.period}</td>
       <td class="num">${t.pax}</td>
@@ -2632,17 +2454,6 @@ function renderAccom(){
     return header+headRow+paxAccordionRows(t,'accom',ACCOM_HDR.length);
   }).join('');
   attachTopScrollbars();
-}
-/* 시내 호텔이면 숙소 칸 아래에 실제 호텔명 입력칸. 그 외 숙소는 빈 문자열 */
-function cityHotelCell(t){
-  if(!isCityHotel(t.accom)) return '';
-  const v=actualHotelOf(t).replace(/"/g,'&quot;');
-  return `<div class="city-hotel-wrap">
-    <span class="city-hotel-lab">실제 호텔명</span>
-    <input class="city-hotel-input" type="text" value="${v}" placeholder="예: ANA홀리데이인"
-      onchange="updateActualHotel('${t.eventSeq}',this.value)"
-      onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
-  </div>`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2794,31 +2605,6 @@ function pkgPresetFor(accom, nights){
 /* 팀별 검증 보정값 (엔화기타·원화기타) */
 let vAdjust={};
 const STORE_VADJ='mt_notify_vAdjust';
-
-/* ── 시내 호텔 실제 호텔명 (행사별) ──
-   시내 호텔처럼 행사마다 실제 숙소가 바뀌는 묶음형 상품에서, 그 행사에 실제로 잡힌
-   호텔명을 eventSeq 단위로 보관. 확정서·안내문이 hotelLabelFor(t)로 읽어간다. */
-let docHotelName={};
-const STORE_DOC_HOTEL='mt_doc_hotelName';
-function loadDocHotelName(){ try{ docHotelName=JSON.parse(localStorage.getItem(STORE_DOC_HOTEL)||'{}'); }catch(e){ docHotelName={}; } }
-function saveDocHotelName(){ try{ localStorage.setItem(STORE_DOC_HOTEL,JSON.stringify(docHotelName)); }catch(e){} }
-/* 실제 호텔명 입력칸을 띄울 대상인지: 현재는 "시내" 포함 숙소만. 추후 이 한 줄만 확장 */
-function isCityHotel(accom){ return !!accom && String(accom).indexOf('시내')>=0; }
-/* 행사에 입력된 실제 호텔명 (없으면 '') */
-function actualHotelOf(t){ return (docHotelName[t.eventSeq]||'').trim(); }
-/* 확정서·안내문용 최종 숙소 표기. 시내 호텔 + 실제 호텔명 입력 시 "미야자키 시내 호텔 (ANA홀리데이인)" */
-function hotelLabelFor(t){
-  const base=t.accom||'';
-  if(isCityHotel(base)){ const h=actualHotelOf(t); if(h) return `${base} (${h})`; }
-  return base;
-}
-/* 실제 호텔명 입력 → 저장 + 숙소 정보 표 갱신 */
-function updateActualHotel(seq, val){
-  const v=String(val||'').trim();
-  if(v) docHotelName[seq]=v; else delete docHotelName[seq];
-  saveDocHotelName();
-  if(typeof showToast==='function') showToast(v?`실제 호텔명 저장: ${v}`:'실제 호텔명 비움');
-}
 
 const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','패키지가(1인)','예상 판매금액','실제 판매금액','차액','상태'];
 function renderVerify(){
@@ -3865,7 +3651,6 @@ const RESORT_DEFAULTS=[
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', arrCode:'KUL', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  insCompany:'DB손해보험', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
   airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
@@ -3910,8 +3695,6 @@ function loadResortMaster(){
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
-  // 보험사는 DB손해보험 고정
-  commonMaster.insCompany='DB손해보험';
   // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
   if(!localStorage.getItem('mt_notify_airfareCodeMigrated')){
     (commonMaster.airfares||[]).forEach(a=>{
@@ -3928,7 +3711,7 @@ function saveResortMaster(){
   try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
 }
 function resetResortMaster(){
-  if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·보험·보유블록 정보가 사라집니다)')) return;
+  if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·항공요금·보유블록 정보가 사라집니다)')) return;
   resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])]}));
   commonMaster={...COMMON_DEFAULTS};
   saveResortMaster();
@@ -4107,10 +3890,15 @@ function renderResortMaster(){
               <input class="rm-input text" style="width:170px" type="text" value="${(r.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박"
                 onchange="updateResort('${r.key}','depart',this.value,this)"></div>
             <div class="rm-row"><label>출발 공항</label>
-              ${aptMultiHTML({value:r.airOut||'', onpick:'rmPickAirOut', ctx:r.key, width:185})}</div>
+              <input class="rm-input text" style="width:170px" type="text" value="${(r.airOut||'').replace(/"/g,'&quot;')}" placeholder="예: 인천 / 김해"
+                onchange="updateResort('${r.key}','airOut',this.value,this)"></div>
             <div class="rm-row"><label>도착 공항</label>
-              ${aptComboHTML({value:r.arrCode||r.airIn||'', groups:{'일본 도착':AIRPORT_OPTS['일본 도착'],'해외 도착':AIRPORT_OPTS['해외 도착']}, onpick:'rmPickAirIn', ctx:r.key, placeholder:'도착 공항 선택', width:170})}</div>
-            <div class="rm-hint">도착 공항을 고르면 한글 표기와 요금 도착코드(IATA)가 함께 저장됩니다. 벳푸=후쿠오카(FUK), 이바라키=나리타(NRT), 나가노=니가타(KIJ)처럼 지역과 공항이 다른 상품은 실제 이용 공항을 선택하세요.</div>
+              <input class="rm-input text" style="width:170px" type="text" value="${(r.airIn||'').replace(/"/g,'&quot;')}" placeholder="예: 구마모토"
+                onchange="updateResort('${r.key}','airIn',this.value,this)"></div>
+            <div class="rm-row"><label>요금 도착코드</label>
+              <input class="rm-input text" style="width:90px;text-transform:uppercase;font-family:var(--mono)" type="text" value="${(r.arrCode||'').replace(/"/g,'&quot;')}" placeholder="KMJ"
+                onchange="updateResort('${r.key}','arrCode',this.value,this)" title="항공요금 검증에 쓰이는 도착공항 IATA 코드. 벳푸=FUK, 이바라키=NRT, 나가노=KIJ 등"></div>
+            <div class="rm-hint">요금 도착코드: 항공요금 테이블 매칭용 공항 코드(벳푸→FUK, 이바라키→NRT, 나가노→KIJ).</div>
           </div>
           <div class="rm-group">
             <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
@@ -4137,21 +3925,6 @@ function renderResortMaster(){
 
   // 공통 마스터
   document.getElementById('common-master').innerHTML=`<div class="cm-box">
-      <div class="cm-box-title">🛡️ 여행자보험</div>
-      <div class="rm-row"><label>보험사</label>
-        <div class="rm-fixed-val">DB손해보험<span class="rm-fixed-tag">고정</span></div></div>
-      <div class="rm-row"><label>상품명</label>
-        <input class="rm-input text" type="text" value="${(commonMaster.insProduct||'').replace(/"/g,'&quot;')}" placeholder="상품명"
-          onchange="updateCommon('insProduct',this.value,this)"></div>
-      <div class="rm-row"><label>1인 보험료</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${commonMaster.insFee?Number(commonMaster.insFee).toLocaleString():''}" placeholder="0"
-          onchange="updateCommon('insFee',this.value,this)"><span class="rm-unit">원</span></div></div>
-      <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:5px">
-        <label>보장 한도</label>
-        <input class="rm-input wide" type="text" value="${(commonMaster.insCover||'').replace(/"/g,'&quot;')}" placeholder="보장 한도 메모"
-          onchange="updateCommon('insCover',this.value,this)"></div>
-    </div>
-  <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시 환율</span></div>
     <div id="monthly-rate-rows"></div>
     <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
@@ -4171,10 +3944,8 @@ function renderResortMaster(){
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
       <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
       <input class="rm-input text" id="af-airline" placeholder="항공사(TW)" style="width:80px">
-      ${aptComboHTML({value:'', onpick:'afPickOrigin', placeholder:'출발지', width:120})}
-      ${aptComboHTML({value:'', groups:{'일본 도착':AIRPORT_OPTS['일본 도착'],'해외 도착':AIRPORT_OPTS['해외 도착']}, onpick:'afPickDest', placeholder:'도착지', width:120})}
-      <input type="hidden" id="af-origin">
-      <input type="hidden" id="af-dest">
+      <input class="rm-input text" id="af-origin" placeholder="출발지(ICN·인천)" style="width:95px">
+      <input class="rm-input text" id="af-dest" placeholder="도착지(KMJ·구마모토)" style="width:105px">
       <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:55px">
       <input class="rm-input text" id="af-flightout" placeholder="출국편(TW295)" style="width:95px" onchange="afAutoReturn()">
       <input class="rm-input text" id="af-flightin" placeholder="귀국편(TW296)" style="width:95px">
@@ -4267,9 +4038,6 @@ function renderAirfares(){
       '</tbody></table></div>'
     : '<div class="muted" style="font-size:11px">등록된 항공요금이 없습니다.</div>';
 }
-/* 항공요금 입력 출발지·도착지 콤보 선택 → hidden input에 코드 저장 */
-function afPickOrigin(code){ const el=document.getElementById('af-origin'); if(el) el.value=code; }
-function afPickDest(code){ const el=document.getElementById('af-dest'); if(el) el.value=code; }
 /* 출국편 입력 시 귀국편 자동 (예: TW295 → TW296, 끝 숫자 +1). 귀국편이 비어있을 때만 */
 function afAutoReturn(){
   const out=document.getElementById('af-flightout').value.trim();
@@ -4289,7 +4057,7 @@ function addAirfare(){
   const tripType=document.getElementById('af-trip').value;
   const fare=num(document.getElementById('af-fare').value);
   const cost=num(document.getElementById('af-cost').value);
-  if(!month||!originRaw||!destRaw||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다. (출발지·도착지는 목록에서 선택)'); return; }
+  if(!month||!originRaw||!destRaw||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다.'); return; }
   // 입력값 정규화: 항공사→코드(TW), 출발지·도착지→IATA 코드(ICN·KMJ)
   const airline=(airlineCode(airlineRaw)||airlineRaw.toUpperCase());
   const origin=airportCode(originRaw);
@@ -4307,19 +4075,6 @@ function addAirfare(){
   saveResortMaster(); renderAirfares();
   if(typeof renderSettleAll==='function' && teams.length) renderSettleAll();
   ['af-airline','af-origin','af-dest','af-nights','af-flightout','af-flightin','af-fare','af-cost'].forEach(id=>document.getElementById(id).value='');
-  afResetCombos();
-}
-/* 항공요금 입력 콤보 2개를 빈 상태로 리셋 (추가 후) */
-function afResetCombos(){
-  const formRow=document.getElementById('af-month')?.closest('div');
-  if(!formRow) return;
-  formRow.querySelectorAll('.apt-pick').forEach(p=>{
-    p.classList.remove('open');
-    const trig=p.querySelector('.apt-trigger');
-    const val=p.querySelector('.apt-val');
-    if(val){ val.classList.add('ph'); val.textContent=(trig&&trig.dataset.ph)||''; }
-    p.querySelectorAll('.apt-opt.sel').forEach(o=>o.classList.remove('sel'));
-  });
 }
 function delAirfare(i){
   const a=commonMaster.airfares[i];
@@ -4371,24 +4126,6 @@ function flashSaved(el, resortKey){
     if(s){ s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1200); }
   }
 }
-/* 출발 공항 다중 선택 → airOut("인천 / 김해") 저장 */
-function rmPickAirOut(valStr, key){
-  const r=resortMaster.find(x=>x.key===key); if(!r) return;
-  const before=r.airOut||''; r.airOut=valStr;
-  logChange(r.name,'출발지',before,valStr);
-  saveResortMaster();
-  if(blkParsed) blkRenderDepart();
-}
-/* 도착 공항 선택 → airIn(한글) + arrCode(IATA) 동시 저장 */
-function rmPickAirIn(code, kor, key){
-  const r=resortMaster.find(x=>x.key===key); if(!r) return;
-  const beforeIn=r.airIn||'', beforeCode=r.arrCode||'';
-  r.airIn=kor; r.arrCode=code;
-  if(beforeIn!==kor) logChange(r.name,'도착지',beforeIn,kor);
-  if(beforeCode!==code) logChange(r.name,'도착공항',beforeCode,code);
-  saveResortMaster();
-  if(blkParsed) blkRenderDepart();
-}
 function updateResort(key, field, val, el){
   const r=resortMaster.find(x=>x.key===key); if(!r) return;
   const textFields=['memo','depart','airOut','airIn','arrCode'];
@@ -4438,9 +4175,9 @@ function updateResort(key, field, val, el){
   if((field==='depart'||field==='airOut'||field==='airIn') && blkParsed) blkRenderDepart();
 }
 function updateCommon(field, val, el){
-  const cLabel={insCompany:'보험사',insProduct:'보험상품',insFee:'보험료',insCover:'보장내용',mgmtKRW:'회원관리비(원)'};
+  const cLabel={mgmtKRW:'회원관리비(원)'};
   const before=commonMaster[field];
-  if(['insFee','mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
+  if(['mgmtKRW'].includes(field)){ commonMaster[field]=num(val); if(el) el.value=commonMaster[field]?Number(commonMaster[field]).toLocaleString():''; }
   else commonMaster[field]=val;
   logChange('공통', cLabel[field]||field, before, commonMaster[field]);
   saveResortMaster();
@@ -4455,7 +4192,6 @@ function savePersist(){
 function loadPersist(){
   try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insExclude={}; vAdjust={}; editOverrides={}; }
   try{ settleAdjust=JSON.parse(localStorage.getItem(STORE_SETTLE)||'{}'); settleDed=JSON.parse(localStorage.getItem(STORE_SETTLE_DED)||'[]'); }catch(e){ settleAdjust={}; settleDed=[]; }
-  loadDocHotelName();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4473,23 +4209,6 @@ function gotoSection(name){
   setTimeout(()=>{ try{ attachTopScrollbars(); }catch(e){} }, 50);
 }
 
-/* ⑦ 확정서 생성 — 문서 종류 선택 (1단계: UI만) */
-var _docKind='confirm';
-function docPickKind(kind){
-  _docKind=kind;
-  document.querySelectorAll('.doc-kind').forEach(b=>{
-    const on=b.dataset.kind===kind;
-    b.classList.toggle('active',on);
-    b.className=(on?'btn-primary':'btn-ghost')+' doc-kind'+(on?' active':'');
-  });
-  const desc={
-    quote:'견적서: 요금 안내 중심. 예약 확정 전 단계에 보냅니다.',
-    itinerary:'일정표: 요금·계좌를 제외하고 항공·일정·안내사항만 포함합니다.',
-    confirm:'확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.'
-  };
-  const el=document.getElementById('doc-kind-desc');
-  if(el) el.textContent=desc[kind]||'';
-}
 function resetAll(){
   if(!confirm('업로드한 파일과 분석 결과를 모두 초기화할까요?\n(팀 지정·발권 체크는 유지됩니다)')) return;
   location.reload();
@@ -5630,15 +5349,135 @@ setTimeout(attachTopScrollbars, 300);
 
 
 
+/* ════════ ⑦ 확정서 생성 — v7 인터랙티브 HTML (대시보드 통합) ════════ */
+
+/* 상품 마스터 16종 */
+
+const MASTER = {"벳푸 아키바 리조트 2색 골프투어": {"arrival_airport": "후쿠오카공항", "arrival_url": "https://www.fukuoka-airport.jp/", "hotel_name": "아키바 리조트", "golf_name": "벳푸CC", "lodge": {"name_en": "AKIBA RESORT", "zip": "874-0943", "addr": "14-24 Kusunokimachi, Beppu, Oita", "tel": "+81-977-27-8839"}, "meeting": "후쿠오카 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구로 나오시면 \"야마나미 벳푸 골프투어\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "고현상 대리 +81 80-9705-6409", "extra_cost": ["※ 아래 금액은 원화(KRW) 기준으로 메리트투어에 사전 결제되는 금액입니다.", "※ 현지에서는 별도의 추가요금이 발생하지 않습니다. (중식 초과 금액 등 개인 이용분 제외)", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "2인 플레이 시 2백 추가 요금 안내", "- 평일 : 1인/1박 당 ¥1,100 추가", "- 주말 및 일본공휴일 : 1인/1박 당 ¥2,200 추가", "공휴요금 : 1인/1박 당 ¥5,000 추가", "(투어 일정 중 일본 공휴일이 있을 경우 적용)", "※ 골프장 중식은 1인 ¥1,100까지 이용 가능합니다.", "초과 금액은 현지에서 엔화로 별도 결제하셔야 합니다.", "■ [아키바리조트]", "객실, 식사, 주변 맛집을 포함한 종합 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW207", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW207' 확인 부탁드립니다.", "후쿠오카공항 도착, 입국 수속 후 숙소로 이동(2시간 소요)", "체크인 후 휴식"], "golf": "", "hotel": "아키바 리조트", "meals": {"석식": "도시락"}}, {"day": 2, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "아키바 리조트", "meals": {"조식": "뷔페식", "중식": "클럽식", "석식": "불포함"}}, {"day": 3, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "아키바 리조트", "meals": {"조식": "뷔페식", "중식": "클럽식", "석식": "불포함"}}, {"day": 4, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "아키바 리조트", "meals": {"조식": "뷔페식", "중식": "클럽식", "석식": "불포함"}}, {"day": 5, "desc": ["체크아웃 후 아침식사, 골프장으로 이동", "오기야마CC 18홀 플레이 후 후쿠오카 공항으로 이동(이동 중 휴게소 경유)", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "뷔페식", "중식": "클럽식"}}]}, "스가다이라 그린CC 골프 투어": {"arrival_airport": "니가타공항 (나가노 이용)", "arrival_url": "https://www.niigata-airport.gr.jp/", "hotel_name": "스가다이라 고원 온천호텔", "golf_name": "스가다이라 그린CC", "lodge": {"name_en": "SUGADAIRA GREENGOLF CLUB", "zip": "386-2211", "addr": "MINENOHARA3153, NIREI-MACHI, SUZAKA, NAGANO, JAPAN", "tel": "+81-268-74-2450"}, "meeting": "니가타 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “스가다이라” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": [], "itinerary": [{"day": 1, "desc": ["인천공항 제2터미널 3층 출국장 , 대한항공 카운터 개별 수속", "출국 수속 완료 후 출발", "니가타공항 도착, 입국 수속 후 관광지로 이동", "이동 중 고속도로 휴게소(세븐일레븐)에서 간단한 휴식 (노지리 호수까지 약 1시간 30분 소요)", "묘고(妙高)산(2,454m) 차창 관광 및 노지리(野尻) 호수 둘레길 산책", "현지 슈퍼마켓 및 약국 쇼핑", "스가다이라 그린CC로 이동 (약 40분 소요)", "나가노", "스가다이라 그린CC 에서 저녁식사 후 숙소에서 휴식"], "golf": "", "hotel": "스가다이라 고원 온천호텔", "meals": {"중식": "기내식", "석식": "클럽식"}}, {"day": 2, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 3, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 4, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 5, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 6, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 7, "desc": ["나가노", "숙소에서 골프장으로 이동(15분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 고원 온천호텔", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 8, "desc": ["나가노", "체크아웃 후 고원 온천호텔 에서 아침식사(샌드위치 제공)", "니가타 공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "간편식"}}]}, "스가다이라 그린CC 골프 투어 맨션형 숙소": {"arrival_airport": "니가타공항 (나가노 이용)", "arrival_url": "https://www.niigata-airport.gr.jp/", "hotel_name": "스가다이라 맨션형 숙소", "golf_name": "스가다이라 그린CC", "lodge": {"name_en": "SUGADAIRA GREENGOLF CLUB", "zip": "386-2211", "addr": "MINENOHARA3153, NIREI-MACHI, SUZAKA, NAGANO, JAPAN", "tel": "+81-268-74-2450"}, "meeting": "니가타 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “스가다이라” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": [], "itinerary": [{"day": 1, "desc": ["인천공항 제2터미널 3층 출국장 , 대한항공 카운터 개별 수속", "출국 수속 완료 후 출발", "니가타공항 도착, 입국 수속 후 관광지로 이동", "이동 중 고속도로 휴게소(세븐일레븐)에서 간단한 휴식 (노지리 호수까지 약 1시간 30분 소요)", "묘고(妙高)산(2,454m) 차창 관광 및 노지리(野尻) 호수 둘레길 산책", "현지 슈퍼마켓 및 약국 쇼핑", "스가다이라 그린CC로 이동 (약 40분 소요)", "나가노", "스가다이라 그린CC 에서 저녁식사 후 숙소에서 휴식"], "golf": "", "hotel": "스가다이라 맨션형 숙소", "meals": {"중식": "기내식", "석식": "클럽식"}}, {"day": 2, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 3, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 4, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 5, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 6, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 7, "desc": ["나가노", "숙소에서 골프장으로 이동(25분 소요) 아침식사 후 라운딩", "스가다이라 그린CC 전 일정 18홀 + 9홀(서비스) 라운딩", "골프 라운딩 후 저녁식사", "숙소로 이동 및 휴식"], "golf": "스가다이라 그린CC", "hotel": "스가다이라 맨션형 숙소", "meals": {"조식": "클럽식", "중식": "클럽식", "석식": "클럽식"}}, {"day": 8, "desc": ["나가노", "체크아웃 후 스가다이라 맨션 에서 아침식사(샌드위치 제공)", "니가타 공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "간편식"}}]}, "시즈노야도 료칸 골프 투어": {"arrival_airport": "구마모토공항", "arrival_url": "https://www.kumamoto-airport.co.jp/", "hotel_name": "시즈노야도 료칸", "golf_name": "아소 야마나미CC", "lodge": {"name_en": "SHIZUNOYADO RYOKAN", "zip": "869-2402", "addr": "62321 Manganji, Minamioguni-machi, Aso-gun, Kumamoto", "tel": "+81-967-25-2332"}, "meeting": "구마모토 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “야마나미” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "싱글/단독 사용 : 1인/1박 당 ¥4,400 추가", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "전기카트 사전 예약 : 1박 1대 ¥2,000 추가 : 전기 카트 사전 예약 안내(상세)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 저녁 메뉴 및 특별 메뉴 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제 1터미널 3층 출국장 , 티웨이항공 카운터 개별수속", "출국 수속 완료 후 출발", "구마모토 공항 도착", "입국 수속 후 아소 야마나미CC 로 이동(1시간 소요)", "점심식사 후 17시 50분까지 라운딩(최대 18홀까지 플레이)", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "라운딩 종료 후 시즈노야도 료칸 으로 이동", "저녁식사 후 휴식"], "golf": "", "hotel": "시즈노야도 료칸", "meals": {"중식": "카츠카레", "석식": "료칸 석식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "시즈노야도 료칸", "meals": {"조식": "료칸 조식", "중식": "클럽식", "석식": "료칸 석식"}}, {"day": 8, "desc": ["체크아웃 후 야마나미리조트 에서 아침 식사", "구마모토 공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "구마모토 시내 호텔 + 3색 골프": {"arrival_airport": "구마모토공항", "arrival_url": "https://www.kumamoto-airport.co.jp/", "hotel_name": "구마모토 시내 호텔", "golf_name": "그랜드챔피언CC, 히고선밸리CC, 중앙CC 외 동급 골프장 랜덤 배정", "lodge": {"name_en": "SOTETSU GRAND FRESA HOTEL", "zip": "860-0807", "addr": "2 Chome-2-23 Shimotori, Chuo Ward, Kumamoto", "tel": "+81-96-353-0203"}, "meeting": "구마모토 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 \"구마모토 시티\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 추가요금 금액 입니다.", "싱글/단독 사용 : 1인/1박 당 추가 ￦35,000"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW287", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW287' 확인 부탁드립니다.", "구마모토공항 도착, 입국 수속 후 골프장으로 이동", "골프 라운딩 후 호텔로 이동 (일몰 플레이)", "체크인 후 저녁식사 및 휴식"], "golf": "그랜드챔피언CC, 히고선밸리CC, 중앙CC 외 동급 골프장 랜덤 배정", "hotel": "구마모토 시내 호텔", "meals": {"중식": "클럽식", "석식": "불포함"}}, {"day": 2, "desc": ["조식 후 골프장으로 이동", "❑ 18홀 라운딩", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "그랜드챔피언CC, 히고선밸리CC, 중앙CC 외 동급 골프장 랜덤 배정", "hotel": "구마모토 시내 호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "불포함"}}, {"day": 3, "desc": ["조식 후 골프장으로 이동", "❑ 18홀 라운딩", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "그랜드챔피언CC, 히고선밸리CC, 중앙CC 외 동급 골프장 랜덤 배정", "hotel": "구마모토 시내 호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "불포함"}}, {"day": 4, "desc": ["조식 후 골프장으로 이동", "❑ 18홀 라운딩", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "그랜드챔피언CC, 히고선밸리CC, 중앙CC 외 동급 골프장 랜덤 배정", "hotel": "구마모토 시내 호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "불포함"}}, {"day": 5, "desc": ["조식 후 체크아웃", "구마모토공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "야마나미CC 골프 투어 장기숙박형 별장전용": {"arrival_airport": "구마모토공항", "arrival_url": "https://www.kumamoto-airport.co.jp/", "hotel_name": "쿠주힐즈", "golf_name": "아소 야마나미CC", "lodge": {"name_en": "ASO YAMANAMI RESORT HOTEL GOLF CLUB", "zip": "869-2702", "addr": "630 Ori, Ubuyama, Aso District, Kumamoto", "tel": "+81-967-25-2331"}, "meeting": "구마모토 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “야마나미” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "싱글/단독 사용 : 1인/1박 당 ¥3,300 추가", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "전기카트 사전 예약 : 1박 1대 ¥2,000 추가 : 전기 카트 사전 예약 안내(상세)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 저녁 메뉴 및 특별 메뉴 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제 1터미널 3층 출국장 , 티웨이항공 카운터 개별수속", "출국 수속 완료 후 출발", "구마모토 공항 도착", "입국 수속 후 숙소로 이동(1시간 소요)", "점심식사 후 17시 50분까지 라운딩(최대 18홀까지 플레이)", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "라운딩 종료 후 장기숙박별장 으로 이동", "저녁식사 후 휴식"], "golf": "", "hotel": "쿠주힐즈", "meals": {"중식": "카츠카레", "석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "쿠주힐즈", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 야마나미리조트에서 아침 식사", "구마모토 공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "야마나미CC 골프 투어 호텔 소형트윈 숙박": {"arrival_airport": "구마모토공항", "arrival_url": "https://www.kumamoto-airport.co.jp/", "hotel_name": "아소 야마나미 골프텔", "golf_name": "아소 야마나미CC", "lodge": {"name_en": "ASO YAMANAMI RESORT HOTEL GOLF CLUB", "zip": "869-2702", "addr": "630 Ori, Ubuyama, Aso District, Kumamoto", "tel": "+81-967-25-2331"}, "meeting": "구마모토 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “야마나미” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "전기카트 사전 예약 : 1박 1대 ¥2,000 추가 : 전기 카트 사전 예약 안내(상세)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 저녁 메뉴 및 특별 메뉴 안내 (상세)"], "itinerary": [{"day": 1, "desc": ["부산/김해", "김해국제공항 2층 출국장 , 이스타항공 카운터 개별수속", "출국 수속 완료 후 출발", "구마모토공항 도착", "※숙소로 이동 중 슈퍼마켓 1회 경유(대형버스 진입 가능 장소에 한함)", "야마나미리조트 도착", "저녁식사 후 휴식"], "golf": "", "hotel": "아소 야마나미 골프텔", "meals": {"석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※ 주말(토, 일) 중 1일은 추가 9홀(총 27홀)을 제공합니다.", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "아소 야마나미CC", "hotel": "아소 야마나미 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 야마나미리조트에서 아침 식사, 9홀 라운딩 진행", "구마모토 공항으로 이동", "출국 수속 완료 후 출발", "부산/김해", "김해국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식", "중식": "클럽식"}}]}, "포틴힐즈CC 골프 투어 호텔 트윈 숙박": {"arrival_airport": "중부국제공항(센트레아, 나고야)", "arrival_url": "https://www.centrair.jp/", "hotel_name": "포틴힐즈CC 골프텔", "golf_name": "포틴힐즈CC", "lodge": {"name_en": "Fourteen Hills Country Club", "zip": "509-7322", "addr": "1511-456 Iinuma, Nakatsugawa, Gifu", "tel": "+81-573-64-9414"}, "meeting": "나고야 중부국제공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 출구로 나오시면 “포틴힐즈” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "패밀리룸(4인 1실 기준)", "→ 2인 이하 이용 시 1인 ¥2,200 추가", "(3인 이용 시 추가요금 없음)", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 점심, 저녁 메뉴 및 특별 메뉴 안내(상세)", "체류일 중식: 화, 목, 일 단품메뉴 제공 / 그 외 뷔페식 제공"], "itinerary": [{"day": 1, "desc": ["인천공항 제 2터미널 3층 출국장 , 아시아나항공 카운터 개별수속", "출국 수속 완료 후 출발", "나고야 중부국제공항 도착, 입국 수속 후 숙소로 이동(약 2시간 소요, 이동 중 휴게소 1회 경유)", "점심식사 후 9홀 또는 일몰 라운딩 진행", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "저녁식사 후 휴식"], "golf": "", "hotel": "포틴힐즈CC 골프텔", "meals": {"중식": "간편식(샌드위치)", "석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 아침식사", "나고야 중부국제공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "포틴힐즈CC 골프 투어 호텔 패밀리룸 숙박": {"arrival_airport": "중부국제공항(센트레아, 나고야)", "arrival_url": "https://www.centrair.jp/", "hotel_name": "포틴힐즈CC 골프텔", "golf_name": "포틴힐즈CC", "lodge": {"name_en": "Fourteen Hills Country Club", "zip": "509-7322", "addr": "1511-456 Iinuma, Nakatsugawa, Gifu", "tel": "+81-573-64-9414"}, "meeting": "나고야 중부국제공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 출구로 나오시면 “포틴힐즈” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "패밀리룸(4인 1실 기준)", "→ 2인 이하 이용 시 1인 ¥2,200 추가", "(3인 이용 시 추가요금 없음)", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 점심, 저녁 메뉴 및 특별 메뉴 안내(상세)", "체류일 중식: 화, 목, 일 단품메뉴 제공 / 그 외 뷔페식 제공"], "itinerary": [{"day": 1, "desc": ["부산/김해", "김해국제공항 2층 출국장 , 진에어 카운터 개별수속", "출국 수속 완료 후 출발", "나고야 중부국제공항 도착, 입국 수속 후 숙소로 이동(약 2시간 소요, 이동 중 휴게소 1회 경유)", "점심식사 후 9홀 또는 일몰 라운딩 진행", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "저녁식사 후 휴식"], "golf": "", "hotel": "포틴힐즈CC 골프텔", "meals": {"중식": "간편식(샌드위치)", "석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 아침식사", "나고야 중부국제공항으로 이동", "출국 수속 완료 후 출발", "부산/김해", "김해국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "후쿠로다노타키CC 골프 투어": {"arrival_airport": "나리타공항", "arrival_url": "https://www.narita-airport.jp/", "hotel_name": "후쿠로다노타키CC 골프텔", "golf_name": "후쿠로다노타키CC", "lodge": {"name_en": "FUKURODANOTAKI GOLF CLUB", "zip": "319-3541", "addr": "19-9 Hatsubara, Daigo, Kuji District, Ibaraki, Japan", "tel": "+81-295-72-3000"}, "meeting": "나리타 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, B쪽 출구로 나오시면 오른쪽 스타벅스 앞에서 \"EWRC 후쿠로다노타키-야마나미 골프투어\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "구영구 팀장 +81 70-3052-9450", "extra_cost": ["※ 아래 금액은 원화(KRW) 기준으로 메리트투어에 사전 결제되는 금액입니다.", "※ 현지에서는 별도의 추가요금이 발생하지 않습니다.", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "2인 플레이 시 2백 추가 요금 안내", "- 평일 : 1인/1박 당 ¥1,100 추가", "- 주말 및 일본공휴일(3,4,7,8월) : 1인/1박 당 ¥2,200 추가", "- 주말 및 일본공휴일(5,6,9,10,11월) : 1인/1박 당 ¥4,400 추가"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 카운터 개별수속", "출국 수속 완료 후 출발", "나리타", "나리타국제공항 2터미널 도착, 입국 수속 후 숙소로 이동(약 2시간 30분 소요)", "숙소 도착 후 9홀 또는 일몰 라운드", "저녁식사 및 휴식"], "golf": "", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"중식": "간편식", "석식": "호텔식"}}, {"day": 2, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "후쿠로다노타키CC", "hotel": "후쿠로다노타키CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 나리타공항으로 이동 (이동 중 간편식 제공)", "나리타", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "간편식"}}]}, "시로사토CC 골프 투어": {"arrival_airport": "나리타공항", "arrival_url": "https://www.narita-airport.jp/", "hotel_name": "시로사토CC 골프텔", "golf_name": "시로사토CC", "lodge": {"name_en": "SHIROSATO GOLF CLUB", "zip": "311-4407", "addr": "436-1 Tokura, Shirosato, Higashiibaraki District, Ibaraki", "tel": "+81-296-88-3611"}, "meeting": "나리타 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, B쪽 출구로 나오시면 오른쪽 스타벅스 앞에서 \"EWRC 시로사토-야마나미 골프투어\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "이종호 팀장 +81 70-3052-9449", "extra_cost": ["※ 아래 금액은 원화(KRW) 기준으로 메리트투어에 사전 결제되는 금액입니다.", "※ 현지에서는 별도의 추가요금이 발생하지 않습니다.", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "2인 플레이 시 2백 추가 요금 안내", "- 평일 : 1인/1박 당 ¥1,100 추가", "- 주말 및 일본공휴일(3,4,7,8월) : 1인/1박 당 ¥2,200 추가", "- 주말 및 일본공휴일(5,6,9,10,11월) : 1인/1박 당 ¥4,400 추가"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW243", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW243' 확인 부탁드립니다.", "나리타", "나리타국제공항 2터미널 도착, 입국 수속 후 숙소로 이동 (약 1시간 30분 소요)", "※숙소 이동 중 이온몰 경유(간단한 식사 및 쇼핑)", "체크인 후 휴식"], "golf": "", "hotel": "시로사토CC 골프텔", "meals": {"중식": "불포함", "석식": "호텔식"}}, {"day": 2, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "시로사토CC", "hotel": "시로사토CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "시로사토CC", "hotel": "시로사토CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "시로사토CC", "hotel": "시로사토CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "시로사토CC", "hotel": "시로사토CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["조식 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본 공휴일 18홀 라운딩", "※이바라키 지역은 큐슈 지역보다 일몰 시간이 약 1시간 빠르므로, 주중에도 27홀 라운딩이 어려울 수 있습니다.", "저녁식사 및 휴식"], "golf": "시로사토CC", "hotel": "시로사토CC 골프텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["조식 후 체크아웃, 나리타공항으로 이동 / 귀국편명: TW242", "나리타", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "포틴힐즈CC 골프 투어 카라반 숙박": {"arrival_airport": "중부국제공항(센트레아, 나고야)", "arrival_url": "https://www.centrair.jp/", "hotel_name": "포틴힐즈CC 카라반", "golf_name": "포틴힐즈CC", "lodge": {"name_en": "Fourteen Hills Country Club", "zip": "509-7322", "addr": "1511-456 Iinuma, Nakatsugawa, Gifu", "tel": "+81-573-64-9414"}, "meeting": "나고야 중부국제공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 출구로 나오시면 “포틴힐즈” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "패밀리룸(4인 1실 기준)", "→ 2인 이하 이용 시 1인 ¥2,200 추가", "(3인 이용 시 추가요금 없음)", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 점심, 저녁 메뉴 및 특별 메뉴 안내(상세)", "체류일 중식: 화, 목, 일 단품메뉴 제공 / 그 외 뷔페식 제공"], "itinerary": [{"day": 1, "desc": ["인천공항 제 2터미널 3층 출국장 , 아시아나항공 카운터 개별수속", "출국 수속 완료 후 출발", "나고야 중부국제공항 도착, 입국 수속 후 숙소로 이동(약 2시간 소요, 이동 중 휴게소 1회 경유)", "점심식사 후 9홀 또는 일몰 라운딩 진행", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "저녁식사 후 휴식"], "golf": "", "hotel": "포틴힐즈CC 카라반", "meals": {"중식": "간편식(샌드위치)", "석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "골프 라운딩 후 휴식"], "golf": "포틴힐즈CC", "hotel": "포틴힐즈CC 카라반", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 아침식사", "나고야 중부국제공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "간지호텔 2색 골프 투어": {"arrival_airport": "구마모토공항", "arrival_url": "https://www.kumamoto-airport.co.jp/", "hotel_name": "간지호텔", "golf_name": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "lodge": {"name_en": "The Guernsey Hotel", "zip": "878-0201", "addr": "4028-1 Kujumachi Oaza Kuju, Taketa, Oita", "tel": "+81-974-76-0913"}, "meeting": "구마모토 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “야마나미” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["※ 아래 금액은 현지 엔화(JPY) 결제입니다.", "싱글/단독 사용 : 1인/1박 당 ¥4,400 추가", "■ 사전 신청 항목", "(출발일 기준 3일 전까지 신청)", "전기카트 사전 예약 : 1박 1대 ¥2,000 추가 : 전기 카트 사전 예약 안내(상세)", "저녁식사 특별 메뉴(바베큐, 후나모리 특선회 등) : 주간 저녁 메뉴 및 특별 메뉴 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW287", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW287' 확인 부탁드립니다.", "구마모토 공항 도착", "입국 수속 후 아소 야마나미CC 로 이동(1시간 소요)", "점심식사 후 17시 50분까지 라운딩(최대 18홀까지 플레이)", "※일몰 시간 및 현지 사정에 따라 라운딩 시간은 짧아질 수 있습니다.", "라운딩 종료 후 간지호텔 로 이동", "저녁식사 후 휴식."], "golf": "", "hotel": "간지호텔", "meals": {"중식": "카츠카레", "석식": "호텔식"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 3, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 4, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 5, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 6, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 7, "desc": ["아침식사 후 라운딩", "주중 18홀 + 9홀(서비스), 주말 및 일본공휴일 18홀 라운딩", "※ 주말(토, 일): 슈퍼마켓 및 온천 유료 셔틀 운행(현지 사정에 따라 취소될 수 있습니다)", "골프 라운딩 후 휴식"], "golf": "주중: 구주 고원CC / 주말 및 일본공휴일: 아소 야마나미CC", "hotel": "간지호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "호텔식"}}, {"day": 8, "desc": ["체크아웃 후 야마나미리조트 에서 아침 식사", "구마모토 공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식"}}]}, "미야자키 2색 골프투어": {"arrival_airport": "미야자키공항", "arrival_url": "", "hotel_name": "미야자키 시내 호텔", "golf_name": "레인보우CC", "lodge": {"name_en": "Miyazaki International Airport Country Club", "zip": "889-1702", "addr": "5189 Tanocho Oaza Oka, Miyazaki-shi, Miyazaki, Japan"}, "meeting": "미야자키 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “국제공항CC + 레인보우CC 골프투어” 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "", "extra_cost": ["싱글/단독 사용 : 1인 1박 ￦25,000 추가", "2인 플레이 시 2백 차지 적용 (주말 및 공휴일 적용 / 주중 X)", "국제공항CC 1인 ￦20,000 추가", "레인보우CC 1인 ￦10,000 추가"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제2터미널 출국장 , 아시아나항공 카운터 개별수속", "출국 수속 완료 후 출발", "미야자키공항 도착", "※숙소로 이동 중 크로스몰 경유(1인당 ￥1,500 지급)", "숙소 도착 후 휴식"], "golf": "", "hotel": "국제공항CC 골프텔", "meals": {"석식": "불포함"}}, {"day": 2, "desc": ["아침식사 후 라운딩", "❑ 국제공항CC 18홀 + 9홀(서비스) / 주말 및 일본 공휴일 18홀 라운딩", "골프라운딩 및 휴식"], "golf": "국제공항CC", "hotel": "국제공항CC 골프텔", "meals": {"조식": "호텔식", "중식": "불포함", "석식": "호텔식"}}, {"day": 3, "desc": ["아침 식사 후 라운딩", "❑ 국제공항CC 18홀 라운딩", "라운딩 후 미야자키 시내로 이동", "석식 후 휴식 (※특식의 경우 현지 상황에 따라 변동될 수 있음)"], "golf": "국제공항CC", "hotel": "미야자키 시내 호텔", "meals": {"조식": "호텔식", "중식": "불포함", "석식": "특식"}}, {"day": 4, "desc": ["아침식사 후 레인보우CC로 이동", "❑ 레인보우CC 18홀 + 9홀 (서비스) / 주말 및 일본 공휴일 18H 라운딩", "미야자키 시내에서 개별식사 후 휴식"], "golf": "레인보우CC", "hotel": "미야자키 시내 호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "불포함"}}, {"day": 5, "desc": ["아침식사 후 레인보우CC로 이동", "❑ 레인보우CC 18홀 + 9홀 (서비스) / 주말 및 일본 공휴일 18H 라운딩", "미야자키 시내에서 개별식사 후 휴식"], "golf": "레인보우CC", "hotel": "미야자키 시내 호텔", "meals": {"조식": "호텔식", "중식": "클럽식", "석식": "불포함"}}, {"day": 6, "desc": ["아침식사 후 체크아웃", "로비로 집합 (※09시 30분까지)", "니토리몰(쇼핑 및 자유시간) 경유 후 미야자키공항으로 이동", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "호텔식", "중식": "불포함"}}]}, "벳푸 무츠키 료칸 3색 골프 투어": {"arrival_airport": "후쿠오카공항", "arrival_url": "https://www.fukuoka-airport.jp/", "hotel_name": "무츠키 료칸", "golf_name": "벳푸CC", "lodge": {"name_en": "NAGOMI NO YADO MUTSUKI RYOKAN", "zip": "874-0842", "addr": "8-40 Okuramachi, Beppu City, Oita, Japan", "tel": "+81-977-27-2888"}, "meeting": "후쿠오카 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구로 나오시면 \"야마나미 벳푸 골프투어\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "정영진 사장 +81 80-2759-7788", "extra_cost": ["※ 아래 금액은 원화(KRW) 기준으로 메리트투어에 사전 결제되는 금액입니다.", "※ 현지에서는 별도의 추가요금이 발생하지 않습니다. (중식 초과 금액 등 개인 이용분 제외)", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "2인 플레이 시 2백 추가 요금 안내", "- 평일 : 1인/1박 당 ¥1,100 추가", "- 주말 및 일본공휴일 : 1인/1박 당 ¥2,200 추가", "공휴요금 : 1인/1박 당 ¥5,000 추가", "(투어 일정 중 일본 공휴일이 있을 경우 적용)", "※ 골프장 중식은 1인 ¥1,100까지 이용 가능합니다.", "초과 금액은 현지에서 엔화로 별도 결제하셔야 합니다.", "■ [무츠키료칸]", "객실, 온천, 식사 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW207", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW207' 확인 부탁드립니다.", "후쿠오카공항 도착, 입국 수속 후 숙소로 이동(2시간 소요)", "체크인 후 휴식"], "golf": "", "hotel": "무츠키 료칸", "meals": {"석식": "도시락"}}, {"day": 2, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "무츠키 료칸", "meals": {"조식": "일본식 조식", "중식": "클럽식", "석식": "일본 전통 코스(가이세키)"}}, {"day": 3, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "무츠키 료칸", "meals": {"조식": "일본식 조식", "중식": "클럽식", "석식": "일본 전통 코스(가이세키)"}}, {"day": 4, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회, 츠루미코스 1회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "무츠키 료칸", "meals": {"조식": "일본식 조식", "중식": "클럽식", "석식": "일본 전통 코스(가이세키)"}}, {"day": 5, "desc": ["체크아웃 후 아침식사, 골프장으로 이동", "오기야마CC 18홀 플레이 후 후쿠오카 공항으로 이동(이동 중 휴게소 경유)", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "일본식 조식", "중식": "클럽식"}}]}, "벳푸 무츠키 료칸 2색 골프 투어": {"arrival_airport": "후쿠오카공항", "arrival_url": "https://www.fukuoka-airport.jp/", "hotel_name": "무츠키 료칸", "golf_name": "벳푸CC", "lodge": {"name_en": "NAGOMI NO YADO MUTSUKI RYOKAN", "zip": "874-0842", "addr": "8-40 Okuramachi, Beppu City, Oita, Japan", "tel": "+81-977-27-2888"}, "meeting": "후쿠오카 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구로 나오시면 \"야마나미 벳푸 골프투어\" 피켓을 든 현지 직원이 대기하고 있습니다.", "emergency": "정영진 사장 +81 80-2759-7788", "extra_cost": ["※ 아래 금액은 원화(KRW) 기준으로 메리트투어에 사전 결제되는 금액입니다.", "※ 현지에서는 별도의 추가요금이 발생하지 않습니다. (중식 초과 금액 등 개인 이용분 제외)", "싱글/단독 사용 : 1인/1박 당 ¥2,200 추가", "2인 플레이 시 2백 추가 요금 안내", "- 평일 : 1인/1박 당 ¥1,100 추가", "- 주말 및 일본공휴일 : 1인/1박 당 ¥2,200 추가", "공휴요금 : 1인/1박 당 ¥5,000 추가", "(투어 일정 중 일본 공휴일이 있을 경우 적용)", "※ 골프장 중식은 1인 ¥1,100까지 이용 가능합니다.", "초과 금액은 현지에서 엔화로 별도 결제하셔야 합니다.", "■ [무츠키료칸]", "객실, 온천, 식사 안내(상세)"], "itinerary": [{"day": 1, "desc": ["인천국제공항 제1터미널 3층, 티웨이항공 B카운터 개별수속 / 출국편명: TW207", "출국 수속 완료 후 출발", "※ 카운터 위치는 당일 변경될 수 있으니 공항 전광판(FIDS)에서 'TW207' 확인 부탁드립니다.", "후쿠오카공항 도착, 입국 수속 후 숙소로 이동(2시간 소요)", "체크인 후 휴식"], "golf": "", "hotel": "무츠키 료칸", "meals": {"석식": "도시락"}}, {"day": 2, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "무츠키 료칸", "meals": {"조식": "일본식 조식", "중식": "클럽식", "석식": "일본 전통 코스(가이세키)"}}, {"day": 3, "desc": ["조식 후 라운딩", "주중/주말 및 일본공휴일 18홀 라운딩", "※벳푸CC 18홀 플레이(체재일 중 유후코스 2회)", "골프 라운딩 후 숙소로 이동", "저녁식사 및 휴식"], "golf": "벳푸CC", "hotel": "무츠키 료칸", "meals": {"조식": "일본식 조식", "중식": "클럽식", "석식": "일본 전통 코스(가이세키)"}}, {"day": 4, "desc": ["체크아웃 후 아침식사, 골프장으로 이동", "오기야마CC 18홀 플레이 후 후쿠오카 공항으로 이동(이동 중 휴게소 경유)", "출국 수속 완료 후 출발", "인천국제공항 도착"], "golf": "", "hotel": "", "meals": {"조식": "일본식 조식", "중식": "클럽식"}}]}};
+
+
+function normProd(s){ return String(s||'').replace(/^\[[^\]]+\]\s*/,'').replace(/["“”]/g,'').trim(); }
+function matchMaster(prod){
+  const p=String(prod||'');
+  // 1) 완전일치 우선
+  const exact=MASTER[normProd(p)];
+  if(exact) return exact;
+  // 2) 골프장 기준 매칭
+  if(p.indexOf('포틴힐즈')>=0){
+    if(p.indexOf('패밀리')>=0) return MASTER['포틴힐즈CC 골프 투어 호텔 패밀리룸 숙박']||null;
+    if(p.indexOf('카라반')>=0) return MASTER['포틴힐즈CC 골프 투어 카라반 숙박']||null;
+    return MASTER['포틴힐즈CC 골프 투어 호텔 트윈 숙박']||null;
+  }
+  if(p.indexOf('무츠키')>=0){
+    if(p.indexOf('2색')>=0) return MASTER['벳푸 무츠키 료칸 2색 골프 투어']||null;
+    return MASTER['벳푸 무츠키 료칸 3색 골프 투어']||null;
+  }
+  if(p.indexOf('스가다이라')>=0){
+    if(p.indexOf('맨션')>=0) return MASTER['스가다이라 그린CC 골프 투어 맨션형 숙소']||null;
+    return MASTER['스가다이라 그린CC 골프 투어']||null;
+  }
+  const GM=[
+    ['야마나미','야마나미CC 골프 투어 호텔 소형트윈 숙박'],
+    ['후쿠로다노타키','후쿠로다노타키CC 골프 투어'],
+    ['시로사토','시로사토CC 골프 투어'],
+    ['시즈노야도','시즈노야도 료칸 골프 투어'],
+    ['간지','간지호텔 2색 골프 투어'],
+    ['아키바','벳푸 아키바 리조트 2색 골프투어'],
+    ['미야자키','미야자키 2색 골프투어'],
+    ['구마모토 시내','구마모토 시내 호텔 + 3색 골프']
+  ];
+  for(const [kw,key] of GM){ if(p.indexOf(kw)>=0 && MASTER[key]) return MASTER[key]; }
+  return null;
+}
+
+
+function matchMaster(prod){
+  const p=String(prod||'');
+  // 1) 완전일치 우선
+  const exact=MASTER[normProd(p)];
+  if(exact) return exact;
+  // 2) 골프장 기준 매칭
+  if(p.indexOf('포틴힐즈')>=0){
+    if(p.indexOf('패밀리')>=0) return MASTER['포틴힐즈CC 골프 투어 호텔 패밀리룸 숙박']||null;
+    if(p.indexOf('카라반')>=0) return MASTER['포틴힐즈CC 골프 투어 카라반 숙박']||null;
+    return MASTER['포틴힐즈CC 골프 투어 호텔 트윈 숙박']||null;
+  }
+  if(p.indexOf('무츠키')>=0){
+    if(p.indexOf('2색')>=0) return MASTER['벳푸 무츠키 료칸 2색 골프 투어']||null;
+    return MASTER['벳푸 무츠키 료칸 3색 골프 투어']||null;
+  }
+  if(p.indexOf('스가다이라')>=0){
+    if(p.indexOf('맨션')>=0) return MASTER['스가다이라 그린CC 골프 투어 맨션형 숙소']||null;
+    return MASTER['스가다이라 그린CC 골프 투어']||null;
+  }
+  const GM=[
+    ['야마나미','야마나미CC 골프 투어 호텔 소형트윈 숙박'],
+    ['후쿠로다노타키','후쿠로다노타키CC 골프 투어'],
+    ['시로사토','시로사토CC 골프 투어'],
+    ['시즈노야도','시즈노야도 료칸 골프 투어'],
+    ['간지','간지호텔 2색 골프 투어'],
+    ['아키바','벳푸 아키바 리조트 2색 골프투어'],
+    ['미야자키','미야자키 2색 골프투어'],
+    ['구마모토 시내','구마모토 시내 호텔 + 3색 골프']
+  ];
+  for(const [kw,key] of GM){ if(p.indexOf(kw)>=0 && MASTER[key]) return MASTER[key]; }
+  return null;
+}
+
+/* v7 디자인 템플릿 (Base64) */
+
+const V7_B64 = "PCFET0NUWVBFIGh0bWw+PGh0bWwgbGFuZz0ia28iPjxoZWFkPjxtZXRhIGNoYXJzZXQ9IlVURi04Ij48bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLCBpbml0aWFsLXNjYWxlPTEuMCI+PHRpdGxlPu2ZleygleyEnCAtIE1FUklUVE9VUjwvdGl0bGU+PGxpbmsgaHJlZj0iaHR0cHM6Ly9mb250cy5nb29nbGVhcGlzLmNvbS9jc3MyP2ZhbWlseT1Ob3RvK1NlcmlmK0tSOndnaHRANTAwOzYwMDs3MDAmZGlzcGxheT1zd2FwIiByZWw9InN0eWxlc2hlZXQiPjxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL29yaW9uY2FjdHVzL3ByZXRlbmRhcmRAdjEuMy45L2Rpc3Qvd2ViL3N0YXRpYy9wcmV0ZW5kYXJkLm1pbi5jc3MiPjxzdHlsZT4KICA6cm9vdHsKICAgIC0tbmF2eTojMWEyMzMyOyAtLWluazojMkEyRTM3OyAtLXN1YjojNUM2MzczOwogICAgLS1iZzojRUVGMkY4OyAtLWxpbmU6I0UyRTdGMDsgLS1jYXJkOiNmZmZmZmY7CiAgICAtLWJsdWU6IzJFNUE4ODsgLS1ncmVlbjojMDU5NjY5OyAtLXJlZDojREMyNjI2OyAtLW9yYW5nZTojRDk3NzA2OwogICAgLS1zb2Z0OiNGNEY3RkI7CiAgfQogICp7Ym94LXNpemluZzpib3JkZXItYm94O21hcmdpbjowO3BhZGRpbmc6MDt9CiAgYm9keXsKICAgIGZvbnQtZmFtaWx5OidQcmV0ZW5kYXJkJywtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWY7CiAgICBiYWNrZ3JvdW5kOnZhcigtLWJnKTsgY29sb3I6dmFyKC0taW5rKTsKICAgIGxpbmUtaGVpZ2h0OjEuNjU7IGZvbnQtc2l6ZToxN3B4OwogICAgLXdlYmtpdC1mb250LXNtb290aGluZzphbnRpYWxpYXNlZDsKICAgIHBhZGRpbmc6MThweCAxNHB4IDYwcHg7CiAgfQogIC5zZXJpZntmb250LWZhbWlseTonTm90byBTZXJpZiBLUicsc2VyaWY7fQogIC5kb2N7bWF4LXdpZHRoOjc2MHB4OyBtYXJnaW46MCBhdXRvO30KCiAgLyog66qo65OcIO2GoOq4gCAo7Iuk66y07J6QIOuvuOumrOuztOq4sOyaqSDigJQg67Cc7IahIOyLnCDsiKjquYApICovCiAgLm1vZGViYXJ7CiAgICBtYXgtd2lkdGg6NzYwcHg7IG1hcmdpbjowIGF1dG8gMTRweDsgZGlzcGxheTpmbGV4OyBnYXA6OHB4OwogICAgYmFja2dyb3VuZDojZmZmOyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItcmFkaXVzOjEycHg7IHBhZGRpbmc6OHB4OwogIH0KICAubW9kZWJhciBidXR0b257CiAgICBmbGV4OjE7IHBhZGRpbmc6OXB4OyBib3JkZXI6bm9uZTsgYm9yZGVyLXJhZGl1czo4cHg7IGN1cnNvcjpwb2ludGVyOwogICAgZm9udC1mYW1pbHk6aW5oZXJpdDsgZm9udC1zaXplOjE0cHg7IGZvbnQtd2VpZ2h0OjYwMDsgY29sb3I6dmFyKC0tc3ViKTsgYmFja2dyb3VuZDp0cmFuc3BhcmVudDsKICB9CiAgLm1vZGViYXIgYnV0dG9uLm9ue2JhY2tncm91bmQ6dmFyKC0tbmF2eSk7IGNvbG9yOiNmZmY7fQogIC5tb2RlYmFyIC5oaW50e2ZvbnQtc2l6ZToxMS41cHg7IGNvbG9yOnZhcigtLXN1Yik7IHRleHQtYWxpZ246Y2VudGVyOyBwYWRkaW5nOjZweCA0cHggMnB4O30KCiAgLyog7Zek642UICovCiAgLnRvcHtiYWNrZ3JvdW5kOnZhcigtLW5hdnkpOyBjb2xvcjojZmZmOyBib3JkZXItcmFkaXVzOjE4cHggMThweCAwIDA7IHBhZGRpbmc6MjZweCAyNnB4IDIycHg7IHBvc2l0aW9uOnJlbGF0aXZlOyBvdmVyZmxvdzpoaWRkZW47fQogIC50b3A6OmFmdGVye2NvbnRlbnQ6IiI7IHBvc2l0aW9uOmFic29sdXRlOyByaWdodDotNDBweDsgdG9wOi00MHB4OyB3aWR0aDoxNjBweDsgaGVpZ2h0OjE2MHB4OyBib3JkZXItcmFkaXVzOjUwJTsgYmFja2dyb3VuZDpyZ2JhKDI1NSwyNTUsMjU1LC4wNCk7fQogIC5icmFuZHtkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgZ2FwOjlweDt9CiAgLmJyYW5kIC5sb2dve2hlaWdodDoyNHB4OyB3aWR0aDphdXRvOyBkaXNwbGF5OmJsb2NrO30KICAuZG9jLXR5cGV7bWFyZ2luLXRvcDoxNHB4OyBmb250LWZhbWlseTonTm90byBTZXJpZiBLUicsc2VyaWY7IGZvbnQtd2VpZ2h0OjcwMDsgZm9udC1zaXplOjMwcHg7IGxldHRlci1zcGFjaW5nOjhweDt9CiAgLmRvYy1zdWJ7bWFyZ2luLXRvcDo0cHg7IGZvbnQtc2l6ZToxNHB4OyBjb2xvcjojOWFhNmJkO30KICAudmVyLXJvd3ttYXJnaW4tdG9wOjEycHg7IGRpc3BsYXk6ZmxleDsgZmxleC13cmFwOndyYXA7IGdhcDo3cHg7fQogIC52ZXItdGFne2Rpc3BsYXk6aW5saW5lLWJsb2NrOyBmb250LXNpemU6MTJweDsgY29sb3I6IzlhYTZiZDsgYmFja2dyb3VuZDpyZ2JhKDI1NSwyNTUsMjU1LC4wNyk7IHBhZGRpbmc6NHB4IDExcHg7IGJvcmRlci1yYWRpdXM6OTk5cHg7fQogIC52ZXItdGFnLmtleXtjb2xvcjojZmZmOyBiYWNrZ3JvdW5kOnJnYmEoMjU1LDI1NSwyNTUsLjE0KTsgZm9udC13ZWlnaHQ6NjAwOyBsZXR0ZXItc3BhY2luZzouM3B4O30KCiAgLyog7ZW17IusIOy5tOuTnCAqLwogIC5rZXljYXJke2JhY2tncm91bmQ6dmFyKC0tY2FyZCk7IGJvcmRlcjoxcHggc29saWQgdmFyKC0tbGluZSk7IGJvcmRlci10b3A6bm9uZTsgcGFkZGluZzoyMnB4IDIycHggMjJweDt9CiAgLmtjLWJhZ2dhZ2V7bWFyZ2luLXRvcDoxNHB4OyBmb250LXNpemU6MTRweDsgY29sb3I6dmFyKC0tc3ViKTsgbGluZS1oZWlnaHQ6MS42OyBwYWRkaW5nOjEzcHggMTZweDsgYmFja2dyb3VuZDp2YXIoLS1zb2Z0KTsgYm9yZGVyLXJhZGl1czoxMHB4O30KICAua2MtYmFnZ2FnZSBie2NvbG9yOnZhcigtLWluayk7IGZvbnQtd2VpZ2h0OjcwMDt9CiAgLmtjLW5hbWV7Zm9udC1zaXplOjE1cHg7IGNvbG9yOnZhcigtLXN1Yik7IG1hcmdpbi1ib3R0b206MnB4O30KICAua2MtbmFtZSBie2NvbG9yOnZhcigtLWluayk7IGZvbnQtc2l6ZToxOHB4OyBmb250LXdlaWdodDo3MDA7fQogIC5rYy1wcm9ke2ZvbnQtZmFtaWx5OidOb3RvIFNlcmlmIEtSJyxzZXJpZjsgZm9udC13ZWlnaHQ6NjAwOyBmb250LXNpemU6MjFweDsgY29sb3I6dmFyKC0tbmF2eSk7IGxpbmUtaGVpZ2h0OjEuNDsgbWFyZ2luLWJvdHRvbToxOHB4O30KICAua2MtZ3JpZHtkaXNwbGF5OmdyaWQ7IGdyaWQtdGVtcGxhdGUtY29sdW1uczoxZnIgMWZyOyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItcmFkaXVzOjE0cHg7IG92ZXJmbG93OmhpZGRlbjt9CiAgLmtjLWNlbGx7cGFkZGluZzoxNnB4IDE4cHg7IGJvcmRlci1ib3R0b206MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAua2MtY2VsbDpudGgtY2hpbGQob2RkKXtib3JkZXItcmlnaHQ6MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAua2MtbGFiZWx7Zm9udC1zaXplOjEyLjVweDsgY29sb3I6dmFyKC0tc3ViKTsgbGV0dGVyLXNwYWNpbmc6LjRweDsgZm9udC13ZWlnaHQ6NjAwOyBtYXJnaW4tYm90dG9tOjVweDt9CiAgLmtjLXZhbHtmb250LXNpemU6MTlweDsgZm9udC13ZWlnaHQ6NzAwOyBjb2xvcjp2YXIoLS1pbmspO30KICAua2MtdmFsIC51bml0e2ZvbnQtc2l6ZToxM3B4OyBjb2xvcjp2YXIoLS1zdWIpOyBmb250LXdlaWdodDo1MDA7IG1hcmdpbi1sZWZ0OjJweDt9CiAgLmRkYXl7ZGlzcGxheTppbmxpbmUtYmxvY2s7IGJhY2tncm91bmQ6dmFyKC0tbmF2eSk7IGNvbG9yOiNmZmY7IGZvbnQtd2VpZ2h0OjcwMDsgZm9udC1zaXplOjEzcHg7IHBhZGRpbmc6M3B4IDExcHg7IGJvcmRlci1yYWRpdXM6OTk5cHg7IG1hcmdpbi1sZWZ0OjRweDt9CiAgLmZsaWdodHtncmlkLWNvbHVtbjoxIC8gLTE7IGJvcmRlci10b3A6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsganVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47IHBhZGRpbmc6MThweDt9CiAgLmZsLXB0e3RleHQtYWxpZ246Y2VudGVyOyBtaW4td2lkdGg6NzRweDt9CiAgLmZsLXRpbWV7Zm9udC1zaXplOjIxcHg7IGZvbnQtd2VpZ2h0OjcwMDt9CiAgLmZsLWNvZGV7Zm9udC1zaXplOjEzcHg7IGNvbG9yOnZhcigtLXN1Yik7IG1hcmdpbi10b3A6MnB4O30KICAuZmwtbWlke2ZsZXg6MTsgcGFkZGluZzowIDE0cHg7IHRleHQtYWxpZ246Y2VudGVyOyBjb2xvcjp2YXIoLS1zdWIpO30KICAuZmwtbGluZXtwb3NpdGlvbjpyZWxhdGl2ZTsgaGVpZ2h0OjFweDsgYmFja2dyb3VuZDp2YXIoLS1saW5lKTsgbWFyZ2luOjhweCAwO30KICAuZmwtbGluZTo6YWZ0ZXJ7Y29udGVudDoi4pyIIjsgcG9zaXRpb246YWJzb2x1dGU7IGxlZnQ6NTAlOyB0b3A6NTAlOyB0cmFuc2Zvcm06dHJhbnNsYXRlKC01MCUsLTUwJSk7IGJhY2tncm91bmQ6dmFyKC0tY2FyZCk7IHBhZGRpbmc6MCA4cHg7IGZvbnQtc2l6ZToxM3B4OyBjb2xvcjp2YXIoLS1ibHVlKTt9CiAgLmZsLW5ve2ZvbnQtc2l6ZToxM3B4OyBmb250LXdlaWdodDo2MDA7IGNvbG9yOnZhcigtLWJsdWUpO30KCiAgLyog7IS57IWYICovCiAgLnNlY3tiYWNrZ3JvdW5kOnZhcigtLWNhcmQpOyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItdG9wOm5vbmU7fQogIC5zZWMtaGVhZHtkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgZ2FwOjExcHg7IHBhZGRpbmc6MTlweCAyMnB4OyBjdXJzb3I6cG9pbnRlcjsgdXNlci1zZWxlY3Q6bm9uZTt9CiAgLnNlYy1oZWFkOmhvdmVye2JhY2tncm91bmQ6I0ZBRkJGRDt9CiAgLnNlYy1udW17Y29sb3I6dmFyKC0tYmx1ZSk7IHdpZHRoOjI2cHg7IGhlaWdodDoyNnB4OyBkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsganVzdGlmeS1jb250ZW50OmNlbnRlcjsgZmxleC1zaHJpbms6MDt9CiAgLnNlYy1udW0gc3Zne3dpZHRoOjIycHg7IGhlaWdodDoyMnB4OyBzdHJva2U6dmFyKC0tYmx1ZSk7IHN0cm9rZS13aWR0aDoxLjc7IGZpbGw6bm9uZTsgc3Ryb2tlLWxpbmVjYXA6cm91bmQ7IHN0cm9rZS1saW5lam9pbjpyb3VuZDt9CiAgLnNlYy10aXRsZXtmb250LXNpemU6MThweDsgZm9udC13ZWlnaHQ6NzAwOyBjb2xvcjp2YXIoLS1uYXZ5KTsgZmxleDoxO30KICAuc2VjLWFycm93e2NvbG9yOnZhcigtLWJsdWUpOyB0cmFuc2l0aW9uOnRyYW5zZm9ybSAuMjVzOyBmb250LXNpemU6MTNweDsgZGlzcGxheTpmbGV4OyBhbGlnbi1pdGVtczpjZW50ZXI7IGdhcDo1cHg7fQogIC5zZWMtYXJyb3cgLmhpbnR7Zm9udC1zaXplOjEycHg7IGNvbG9yOnZhcigtLXN1Yik7IGZvbnQtd2VpZ2h0OjYwMDt9CiAgLnNlYy5vcGVuIC5zZWMtYXJyb3d7dHJhbnNmb3JtOm5vbmU7fQogIC5zZWMub3BlbiAuc2VjLWFycm93IC5jaGV2e3RyYW5zZm9ybTpyb3RhdGUoMTgwZGVnKTt9CiAgLnNlYy1hcnJvdyAuY2hldntkaXNwbGF5OmlubGluZS1ibG9jazsgdHJhbnNpdGlvbjp0cmFuc2Zvcm0gLjI1czt9CiAgLnNlYy5vcGVuIC5zZWMtYXJyb3cgLmhpbnR7ZGlzcGxheTpub25lO30KICAuc2VjLWJvZHl7ZGlzcGxheTpub25lOyBwYWRkaW5nOjAgMjJweCAyMnB4O30KICAuc2VjLm9wZW4gLnNlYy1ib2R5e2Rpc3BsYXk6YmxvY2s7fQogIC5zZWMuc3RhdGljIC5zZWMtaGVhZHtjdXJzb3I6ZGVmYXVsdDt9CiAgLnNlYy5zdGF0aWMgLnNlYy1hcnJvd3tkaXNwbGF5Om5vbmU7fQogIC5zZWMuc3RhdGljIC5zZWMtYm9keXtkaXNwbGF5OmJsb2NrO30KCiAgLyog7JqU6riIICovCiAgLnBheS1yb3d7ZGlzcGxheTpmbGV4OyBqdXN0aWZ5LWNvbnRlbnQ6c3BhY2UtYmV0d2VlbjsgYWxpZ24taXRlbXM6YmFzZWxpbmU7IHBhZGRpbmc6MTNweCAwOyBib3JkZXItYm90dG9tOjFweCBkYXNoZWQgdmFyKC0tbGluZSk7IGZvbnQtc2l6ZToxNnB4O30KICAucGF5LXJvdyAucGx7Y29sb3I6dmFyKC0tc3ViKTt9CiAgLnBheS1yb3cgLnB2e2ZvbnQtd2VpZ2h0OjYwMDt9CiAgLnBheS10b3RhbHtiYWNrZ3JvdW5kOnZhcigtLXNvZnQpOyBib3JkZXItcmFkaXVzOjEycHg7IHBhZGRpbmc6MTZweCAxOHB4OyBtYXJnaW4tdG9wOjE0cHg7IGRpc3BsYXk6ZmxleDsganVzdGlmeS1jb250ZW50OnNwYWNlLWJldHdlZW47IGFsaWduLWl0ZW1zOmJhc2VsaW5lO30KICAucGF5LXRvdGFsIC50bHtmb250LXNpemU6MTVweDsgY29sb3I6dmFyKC0tc3ViKTsgZm9udC13ZWlnaHQ6NjAwO30KICAucGF5LXRvdGFsIC50dntmb250LXNpemU6MjRweDsgZm9udC13ZWlnaHQ6ODAwOyBjb2xvcjp2YXIoLS1uYXZ5KTsgd2hpdGUtc3BhY2U6bm93cmFwO30KICAuYmFsYW5jZXttYXJnaW4tdG9wOjEycHg7IGJvcmRlcjoxLjVweCBzb2xpZCB2YXIoLS1yZWQpOyBib3JkZXItcmFkaXVzOjEycHg7IHBhZGRpbmc6MTZweCAxOHB4OyBiYWNrZ3JvdW5kOiNGRUY1RjU7fQogIC5iYWxhbmNlIC5ibHtmb250LXNpemU6MTRweDsgY29sb3I6dmFyKC0tcmVkKTsgZm9udC13ZWlnaHQ6NzAwOyBtYXJnaW4tYm90dG9tOjRweDt9CiAgLmJhbGFuY2UgLmJ2e2ZvbnQtc2l6ZToyNHB4OyBmb250LXdlaWdodDo4MDA7IGNvbG9yOnZhcigtLXJlZCk7fQogIC5iYWxhbmNlIC5iZHtmb250LXNpemU6MTRweDsgY29sb3I6dmFyKC0tc3ViKTsgbWFyZ2luLXRvcDo1cHg7fQogIC5wZXJwe21hcmdpbi10b3A6MDsgYm9yZGVyOjFweCBzb2xpZCB2YXIoLS1saW5lKTsgYm9yZGVyLXJhZGl1czoxMnB4OyBvdmVyZmxvdzpoaWRkZW47fQogIC5wZXJwLWhlYWR7YmFja2dyb3VuZDp2YXIoLS1zb2Z0KTsgcGFkZGluZzoxMXB4IDE2cHg7IGZvbnQtc2l6ZToxNHB4OyBmb250LXdlaWdodDo3MDA7IGNvbG9yOnZhcigtLW5hdnkpO30KICAucGVycC1yb3d7ZGlzcGxheTpmbGV4OyBqdXN0aWZ5LWNvbnRlbnQ6c3BhY2UtYmV0d2VlbjsgYWxpZ24taXRlbXM6YmFzZWxpbmU7IHBhZGRpbmc6MTNweCAxNnB4OyBmb250LXNpemU6MTZweDsgYm9yZGVyLXRvcDoxcHggc29saWQgdmFyKC0tbGluZSk7IGdhcDoxMHB4O30KICAucGVycC1yb3cgLnBse2NvbG9yOnZhcigtLXN1Yik7fQogIC5wZXJwLXJvdyAucHZ7Zm9udC13ZWlnaHQ6NzAwOyB3aGl0ZS1zcGFjZTpub3dyYXA7fQogIC5wZXJwLXJvdy5iYWx7YmFja2dyb3VuZDojRkVGNUY1O30KICAucGVycC1yb3cuYmFsIC5wbHtjb2xvcjp2YXIoLS1yZWQpOyBmb250LXdlaWdodDo3MDA7fQogIC5wZXJwLXJvdy5iYWwgLnB2e2NvbG9yOnZhcigtLXJlZCk7IGZvbnQtc2l6ZToxOXB4OyBmb250LXdlaWdodDo4MDA7fQogIC5wYWlkLWJveHttYXJnaW4tdG9wOjEycHg7IGJvcmRlcjoxLjVweCBzb2xpZCB2YXIoLS1ncmVlbik7IGJvcmRlci1yYWRpdXM6MTJweDsgcGFkZGluZzoxNnB4IDE4cHg7IGJhY2tncm91bmQ6I0U3RjZGMDsgZGlzcGxheTpmbGV4OyBhbGlnbi1pdGVtczpjZW50ZXI7IGdhcDoxMHB4O30KICAucGFpZC1ib3ggLnBje2ZvbnQtc2l6ZToyMnB4O30KICAucGFpZC1ib3ggLnB0e2ZvbnQtc2l6ZToxOHB4OyBmb250LXdlaWdodDo4MDA7IGNvbG9yOnZhcigtLWdyZWVuKTt9CiAgLnBhaWQtYm94IC5wZHtmb250LXNpemU6MTMuNXB4OyBjb2xvcjp2YXIoLS1zdWIpO30KICAucGFpZC1jaGlwe2Rpc3BsYXk6aW5saW5lLWJsb2NrOyBiYWNrZ3JvdW5kOiNFN0Y2RjA7IGNvbG9yOnZhcigtLWdyZWVuKTsgZm9udC1zaXplOjEzcHg7IGZvbnQtd2VpZ2h0OjcwMDsgcGFkZGluZzoycHggOXB4OyBib3JkZXItcmFkaXVzOjZweDsgbWFyZ2luLWxlZnQ6N3B4O30KICAuYWNjdHttYXJnaW4tdG9wOjE0cHg7IGJhY2tncm91bmQ6dmFyKC0tbmF2eSk7IGNvbG9yOiNmZmY7IGJvcmRlci1yYWRpdXM6MTJweDsgcGFkZGluZzoxNXB4IDE4cHg7fQogIC5hY2N0IC5hbHtmb250LXNpemU6MTNweDsgY29sb3I6IzlhYTZiZDsgbWFyZ2luLWJvdHRvbTo0cHg7fQogIC5hY2N0IC5hdntmb250LXNpemU6MThweDsgZm9udC13ZWlnaHQ6NzAwO30KICAuYWNjdCAuYW57Zm9udC1zaXplOjEzcHg7IGNvbG9yOiM5YWE2YmQ7IG1hcmdpbi10b3A6NHB4O30KICAvKiDsubTsubTsmKQg7J6F6riI7JmE66OMIOyVjOumvCAqLwogIC5rYWthby1ub3RpY2V7bWFyZ2luLXRvcDoxNHB4OyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItcmFkaXVzOjEycHg7IHBhZGRpbmc6MTZweCAxOHB4OyBiYWNrZ3JvdW5kOnZhcigtLXNvZnQpOyB0ZXh0LWFsaWduOmNlbnRlcjt9CiAgLmtuLXF7Zm9udC1zaXplOjE1cHg7IGZvbnQtd2VpZ2h0OjcwMDsgY29sb3I6dmFyKC0taW5rKTsgbWFyZ2luLWJvdHRvbToxMnB4O30KICAua24tYnRue2Rpc3BsYXk6aW5saW5lLWZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsganVzdGlmeS1jb250ZW50OmNlbnRlcjsgZ2FwOjhweDsgd2lkdGg6MTAwJTsgYmFja2dyb3VuZDojRkVFNTAwOyBjb2xvcjojM0MxRTFFOyBib3JkZXI6bm9uZTsgYm9yZGVyLXJhZGl1czoxMHB4OyBwYWRkaW5nOjE0cHggMThweDsgZm9udC1mYW1pbHk6aW5oZXJpdDsgZm9udC1zaXplOjE2cHg7IGZvbnQtd2VpZ2h0OjcwMDsgY3Vyc29yOnBvaW50ZXI7IHRyYW5zaXRpb246ZmlsdGVyIC4xNXM7fQogIC5rbi1idG46aG92ZXJ7ZmlsdGVyOmJyaWdodG5lc3MoLjk2KTt9CiAgLmtuLWJ0bjphY3RpdmV7ZmlsdGVyOmJyaWdodG5lc3MoLjkyKTt9CiAgLmtuLWhlbHB7Zm9udC1zaXplOjEzcHg7IGNvbG9yOnZhcigtLXN1Yik7IGxpbmUtaGVpZ2h0OjEuNjsgbWFyZ2luLXRvcDoxMHB4O30KICAua24taGVscCBie2NvbG9yOnZhcigtLWluayk7fQogIC5rbi1jb3BpZWR7ZGlzcGxheTpub25lOyBmb250LXNpemU6MTMuNXB4OyBmb250LXdlaWdodDo2MDA7IGNvbG9yOnZhcigtLWdyZWVuKTsgbWFyZ2luLXRvcDoxMHB4OyBwYWRkaW5nOjlweCAxMnB4OyBiYWNrZ3JvdW5kOiNFN0Y2RjA7IGJvcmRlci1yYWRpdXM6OHB4O30KICAua24tY29waWVkLnNob3d7ZGlzcGxheTpibG9jazt9CiAgLyog6rCc7J24IOuqqOuTnCDrs7jsnbgg67CV7IqkICovCiAgLm1pbmV7bWFyZ2luLXRvcDo0cHg7IGJvcmRlcjoxLjVweCBzb2xpZCB2YXIoLS1ibHVlKTsgYm9yZGVyLXJhZGl1czoxMnB4OyBvdmVyZmxvdzpoaWRkZW47fQogIC5taW5lLWhlYWR7YmFja2dyb3VuZDp2YXIoLS1ibHVlKTsgY29sb3I6I2ZmZjsgcGFkZGluZzoxMXB4IDE2cHg7IGZvbnQtc2l6ZToxNXB4OyBmb250LXdlaWdodDo3MDA7fQogIC5taW5lLXJvd3tkaXNwbGF5OmZsZXg7IGp1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuOyBwYWRkaW5nOjEycHggMTZweDsgZm9udC1zaXplOjE2cHg7IGJvcmRlci1ib3R0b206MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAubWluZS1yb3c6bGFzdC1jaGlsZHtib3JkZXItYm90dG9tOm5vbmU7fQogIC5taW5lLXJvdyAubWx7Y29sb3I6dmFyKC0tc3ViKTt9CiAgLm1pbmUtcm93IC5tdntmb250LXdlaWdodDo3MDA7fQogIC5taW5lLXJvdy5iYWwgLm12e2NvbG9yOnZhcigtLXJlZCk7fQogIC5taW5lLXJvdy5kb25lIC5tdntjb2xvcjp2YXIoLS1ncmVlbik7fQoKICAvKiDtg4DsnoTrnbzsnbggKi8KICAudGx7cG9zaXRpb246cmVsYXRpdmU7IG1hcmdpbi10b3A6NHB4OyBwYWRkaW5nLWxlZnQ6MzBweDt9CiAgLnRsOjpiZWZvcmV7Y29udGVudDoiIjsgcG9zaXRpb246YWJzb2x1dGU7IGxlZnQ6OXB4OyB0b3A6OHB4OyBib3R0b206OHB4OyB3aWR0aDoycHg7IGJhY2tncm91bmQ6dmFyKC0tbGluZSk7fQogIC50bC1pdGVte3Bvc2l0aW9uOnJlbGF0aXZlOyBwYWRkaW5nOjAgMCAyMnB4O30KICAudGwtaXRlbTpsYXN0LWNoaWxke3BhZGRpbmctYm90dG9tOjA7fQogIC50bC1kb3R7cG9zaXRpb246YWJzb2x1dGU7IGxlZnQ6LTMwcHg7IHRvcDozcHg7IHdpZHRoOjIwcHg7IGhlaWdodDoyMHB4OyBib3JkZXItcmFkaXVzOjUwJTsgYmFja2dyb3VuZDojZmZmOyBib3JkZXI6MnB4IHNvbGlkIHZhcigtLWJsdWUpOyBkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsganVzdGlmeS1jb250ZW50OmNlbnRlcjt9CiAgLnRsLWRvdCBpe3dpZHRoOjdweDsgaGVpZ2h0OjdweDsgYm9yZGVyLXJhZGl1czo1MCU7IGJhY2tncm91bmQ6dmFyKC0tYmx1ZSk7IGZvbnQtc3R5bGU6bm9ybWFsO30KICAudGwtaXRlbS5kZXBhcnQgLnRsLWRvdCwgLnRsLWl0ZW0uYXJyaXZlIC50bC1kb3R7Ym9yZGVyLWNvbG9yOnZhcigtLW5hdnkpOyBiYWNrZ3JvdW5kOnZhcigtLW5hdnkpO30KICAudGwtaXRlbS5kZXBhcnQgLnRsLWRvdCBpLCAudGwtaXRlbS5hcnJpdmUgLnRsLWRvdCBpe2JhY2tncm91bmQ6I2ZmZjt9CiAgLnRsLWRheXtmb250LXNpemU6MTNweDsgZm9udC13ZWlnaHQ6NzAwOyBjb2xvcjp2YXIoLS1ibHVlKTt9CiAgLnRsLWRhdGV7Zm9udC1zaXplOjEzcHg7IGNvbG9yOnZhcigtLXN1Yik7IG1hcmdpbi1sZWZ0OjZweDsgZm9udC13ZWlnaHQ6NTAwO30KICAudGwtdGl0bGV7Zm9udC1zaXplOjE3cHg7IGZvbnQtd2VpZ2h0OjcwMDsgbWFyZ2luOjNweCAwIDRweDt9CiAgLnRsLWRlc2N7Zm9udC1zaXplOjE1LjVweDsgY29sb3I6dmFyKC0tc3ViKTsgbGluZS1oZWlnaHQ6MS42O30KICAudGwtbWVyZ2V7YmFja2dyb3VuZDp2YXIoLS1zb2Z0KTsgYm9yZGVyLXJhZGl1czoxMHB4OyBwYWRkaW5nOjExcHggMTRweDsgZm9udC1zaXplOjE1cHg7IGNvbG9yOnZhcigtLXN1Yik7IGRpc3BsYXk6ZmxleDsgZ2FwOjlweDsgYWxpZ24taXRlbXM6ZmxleC1zdGFydDt9CiAgLnRsLW1lcmdlIGJ7Y29sb3I6dmFyKC0tYmx1ZSk7fQogIC50bC1pY3tmbGV4LXNocmluazowOyBkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgcGFkZGluZy10b3A6MnB4O30KICAudGwtbWVhbHttYXJnaW4tdG9wOjZweDsgZm9udC1zaXplOjE0LjVweDsgY29sb3I6dmFyKC0taW5rKTsgZm9udC13ZWlnaHQ6NjAwO30KICAudGwtbWVhbCAubWx7Y29sb3I6dmFyKC0tYmx1ZSk7IGZvbnQtd2VpZ2h0OjcwMDt9CiAgLnRsLWRlc2MgYiwgLnRsLW1lcmdlIGJ7Zm9udC13ZWlnaHQ6NzAwO30KCiAgLyog66qF64uoICovCiAgLnJvc3Rlcnt3aWR0aDoxMDAlOyBib3JkZXItY29sbGFwc2U6Y29sbGFwc2U7IGZvbnQtc2l6ZToxNXB4O30KICAucm9zdGVyIHRoe2JhY2tncm91bmQ6dmFyKC0tc29mdCk7IGNvbG9yOnZhcigtLXN1Yik7IGZvbnQtd2VpZ2h0OjYwMDsgdGV4dC1hbGlnbjpsZWZ0OyBwYWRkaW5nOjEwcHggMTJweDsgZm9udC1zaXplOjEzcHg7IGJvcmRlci1ib3R0b206MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAucm9zdGVyIHRke3BhZGRpbmc6MTFweCAxMnB4OyBib3JkZXItYm90dG9tOjFweCBzb2xpZCB2YXIoLS1saW5lKTt9CiAgLnJvc3RlciB0cjpsYXN0LWNoaWxkIHRke2JvcmRlci1ib3R0b206bm9uZTt9CiAgLnJvc3RlciB0ci5tZXtiYWNrZ3JvdW5kOiNFQUYxRjk7fQogIC5yb3N0ZXIgLmVue2NvbG9yOnZhcigtLXN1Yik7IGZvbnQtc2l6ZToxM3B4O30KICAubGVhZC10YWd7ZGlzcGxheTppbmxpbmUtYmxvY2s7IGZvbnQtc2l6ZToxMXB4OyBmb250LXdlaWdodDo3MDA7IGNvbG9yOiNmZmY7IGJhY2tncm91bmQ6dmFyKC0tYmx1ZSk7IHBhZGRpbmc6MXB4IDZweDsgYm9yZGVyLXJhZGl1czo1cHg7IG1hcmdpbi1sZWZ0OjVweDt9CiAgLm1lLXRhZ3tkaXNwbGF5OmlubGluZS1ibG9jazsgZm9udC1zaXplOjExcHg7IGZvbnQtd2VpZ2h0OjcwMDsgY29sb3I6I2ZmZjsgYmFja2dyb3VuZDp2YXIoLS1ncmVlbik7IHBhZGRpbmc6MXB4IDZweDsgYm9yZGVyLXJhZGl1czo1cHg7IG1hcmdpbi1sZWZ0OjVweDt9CgogIC8qIOyViOuCtCAqLwogIC5ub3Rle2ZvbnQtc2l6ZToxNXB4OyBjb2xvcjp2YXIoLS1zdWIpOyBsaW5lLWhlaWdodDoxLjc7IHBhZGRpbmc6MTNweCAxNnB4OyBiYWNrZ3JvdW5kOnZhcigtLXNvZnQpOyBib3JkZXItcmFkaXVzOjEwcHg7IGJvcmRlci1sZWZ0OjNweCBzb2xpZCB2YXIoLS1ibHVlKTsgbWFyZ2luLXRvcDoxMHB4O30KICAubm90ZS53YXJue2JvcmRlci1sZWZ0LWNvbG9yOnZhcigtLXJlZCk7IGJhY2tncm91bmQ6I0ZFRjVGNTt9CiAgLm5vdGUgYntjb2xvcjp2YXIoLS1pbmspO30KICAuaW5mby1saXN0e2xpc3Qtc3R5bGU6bm9uZTsgbWFyZ2luLXRvcDo2cHg7fQogIC5pbmZvLWxpc3QgbGl7cG9zaXRpb246cmVsYXRpdmU7IHBhZGRpbmctbGVmdDoxOHB4OyBmb250LXNpemU6MTUuNXB4OyBjb2xvcjp2YXIoLS1zdWIpOyBtYXJnaW4tYm90dG9tOjdweDsgbGluZS1oZWlnaHQ6MS42O30KICAuaW5mby1saXN0IGxpOjpiZWZvcmV7Y29udGVudDoiIjsgcG9zaXRpb246YWJzb2x1dGU7IGxlZnQ6MnB4OyB0b3A6MTBweDsgd2lkdGg6NXB4OyBoZWlnaHQ6NXB4OyBib3JkZXItcmFkaXVzOjUwJTsgYmFja2dyb3VuZDp2YXIoLS1ibHVlKTt9CiAgLmluZm8tbGlzdCBie2NvbG9yOnZhcigtLWluayk7fQogIC8qIO2PrO2VqC/rtojtj6ztlaggMuuLqCAqLwogIC5pbmNse2Rpc3BsYXk6Z3JpZDsgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjFmciAxZnI7IGdhcDoxMHB4OyBtYXJnaW4tdG9wOjRweDsgbWFyZ2luLWJvdHRvbToxNnB4O30KICAuaW5jbC1ib3h7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1saW5lKTsgYm9yZGVyLXJhZGl1czoxMHB4OyBwYWRkaW5nOjEzcHggMTRweDt9CiAgLmluY2wtYm94IC5paHtmb250LXNpemU6MTNweDsgZm9udC13ZWlnaHQ6NzAwOyBtYXJnaW4tYm90dG9tOjhweDsgcGFkZGluZy1ib3R0b206N3B4OyBib3JkZXItYm90dG9tOjFweCBzb2xpZCB2YXIoLS1saW5lKTt9CiAgLmluY2wtYm94LmluIC5paHtjb2xvcjp2YXIoLS1ncmVlbik7fQogIC5pbmNsLWJveC5vdXQgLmloe2NvbG9yOnZhcigtLXN1Yik7fQogIC5pbmNsLWJveCB1bHtsaXN0LXN0eWxlOm5vbmU7fQogIC5pbmNsLWJveCBsaXtmb250LXNpemU6MTRweDsgY29sb3I6dmFyKC0tc3ViKTsgbGluZS1oZWlnaHQ6MS41NTsgbWFyZ2luLWJvdHRvbTo0cHg7fQogIC8qIOuvuOuLiCDslYjrgrQg7ZWt66qpICovCiAgLm1pbml7bWFyZ2luLXRvcDo0cHg7fQogIC5taW5pLWl0ZW17cGFkZGluZzoxMXB4IDA7IGJvcmRlci1ib3R0b206MXB4IGRhc2hlZCB2YXIoLS1saW5lKTt9CiAgLm1pbmktaXRlbTpsYXN0LWNoaWxke2JvcmRlci1ib3R0b206bm9uZTt9CiAgLm1pbmktaXRlbSAubXR7Zm9udC1zaXplOjE1cHg7IGZvbnQtd2VpZ2h0OjcwMDsgY29sb3I6dmFyKC0taW5rKTsgbWFyZ2luLWJvdHRvbTozcHg7fQogIC5taW5pLWl0ZW0gLm1ke2ZvbnQtc2l6ZToxNC41cHg7IGNvbG9yOnZhcigtLXN1Yik7IGxpbmUtaGVpZ2h0OjEuNjt9CiAgLm1pbmktaXRlbSAubWQgYXtjb2xvcjp2YXIoLS1ibHVlKTsgd29yZC1icmVhazpicmVhay1hbGw7fQogIC8qIOyeheq1rSDsi6Dqs6Dsmqkg7IiZ7IaMIOqwleyhsCAqLwogIC5sb2RnZXttYXJnaW4tdG9wOjE0cHg7IGJvcmRlcjoxLjVweCBzb2xpZCB2YXIoLS1ibHVlKTsgYm9yZGVyLXJhZGl1czoxMnB4OyBvdmVyZmxvdzpoaWRkZW47fQogIC5sb2RnZS1oZWFke2JhY2tncm91bmQ6dmFyKC0tYmx1ZSk7IGNvbG9yOiNmZmY7IHBhZGRpbmc6MTJweCAxNnB4OyBmb250LXNpemU6MTVweDsgZm9udC13ZWlnaHQ6NzAwOyBkaXNwbGF5OmZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgZ2FwOjhweDt9CiAgLmxvZGdlLWJvZHl7cGFkZGluZzo2cHggMTZweCAxNHB4O30KICAubG9kZ2Utcm93e2Rpc3BsYXk6ZmxleDsgYWxpZ24taXRlbXM6Y2VudGVyOyBnYXA6MTBweDsgcGFkZGluZzoxMnB4IDA7IGJvcmRlci1ib3R0b206MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAubHItaW5mb3tmbGV4OjE7IG1pbi13aWR0aDowO30KICAubHItbGFiZWx7Zm9udC1zaXplOjEycHg7IGNvbG9yOnZhcigtLXN1Yik7IGZvbnQtd2VpZ2h0OjYwMDsgbWFyZ2luLWJvdHRvbToycHg7fQogIC5sci12YWx7Zm9udC1zaXplOjE2cHg7IGZvbnQtd2VpZ2h0OjcwMDsgY29sb3I6dmFyKC0taW5rKTsgd29yZC1icmVhazpicmVhay1hbGw7fQogIC5jb3B5LWJ0bntmbGV4LXNocmluazowOyBiYWNrZ3JvdW5kOiNmZmY7IGNvbG9yOnZhcigtLWJsdWUpOyBib3JkZXI6MS41cHggc29saWQgdmFyKC0tYmx1ZSk7IGJvcmRlci1yYWRpdXM6OHB4OyBwYWRkaW5nOjhweCAxNnB4OyBmb250LWZhbWlseTppbmhlcml0OyBmb250LXNpemU6MTRweDsgZm9udC13ZWlnaHQ6NzAwOyBjdXJzb3I6cG9pbnRlcjsgdHJhbnNpdGlvbjphbGwgLjE1czt9CiAgLmNvcHktYnRuOmhvdmVye2JhY2tncm91bmQ6dmFyKC0tYmx1ZSk7IGNvbG9yOiNmZmY7fQogIC5jb3B5LWJ0bi5kb25le2JhY2tncm91bmQ6dmFyKC0tZ3JlZW4pOyBib3JkZXItY29sb3I6dmFyKC0tZ3JlZW4pOyBjb2xvcjojZmZmO30KICAubG9kZ2UtYWRkcntmb250LXNpemU6MTRweDsgY29sb3I6dmFyKC0tc3ViKTsgbGluZS1oZWlnaHQ6MS41NTsgcGFkZGluZzoxMnB4IDAgMDt9CiAgLmxvZGdlLW5vdGV7Zm9udC1zaXplOjEzcHg7IGNvbG9yOnZhcigtLXN1Yik7IGxpbmUtaGVpZ2h0OjEuNjsgcGFkZGluZzoxMnB4IDE2cHg7IGJhY2tncm91bmQ6dmFyKC0tc29mdCk7IGJvcmRlci10b3A6MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAueWVue2NvbG9yOnZhcigtLW9yYW5nZSk7IGZvbnQtd2VpZ2h0OjYwMDt9CiAgLyog7Leo7IaMIOyImOyImOujjCDtkZwgKi8KICAuZmVle3dpZHRoOjEwMCU7IGJvcmRlci1jb2xsYXBzZTpjb2xsYXBzZTsgZm9udC1zaXplOjE0LjVweDsgbWFyZ2luLXRvcDo0cHg7fQogIC5mZWUgdGh7YmFja2dyb3VuZDp2YXIoLS1zb2Z0KTsgY29sb3I6dmFyKC0tc3ViKTsgZm9udC13ZWlnaHQ6NjAwOyB0ZXh0LWFsaWduOmxlZnQ7IHBhZGRpbmc6OXB4IDEycHg7IGZvbnQtc2l6ZToxMi41cHg7IGJvcmRlci1ib3R0b206MXB4IHNvbGlkIHZhcigtLWxpbmUpO30KICAuZmVlIHRke3BhZGRpbmc6MTBweCAxMnB4OyBib3JkZXItYm90dG9tOjFweCBzb2xpZCB2YXIoLS1saW5lKTt9CiAgLmZlZSB0cjpsYXN0LWNoaWxkIHRke2JvcmRlci1ib3R0b206bm9uZTt9CiAgLmZlZSB0ZC5hbXR7dGV4dC1hbGlnbjpyaWdodDsgZm9udC13ZWlnaHQ6NzAwOyBjb2xvcjp2YXIoLS1pbmspOyB3aGl0ZS1zcGFjZTpub3dyYXA7fQogIC5mZWUgdGQuYW10LmZyZWV7Y29sb3I6dmFyKC0tZ3JlZW4pO30KICAuZmVlLXRpdGxle2ZvbnQtc2l6ZToxNXB4OyBmb250LXdlaWdodDo3MDA7IGNvbG9yOnZhcigtLW5hdnkpOyBtYXJnaW4tYm90dG9tOjhweDt9CiAgLmZlZS1jYXV0aW9ue2Rpc3BsYXk6ZmxleDsgZ2FwOjhweDsgYWxpZ24taXRlbXM6ZmxleC1zdGFydDsgZm9udC1zaXplOjEzLjVweDsgY29sb3I6dmFyKC0taW5rKTsgbGluZS1oZWlnaHQ6MS42OyBwYWRkaW5nOjEycHggMTRweDsgYmFja2dyb3VuZDojRkZGQkVCOyBib3JkZXI6MXB4IHNvbGlkICNGQ0U3QjU7IGJvcmRlci1yYWRpdXM6MTBweDsgbWFyZ2luLWJvdHRvbToxMnB4O30KICAuZmVlLWNhdXRpb24gc3Zne2ZsZXgtc2hyaW5rOjA7IG1hcmdpbi10b3A6MnB4O30KICAuZmVlLWNhdXRpb24gYntjb2xvcjp2YXIoLS1vcmFuZ2UpOyBmb250LXdlaWdodDo3MDA7fQogIC5hbXQtc3Vie2Rpc3BsYXk6YmxvY2s7IGZvbnQtc2l6ZToxMS41cHg7IGZvbnQtd2VpZ2h0OjYwMDsgY29sb3I6dmFyKC0tb3JhbmdlKTsgbWFyZ2luLXRvcDoycHg7fQogIC8qIOuLqOyytCDtla3qs7Xqtowg7JWI64K0ICovCiAgLmdycC1haXJ7bWFyZ2luLXRvcDoxNHB4OyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItbGVmdDozcHggc29saWQgdmFyKC0tYmx1ZSk7IGJvcmRlci1yYWRpdXM6MTBweDsgcGFkZGluZzoxNHB4IDE2cHg7IGJhY2tncm91bmQ6dmFyKC0tc29mdCk7fQogIC5ncnAtYWlyIC5nYS1oZWFke2ZvbnQtc2l6ZToxNXB4OyBmb250LXdlaWdodDo3MDA7IGNvbG9yOnZhcigtLW5hdnkpOyBtYXJnaW4tYm90dG9tOjZweDt9CiAgLmdycC1haXIgLmdhLWRlc2N7Zm9udC1zaXplOjE0LjVweDsgY29sb3I6dmFyKC0tc3ViKTsgbGluZS1oZWlnaHQ6MS43NTt9CiAgLmdycC1haXIgLmdhLWRlc2MgYntjb2xvcjp2YXIoLS1pbmspO30KICAuZ3JwLWFpciAuaW5mby1saXN0IGxpe2ZvbnQtc2l6ZToxNC41cHg7IG1hcmdpbi1ib3R0b206NnB4O30KICAuZ3JwLWFpciAuZ2Etbm90ZXtmb250LXNpemU6MTMuNXB4OyBjb2xvcjp2YXIoLS1zdWIpOyBtYXJnaW4tdG9wOjhweDsgcGFkZGluZy10b3A6OHB4OyBib3JkZXItdG9wOjFweCBkYXNoZWQgdmFyKC0tbGluZSk7fQogIC5nYS1saW5re2Rpc3BsYXk6aW5saW5lLWZsZXg7IGFsaWduLWl0ZW1zOmNlbnRlcjsgZ2FwOjVweDsgbWFyZ2luLXRvcDoxMnB4OyBjb2xvcjp2YXIoLS1ibHVlKTsgZm9udC1zaXplOjE0LjVweDsgZm9udC13ZWlnaHQ6NzAwOyB0ZXh0LWRlY29yYXRpb246bm9uZTsgcGFkZGluZzo5cHggMTRweDsgYm9yZGVyOjEuNXB4IHNvbGlkIHZhcigtLWJsdWUpOyBib3JkZXItcmFkaXVzOjhweDsgdHJhbnNpdGlvbjphbGwgLjE1czt9CiAgLmdhLWxpbms6aG92ZXJ7YmFja2dyb3VuZDp2YXIoLS1ibHVlKTsgY29sb3I6I2ZmZjt9CgogIC8qIO2RuO2EsCAqLwogIC5mb290e2JhY2tncm91bmQ6dmFyKC0tbmF2eSk7IGNvbG9yOiNjZGQ2ZTY7IGJvcmRlci1yYWRpdXM6MCAwIDE4cHggMThweDsgcGFkZGluZzoyNHB4IDI2cHg7fQogIC5mb290LWN0YXtiYWNrZ3JvdW5kOnJnYmEoMjU1LDI1NSwyNTUsLjA2KTsgYm9yZGVyLXJhZGl1czoxMnB4OyBwYWRkaW5nOjE2cHggMThweDsgbWFyZ2luLWJvdHRvbToxNnB4O30KICAuZm9vdC1jdGEgLmZse2ZvbnQtc2l6ZToxM3B4OyBjb2xvcjojOWFhNmJkOyBtYXJnaW4tYm90dG9tOjNweDt9CiAgLmZvb3QtY3RhIC5mdntmb250LXNpemU6MTlweDsgZm9udC13ZWlnaHQ6NzAwOyBjb2xvcjojZmZmO30KICAuZm9vdC1pbmZve2ZvbnQtc2l6ZToxM3B4OyBsaW5lLWhlaWdodDoxLjc7IGNvbG9yOiM4MjkwYTg7fQogIC5mb290LWluZm8gYntjb2xvcjojY2RkNmU2O30KCiAgLyog7J2066+47KeAIOyggOyepSDrsoTtirwgKi8KICAuc2F2ZWJhcnttYXgtd2lkdGg6NzYwcHg7IG1hcmdpbjoxNnB4IGF1dG8gMDsgdGV4dC1hbGlnbjpjZW50ZXI7fQogIC5zYXZlYmFyIGJ1dHRvbntiYWNrZ3JvdW5kOnZhcigtLWJsdWUpOyBjb2xvcjojZmZmOyBib3JkZXI6bm9uZTsgYm9yZGVyLXJhZGl1czoxMHB4OyBwYWRkaW5nOjEzcHggMjRweDsgZm9udC1mYW1pbHk6aW5oZXJpdDsgZm9udC1zaXplOjE1cHg7IGZvbnQtd2VpZ2h0OjYwMDsgY3Vyc29yOnBvaW50ZXI7fQoKICAudGVhbS1vbmx5e2Rpc3BsYXk6YmxvY2s7fQogIC5wZXJzb24tb25seXtkaXNwbGF5Om5vbmU7fQogIGJvZHkubW9kZS1wZXJzb24gLnRlYW0tb25seXtkaXNwbGF5Om5vbmU7fQogIGJvZHkubW9kZS1wZXJzb24gLnBlcnNvbi1vbmx5e2Rpc3BsYXk6YmxvY2s7fQoKICBAbWVkaWEgKG1heC13aWR0aDo1MjBweCl7CiAgICBib2R5e2ZvbnQtc2l6ZToxNnB4OyBwYWRkaW5nOjE0cHggMTBweCA0MHB4O30KICAgIC5kb2MtdHlwZXtmb250LXNpemU6MjZweDsgbGV0dGVyLXNwYWNpbmc6NnB4O30KICAgIC5rYy1wcm9ke2ZvbnQtc2l6ZToxOXB4O30KICAgIC5rYy12YWx7Zm9udC1zaXplOjE3cHg7fQogICAgLmZsLXRpbWV7Zm9udC1zaXplOjE5cHg7fQogIH0KICBAbWVkaWEgcHJpbnR7CiAgICAubW9kZWJhciwuc2F2ZWJhcntkaXNwbGF5Om5vbmUgIWltcG9ydGFudDt9CiAgICBib2R5e2JhY2tncm91bmQ6I2ZmZjsgcGFkZGluZzowO30KICAgICp7LXdlYmtpdC1wcmludC1jb2xvci1hZGp1c3Q6ZXhhY3Q7IHByaW50LWNvbG9yLWFkanVzdDpleGFjdDt9CiAgfQoKICAvKiDrrLjshJwg7KKF66WY67OEIO2RnOyLnCDsoJzslrQgKi8KICBib2R5W2RhdGEta2luZD0iaXRpbmVyYXJ5Il0gLnNlYy1mZWUtd3JhcHtkaXNwbGF5Om5vbmUgIWltcG9ydGFudDt9CiAgYm9keVtkYXRhLWtpbmQ9InF1b3RlIl0gLnF1b3RlLWhpZGV7ZGlzcGxheTpub25lICFpbXBvcnRhbnQ7fQogIGJvZHlbZGF0YS1raW5kPSJjb25maXJtIl0gLnF1b3RlLW9ubHl7ZGlzcGxheTpub25lICFpbXBvcnRhbnQ7fQogIGJvZHlbZGF0YS1raW5kPSJpdGluZXJhcnkiXSAucXVvdGUtb25seXtkaXNwbGF5Om5vbmUgIWltcG9ydGFudDt9Cjwvc3R5bGU+PC9oZWFkPjxib2R5IGNsYXNzPSJtb2RlLXRlYW0iIGRhdGEta2luZD0ie3tkb2NLaW5kfX0iPgoKPGRpdiBjbGFzcz0iZG9jIj4KCiAgPGRpdiBjbGFzcz0idG9wIj4KICAgIDxkaXYgY2xhc3M9ImJyYW5kIj4KICAgICAgPHN2ZyBjbGFzcz0ibG9nbyIgdmlld0JveD0iMCAwIDUzOS40OSA2Ny4zMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Zz48cG9seWdvbiBwb2ludHM9IjE0Ni42OSA1MS40IDE0Ni41NCA1MS40IDEzNC44MyA5Ljg5IDExOC4yMyA5Ljg5IDExOC4yMyA1OC4yMyAxMjcuMzggNTguMjMgMTI3LjA3IDEzLjczIDEyNy4yMiAxMy43MyAxNDAuODkgNTguMjMgMTUxLjg3IDU4LjIzIDE2NS42MSAxMy40NSAxNjUuNzcgMTMuNDUgMTY1LjQ2IDU4LjIzIDE3NC45MiA1OC4yMyAxNzQuOTIgOS44OSAxNTguNjMgOS44OSAxNDYuNjkgNTEuNCIgZmlsbD0iI2ZmZiIvPjxwb2x5Z29uIHBvaW50cz0iMTk2Ljc0IDM1LjQ4IDIxNC44OSAzNS40OCAyMTQuODkgMzEuMDcgMTk2Ljc0IDMxLjA3IDE5Ni43NCAxNC4zOCAyMTcuMzggMTQuMzggMjE3LjM4IDkuODkgMTg3LjA1IDkuODkgMTg3LjA1IDU4LjIzIDIxOC45NCA1OC4yMyAyMTguOTQgNTMuNzQgMTk2Ljc0IDUzLjc0IDE5Ni43NCAzNS40OCIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjI3Ny41MSIgeT0iOS44OSIgd2lkdGg9IjkuNyIgaGVpZ2h0PSI0OC4zMyIgZmlsbD0iI2ZmZiIvPjxwb2x5Z29uIHBvaW50cz0iMjk2LjExIDE0LjQ3IDMxMS4xMiAxNC40NyAzMTEuMTIgNTguMjMgMzIwLjgxIDU4LjIzIDMyMC44MSAxNC40NyAzMzUuOSAxNC40NyAzMzUuOSA5Ljg5IDI5Ni4xMSA5Ljg5IDI5Ni4xMSAxNC40NyIgZmlsbD0iI2ZmZiIvPjxwb2x5Z29uIHBvaW50cz0iMzQzLjk0IDE0LjUgMzU4Ljk1IDE0LjUgMzU4Ljk1IDU4LjIzIDM2OC42NSA1OC4yMyAzNjguNjUgMTQuNSAzODMuNzQgMTQuNSAzODMuNzQgOS44OSAzNDMuOTQgOS44OSAzNDMuOTQgMTQuNSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik00MzQuMjQsMTUuODZhMjYuMzcsMjYuMzcsMCwwLDAtOC44NC01LjI1LDI4LjQxLDI4LjQxLDAsMCwwLTEwLjQ4LTEuODUsMjcuODEsMjcuODEsMCwwLDAtMTAuNCwxLjg4QTI2LjUxLDI2LjUxLDAsMCwwLDM5NS42OSwxNmEyNC4yNCwyNC4yNCwwLDAsMC01LjgzLDguMSwyNC44NiwyNC44NiwwLDAsMC0yLjA3LDEwLjIsMjMuOTIsMjMuOTIsMCwwLDAsMy41NiwxMywyNC40NCwyNC40NCwwLDAsMCw5Ljg5LDguODUsMjguNTcsMjguNTcsMCwwLDAsMTMuNjgsMy4xOSwyOCwyOCwwLDAsMCwxMC40OC0xLjg4LDI3LjA3LDI3LjA3LDAsMCwwLDguODQtNS4yNiwyMy41NywyMy41NywwLDAsMCw1LjgyLTgsMjQuNTUsMjQuNTUsMCwwLDAsMi4wOC0xMC4xNiwyNC41NSwyNC41NSwwLDAsMC0yLjA4LTEwLjE2QTI0LjEyLDI0LjEyLDAsMCwwLDQzNC4yNCwxNS44NlpNNDI5LjY3LDQ0LjdhMTYuODYsMTYuODYsMCwwLDEtNi4yMiw2LjksMTQuODgsMTQuODgsMCwwLDEtOC41MywyLjQ3LDE0LjU0LDE0LjU0LDAsMCwxLTguNDUtMi41MSwxNywxNywwLDAsMS02LjIxLTcuMDZBMjMuMzYsMjMuMzYsMCwwLDEsMzk4LDM0LjA2YTIzLjI3LDIzLjI3LDAsMCwxLDIuMjMtMTAuNDgsMTcsMTcsMCwwLDEsNi4yMS03QTE0LjY4LDE0LjY4LDAsMCwxLDQxNSwxNC4wNWExNC4xNywxNC4xNywwLDAsMSw4LjQxLDIuNTUsMTcuNTksMTcuNTksMCwwLDEsNi4yMiw3LjE0LDIzLjUxLDIzLjUxLDAsMCwxLDIuMjYsMTAuNTZBMjIuOTMsMjIuOTMsMCwwLDEsNDI5LjY3LDQ0LjdaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTQ4MS4yMyw0My45M2ExMC44MSwxMC44MSwwLDAsMS0yLjUxLDcuMzZjLTEuNjYsMS45Mi00LjQsMi44OC04LjIsMi44OHMtNi40OC0xLTguMTgtM2ExMS4xMiwxMS4xMiwwLDAsMS0yLjU0LTcuNDZWOS44OWgtOS42OVY0MS42N0ExOC4yNCwxOC4yNCwwLDAsMCw0NTIuNDIsNTFhMTUuNCwxNS40LDAsMCwwLDYuODQsNi4xOCwyNS42MiwyNS42MiwwLDAsMCwxMS4yNiwyLjIsMjQuODksMjQuODksMCwwLDAsMTEuMjUtMi4yNywxNS44MiwxNS44MiwwLDAsMCw2Ljg1LTYuMjksMTguNTIsMTguNTIsMCwwLDAsMi4zLTkuMzVWOS44OWgtOS42OVoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjU3LjEsMzcuMTJhMTUuNTIsMTUuNTIsMCwwLDAsNi44NC00Ljk0LDEyLjM5LDEyLjM5LDAsMCwwLDIuNDYtNy43MiwxMi43OCwxMi43OCwwLDAsMC0yLjM1LTcuNjcsMTUuMTIsMTUuMTIsMCwwLDAtNi42LTUuMDgsMjUuMDcsMjUuMDcsMCwwLDAtOS44OS0xLjgyaC0xOFY1OC4yM2g5Ljd2LTQ0SDI0N2MyLjc2LDAsNSwuMjMsNi43OCwxLjZzMy44NSwzLjM1LDMuMzIsOC45M2E4LjI1LDguMjUsMCwwLDEtMi4zMiw1QTEwLjI4LDEwLjI4LDAsMCwxLDI1MCwzMi4zMmEyNS4zNCwyNS4zNCwwLDAsMS02LjI5Ljc0aC0zLjZMMjUzLjkxLDUzaDBsLjQ0LjYyYTEyLDEyLDAsMCwwLDMuMTQsMywxMy41LDEzLjUsMCwwLDAsMi42LDEsNDEuNDgsNDEuNDgsMCwwLDAsOC4wNS42N2guNjhMMjUzLjg4LDM4LjA2QTIyLjM1LDIyLjM1LDAsMCwwLDI1Ny4xLDM3LjEyWiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik04NC40Mywwcy0yNS0uMjMtNDIuMjQsMTguOGExNy4xNCwxNy4xNCwwLDAsMC0xLjczLDIuMzd2LS4wNmMtNyw5LjgxLTgsMTguMDYtOCwyMS40MSwwLDguNzQsMi4zLDEyLjIxLDIuMywxMi4yMSwwLTEuNTYuMDgtMy4wNi4xNS00LjQ0YTQwLjcxLDQwLjcxLDAsMCwxLDMuNzctMTQuMjFxMS4xMS0yLDIuMjYtMy44Yy4yMi0uMzMuNDUtLjY2LjYyLS45NCwxNC4wNy0yMSwzMi40LTE5LjA5LDMyLjQtMTkuMDlzMywxOS00LjA2LDMyLjk0UzQ1LjU0LDY3LjMxLDQ1LjU0LDY3LjMxSDQ3QzYzLjM3LDY2LDcyLjYxLDU0LDczLjM3LDUyLjkxLDg5Ljc0LDMwLDg0LjQzLDAsODQuNDMsMFoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTUuMzgsNDUuMTljLTctMTQtNC4wNi0zMi45NC00LjA2LTMyLjk0UzIzLjUsMTEsMzUuNjIsMjEuODlhMjkuNzksMjkuNzksMCwwLDEsNC41MS02LjA2QzIzLjE1LS4xOS44MiwwLC44MiwwUy00LjQ5LDMwLDExLjg4LDUyLjkxYy43NiwxLDEwLDEzLjEzLDI2LjQzLDE0LjRoMS40MVMyMi40NCw1OS4xNiwxNS4zOCw0NS4xOVoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNNTI3Ljc2LDM3LjEyYTE1LjQsMTUuNCwwLDAsMCw2Ljg0LTQuOTQsMTIuMzQsMTIuMzQsMCwwLDAsMi40Ny03LjcyLDEyLjg1LDEyLjg1LDAsMCwwLTIuMzUtNy42NywxNS4xNSwxNS4xNSwwLDAsMC02LjYxLTUuMDgsMjUsMjUsMCwwLDAtOS44OS0xLjgyaC0xOFY1OC4yM2g5Ljd2LTQ0aDcuNzRjMi43NiwwLDUsLjIzLDYuNzgsMS42czMuODUsMy4zNSwzLjMxLDguOTNhOC4yNCw4LjI0LDAsMCwxLTIuMzEsNSwxMC4yOCwxMC4yOCwwLDAsMS00Ljc3LDIuNTYsMjUuNDIsMjUuNDIsMCwwLDEtNi4zLjc0SDUxMC44TDUyNC41OCw1M2gwbC40My42MmExMi4wNSwxMi4wNSwwLDAsMCwzLjE1LDMsMTMuNSwxMy41LDAsMCwwLDIuNiwxLDQxLjQyLDQxLjQyLDAsMCwwLDgsLjY3aC42OEw1MjQuNTUsMzguMDZBMjIuMjEsMjIuMjEsMCwwLDAsNTI3Ljc2LDM3LjEyWiIgZmlsbD0iI2ZmZiIvPjwvZz48L3N2Zz4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0iZG9jLXR5cGUgc2VyaWYiPnt7a2luZExhYmVsfX08L2Rpdj4KICAgIDxkaXYgY2xhc3M9ImRvYy1zdWIiPnt7ZG9jU3VifX08L2Rpdj4KICAgIDxkaXYgY2xhc3M9InZlci1yb3ciPgogICAgICA8c3BhbiBjbGFzcz0idmVyLXRhZyBrZXkiPu2WieyCrOuyiO2YuCB7e+2WieyCrOuyiO2YuH19PC9zcGFuPgogICAgICA8c3BhbiBjbGFzcz0idmVyLXRhZyI+7LWc7KKFIO2ZleyglSB7e2dlbkRhdGV9fTwvc3Bhbj4KICAgIDwvZGl2PgogIDwvZGl2PgoKICA8ZGl2IGNsYXNzPSJrZXljYXJkIj4KICAgIDxkaXYgY2xhc3M9ImtjLW5hbWUgdGVhbS1vbmx5Ij48Yj57e+uMgO2RnH19PC9iPiDri5gg7Jm4IHt77J247JuQXzF9feuqhSAo7LSdIHt77J247JuQfX3rqoUpPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJrYy1uYW1lIHBlcnNvbi1vbmx5Ij48Yj57e+uMgO2RnH19PC9iPiDri5g8L2Rpdj4KICAgIDxkaXYgY2xhc3M9ImtjLXByb2Qgc2VyaWYiPnt7cHJvZE5hbWV9fSA8c3BhbiBzdHlsZT0iZm9udC1zaXplOjE1cHg7Y29sb3I6dmFyKC0tc3ViKTtmb250LXdlaWdodDo1MDA7Ij57e+q4sOqwhH19PC9zcGFuPjwvZGl2PgoKICAgIDxkaXYgY2xhc3M9ImtjLWdyaWQiPgogICAgICA8ZGl2IGNsYXNzPSJrYy1jZWxsIj4KICAgICAgICA8ZGl2IGNsYXNzPSJrYy1sYWJlbCI+7Lac67CcPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ia2MtdmFsIj57e2RlcE19fSA8c3BhbiBjbGFzcz0idW5pdCI+e3tkZXBEfX08L3NwYW4+PHNwYW4gY2xhc3M9ImRkYXkiIGlkPSJkZGF5Ij57e2RkYXl9fTwvc3Bhbj48L2Rpdj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImtjLWNlbGwiPgogICAgICAgIDxkaXYgY2xhc3M9ImtjLWxhYmVsIj7rj4TssKk8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJrYy12YWwiPnt7YXJyTX19IDxzcGFuIGNsYXNzPSJ1bml0Ij57e2FyckR9fTwvc3Bhbj48L2Rpdj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImZsaWdodCI+CiAgICAgICAgPGRpdiBjbGFzcz0iZmwtcHQiPjxkaXYgY2xhc3M9ImZsLXRpbWUiPnt77Lac67Cc7Y647Iuc6rCBfX08L2Rpdj48ZGl2IGNsYXNzPSJmbC1jb2RlIj7snbjsspwgSUNOPC9kaXY+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iZmwtbWlkIj48ZGl2IGNsYXNzPSJmbC1ubyI+e3vstpzrsJztjrh9fTwvZGl2PjxkaXYgY2xhc3M9ImZsLWxpbmUiPjwvZGl2PjxkaXYgc3R5bGU9ImZvbnQtc2l6ZToxMnB4OyI+6rCA64qUIO2OuDwvZGl2PjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImZsLXB0Ij48ZGl2IGNsYXNzPSJmbC10aW1lIj57e+2YhOyngOuPhOywqX19PC9kaXY+PGRpdiBjbGFzcz0iZmwtY29kZSI+e3vrj4TssKnqs7Xtla19fTwvZGl2PjwvZGl2PgogICAgICA8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iZmxpZ2h0Ij4KICAgICAgICA8ZGl2IGNsYXNzPSJmbC1wdCI+PGRpdiBjbGFzcz0iZmwtdGltZSI+e3vqt4Dqta3tjrjsi5zqsIF9fTwvZGl2PjxkaXYgY2xhc3M9ImZsLWNvZGUiPnt764+E7LCp6rO17ZWtfX08L2Rpdj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJmbC1taWQiPjxkaXYgY2xhc3M9ImZsLW5vIj57e+q3gOq1re2OuH19PC9kaXY+PGRpdiBjbGFzcz0iZmwtbGluZSI+PC9kaXY+PGRpdiBzdHlsZT0iZm9udC1zaXplOjEycHg7Ij7smKTripQg7Y64PC9kaXY+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iZmwtcHQiPjxkaXYgY2xhc3M9ImZsLXRpbWUiPnt76reA6rWt64+E7LCpfX08L2Rpdj48ZGl2IGNsYXNzPSJmbC1jb2RlIj7snbjsspwgSUNOPC9kaXY+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJrYy1iYWdnYWdlIj4KICAgICAgPGI+7JyE7YOB7IiY7ZWY66y8IDE1a2c8L2I+IMK3IDxiPuqzqO2UhOuwsSAxNWtnIOydtO2VmDwvYj4gwrcg6riw64K07IiY7ZWY66y8IDEwa2cgMeqwnDxicj4KICAgICAg7Yuw7Juo7J20IELsubTsmrTthLAg7IiY7IaNIMK3IOy2nOuwnCAz7Iuc6rCEIOyghCDqs7Xtla0g64+E7LCpIOq2jOyepQogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0g7JqU6riIIC0tPgogIDxkaXYgY2xhc3M9InNlYyBzdGF0aWMgc2VjLWZlZS13cmFwIj4KICAgIDxkaXYgY2xhc3M9InNlYy1oZWFkIj48c3BhbiBjbGFzcz0ic2VjLW51bSI+PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiPjxyZWN0IHg9IjIiIHk9IjYiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxMiIgcng9IjIiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIyLjUiLz48cGF0aCBkPSJNNSA5djZNMTkgOXY2Ii8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPuyalOq4iCDslYjrgrQ8L3NwYW4+PC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJzZWMtYm9keSI+CiAgICAgIDxkaXYgY2xhc3M9ImluY2wiPgogICAgICAgIDxkaXYgY2xhc3M9ImluY2wtYm94IGluIj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImloIj7tj6ztlagg7IKs7ZWtPC9kaXY+CiAgICAgICAgICA8dWw+CiAgICAgICAgICAgIDxsaT7tla3qs7Xro4wgKOycoOulmO2VoOymneujjMK37KCc7IS46rO16rO86riIIO2PrO2VqCk8L2xpPgogICAgICAgICAgICA8bGk+7KeA7IOB67mEICjsiJnrsJXCt+udvOyatOuUqcK37Iud7IKsIC8gMeydvOywqCDspJHsi50g7KCc7Jm4KTwvbGk+CiAgICAgICAgICAgIDxsaT7smZXrs7Ug7Iah7JiBIOyEnOu5hOyKpDwvbGk+CiAgICAgICAgICAgIDxsaT7tmozsm5Ag6rSA66as67mEIOKCqTUwLDAwMCAo7Jes7ZaJ7J6Q67O07ZeYIO2PrO2VqCk8L2xpPgogICAgICAgICAgPC91bD4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJpbmNsLWJveCBvdXQiPgogICAgICAgICAgPGRpdiBjbGFzcz0iaWgiPuu2iO2PrO2VqCDsgqztla08L2Rpdj4KICAgICAgICAgIDx1bD4KICAgICAgICAgICAgPGxpPuqwnOyduCDqsr3ruYQ8L2xpPgogICAgICAgICAgICA8bGk+7ZiE7KeAIOyEoO2DnSDtla3rqqkgKOyVhOuemCDstpTqsIAg67mE7JqpIOywuOyhsCk8L2xpPgogICAgICAgICAgPC91bD4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8IS0tIO2MgCDrqqjrk5w6IDHsnbgg67mE7JqpIOq4sOykgCAtLT4KICAgICAgPGRpdiBjbGFzcz0idGVhbS1vbmx5Ij4KICAgICAgICA8ZGl2IGNsYXNzPSJwZXJwIj4KICAgICAgICAgIDxkaXYgY2xhc3M9InBlcnAtaGVhZCI+MeyduCDruYTsmqkg7JWI64K0PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJwZXJwLXJvdyI+PHNwYW4gY2xhc3M9InBsIj4x7J24IOyDge2SiOqwgDxicj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEyLjVweDtjb2xvcjp2YXIoLS1zdWIpOyI+7ZWt6rO166OMIDQ266eM7JuQIO2PrO2VqDwvc3Bhbj48L3NwYW4+PHNwYW4gY2xhc3M9InB2Ij57e3Blcn19PC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0icGVycC1yb3cgcXVvdGUtaGlkZSI+PHNwYW4gY2xhc3M9InBsIj4x7J24IOyYiOyVveq4iCA8c3BhbiBjbGFzcz0icGFpZC1jaGlwIj7snoXquIgg7JmE66OMPC9zcGFuPjwvc3Bhbj48c3BhbiBjbGFzcz0icHYiPnt7ZGVwb3NpdH19PC9zcGFuPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0icGVycC1yb3cgYmFsIHF1b3RlLWhpZGUiPjxzcGFuIGNsYXNzPSJwbCI+MeyduCDsnpTquIg8L3NwYW4+PHNwYW4gY2xhc3M9InB2Ij57e2JhbGFuY2V9fTwvc3Bhbj48L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJub3RlIHF1b3RlLW9ubHkiIHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7Ij4KICAgICAgICAgIOuzuCDqsqzsoIHshJzripQgPGI+7JiI7JW9IO2ZleyglSDsoIQg7JWI64K07JqpPC9iPuyeheuLiOuLpC4g7JiI7JW96riIIOyeheq4iCDsi5wg7JiI7JW97J20IO2ZleygleuQmOupsCwg7ZmV7KCV7ISc66W8IOuLpOyLnCDrs7TrgrTrk5zrpr3ri4jri6QuCiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibm90ZSB3YXJuIHF1b3RlLWhpZGUiIHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7Ij4KICAgICAgICAgIOyelOq4iCDrgqnrtoAg6riw7ZWcIDogPGI+e3tiYWxhbmNlRHVlfX08L2I+IOq5jOyngCAo7Lac67CcIDMw7J28IOyghCkKICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8IS0tIOqwnOyduCDrqqjrk5w6IOuzuOyduCDrgrTsl63rp4wgKO2ZleygleyEnOunjCkgLS0+CiAgICAgIDxkaXYgY2xhc3M9InBlcnNvbi1vbmx5Ij4KICAgICAgICA8ZGl2IGNsYXNzPSJtaW5lIj4KICAgICAgICAgIDxkaXYgY2xhc3M9Im1pbmUtaGVhZCI+7KGw7Jqw7IStIOuLmCDsnoXquIgg7ZiE7ZmpPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJtaW5lLXJvdyI+PHNwYW4gY2xhc3M9Im1sIj7rs7jsnbgg67aA64u07JWhPC9zcGFuPjxzcGFuIGNsYXNzPSJtdiI+e3twZXJ9fTwvc3Bhbj48L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9Im1pbmUtcm93Ij48c3BhbiBjbGFzcz0ibWwiPuyeheq4iCDsmYTro4w8L3NwYW4+PHNwYW4gY2xhc3M9Im12IiBzdHlsZT0iY29sb3I6dmFyKC0tZ3JlZW4pOyI+e3tkZXBvc2l0fX08L3NwYW4+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJtaW5lLXJvdyBiYWwiPjxzcGFuIGNsYXNzPSJtbCI+64Ko7J2AIOyelOq4iDwvc3Bhbj48c3BhbiBjbGFzcz0ibXYiPnt7YmFsYW5jZX19PC9zcGFuPjwvZGl2PgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImJhbGFuY2UiIHN0eWxlPSJib3JkZXItY29sb3I6dmFyKC0tb3JhbmdlKTtiYWNrZ3JvdW5kOiNGRkZCRUI7Ij4KICAgICAgICAgIDxkaXYgY2xhc3M9ImJsIiBzdHlsZT0iY29sb3I6dmFyKC0tb3JhbmdlKTsiPuuCqeu2gCDquLDtlZw8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImJkIiBzdHlsZT0ibWFyZ2luLXRvcDowOyI+PGI+e3tiYWxhbmNlRHVlfX08L2I+IOq5jOyngCDsnoXquIgg67aA7YOB65Oc66a964uI64ukICjstpzrsJwgMzDsnbwg7KCEKTwvZGl2PgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImFjY3QgcXVvdGUtaGlkZSI+CiAgICAgICAgPGRpdiBjbGFzcz0iYWwiPuyeheq4iCDqs4Tsoow8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJhdiI+e3thY2N0SW5mb319PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iYW4iPnt7YWNjdEhvbGRlcn19PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0ia2FrYW8tbm90aWNlIHF1b3RlLWhpZGUiPgogICAgICAgIDxkaXYgY2xhc3M9ImtuLXEiPuyeheq4iOydhCDsmYTro4ztlZjshajrgpjsmpQ/PC9kaXY+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0ia24tYnRuIiBvbmNsaWNrPSJub3RpZnlQYXltZW50KCkiPgogICAgICAgICAgPHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgYXJpYS1oaWRkZW49InRydWUiPjxwYXRoIGQ9Ik0xMiAzQzYuNSAzIDIgNi42IDIgMTFjMCAyLjggMS45IDUuMyA0LjcgNi43LS4yLjctLjcgMi42LS44IDMtLjEuNS4yLjUuNC40LjItLjEgMi42LTEuOCAzLjYtMi41LjcuMSAxLjQuMiAyLjEuMiA1LjUgMCAxMC0zLjYgMTAtOHMtNC41LTgtMTAtOHoiIGZpbGw9IiMzQzFFMUUiLz48L3N2Zz4KICAgICAgICAgIOy5tOy5tOyYpOuhnCDsnoXquIgg7JmE66OMIOyVjOumrOq4sAogICAgICAgIDwvYnV0dG9uPgogICAgICAgIDxkaXYgY2xhc3M9ImtuLWhlbHAiPuuyhO2KvOydhCDriITrpbTrqbQg7JWI64K0IOuplOyLnOyngOqwgCDrs7XsgqzrkJjqs6Ag66mU66as7Yq47Yis7Ja0IOy5tOy5tOyYpCDssYTrhJDsnbQg7Je066a964uI64ukLiDssYTtjIXssL3sl5AgPGI+67aZ7Jes64Sj6riwIOKGkiDsoITshqE8L2I+7ZW0IOyjvOyEuOyalC48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJrbi1jb3BpZWQiIGlkPSJrbkNvcGllZCI+66mU7Iuc7KeA6rCAIOuzteyCrOuQmOyXiOyKteuLiOuLpCDCtyDsubTsubTsmKQg7LGE64SQ7JeQIOu2meyXrOuEo+yWtCDso7zshLjsmpQ8L2Rpdj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KCiAgPCEtLSDsl6ztlokg7J287KCVIC0tPgogIDxkaXYgY2xhc3M9InNlYyBvcGVuIj4KICAgIDxkaXYgY2xhc3M9InNlYy1oZWFkIiBvbmNsaWNrPSJ0b2dnbGVTZWModGhpcykiPjxzcGFuIGNsYXNzPSJzZWMtbnVtIj48c3ZnIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iNSIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE2IiByeD0iMiIvPjxwYXRoIGQ9Ik0zIDloMThNOCAzdjRNMTYgM3Y0Ii8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPuyXrO2WiSDsnbzsoJU8L3NwYW4+PHNwYW4gY2xhc3M9InNlYy1hcnJvdyI+PHNwYW4gY2xhc3M9ImhpbnQiPu2Dre2VmOyXrCDrs7TquLA8L3NwYW4+PHNwYW4gY2xhc3M9ImNoZXYiPuKMhDwvc3Bhbj48L3NwYW4+PC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJzZWMtYm9keSI+CiAgICAgIDxkaXYgY2xhc3M9InRsIj57e2l0aW5IVE1MfX08L2Rpdj4KICAgIDwvZGl2PgogIDwvZGl2PgoKICA8IS0tIOy2lOqwgCDruYTsmqkgwrcg7IKs7KCEIOyLoOyyrSAtLT4KICA8ZGl2IGNsYXNzPSJzZWMiPgogICAgPGRpdiBjbGFzcz0ic2VjLWhlYWQiIG9uY2xpY2s9InRvZ2dsZVNlYyh0aGlzKSI+PHNwYW4gY2xhc3M9InNlYy1udW0iPjxzdmcgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMjAuNiAxMy40IDEzLjQgMjAuNmEyIDIgMCAwIDEtMi44IDBMMyAxM1YzaDEweiIvPjxjaXJjbGUgY3g9IjcuNSIgY3k9IjcuNSIgcj0iMS4yIi8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPuy2lOqwgCDruYTsmqkgwrcg7IKs7KCEIOyLoOyyrTwvc3Bhbj48c3BhbiBjbGFzcz0ic2VjLWFycm93Ij48c3BhbiBjbGFzcz0iaGludCI+7YOt7ZWY7JesIOuztOq4sDwvc3Bhbj48c3BhbiBjbGFzcz0iY2hldiI+4oyEPC9zcGFuPjwvc3Bhbj48L2Rpdj4KICAgIDxkaXYgY2xhc3M9InNlYy1ib2R5Ij4KICAgICAgPGRpdiBjbGFzcz0ibm90ZSI+7ISg7YOdIOuYkOuKlCDsnbjsm5Ag7KGw6rG07JeQIO2VtOuLue2VmOuKlCDqsr3smrDsl5Drp4wg67mE7Jqp7J20IOuwnOyDne2VqeuLiOuLpC48L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0ibWluaSI+e3tleHRyYUhUTUx9fTwvZGl2PgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0g7J2867O4IOyeheq1rSDslYjrgrQgLS0+CiAgPGRpdiBjbGFzcz0ic2VjIj4KICAgIDxkaXYgY2xhc3M9InNlYy1oZWFkIiBvbmNsaWNrPSJ0b2dnbGVTZWModGhpcykiPjxzcGFuIGNsYXNzPSJzZWMtbnVtIj48c3ZnIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iNSIgeT0iMiIgd2lkdGg9IjE0IiBoZWlnaHQ9IjIwIiByeD0iMiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iOS41IiByPSIyLjgiLz48cGF0aCBkPSJNOSAxNmg2Ii8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPuydvOuzuCDsnoXqta0g7JWI64K0PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtYXJyb3ciPjxzcGFuIGNsYXNzPSJoaW50Ij7tg63tlZjsl6wg67O06riwPC9zcGFuPjxzcGFuIGNsYXNzPSJjaGV2Ij7ijIQ8L3NwYW4+PC9zcGFuPjwvZGl2PgogICAgPGRpdiBjbGFzcz0ic2VjLWJvZHkiPgogICAgICA8ZGl2IGNsYXNzPSJtaW5pIj4KICAgICAgICA8ZGl2IGNsYXNzPSJtaW5pLWl0ZW0iPgogICAgICAgICAgPGRpdiBjbGFzcz0ibXQiPlZpc2l0IEphcGFuIFdlYiDsgqzsoIQg65Ox66GdIOq2jOyepTwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibWQiPuuTseuhnSDsi5wg7J6F6rWtwrfshLjqtIAg7KCI7LCo6rCAIOybkO2ZnO2VqeuLiOuLpC4g66+465Ox66GdIOyLnOyXkOuPhCDsnoXqta0g6rCA64ql7ZWY66mwIOqzte2VreyXkOyEnCDsooXsnbQg7Iug6rOg7IScIOyekeyEseydtCDqsIDriqXtlanri4jri6QuPGJyPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnZqdy5kaWdpdGFsLmdvLmpwLyIgdGFyZ2V0PSJfYmxhbmsiPnZqdy5kaWdpdGFsLmdvLmpwPC9hPjwvZGl2PgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImxvZGdlIj4KICAgICAgICA8ZGl2IGNsYXNzPSJsb2RnZS1oZWFkIj4KICAgICAgICAgIDxzdmcgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTMgMjFoMThNNSAyMVY4bDctNSA3IDV2MTNNOSAyMXYtNmg2djYiLz48L3N2Zz4KICAgICAgICAgIOyeheq1rSDsi6Dqs6Dsmqkg7IiZ7IaMIOygleuztAogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImxvZGdlLWJvZHkiPgogICAgICAgICAgPGRpdiBjbGFzcz0ibG9kZ2Utcm93Ij4KICAgICAgICAgICAgPGRpdiBjbGFzcz0ibHItaW5mbyI+PGRpdiBjbGFzcz0ibHItbGFiZWwiPuyImeyGjOuqhTwvZGl2PjxkaXYgY2xhc3M9ImxyLXZhbCI+e3tsb2RnZU5hbWV9fTwvZGl2PjwvZGl2PgogICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJjb3B5LWJ0biIgb25jbGljaz0iY29weVRleHQodGhpcywne3tsb2RnZU5hbWV9fScpIj7rs7Xsgqw8L2J1dHRvbj4KICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibG9kZ2Utcm93Ij4KICAgICAgICAgICAgPGRpdiBjbGFzcz0ibHItaW5mbyI+PGRpdiBjbGFzcz0ibHItbGFiZWwiPuyasO2OuOuyiO2YuDwvZGl2PjxkaXYgY2xhc3M9ImxyLXZhbCI+e3tsb2RnZVppcH19PC9kaXY+PC9kaXY+CiAgICAgICAgICAgIDxidXR0b24gY2xhc3M9ImNvcHktYnRuIiBvbmNsaWNrPSJjb3B5VGV4dCh0aGlzLCd7e2xvZGdlWmlwfX0nKSI+67O17IKsPC9idXR0b24+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9ImxvZGdlLXJvdyI+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9ImxyLWluZm8iPjxkaXYgY2xhc3M9ImxyLWxhYmVsIj7soITtmZTrsojtmLg8L2Rpdj48ZGl2IGNsYXNzPSJsci12YWwiPnt7bG9kZ2VUZWx9fTwvZGl2PjwvZGl2PgogICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJjb3B5LWJ0biIgb25jbGljaz0iY29weVRleHQodGhpcywne3tsb2RnZVRlbH19JykiPuuzteyCrDwvYnV0dG9uPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsb2RnZS1hZGRyIj57e2xvZGdlQWRkcn19PC9kaXY+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ibG9kZ2Utbm90ZSI+7J2867O4IOyeheq1rSDsi6zsgqwg7IucIOyImeyGjCDsoJXrs7Qg6riw7J6s6rCAIO2VhOyalO2VoCDsiJgg7J6I7Iq164uI64ukLiDsnIQg67KE7Yq87Jy866GcIOuzteyCrO2VtCDsgqzsmqntlZjshLjsmpQuPC9kaXY+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0g66+47YyFIOyViOuCtCAtLT4KICA8ZGl2IGNsYXNzPSJzZWMiPgogICAgPGRpdiBjbGFzcz0ic2VjLWhlYWQiIG9uY2xpY2s9InRvZ2dsZVNlYyh0aGlzKSI+PHNwYW4gY2xhc3M9InNlYy1udW0iPjxzdmcgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMjFzNy01LjUgNy0xMWE3IDcgMCAwIDAtMTQgMGMwIDUuNSA3IDExIDcgMTF6Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMCIgcj0iMi41Ii8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPu2YhOyngCDrr7jtjIUg7JWI64K0PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtYXJyb3ciPjxzcGFuIGNsYXNzPSJoaW50Ij7tg63tlZjsl6wg67O06riwPC9zcGFuPjxzcGFuIGNsYXNzPSJjaGV2Ij7ijIQ8L3NwYW4+PC9zcGFuPjwvZGl2PgogICAgPGRpdiBjbGFzcz0ic2VjLWJvZHkiPgogICAgICA8ZGl2IGNsYXNzPSJub3RlIj57e21lZXRpbmd9fTwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJtaW5pIiBzdHlsZT0ibWFyZ2luLXRvcDo2cHg7Ij4Ke3tlbWVyZ2VuY3lCbG9ja319CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0g7JWI64K0IC0tPgogIDxkaXYgY2xhc3M9InNlYyBvcGVuIj4KICAgIDxkaXYgY2xhc3M9InNlYy1oZWFkIiBvbmNsaWNrPSJ0b2dnbGVTZWModGhpcykiPjxzcGFuIGNsYXNzPSJzZWMtbnVtIj48c3ZnIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE0IDNINmEyIDIgMCAwIDAtMiAydjE0YTIgMiAwIDAgMCAyIDJoMTJhMiAyIDAgMCAwIDItMlY5eiIvPjxwYXRoIGQ9Ik0xNCAzdjZoNk05IDEzaDZNOSAxN2g2Ii8+PC9zdmc+PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtdGl0bGUiPuyYiOyVvSDCtyDst6jshowg7JWI64K0PC9zcGFuPjxzcGFuIGNsYXNzPSJzZWMtYXJyb3ciPjxzcGFuIGNsYXNzPSJoaW50Ij7tg63tlZjsl6wg67O06riwPC9zcGFuPjxzcGFuIGNsYXNzPSJjaGV2Ij7ijIQ8L3NwYW4+PC9zcGFuPjwvZGl2PgogICAgPGRpdiBjbGFzcz0ic2VjLWJvZHkiPgogICAgICA8ZGl2IGNsYXNzPSJmZWUtdGl0bGUiPuyXrO2WiSDsmpTquIgo7KeA7IOB67mEKSDst6jshowg7IiY7IiY66OMPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImZlZS1jYXV0aW9uIj4KICAgICAgICA8c3ZnIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJub25lIiBzdHJva2U9IiNEOTc3MDYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgOXY0TTEyIDE3aC4wMU0xMC4zIDMuOSAxLjggMThhMiAyIDAgMCAwIDEuNyAzaDE3YTIgMiAwIDAgMCAxLjctM0wxMy43IDMuOWEyIDIgMCAwIDAtMy40IDB6Ii8+PC9zdmc+CiAgICAgICAgPHNwYW4+7JWE656YIO2RnOuKlCA8Yj7sl6ztlokg7JqU6riIKOyngOyDgeu5hCkg6riw7KSAPC9iPuyeheuLiOuLpC4gPGI+7ZWt6rO16raM7J2AIOuzhOuPhCDqt5zsoJU8L2I+7J20IOyggeyaqeuQmOyWtCwg67Cc6raM65CcIOqyveyasCAzMOydvCDsoITsnbTrnbzrj4Qg7ZWt6rO1IOyImOyImOujjOqwgCDrsJzsg53tlaAg7IiYIOyeiOyKteuLiOuLpC48L3NwYW4+CiAgICAgIDwvZGl2PgogICAgICA8dGFibGUgY2xhc3M9ImZlZSI+CiAgICAgICAgPHRoZWFkPjx0cj48dGg+7Leo7IaMIOyLnOygkDwvdGg+PHRoIHN0eWxlPSJ0ZXh0LWFsaWduOnJpZ2h0OyI+7Jes7ZaJIOyalOq4iCDsiJjsiJjro4w8L3RoPjwvdHI+PC90aGVhZD4KICAgICAgICA8dGJvZHk+CiAgICAgICAgICA8dHI+PHRkPuy2nOuwnCAzMOydvCDsoITquYzsp4A8L3RkPjx0ZCBjbGFzcz0iYW10IGZyZWUiPuqzhOyVveq4iCDsoITslaEg7ZmY6riJPHNwYW4gY2xhc3M9ImFtdC1zdWIiPu2Vreqzteq2jCDrsJzqtowg7IucIOuzhOuPhDwvc3Bhbj48L3RkPjwvdHI+CiAgICAgICAgICA8dHI+PHRkPuy2nOuwnCAyOSB+IDIw7J28IOyghDwvdGQ+PHRkIGNsYXNzPSJhbXQiPuyalOq4iOydmCAxMCU8L3RkPjwvdHI+CiAgICAgICAgICA8dHI+PHRkPuy2nOuwnCAxOSB+IDEw7J28IOyghDwvdGQ+PHRkIGNsYXNzPSJhbXQiPuyalOq4iOydmCAxNSU8L3RkPjwvdHI+CiAgICAgICAgICA8dHI+PHRkPuy2nOuwnCA5IH4gOOydvCDsoIQ8L3RkPjx0ZCBjbGFzcz0iYW10Ij7smpTquIjsnZggMjAlPC90ZD48L3RyPgogICAgICAgICAgPHRyPjx0ZD7stpzrsJwgNyB+IDHsnbwg7KCEPC90ZD48dGQgY2xhc3M9ImFtdCI+7JqU6riI7J2YIDMwJTwvdGQ+PC90cj4KICAgICAgICAgIDx0cj48dGQ+7Lac67CcIOuLueydvDwvdGQ+PHRkIGNsYXNzPSJhbXQiPuyalOq4iOydmCA1MCU8L3RkPjwvdHI+CiAgICAgICAgPC90Ym9keT4KICAgICAgPC90YWJsZT4KICAgICAgPHVsIGNsYXNzPSJpbmZvLWxpc3QiIHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7Ij4KICAgICAgICA8bGk+44CM6rWt7Jm47Jes7ZaJIO2RnOykgOyVveq0gOOAjeydhCDquLDspIDsnLzroZwg7KCB7Jqp65Cp64uI64ukLjwvbGk+CiAgICAgICAgPGxpPk5vLXNob3cg7IucIOyZleuztSDtla3qs7XqtozsnYAg7KCE7JWhIO2ZmOu2iCDrtojqsIDtlanri4jri6QuPC9saT4KICAgICAgPC91bD4KCiAgICAgIDxkaXYgY2xhc3M9ImdycC1haXIiPgogICAgICAgIDxkaXYgY2xhc3M9ImdhLWhlYWQiPu2Vreqzteq2jCDqtIDroKgg7JWI64K0PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iZ2EtZGVzYyI+CiAgICAgICAgICDstpzrsJzsnbzsnbQg66eO7J20IOuCqOyVhCDsnojrjZTrnbzrj4QsIOuqheygiMK37Jew7Zy0IOuTsSDsoozshJ0g7ZmV67O06rCAIOyWtOugpOyatCDsi5zquLDsnbTqsbDrgpgg7ZWt6rO17IKs7JeQ7IScIOyCrOyghCDrsJzqtozsnYQg7JqU7LKt7ZWY64qUIOqyveyasOyXkOuKlCDrr7jrpqwg67Cc6raMKOyEoOuwnOq2jCnsnbQg7KeE7ZaJ65CgIOyImCDsnojsirXri4jri6QuCiAgICAgICAgICDsnbQg6rK97JqwIOuwnOq2jCDsoITsnbTrnbzrj4Qg7KKM7ISdIOuwmO2ZmMK366qF64uoIOuzgOqyvSDrk7HsnZgg7IiY7IiY66OM6rCALCDrsJzqtowg7ZuE7JeQ64qUIO2VreqzteyCrCDst6jshowg7IiY7IiY66OM6rCAIOuwnOyDne2VoCDsiJgg7J6I7Iq164uI64ukLgogICAgICAgICAg7Yyo64SQ7Yuw64qUIOychCDst6jshowg7IiY7IiY66OM7JmAIOuzhOqwnOuhnCDsoIHsmqnrkJjrqbAsIO2VreqzteyCrMK37Jq07J6EIOyiheulmMK37Leo7IaMIOyLnOygkOyXkCDrlLDrnbwg64us65287KeR64uI64ukLgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImdhLW5vdGUiPuyggeyaqSDsl6zrtoDsmYAg6rWs7LK07KCB7J24IOq4iOyVoeydgCDsmIjslb3tlZjsi6Ag7ZWt6rO16raMIOyhsOqxtOyXkCDrlLDrnbwg64uk66W066+A66GcIOuLtOuLueyekOyXkOqyjCDrrLjsnZjtlbQg7KO87Iuc6riwIOuwlOuejeuLiOuLpC48L2Rpdj4KICAgICAgICA8YSBjbGFzcz0iZ2EtbGluayIgaHJlZj0iaHR0cHM6Ly93d3cubWVyaXR0b3VyLmNvLmtyL2N1c3RvbWVyL2Jicy9jb20wMV92aWV3P3Bvc3RTZXE9MzAwMDAwMzcmcGFnZT0xIiB0YXJnZXQ9Il9ibGFuayI+CiAgICAgICAgICDtla3qs7Ug67Cc6raMIOyViOuCtCDsnpDshLjtnogg67O06riwCiAgICAgICAgICA8c3ZnIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik03IDE3IDE3IDdNOSA3aDh2OCIvPjwvc3ZnPgogICAgICAgIDwvYT4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJub3RlIHdhcm4iPuyynOyerOyngOuzgCjsmrDsspzCt+2PreyEpCDrk7EpIOuYkOuKlCDqs6jtlITsnqUg7IKs7KCV7Jy866GcIOudvOyatOuTnOqwgCDrtojqsIDtlZwg6rK97JqwIO2ZmOu2iOuQmOyngCDslYrsnLzrqbAg64yA7LK0IO2UhOuhnOq3uOueqOycvOuhnCDsp4TtlonrkKnri4jri6QuPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KCiAgPGRpdiBjbGFzcz0iZm9vdCI+CiAgICA8ZGl2IGNsYXNzPSJmb290LWN0YSI+PGRpdiBjbGFzcz0iZmwiPuyYiOyVvSDrrLjsnZg8L2Rpdj48ZGl2IGNsYXNzPSJmdiI+e3tpbnF1aXJ5VGVsfX08L2Rpdj48L2Rpdj4KICAgIDxkaXYgY2xhc3M9ImZvb3QtaW5mbyI+PGI+TUVSSVRUT1VSPC9iPiDCtyDrqZTrpqztirjtiKzslrQ8YnI+aHR0cHM6Ly93d3cubWVyaXR0b3VyLmNvLmtyPC9kaXY+CiAgPC9kaXY+Cgo8L2Rpdj4KCjxkaXYgY2xhc3M9InNhdmViYXIiPjxidXR0b24gb25jbGljaz0id2luZG93LnByaW50KCkiPuydtOuvuOyngOuhnCDsoIDsnqUgLyDsnbjsh4Q8L2J1dHRvbj48L2Rpdj4KCgo8c2NyaXB0PgpmdW5jdGlvbiB0b2dnbGVTZWMoZWwpeyBlbC5wYXJlbnRFbGVtZW50LmNsYXNzTGlzdC50b2dnbGUoIm9wZW4iKTsgfQooZnVuY3Rpb24oKXt2YXIgZWw9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImRkYXkiKTtpZighZWwpcmV0dXJuO3ZhciBkZXA9bmV3IERhdGUoInt77Lac67CcfX1UMDA6MDA6MDAiKSxub3c9bmV3IERhdGUoKTtub3cuc2V0SG91cnMoMCwwLDAsMCk7dmFyIGRmPU1hdGgucm91bmQoKGRlcC1ub3cpLzg2NDAwMDAwKTtlbC50ZXh0Q29udGVudD1kZj4wPyJELSIrZGY6KGRmPT09MD8iRC1EQVkiOiLsl6ztlokg7KSRIik7fSkoKTsKZnVuY3Rpb24gY29weVRleHQoYix0KXtpZihuYXZpZ2F0b3IuY2xpcGJvYXJkKXtuYXZpZ2F0b3IuY2xpcGJvYXJkLndyaXRlVGV4dCh0KS50aGVuKGZ1bmN0aW9uKCl7dmFyIG89Yi50ZXh0Q29udGVudDtiLnRleHRDb250ZW50PSLrs7XsgqzrkKgiO2IuY2xhc3NMaXN0LmFkZCgiZG9uZSIpO3NldFRpbWVvdXQoZnVuY3Rpb24oKXtiLnRleHRDb250ZW50PW87Yi5jbGFzc0xpc3QucmVtb3ZlKCJkb25lIik7fSwxNTAwKTt9KTt9fQpmdW5jdGlvbiBub3RpZnlQYXltZW50KCl7dmFyIG1zZz0iW+uplOumrO2KuO2IrOyWtF0ge3vrjIDtkZx9fSAvIHt77ZaJ7IKs67KI7Zi4fX0gLyB7e3Byb2ROYW1lfX0g7J6F6riIIOyZhOujjO2WiOyKteuLiOuLpC4iO2lmKG5hdmlnYXRvci5jbGlwYm9hcmQpe25hdmlnYXRvci5jbGlwYm9hcmQud3JpdGVUZXh0KG1zZyk7fXZhciBlbD1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgia25Db3BpZWQiKTtpZihlbCllbC5jbGFzc0xpc3QuYWRkKCJzaG93Iik7d2luZG93Lm9wZW4oImh0dHA6Ly9wZi5rYWthby5jb20vX2R4aFd1cy9jaGF0IiwiX2JsYW5rIik7fQo8L3NjcmlwdD48L2JvZHk+PC9odG1sPg==";
+
+
+function decodeV7(){
+  const bin = atob(V7_B64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
+}
+const V7_RAW = decodeV7();
+function PAGE_TEMPLATE(d){
+  let html = V7_RAW;
+  const map = {
+    "행사번호":d.행사번호||"", "대표":d.대표||"", "인원":d.인원||"", "인원_1":(d.인원-1)||"",
+    "prodName":d.prodName||"", "기간":d.기간||"",
+    "depM":d.depM||"", "depD":d.depD||"", "arrM":d.arrM||"", "arrD":d.arrD||"",
+    "depMslash":(d.depM||"").replace("."," / "), "출발":d.출발||"",
+    "출발편":d.출발편||"", "출발편시각":d.출발편시각||"", "현지도착":d.현지도착||"",
+    "귀국편":d.귀국편||"", "귀국편시각":d.귀국편시각||"", "귀국도착":d.귀국도착||"—",
+    "도착공항":d.도착공항||"현지공항",
+    "per":d.per||"", "deposit":d.deposit||"", "balance":d.balance||"",
+    "itinHTML":d.itinHTML||"", "extraHTML":d.extraHTML||"",
+    "lodgeName":d.lodgeName||"", "lodgeZip":d.lodgeZip||"", "lodgeAddr":d.lodgeAddr||"", "lodgeTel":d.lodgeTel||"",
+    "meeting":d.meeting||"현지 직원이 피켓을 들고 대기합니다.",
+    "emergencyBlock":d.emergencyBlock||"",
+    "dday":d.dday||"", "genDate":d.genDate||"", "balanceDue":d.balanceDue||"",
+    "roomType":d.roomType||"", "acctInfo":d.acctInfo||"", "acctHolder":d.acctHolder||"", "inquiryTel":d.inquiryTel||"",
+    "kindLabel":d.kindLabel||"확 정 서", "docKind":d.docKind||"confirm",
+    "docSub":({confirm:"예약이 확정되었습니다 · 출발 전 아래 내용을 확인해 주세요",quote:"예상 일정과 금액을 안내드립니다 · 예약금 입금 시 확정됩니다",itinerary:"여행 일정과 안내사항입니다 · 출발 전 확인해 주세요"})[d.docKind]||""
+  };
+  for(const k in map){ html = html.split("{{"+k+"}}").join(map[k]); }
+  return html;
+}
+
+
+
 /* ════════════════════════════════════════════════════════════
-   ⑦ 확정서 생성 — 견적서/일정표/확정서 (760px 표준 디자인폼 → JPG)
-   항공은 예약리스트·일행별예약 기준만 사용 (APIS 미사용 — 발송 시점에 미발권)
+   ⑦ 확정서 생성 — v7 인터랙티브 HTML (견적서/일정표/확정서)
+   대시보드 teams[] 데이터를 그대로 사용. 마스터 매칭 + v7 디자인.
 ════════════════════════════════════════════════════════════ */
 let _docTeam=null, _docAcct={};
 const DOC_KIND_LABEL={quote:'견 적 서', itinerary:'일 정 표', confirm:'확 정 서'};
 const DOC_KIND_FILE={quote:'견적서', itinerary:'일정표', confirm:'확정서'};
-const DOC_DEPOSIT_PP=300000;   // 예약금 1인당 30만원
+const DOC_DEPOSIT_PP=300000;
+const DOC_DOW=['월','화','수','목','금','토','일'];
 
+function docPad(n){ return String(n).padStart(2,'0'); }
+function docFmtMD(d){ return docPad(d.getMonth()+1)+'.'+docPad(d.getDate()); }
+function docWon(n){ return '₩'+Number(n||0).toLocaleString('ko'); }
+function docDow(d){ return DOC_DOW[d.getDay()===0?6:d.getDay()-1]; }
+
+/* 계좌·문의 (기존 mt_doc_acct 재사용: bank/no/holder/tel) */
 function docLoadAcct(){
   try{ _docAcct=JSON.parse(localStorage.getItem('mt_doc_acct')||'{}'); }catch(e){ _docAcct={}; }
   [['bank','doc-acct-bank'],['no','doc-acct-no'],['holder','doc-acct-holder'],['tel','doc-acct-tel']].forEach(([k,id])=>{
@@ -5648,11 +5487,31 @@ function docLoadAcct(){
 function docSaveAcct(k,v){
   _docAcct[k]=String(v||'').trim();
   try{ localStorage.setItem('mt_doc_acct',JSON.stringify(_docAcct)); }catch(e){}
-  if(_docTeam) docGenerate();   // 미리보기 즉시 반영
+  if(_docTeam) docGenerate();
 }
+
+/* 문서 종류 토글 */
+var _docKind='confirm';
+function docPickKind(kind){
+  _docKind=kind;
+  document.querySelectorAll('.doc-kind').forEach(b=>{
+    const on=b.dataset.kind===kind;
+    b.classList.toggle('active',on);
+    b.classList.toggle('btn-primary',on);
+    b.classList.toggle('btn-ghost',!on);
+  });
+  const desc={
+    quote:'견적서: 일정·항공·예상 금액 안내. 예약금/입금계좌는 제외됩니다.',
+    itinerary:'일정표: 일정·숙소·안내사항 중심. 요금 정보는 제외됩니다.',
+    confirm:'확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.'
+  };
+  const el=document.getElementById('doc-kind-desc'); if(el) el.textContent=desc[kind]||'';
+  if(_docTeam) docGenerate();
+}
+
 const docSearchDeb=(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(renderDocTeams,200); }; })();
 
-/* 팀 목록 */
+/* 팀 목록 (체크박스 = ZIP 일괄용) */
 function renderDocTeams(){
   const box=document.getElementById('doc-team-list'); if(!box) return;
   if(!teams.length){
@@ -5661,144 +5520,172 @@ function renderDocTeams(){
   }
   const q=(document.getElementById('doc-search').value||'').toLowerCase();
   const list=teams.filter(t=>{
+    if(t.status!=='확정'&&t.status!=='정산') return false; // 확정서 대상만
     if(!q) return true;
     return [t.eventNo,t.repName,t.prodName,t.accom].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
   }).sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
-  const stColor={'견적':'#D97706','대기':'#D97706','확정':'#059669','정산':'#2E5A88'};
+  const stColor={'확정':'#059669','정산':'#2E5A88'};
   box.className=''; box.style.padding='0';
-  box.innerHTML = list.length ? `<div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table style="font-size:12px">
-    <thead><tr><th></th><th>구분</th><th>행사번호</th><th>대표고객</th><th>출발일</th><th>기간</th><th>인원</th><th>숙소</th><th>상품명</th></tr></thead><tbody>`+
-    list.map(t=>`<tr onclick="docPickTeam('${t.eventSeq}')" style="cursor:pointer;${_docTeam===t.eventSeq?'background:rgba(46,90,136,.08)':''}">
-      <td class="center"><input type="radio" name="doc-team" ${_docTeam===t.eventSeq?'checked':''}></td>
+  box.innerHTML = list.length ? `<div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn-sm" onclick="docSelectAll(true)">전체 선택</button>
+    <button class="btn-sm" onclick="docSelectAll(false)">전체 해제</button>
+    <span class="muted" id="doc-sel-count" style="font-size:12px;align-self:center">0개 선택</span>
+    <button class="btn-primary" id="doc-zip-btn" style="margin-left:auto;padding:7px 16px;font-size:12px" onclick="docGenerateZip()" disabled>선택 팀 ZIP 생성</button>
+  </div>
+  <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table style="font-size:12px">
+    <thead><tr><th style="width:30px"></th><th></th><th>구분</th><th>행사번호</th><th>대표고객</th><th>출발일</th><th>기간</th><th>인원</th><th>숙소</th><th>상품명</th><th>매칭</th></tr></thead><tbody>`+
+    list.map(t=>{
+      const matched=!!matchMaster(t.prodName);
+      return `<tr style="${_docTeam===t.eventSeq?'background:rgba(46,90,136,.08)':''}">
+      <td class="center"><input type="checkbox" class="doc-chk" data-seq="${t.eventSeq}" ${matched?'':'disabled'} onclick="docUpdateCount()"></td>
+      <td class="center"><input type="radio" name="doc-team" ${_docTeam===t.eventSeq?'checked':''} onclick="docPickTeam('${t.eventSeq}')"></td>
       <td class="center"><span style="font-weight:700;color:${stColor[t.status]||'var(--text3)'}">${t.status}</span></td>
-      <td class="center" style="font-family:var(--mono);font-size:11px">${t.eventNo}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px;cursor:pointer" onclick="docPickTeam('${t.eventSeq}')">${t.eventNo}</td>
       <td style="font-weight:600">${t.repName}</td>
       <td class="center">${t.dep}</td><td class="center">${t.period}</td><td class="center">${t.pax}명</td>
       <td class="st-accom">${t.accom||'-'}</td>
-      <td style="font-size:11px;color:var(--text3)">${t.prodName||'-'}</td></tr>`).join('')+
+      <td style="font-size:11px;color:var(--text3)">${t.prodName||'-'}</td>
+      <td class="center">${matched?'<span style="color:#059669;font-weight:700">●</span>':'<span style="color:#DC2626">미매칭</span>'}</td></tr>`;
+    }).join('')+
     '</tbody></table></div>'
     : '<div class="muted" style="font-size:12px;padding:16px;text-align:center">검색 결과가 없습니다.</div>';
+  docUpdateCount();
 }
-function docPickTeam(seq){
-  _docTeam=seq;
-  renderDocTeams();
-  docGenerate();
+function docSelectAll(on){
+  document.querySelectorAll('.doc-chk:not(:disabled)').forEach(c=>c.checked=on);
+  docUpdateCount();
 }
-/* 문서 종류 변경 시 미리보기 재생성 */
-const _docPickKindOrig=docPickKind;
-docPickKind=function(kind){ _docPickKindOrig(kind); if(_docTeam) docGenerate(); };
+function docUpdateCount(){
+  const n=document.querySelectorAll('.doc-chk:checked').length;
+  const c=document.getElementById('doc-sel-count'); if(c) c.textContent=n+'개 선택';
+  const b=document.getElementById('doc-zip-btn'); if(b) b.disabled=n===0;
+}
+function docPickTeam(seq){ _docTeam=seq; renderDocTeams(); docGenerate(); }
 
-/* 팀의 항공편 표시값 (일행별예약 → 예약리스트 항공 칼럼 순. APIS 미사용) */
-function docFlights(t){
-  const p=(t.pax_list||[]).find(x=>x.depFlight||x.retFlight)||{};
-  return { dep: p.depFlight || t.flight || '', ret: p.retFlight || '' };
-}
+/* teams[] → v7 데이터 어댑터 */
+function docBuildHtmlV7(t, kind){
+  const m=matchMaster(t.prodName);
+  if(!m) return '<div style="padding:40px;text-align:center;color:#DC2626">상품 마스터에 매칭되지 않는 팀입니다.</div>';
 
+  const dep=new Date((t.dep||'')+'T00:00:00');
+  const arr=new Date((t.arr||'')+'T00:00:00');
+  const per=t.pax? Math.round((t.sales||0)/t.pax):0;
+  const deposit=DOC_DEPOSIT_PP;
+  const balance=Math.max(0, per-deposit);
+  const prodName=normProd(t.prodName);
+
+  // 일정 타임라인
+  let itinHTML='';
+  const itin=m.itinerary||[];
+  itin.forEach((d,i)=>{
+    const dt=new Date(dep.getTime()+(d.day-1)*86400000);
+    const isFirst=(i===0), isLast=(i===itin.length-1);
+    const cls=isFirst?'depart':(isLast?'arrive':'');
+    const meals=Object.entries(d.meals||{}).map(([k,v])=>`${k} ${v}`).join(' · ');
+    const desc=(d.desc||[]).slice(0,3).join(' ');
+    itinHTML+=`<div class="tl-item ${cls}"><span class="tl-dot"><i></i></span>`+
+      `<div class="tl-day">${d.day}일차 <span class="tl-date">${docFmtMD(dt)} (${docDow(dt)})</span></div>`+
+      `<div class="tl-title">${docEsc(d.golf||(isFirst?'출국 · 이동':isLast?'귀국':'일정'))}</div>`;
+    if(desc) itinHTML+=`<div class="tl-desc">${docEsc(desc)}</div>`;
+    if(meals) itinHTML+=`<div class="tl-meal"><span class="ml">식사</span> ${docEsc(meals)}</div>`;
+    itinHTML+=`</div>`;
+  });
+
+  // 추가비용
+  let extraHTML='';
+  (m.extra_cost||[]).filter(x=>x && !x.startsWith('※ 선택') && !x.startsWith('■')).forEach(x=>{
+    extraHTML+=`<div class="mini-item"><div class="md">${docEsc(x)}</div></div>`;
+  });
+
+  // 비상연락망 분리
+  let emgName='', emgTel='', emgTelRaw='';
+  if(m.emergency){
+    const mm=String(m.emergency).match(/([+\d][\d\s\-]{6,})/);
+    if(mm){ emgTel=mm[1].trim(); emgName=m.emergency.slice(0,mm.index).trim(); emgTelRaw=emgTel.replace(/[\s\-]/g,''); }
+    else { emgName=m.emergency.trim(); }
+  }
+  const emergencyBlock = (emgName||emgTel)
+    ? `<div class="mini-item"><div class="mt">현지 비상 연락망</div><div class="md">${docEsc(emgName)}${emgTel?` · <a href="tel:${emgTelRaw}">${docEsc(emgTel)}</a>`:''}</div></div>`
+    : '';
+
+  // 날짜 계산
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dleft=Math.round((dep-today)/86400000);
+  const dday=dleft>0?('D-'+dleft):(dleft===0?'D-DAY':'여행 중');
+  const due=new Date(dep.getTime()-30*86400000);
+  const balanceDue=due.getFullYear()+'.'+docPad(due.getMonth()+1)+'.'+docPad(due.getDate());
+  const genDate=today.getFullYear()+'.'+docPad(today.getMonth()+1)+'.'+docPad(today.getDate())+' 생성';
+  const rt=(t.prodName||'').match(/(트윈|싱글|패밀리룸|소형트윈|관내별장|돔하우스|카라반|맨션)/);
+
+  // 항공 (대시보드 현지도착 보완 필드 우선, 없으면 일행 편명)
+  const depFlight=t.arrDepFlight||t.flight||(t.pax_list&&t.pax_list[0]&&t.pax_list[0].depFlight)||'';
+  const retFlight=t.arrRetFlight||(t.pax_list&&t.pax_list[0]&&t.pax_list[0].retFlight)||'';
+
+  // 계좌·문의
+  const acctInfo=(_docAcct.bank||_docAcct.no)?`${_docAcct.bank||''} ${_docAcct.no||''}`.trim():'입금 계좌는 별도 안내드립니다';
+  const acctHolder=_docAcct.holder?('예금주 : '+_docAcct.holder):'';
+  const inquiryTel=_docAcct.tel||'';
+
+  const L=m.lodge||{};
+  return PAGE_TEMPLATE({
+    docKind:kind, kindLabel:DOC_KIND_LABEL[kind],
+    행사번호:t.eventNo, 대표:t.repName, 인원:t.pax, prodName, 기간:t.period,
+    depM:docFmtMD(dep), depD:docDow(dep), arrM:docFmtMD(arr), arrD:docDow(arr),
+    출발:t.dep, dday, genDate, balanceDue,
+    출발편:depFlight, 출발편시각:t.arrDepTime||'', 현지도착:t.arrTimeJP||'',
+    귀국편:retFlight, 귀국편시각:t.retTimeJP||'',
+    도착공항:m.arrival_airport||'',
+    per:docWon(per), deposit:docWon(deposit), balance:docWon(balance),
+    itinHTML, extraHTML,
+    lodgeName:L.name_en||'', lodgeZip:L.zip||'', lodgeAddr:L.addr||'', lodgeTel:L.tel||'',
+    meeting:m.meeting||'', emergencyBlock,
+    arrUrl:m.arrival_url||'', hotelName:m.hotel_name||'', roomType:(rt?rt[1]:''),
+    acctInfo, acctHolder, inquiryTel
+  });
+}
+function docEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* 미리보기 생성 */
 function docGenerate(){
   const t=teams.find(x=>x.eventSeq===_docTeam);
   if(!t) return;
-  document.getElementById('doc-preview-card').style.display='';
+  const card=document.getElementById('doc-preview-card');
+  card.style.display='';
   document.getElementById('doc-preview-info').textContent=`— ${DOC_KIND_FILE[_docKind]} · ${t.repName} (${t.eventNo})`;
-  document.getElementById('doc-render').innerHTML=docBuildHtml(t,_docKind);
+  const html=docBuildHtmlV7(t,_docKind);
+  const ifr=document.getElementById('doc-render-frame');
+  if(ifr) ifr.srcdoc=html;
 }
 
-/* 760px 표준 디자인폼 (네이비 헤더·푸터, Noto Serif 제목, 본문 16~17px) */
-function docBuildHtml(t,kind){
-  const NV='#1a2332', LN='#e2e7ef', TX='#2b3442', SUB='#5a6678', GREEN='#059669', RED='#DC2626';
-  const serif="'Noto Serif KR',serif", sans="'Noto Sans KR',sans-serif";
-  const fl=docFlights(t);
-  const deposit=DOC_DEPOSIT_PP*(t.pax||0);
-  const balance=Math.max(0,(t.sales||0)-deposit);
-  const won2=v=>'₩'+Number(v||0).toLocaleString();
-  const box=(label,val)=>`<div style="flex:1;min-width:150px;background:#f6f8fb;border:1px solid ${LN};border-radius:10px;padding:14px 16px">
-    <div style="font-size:12px;color:${SUB};font-weight:600;margin-bottom:5px">${label}</div>
-    <div style="font-size:17px;color:${TX};font-weight:700;line-height:1.35">${val}</div></div>`;
-  const secTitle=(no,txt)=>`<div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px">
-    <div style="width:26px;height:26px;border-radius:50%;background:${NV};color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:${sans}">${no}</div>
-    <div style="font-family:${serif};font-size:20px;font-weight:700;color:${NV}">${txt}</div></div>`;
-  const row=(l,v)=>`<div style="display:flex;border-bottom:1px solid ${LN};padding:11px 4px;font-size:16px">
-    <div style="width:130px;color:${SUB};font-weight:600;flex-shrink:0">${l}</div><div style="color:${TX};font-weight:500">${v}</div></div>`;
-
-  let n=1, body='';
-  // ① 항공 일정 — 출발·귀국 각각 기재 (동일 표현 금지 원칙)
-  body+=secTitle(n++,'항공 일정');
-  body+=row('출발', `${t.dep||'-'} · ${t.origin||''} 출발${fl.dep?` · <b>${fl.dep}</b>편`:''}`);
-  body+=row('귀국', `${t.arr||'-'}${fl.ret?` · <b>${fl.ret}</b>편`:''}`);
-  body+=`<div style="margin-top:12px;background:#f6f8fb;border-left:4px solid ${NV};border-radius:6px;padding:12px 16px;font-size:15px;color:${SUB};line-height:1.6">
-    항공 예약번호와 좌석 정보는 <b style="color:${TX}">발권 완료 후 알림톡으로 별도 안내</b>드립니다.</div>`;
-  // ② 숙박·일정
-  body+=secTitle(n++,'숙박 · 일정');
-  body+=row('숙소', `${t.accom||'-'}${t.roomType?` · ${t.roomType}`:''}`);
-  body+=row('기간', `${t.period||'-'} (${t.dep||''} ~ ${t.arr||''})`);
-  if(t.prodName) body+=row('상품', t.prodName);
-  // ③ 요금 안내 (일정표 제외)
-  if(kind!=='itinerary'){
-    body+=secTitle(n++, kind==='quote'?'견적 금액':'요금 안내');
-    body+=`<div style="border:1px solid ${LN};border-radius:12px;overflow:hidden">
-      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;border-bottom:1px solid ${LN}">
-        <span style="color:${SUB};font-weight:600">${kind==='quote'?'견적 금액 (총 '+t.pax+'명)':'총 금액 (총 '+t.pax+'명)'}</span>
-        <b style="color:${TX};font-size:18px">${t.sales?won2(t.sales):'별도 안내'}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;border-bottom:1px solid ${LN}">
-        <span style="color:${SUB};font-weight:600">예약금 <span style="font-size:13px">(1인 ${won2(DOC_DEPOSIT_PP)} × ${t.pax}명)</span></span>
-        <b style="color:${GREEN}">${won2(deposit)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:15px 20px;font-size:16px;background:#f6f8fb">
-        <span style="color:${SUB};font-weight:600">잔금</span>
-        <b style="color:${TX}">${t.sales?won2(balance):'별도 안내'}</b></div>
-    </div>`;
-    if(_docAcct.bank||_docAcct.no){
-      body+=`<div style="margin-top:12px;border:1px solid ${LN};border-radius:10px;padding:14px 18px;font-size:16px;color:${TX}">
-        <span style="color:${SUB};font-weight:600;margin-right:12px">입금 계좌</span>
-        <b>${_docAcct.bank||''} ${_docAcct.no||''}</b>${_docAcct.holder?` <span style="color:${SUB}">(예금주: ${_docAcct.holder})</span>`:''}</div>`;
-    }
-    if(kind==='quote'){
-      body+=`<div style="margin-top:12px;background:#fdf6f6;border-left:4px solid ${RED};border-radius:6px;padding:12px 16px;font-size:15px;color:${SUB};line-height:1.6">
-        본 견적서는 예약 확정 전 안내용입니다. 예약금 입금 시 예약이 확정됩니다.</div>`;
-    }
-  }
-  // ④ 안내사항
-  body+=secTitle(n++,'안내사항');
-  body+=`<div style="font-size:15.5px;color:${SUB};line-height:1.9">
-    · 여권 유효기간이 출발일 기준 <b style="color:${TX}">6개월 이상</b> 남아 있는지 확인 부탁드립니다.<br>
-    · 항공 발권 완료 후 예약번호를 알림톡으로 안내드립니다.<br>
-    · 일정·숙소는 현지 사정에 따라 일부 변경될 수 있습니다.</div>`;
-
-  return `<div id="doc-canvas" style="width:760px;background:#fff;font-family:${sans};color:${TX}">
-    <div style="background:${NV};padding:26px 34px;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-family:${serif};font-size:22px;font-weight:700;color:#fff;letter-spacing:.06em">MERITTOUR</div>
-      <div style="border:1px solid rgba(255,255,255,.45);color:#fff;font-size:14px;font-weight:600;padding:6px 16px;border-radius:20px;letter-spacing:.18em">${DOC_KIND_LABEL[kind]}</div>
-    </div>
-    <div style="padding:34px 34px 40px">
-      <div style="font-family:${serif};font-size:25px;font-weight:700;color:${NV};line-height:1.4">${t.prodName||t.accom||'골프 투어'}</div>
-      <div style="font-size:16px;color:${SUB};margin-top:8px">${t.repName} 님${t.pax>1?` 외 ${t.pax-1}명`:''} · 행사번호 ${t.eventNo}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px">
-        ${box('출발일',t.dep||'-')}${box('기간',t.period||'-')}${box('인원',(t.pax||0)+'명')}
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-        ${box('출발지',t.origin||'-')}${box('숙소',(t.accom||'-')+(t.roomType?'<div style="font-size:13px;color:'+SUB+';font-weight:500;margin-top:2px">'+t.roomType+'</div>':''))}
-      </div>
-      ${body}
-    </div>
-    <div style="background:${NV};padding:22px 34px;display:flex;justify-content:space-between;align-items:center">
-      <div style="color:#fff;font-size:15px;font-weight:600">예약 문의 · MERITTOUR${_docAcct.tel?` <span style="font-size:17px;font-weight:700;margin-left:8px">${_docAcct.tel}</span>`:''}</div>
-      <div style="color:rgba(255,255,255,.55);font-size:12px">메리트투어</div>
-    </div>
-  </div>`;
-}
-
-function docExportJpg(){
+/* 개별 HTML 다운로드 */
+function docDownloadOne(){
   const t=teams.find(x=>x.eventSeq===_docTeam);
-  const el=document.getElementById('doc-canvas');
-  if(!t||!el){ alert('먼저 팀을 선택해 미리보기를 생성해주세요.'); return; }
-  showToast('JPG 생성 중…');
-  html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760}).then(canvas=>{
-    const a=document.createElement('a');
-    a.download=`${DOC_KIND_FILE[_docKind]}_${t.repName}_${t.dep}.jpg`;
-    a.href=canvas.toDataURL('image/jpeg',0.92);
-    a.click();
-    showToast(`${DOC_KIND_FILE[_docKind]} JPG 저장 완료`);
-  }).catch(e=>alert('이미지 생성 실패: '+e.message));
+  if(!t){ alert('먼저 팀을 선택해주세요.'); return; }
+  const html=docBuildHtmlV7(t,_docKind);
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`${t.eventNo}.html`; a.click();
+}
+
+/* 선택 팀 ZIP 일괄 */
+async function docGenerateZip(){
+  if(typeof JSZip==='undefined'){ alert('ZIP 라이브러리를 불러오지 못했습니다.'); return; }
+  const checks=[...document.querySelectorAll('.doc-chk:checked')];
+  if(!checks.length){ alert('팀을 선택해주세요.'); return; }
+  showToast('ZIP 생성 중…');
+  const zip=new JSZip();
+  checks.forEach(c=>{
+    const t=teams.find(x=>x.eventSeq===c.dataset.seq);
+    if(t) zip.file(`${t.eventNo}.html`, docBuildHtmlV7(t,_docKind));
+  });
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  const ymd=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.download=`confirm_${DOC_KIND_FILE[_docKind]}_${ymd}.zip`; a.click();
+  showToast(`${checks.length}개 ${DOC_KIND_FILE[_docKind]} ZIP 저장 완료`);
 }
 docLoadAcct();
+
 
 /* ════════════════════════════════════════════════════════════
    ⑧ 정산 — 현지정산(¥, 사이젠 대조) · 수익정산(₩) · 개인별 명세 · 엠클릭 대조
