@@ -266,6 +266,44 @@ tr:hover td{background:#EEF3FA}
 .rm-input.text{text-align:left;font-family:var(--sans);width:150px}
 .rm-input.wide{width:100%;text-align:left;font-family:var(--sans)}
 .rm-input:focus{outline:none;border-color:var(--accent);background:var(--accent-dim)}
+/* 공항 검색 선택 콤보박스 */
+.apt-pick{position:relative;display:inline-block}
+.apt-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);cursor:pointer;text-align:left;font-family:var(--sans);min-height:29px;box-sizing:border-box}
+.apt-trigger:hover{border-color:var(--accent)}
+.apt-pick.open .apt-trigger{border-color:var(--accent);background:var(--accent-dim)}
+.apt-trigger .apt-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.apt-trigger .apt-val.ph{color:var(--text3)}
+.apt-trigger .apt-caret{flex-shrink:0;color:var(--accent);font-size:9px}
+.apt-menu{position:absolute;z-index:60;top:calc(100% + 3px);left:0;min-width:200px;max-width:280px;background:var(--surface);border:1px solid var(--accent);border-radius:8px;box-shadow:0 8px 24px rgba(26,35,50,.16);display:none;overflow:hidden}
+.apt-pick.open .apt-menu{display:block}
+.apt-search-wrap{padding:7px;border-bottom:1px solid var(--border)}
+.apt-search{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:var(--sans);background:var(--surface2);color:var(--text);box-sizing:border-box}
+.apt-search:focus{outline:none;border-color:var(--accent)}
+.apt-list{max-height:230px;overflow-y:auto;padding:4px}
+.apt-grp-label{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;padding:7px 8px 3px}
+.apt-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:12px}
+.apt-opt:hover,.apt-opt.kbd{background:var(--accent-dim)}
+.apt-opt.sel{background:var(--accent);color:#fff}
+.apt-opt .apt-opt-code{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.apt-opt.sel .apt-opt-code{color:rgba(255,255,255,.85)}
+.apt-opt .apt-chk{color:var(--accent);font-weight:800;opacity:0}
+.apt-opt.sel .apt-chk{opacity:1;color:#fff}
+.apt-empty{padding:12px 8px;text-align:center;color:var(--text3);font-size:11px}
+/* 출발지 다중 선택 칩(트리거 안) */
+.apt-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.apt-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent2);border-radius:14px;padding:1px 4px 1px 8px;font-size:11px;line-height:1.5}
+.apt-chip .apt-chip-x{cursor:pointer;color:var(--accent);font-weight:700;padding:0 2px;border-radius:50%}
+.apt-chip .apt-chip-x:hover{background:var(--accent);color:#fff}
+/* 고정 라벨(보험사 등) */
+.rm-fixed-val{font-size:13px;font-weight:700;color:var(--text);padding:5px 0}
+.rm-fixed-tag{font-size:10px;font-weight:700;background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent);border-radius:5px;padding:2px 7px;margin-left:6px}
+/* 시내 호텔 실제 호텔명 인라인 입력 (숙소 정보 탭) */
+.city-hotel-wrap{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.city-hotel-input{width:100%;max-width:180px;padding:3px 7px;border:1px dashed var(--border2);border-radius:5px;font-size:11px;font-family:var(--sans);background:var(--surface2);color:var(--text);box-sizing:border-box}
+.city-hotel-input:focus{outline:none;border-style:solid;border-color:var(--accent);background:var(--accent-dim)}
+.city-hotel-input::placeholder{color:var(--text3)}
+.city-hotel-lab{font-size:9px;color:var(--accent2);font-weight:700;letter-spacing:.02em}
+.city-hotel-name{font-size:11px;color:var(--accent2);font-weight:600}
 .rm-unit{font-size:10px;color:var(--text3);margin-left:4px;flex-shrink:0;width:34px;text-align:left}
 .rm-saved{font-size:10px;color:var(--green2);opacity:0;transition:opacity .3s}
 .rm-saved.show{opacity:1}
@@ -2001,6 +2039,142 @@ const AIRPORT_CODE={
   '니가타':'KIJ','나가노':'KIJ','미야자키':'KMI','나고야':'NGO','중부':'NGO',
   '오이타':'OIT','벳푸':'FUK','이바라키':'NRT'
 };
+/* ── 공항 선택 콤보박스용 목록 (한글명+코드 단위, 그룹 구분) ──
+   같은 코드라도 한글명이 다르면 별도 항목으로 띄운다(벳푸=FUK, 후쿠오카=FUK 등).
+   지역명과 실제 이용 공항이 다른 메리트투어 상품 특성에 맞춤. */
+const AIRPORT_OPTS={
+  '국내 출발': [
+    ['인천','ICN'],['김해','PUS'],['대구','TAE'],['김포','GMP'],['제주','CJU'],
+    ['청주','CJA'],['무안','MWX'],['광주','KWJ'],['양양','YNY'],['울산','USN'],['여수','RSU']
+  ],
+  '일본 도착': [
+    ['구마모토','KMJ'],['후쿠오카','FUK'],['벳푸','FUK'],['오이타','OIT'],
+    ['나고야','NGO'],['미야자키','KMI'],['니가타','KIJ'],['나가노','KIJ'],
+    ['나리타','NRT'],['도쿄','NRT'],['이바라키','NRT']
+  ],
+  '해외 도착': [
+    ['쿠알라룸푸르','KUL'],['하노이','HAN'],['다낭','DAD'],['방콕','BKK']
+  ]
+};
+/* 코드/한글 표기 → "한글(코드)" 보기 라벨. 입력이 코드면 대표 한글명 역추적 */
+function aptLabel(v){
+  const raw=String(v||'').trim(); if(!raw) return '';
+  // 이미 한글명이면 그대로 + 코드
+  for(const list of Object.values(AIRPORT_OPTS)) for(const [kor,code] of list){ if(kor===raw) return `${kor} (${code})`; }
+  // 코드면 대표 한글명 찾기 (목록 첫 매칭)
+  const up=raw.toUpperCase();
+  for(const list of Object.values(AIRPORT_OPTS)) for(const [kor,code] of list){ if(code===up) return `${kor} (${code})`; }
+  return raw;
+}
+/* 단일 선택 공항 콤보박스 HTML.
+   onpick: 'aptOnPick' 같은 전역 함수명. 호출 시 (code, kor, ctx) 전달 */
+let _aptUID=0;
+function aptComboHTML(opts){
+  const {value='', groups=AIRPORT_OPTS, onpick, ctx='', placeholder='공항 선택', width=170}=opts;
+  const id='apt'+(++_aptUID);
+  const lab=value?aptLabel(value):'';
+  let menu='';
+  for(const [g,list] of Object.entries(groups)){
+    menu+=`<div class="apt-grp-label">${g}</div>`;
+    menu+=list.map(([kor,code])=>{
+      const sel=(value===kor||String(value).toUpperCase()===code)?' sel':'';
+      return `<div class="apt-opt${sel}" data-kor="${kor}" data-code="${code}" data-search="${kor} ${code}"
+        onmousedown="aptSelect('${id}','${code}','${kor}','${onpick||''}','${ctx}')">
+        <span>${kor}</span><span style="display:flex;gap:8px;align-items:center"><span class="apt-opt-code">${code}</span><span class="apt-chk">✓</span></span></div>`;
+    }).join('');
+  }
+  return `<div class="apt-pick" id="${id}" style="width:${width}px" data-onpick="${onpick||''}" data-ctx="${ctx}">
+    <div class="apt-trigger" data-ph="${placeholder}" onclick="aptToggle('${id}')">
+      <span class="apt-val${lab?'':' ph'}">${lab||placeholder}</span><span class="apt-caret">▼</span>
+    </div>
+    <div class="apt-menu">
+      <div class="apt-search-wrap"><input class="apt-search" type="text" placeholder="검색 (구마·KMJ)" oninput="aptFilter('${id}',this.value)" onclick="event.stopPropagation()"></div>
+      <div class="apt-list">${menu}</div>
+    </div>
+  </div>`;
+}
+function aptToggle(id){
+  const el=document.getElementById(id); if(!el) return;
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.apt-pick.open').forEach(p=>p.classList.remove('open'));
+  if(!wasOpen){ el.classList.add('open'); const s=el.querySelector('.apt-search'); if(s){ s.value=''; aptFilter(id,''); setTimeout(()=>s.focus(),0); } }
+}
+function aptFilter(id,q){
+  const el=document.getElementById(id); if(!el) return;
+  const t=String(q||'').trim().toLowerCase();
+  let shownInGrp={};
+  el.querySelectorAll('.apt-opt').forEach(o=>{
+    const hay=(o.dataset.search||'').toLowerCase();
+    const show=!t||hay.indexOf(t)>=0;
+    o.style.display=show?'':'none';
+  });
+  // 그룹 라벨: 그 그룹에 보이는 항목 없으면 숨김
+  el.querySelectorAll('.apt-grp-label').forEach(lab=>{
+    let n=lab.nextElementSibling, any=false;
+    while(n && n.classList.contains('apt-opt')){ if(n.style.display!=='none'){any=true;break;} n=n.nextElementSibling; }
+    lab.style.display=any?'':'none';
+  });
+  // 빈 결과 메시지
+  let empty=el.querySelector('.apt-empty');
+  const anyVisible=[...el.querySelectorAll('.apt-opt')].some(o=>o.style.display!=='none');
+  if(!anyVisible){ if(!empty){ empty=document.createElement('div'); empty.className='apt-empty'; empty.textContent='검색 결과 없음'; el.querySelector('.apt-list').appendChild(empty);} empty.style.display=''; }
+  else if(empty) empty.style.display='none';
+}
+function aptSelect(id,code,kor,onpick,ctx){
+  const el=document.getElementById(id); if(!el) return;
+  el.classList.remove('open');
+  const val=el.querySelector('.apt-val'); if(val){ val.textContent=aptLabel(kor); val.classList.remove('ph'); }
+  el.querySelectorAll('.apt-opt').forEach(o=>o.classList.toggle('sel', o.dataset.code===code && o.dataset.kor===kor));
+  if(onpick && typeof window[onpick]==='function') window[onpick](code,kor,ctx);
+}
+/* 바깥 클릭 시 열린 콤보 닫기 */
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.apt-pick')) document.querySelectorAll('.apt-pick.open').forEach(p=>p.classList.remove('open'));
+});
+/* ── 다중 선택 공항 콤보박스 (출발 공항용) ──
+   value: "인천 / 김해" 형태 문자열. onpick(valStr, ctx) 호출 */
+function aptMultiHTML(opts){
+  const {value='', onpick, ctx='', placeholder='출발 공항 선택', width=190}=opts;
+  const id='aptm'+(++_aptUID);
+  const sels=String(value||'').split('/').map(s=>s.trim()).filter(Boolean);
+  let menu='';
+  // 출발은 국내 위주지만 전체 그룹 노출(해외 출발 대비)
+  for(const [g,list] of Object.entries(AIRPORT_OPTS)){
+    menu+=`<div class="apt-grp-label">${g}</div>`;
+    menu+=list.map(([kor,code])=>{
+      const on=sels.includes(kor)?' sel':'';
+      return `<div class="apt-opt${on}" data-kor="${kor}" data-code="${code}" data-search="${kor} ${code}"
+        onmousedown="event.preventDefault();aptMultiToggle('${id}','${kor}','${onpick||''}','${ctx}')">
+        <span>${kor}</span><span style="display:flex;gap:8px;align-items:center"><span class="apt-opt-code">${code}</span><span class="apt-chk">✓</span></span></div>`;
+    }).join('');
+  }
+  return `<div class="apt-pick" id="${id}" style="width:${width}px" data-onpick="${onpick||''}" data-ctx="${ctx}" data-sels="${sels.join('/')}">
+    <div class="apt-trigger" onclick="aptToggle('${id}')">
+      <span class="apt-val">${aptMultiChips(sels)||'<span class="ph" style="color:var(--text3)">'+placeholder+'</span>'}</span><span class="apt-caret">▼</span>
+    </div>
+    <div class="apt-menu">
+      <div class="apt-search-wrap"><input class="apt-search" type="text" placeholder="검색 (인천·ICN)" oninput="aptFilter('${id}',this.value)" onclick="event.stopPropagation()"></div>
+      <div class="apt-list">${menu}</div>
+    </div>
+  </div>`;
+}
+function aptMultiChips(sels){
+  if(!sels.length) return '';
+  return '<span class="apt-chips">'+sels.map(s=>`<span class="apt-chip">${s}</span>`).join('')+'</span>';
+}
+function aptMultiToggle(id,kor,onpick,ctx){
+  const el=document.getElementById(id); if(!el) return;
+  let sels=String(el.dataset.sels||'').split('/').map(s=>s.trim()).filter(Boolean);
+  if(sels.includes(kor)) sels=sels.filter(s=>s!==kor); else sels.push(kor);
+  el.dataset.sels=sels.join('/');
+  // 트리거 칩 갱신
+  const val=el.querySelector('.apt-val');
+  if(val) val.innerHTML=aptMultiChips(sels)||'<span class="ph" style="color:var(--text3)">출발 공항 선택</span>';
+  // 옵션 선택 표시 갱신
+  el.querySelectorAll('.apt-opt').forEach(o=>o.classList.toggle('sel', sels.includes(o.dataset.kor)));
+  const valStr=sels.join(' / ');
+  if(onpick && typeof window[onpick]==='function') window[onpick](valStr,ctx);
+}
 /* 출발지 표기에 대응하는 검색 토큰들(한글명 + 코드, 양방향) */
 function originSearchTokens(s){
   const raw=String(s||'').trim(); if(!raw) return '';
@@ -2421,7 +2595,13 @@ function renderAccom(){
     const rs=accomTeams.filter(t=>t.accom===a);
     if(!rs.length) return '';
     const pax=rs.reduce((s,t)=>s+t.pax,0);
-    return `<div class="sum-box"><div class="sum-label">${a}</div><div class="sum-val">${rs.length}건 · ${pax}명</div></div>`;
+    // 시내 호텔이면 실제 호텔명 입력 현황 병기
+    let sub='';
+    if(isCityHotel(a)){
+      const filled=rs.filter(t=>actualHotelOf(t)).length;
+      sub=`<div style="font-size:10px;color:${filled===rs.length?'var(--green2)':'var(--orange,#D97706)'};margin-top:2px">실제 호텔명 ${filled}/${rs.length} 입력</div>`;
+    }
+    return `<div class="sum-box"><div class="sum-label">${a}</div><div class="sum-val">${rs.length}건 · ${pax}명</div>${sub}</div>`;
   }).filter(Boolean).join('');
   document.getElementById('accom-summary').innerHTML=boxes;
   // 숙소별 그룹핑 테이블
@@ -2442,7 +2622,7 @@ function renderAccom(){
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
-      <td>${accomTag(t.accom)}</td>
+      <td>${accomTag(t.accom)}${cityHotelCell(t)}</td>
       <td>${t.roomType||'-'}</td>
       <td class="center">${t.period}</td>
       <td class="num">${t.pax}</td>
@@ -2453,6 +2633,17 @@ function renderAccom(){
     return header+headRow+paxAccordionRows(t,'accom',ACCOM_HDR.length);
   }).join('');
   attachTopScrollbars();
+}
+/* 시내 호텔이면 숙소 칸 아래에 실제 호텔명 입력칸. 그 외 숙소는 빈 문자열 */
+function cityHotelCell(t){
+  if(!isCityHotel(t.accom)) return '';
+  const v=actualHotelOf(t).replace(/"/g,'&quot;');
+  return `<div class="city-hotel-wrap">
+    <span class="city-hotel-lab">실제 호텔명</span>
+    <input class="city-hotel-input" type="text" value="${v}" placeholder="예: ANA홀리데이인"
+      onchange="updateActualHotel('${t.eventSeq}',this.value)"
+      onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+  </div>`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2604,6 +2795,31 @@ function pkgPresetFor(accom, nights){
 /* 팀별 검증 보정값 (엔화기타·원화기타) */
 let vAdjust={};
 const STORE_VADJ='mt_notify_vAdjust';
+
+/* ── 시내 호텔 실제 호텔명 (행사별) ──
+   시내 호텔처럼 행사마다 실제 숙소가 바뀌는 묶음형 상품에서, 그 행사에 실제로 잡힌
+   호텔명을 eventSeq 단위로 보관. 확정서·안내문이 hotelLabelFor(t)로 읽어간다. */
+let docHotelName={};
+const STORE_DOC_HOTEL='mt_doc_hotelName';
+function loadDocHotelName(){ try{ docHotelName=JSON.parse(localStorage.getItem(STORE_DOC_HOTEL)||'{}'); }catch(e){ docHotelName={}; } }
+function saveDocHotelName(){ try{ localStorage.setItem(STORE_DOC_HOTEL,JSON.stringify(docHotelName)); }catch(e){} }
+/* 실제 호텔명 입력칸을 띄울 대상인지: 현재는 "시내" 포함 숙소만. 추후 이 한 줄만 확장 */
+function isCityHotel(accom){ return !!accom && String(accom).indexOf('시내')>=0; }
+/* 행사에 입력된 실제 호텔명 (없으면 '') */
+function actualHotelOf(t){ return (docHotelName[t.eventSeq]||'').trim(); }
+/* 확정서·안내문용 최종 숙소 표기. 시내 호텔 + 실제 호텔명 입력 시 "미야자키 시내 호텔 (ANA홀리데이인)" */
+function hotelLabelFor(t){
+  const base=t.accom||'';
+  if(isCityHotel(base)){ const h=actualHotelOf(t); if(h) return `${base} (${h})`; }
+  return base;
+}
+/* 실제 호텔명 입력 → 저장 + 숙소 정보 표 갱신 */
+function updateActualHotel(seq, val){
+  const v=String(val||'').trim();
+  if(v) docHotelName[seq]=v; else delete docHotelName[seq];
+  saveDocHotelName();
+  if(typeof showToast==='function') showToast(v?`실제 호텔명 저장: ${v}`:'실제 호텔명 비움');
+}
 
 const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','패키지가(1인)','예상 판매금액','실제 판매금액','차액','상태'];
 function renderVerify(){
@@ -3650,7 +3866,7 @@ const RESORT_DEFAULTS=[
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', arrCode:'KUL', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
 const COMMON_DEFAULTS={
-  insCompany:'', insProduct:'', insFee:0, insCover:'',
+  insCompany:'DB손해보험', insProduct:'', insFee:0, insCover:'',
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
   airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
@@ -3695,6 +3911,8 @@ function loadResortMaster(){
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
+  // 보험사는 DB손해보험 고정
+  commonMaster.insCompany='DB손해보험';
   // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
   if(!localStorage.getItem('mt_notify_airfareCodeMigrated')){
     (commonMaster.airfares||[]).forEach(a=>{
@@ -3890,15 +4108,10 @@ function renderResortMaster(){
               <input class="rm-input text" style="width:170px" type="text" value="${(r.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박"
                 onchange="updateResort('${r.key}','depart',this.value,this)"></div>
             <div class="rm-row"><label>출발 공항</label>
-              <input class="rm-input text" style="width:170px" type="text" value="${(r.airOut||'').replace(/"/g,'&quot;')}" placeholder="예: 인천 / 김해"
-                onchange="updateResort('${r.key}','airOut',this.value,this)"></div>
+              ${aptMultiHTML({value:r.airOut||'', onpick:'rmPickAirOut', ctx:r.key, width:185})}</div>
             <div class="rm-row"><label>도착 공항</label>
-              <input class="rm-input text" style="width:170px" type="text" value="${(r.airIn||'').replace(/"/g,'&quot;')}" placeholder="예: 구마모토"
-                onchange="updateResort('${r.key}','airIn',this.value,this)"></div>
-            <div class="rm-row"><label>요금 도착코드</label>
-              <input class="rm-input text" style="width:90px;text-transform:uppercase;font-family:var(--mono)" type="text" value="${(r.arrCode||'').replace(/"/g,'&quot;')}" placeholder="KMJ"
-                onchange="updateResort('${r.key}','arrCode',this.value,this)" title="항공요금 검증에 쓰이는 도착공항 IATA 코드. 벳푸=FUK, 이바라키=NRT, 나가노=KIJ 등"></div>
-            <div class="rm-hint">요금 도착코드: 항공요금 테이블 매칭용 공항 코드(벳푸→FUK, 이바라키→NRT, 나가노→KIJ).</div>
+              ${aptComboHTML({value:r.arrCode||r.airIn||'', groups:{'일본 도착':AIRPORT_OPTS['일본 도착'],'해외 도착':AIRPORT_OPTS['해외 도착']}, onpick:'rmPickAirIn', ctx:r.key, placeholder:'도착 공항 선택', width:170})}</div>
+            <div class="rm-hint">도착 공항을 고르면 한글 표기와 요금 도착코드(IATA)가 함께 저장됩니다. 벳푸=후쿠오카(FUK), 이바라키=나리타(NRT), 나가노=니가타(KIJ)처럼 지역과 공항이 다른 상품은 실제 이용 공항을 선택하세요.</div>
           </div>
           <div class="rm-group">
             <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
@@ -3927,8 +4140,7 @@ function renderResortMaster(){
   document.getElementById('common-master').innerHTML=`<div class="cm-box">
       <div class="cm-box-title">🛡️ 여행자보험</div>
       <div class="rm-row"><label>보험사</label>
-        <input class="rm-input text" type="text" value="${(commonMaster.insCompany||'').replace(/"/g,'&quot;')}" placeholder="보험사명"
-          onchange="updateCommon('insCompany',this.value,this)"></div>
+        <div class="rm-fixed-val">DB손해보험<span class="rm-fixed-tag">고정</span></div></div>
       <div class="rm-row"><label>상품명</label>
         <input class="rm-input text" type="text" value="${(commonMaster.insProduct||'').replace(/"/g,'&quot;')}" placeholder="상품명"
           onchange="updateCommon('insProduct',this.value,this)"></div>
@@ -3960,8 +4172,10 @@ function renderResortMaster(){
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
       <input class="rm-input" id="af-month" type="month" style="width:120px;text-align:left;font-family:var(--sans)">
       <input class="rm-input text" id="af-airline" placeholder="항공사(TW)" style="width:80px">
-      <input class="rm-input text" id="af-origin" placeholder="출발지(ICN·인천)" style="width:95px">
-      <input class="rm-input text" id="af-dest" placeholder="도착지(KMJ·구마모토)" style="width:105px">
+      ${aptComboHTML({value:'', onpick:'afPickOrigin', placeholder:'출발지', width:120})}
+      ${aptComboHTML({value:'', groups:{'일본 도착':AIRPORT_OPTS['일본 도착'],'해외 도착':AIRPORT_OPTS['해외 도착']}, onpick:'afPickDest', placeholder:'도착지', width:120})}
+      <input type="hidden" id="af-origin">
+      <input type="hidden" id="af-dest">
       <input class="rm-input" id="af-nights" type="text" inputmode="numeric" placeholder="박수" style="width:55px">
       <input class="rm-input text" id="af-flightout" placeholder="출국편(TW295)" style="width:95px" onchange="afAutoReturn()">
       <input class="rm-input text" id="af-flightin" placeholder="귀국편(TW296)" style="width:95px">
@@ -4054,6 +4268,9 @@ function renderAirfares(){
       '</tbody></table></div>'
     : '<div class="muted" style="font-size:11px">등록된 항공요금이 없습니다.</div>';
 }
+/* 항공요금 입력 출발지·도착지 콤보 선택 → hidden input에 코드 저장 */
+function afPickOrigin(code){ const el=document.getElementById('af-origin'); if(el) el.value=code; }
+function afPickDest(code){ const el=document.getElementById('af-dest'); if(el) el.value=code; }
 /* 출국편 입력 시 귀국편 자동 (예: TW295 → TW296, 끝 숫자 +1). 귀국편이 비어있을 때만 */
 function afAutoReturn(){
   const out=document.getElementById('af-flightout').value.trim();
@@ -4073,7 +4290,7 @@ function addAirfare(){
   const tripType=document.getElementById('af-trip').value;
   const fare=num(document.getElementById('af-fare').value);
   const cost=num(document.getElementById('af-cost').value);
-  if(!month||!originRaw||!destRaw||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다.'); return; }
+  if(!month||!originRaw||!destRaw||!nights||!fare){ alert('월·출발지·도착지·박수·요금은 필수입니다. (출발지·도착지는 목록에서 선택)'); return; }
   // 입력값 정규화: 항공사→코드(TW), 출발지·도착지→IATA 코드(ICN·KMJ)
   const airline=(airlineCode(airlineRaw)||airlineRaw.toUpperCase());
   const origin=airportCode(originRaw);
@@ -4091,6 +4308,19 @@ function addAirfare(){
   saveResortMaster(); renderAirfares();
   if(typeof renderSettleAll==='function' && teams.length) renderSettleAll();
   ['af-airline','af-origin','af-dest','af-nights','af-flightout','af-flightin','af-fare','af-cost'].forEach(id=>document.getElementById(id).value='');
+  afResetCombos();
+}
+/* 항공요금 입력 콤보 2개를 빈 상태로 리셋 (추가 후) */
+function afResetCombos(){
+  const formRow=document.getElementById('af-month')?.closest('div');
+  if(!formRow) return;
+  formRow.querySelectorAll('.apt-pick').forEach(p=>{
+    p.classList.remove('open');
+    const trig=p.querySelector('.apt-trigger');
+    const val=p.querySelector('.apt-val');
+    if(val){ val.classList.add('ph'); val.textContent=(trig&&trig.dataset.ph)||''; }
+    p.querySelectorAll('.apt-opt.sel').forEach(o=>o.classList.remove('sel'));
+  });
 }
 function delAirfare(i){
   const a=commonMaster.airfares[i];
@@ -4141,6 +4371,24 @@ function flashSaved(el, resortKey){
     const s=document.getElementById('saved-'+resortKey);
     if(s){ s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1200); }
   }
+}
+/* 출발 공항 다중 선택 → airOut("인천 / 김해") 저장 */
+function rmPickAirOut(valStr, key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const before=r.airOut||''; r.airOut=valStr;
+  logChange(r.name,'출발지',before,valStr);
+  saveResortMaster();
+  if(blkParsed) blkRenderDepart();
+}
+/* 도착 공항 선택 → airIn(한글) + arrCode(IATA) 동시 저장 */
+function rmPickAirIn(code, kor, key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const beforeIn=r.airIn||'', beforeCode=r.arrCode||'';
+  r.airIn=kor; r.arrCode=code;
+  if(beforeIn!==kor) logChange(r.name,'도착지',beforeIn,kor);
+  if(beforeCode!==code) logChange(r.name,'도착공항',beforeCode,code);
+  saveResortMaster();
+  if(blkParsed) blkRenderDepart();
 }
 function updateResort(key, field, val, el){
   const r=resortMaster.find(x=>x.key===key); if(!r) return;
@@ -4208,6 +4456,7 @@ function savePersist(){
 function loadPersist(){
   try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insExclude={}; vAdjust={}; editOverrides={}; }
   try{ settleAdjust=JSON.parse(localStorage.getItem(STORE_SETTLE)||'{}'); settleDed=JSON.parse(localStorage.getItem(STORE_SETTLE_DED)||'[]'); }catch(e){ settleAdjust={}; settleDed=[]; }
+  loadDocHotelName();
 }
 
 /* ════════════════════════════════════════════════════════════
