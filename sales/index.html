@@ -6,7 +6,6 @@
 <title>MERITTOUR · SALES</title>
 <link rel="stylesheet" href="../shared/core.css">
 <meta name="robots" content="noindex, nofollow" />
-<script src="../shared/gate.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,7 +16,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; margin-bottom: 28px; border-bottom: 1px solid var(--mt-border); }
 .brand-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .brand { font-size: 22px; font-weight: 700; color: var(--mt-brand); letter-spacing: -0.02em; }
-.brand-logo { height: 20px; width: auto; display: block; }
+.brand-logo { height: 28px; width: auto; display: block; }
 .brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: 0.08em; }
 .dept-badge { font-size: 11px; font-weight: 700; font-family: var(--mt-mono); background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-accent); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; }
 .dept-badge.admin { background: var(--mt-point-dim); color: var(--mt-point); border-color: var(--mt-point); }
@@ -66,6 +65,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     <div class="brand-wrap">
       <img src="../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="brand-logo">
       <div class="brand-sub">INTERNAL TOOLS</div>
+      <span class="dept-badge ">영업팀</span>
     </div>
     <div class="header-actions">
       <div class="user-info hidden" id="userInfo">
@@ -109,6 +109,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     <a href="../tools/insurance/" class="tool-card">
       <div class="tool-card-title">보험코드매칭</div>
       <div class="tool-card-desc">보험사 PDF + 예약 엑셀 → 인별/행사별 보험료 자동 매칭</div>
+      <div class="tool-card-meta">
+        <span class="badge ver">v1.0</span>
+        <span class="badge team">영업</span>
+      </div>
+    </a>
+    <a href="../tools/library/" class="tool-card">
+      <div class="tool-card-title">가입 서류 자료실</div>
+      <div class="tool-card-desc">EWRC II 회원권 · 장기숙박(쿠주힐즈) 가입 서류 — 원본 양식 · 작성방법본 · 필수서류 체크리스트</div>
       <div class="tool-card-meta">
         <span class="badge ver">v1.0</span>
         <span class="badge team">영업</span>
