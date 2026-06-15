@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 가입 서류 자료실</title>
+<link rel="stylesheet" href="../../shared/core.css">
+<meta name="robots" content="noindex, nofollow" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(--mt-text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+.container { max-width: 980px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* 헤더 */
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--mt-border); }
+.brand-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand-logo { height: 28px; width: auto; display: block; }
+.brand-fallback { font-size: 20px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.02em; }
+.brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: 0.08em; }
+.dept-badge { font-size: 11px; font-weight: 700; font-family: var(--mt-mono); background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-border2); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; }
+.ghost-btn { background: transparent; border: 1px solid var(--mt-border); color: var(--mt-text2); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--mt-sans); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all .15s; }
+.ghost-btn:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+
+/* 페이지 타이틀 */
+.page-title { font-size: 22px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.02em; }
+.page-desc { font-size: 13px; color: var(--mt-text2); margin-top: 6px; line-height: 1.7; }
+.page-desc strong { color: var(--mt-text); font-weight: 700; }
+
+/* 섹션 라벨 */
+.section-title { font-size: 11px; font-weight: 700; color: var(--mt-text2); text-transform: uppercase; letter-spacing: 0.12em; margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
+.section-title::before { content: ''; width: 3px; height: 13px; background: var(--mt-accent); border-radius: 2px; display: block; }
+
+/* 상품 카드 */
+.doc-card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-left: 3px solid var(--mt-accent); border-radius: var(--mt-radius-lg); padding: 20px 22px; box-shadow: var(--mt-shadow); margin-bottom: 16px; }
+.doc-card.longstay { border-left-color: var(--mt-point); }
+.doc-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.doc-card-name { font-size: 17px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.01em; }
+.doc-card-name .en { font-size: 11px; font-weight: 600; color: var(--mt-text3); font-family: var(--mt-mono); margin-left: 7px; letter-spacing: 0.02em; }
+.doc-tags { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 10.5px; padding: 2px 9px; border-radius: 20px; font-weight: 700; letter-spacing: 0.02em; border: 1px solid; white-space: nowrap; }
+.tag-money { background: var(--mt-accent-dim); color: var(--mt-accent); border-color: var(--mt-border2); }
+.tag-target { background: var(--mt-green-dim); color: var(--mt-green-dark); border-color: #B7E4C0; }
+.tag-target.corp { background: var(--mt-point-dim); color: var(--mt-point2); border-color: #DCDCC2; }
+
+/* 요약 라인 */
+.doc-summary { font-size: 12.5px; color: var(--mt-text2); margin: 8px 0 16px; line-height: 1.7; padding: 10px 14px; background: var(--mt-surface2); border-radius: var(--mt-radius); }
+.doc-summary strong { color: var(--mt-text); font-weight: 700; }
+
+/* 다운로드 버튼 */
+.dl-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.dl-btn { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: var(--mt-radius); text-decoration: none; cursor: pointer; transition: all .15s; border: 1.5px solid; }
+.dl-btn.primary { background: var(--mt-accent); border-color: var(--mt-accent); color: #fff; }
+.dl-btn.primary:hover { background: var(--mt-accent2); }
+.dl-btn.outline { background: var(--mt-surface); border-color: var(--mt-border2); color: var(--mt-text); }
+.dl-btn.outline:hover { border-color: var(--mt-accent); color: var(--mt-accent); background: var(--mt-accent-dim); }
+.dl-ico { font-size: 19px; line-height: 1; }
+.dl-body { display: flex; flex-direction: column; gap: 1px; }
+.dl-label { font-size: 13.5px; font-weight: 700; }
+.dl-sub { font-size: 11px; opacity: 0.8; }
+.dl-btn.broken { opacity: 0.55; cursor: not-allowed; }
+
+/* 체크리스트 그리드 */
+.req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 680px){ .req-grid { grid-template-columns: 1fr; } .container{padding:24px 16px 64px;} }
+.req-block-label { font-size: 11px; font-weight: 800; color: var(--mt-text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 9px; padding-bottom: 6px; border-bottom: 1px solid var(--mt-border); }
+.req-list { list-style: none; }
+.req-list li { font-size: 12.5px; color: var(--mt-text); padding: 5px 0 5px 20px; position: relative; line-height: 1.55; }
+.req-list li::before { content: ''; position: absolute; left: 4px; top: 11px; width: 6px; height: 6px; border-radius: 2px; background: var(--mt-accent); }
+.req-list li.attach::before { background: var(--mt-text3); border-radius: 50%; }
+.req-list li .seal { color: var(--mt-red); font-weight: 700; }
+.req-list li .note { display: block; color: var(--mt-text3); font-size: 11px; margin-top: 1px; }
+
+/* 공통 안내 박스 */
+.common-box { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg); padding: 20px 22px; box-shadow: var(--mt-shadow); margin-top: 8px; }
+.common-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+@media (max-width: 680px){ .common-grid { grid-template-columns: 1fr; } }
+.common-item-label { font-size: 11px; font-weight: 800; color: var(--mt-text2); letter-spacing: 0.04em; margin-bottom: 5px; }
+.common-item-body { font-size: 12.5px; color: var(--mt-text); line-height: 1.7; }
+.common-item-body .mono { font-family: var(--mt-mono); font-size: 12px; }
+.common-item-body .muted { color: var(--mt-text3); font-size: 11.5px; }
+
+/* 안내 주석 */
+.note-bar { font-size: 12px; color: var(--mt-text2); background: var(--mt-amber-dim); border-left: 3px solid var(--mt-amber); border-radius: 6px; padding: 11px 14px; margin: 4px 0 22px; line-height: 1.7; }
+.note-bar strong { color: var(--mt-amber-dark); }
+.footer-tip { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 44px; font-family: var(--mt-mono); letter-spacing: 0.06em; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--mt-brand2); color: #fff; padding: 11px 20px; border-radius: 24px; font-size: 13px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 100; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="brand-wrap">
+      <img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="brand-logo"
+           onerror="this.style.display='none';document.getElementById('brandFallback').style.display='block';">
+      <span class="brand-fallback" id="brandFallback" style="display:none">MERITTOUR</span>
+      <span class="brand-sub">INTERNAL TOOLS</span>
+      <span class="dept-badge">자료실</span>
+    </div>
+    <a class="ghost-btn" href="../../sales/">⌂ 홈</a>
+  </div>
+
+  <!-- 타이틀 -->
+  <h1 class="page-title">가입 서류 자료실</h1>
+  <p class="page-desc">
+    EWRC II 회원권 · 장기숙박형 숙소(쿠주힐즈) 가입 서류를 한곳에 모았습니다.
+    각 상품의 <strong>원본 양식</strong>과 <strong>작성방법본</strong>을 받아 고객님께 발송하세요.
+  </p>
+
+  <div class="note-bar">
+    <strong>내부용 자료입니다.</strong> 양식·약관 버전은 <span class="mono">v1.6</span> 기준이며, 외화송금신청서는 KB국민은행 <span class="mono">26.01 개정</span> 양식입니다.
+    버전이 바뀌면 <span class="mono">tools/library/</span> 폴더의 PDF만 교체하시면 됩니다.
+  </div>
+
+  <!-- ============ EWRC II 회원권 ============ -->
+  <div class="section-title">EWRC II 회원권</div>
+
+  <div class="doc-card" id="card-ewrc2">
+    <div class="doc-card-head">
+      <div class="doc-card-name">EWRC II 회원권 <span class="en">Enjoy World Resort Club II</span></div>
+      <div class="doc-tags">
+        <span class="tag tag-money">입회금 700만원 · 소멸성</span>
+        <span class="tag tag-target">개인 · 일반</span>
+      </div>
+    </div>
+    <div class="doc-summary">
+      평생 회원권 · <strong>정회원 1 + 무기명 3</strong>(최대 4인 회원가) · 메리트투어 안내 리조트 전체 이용.
+      입금 계좌 <strong class="mono">국민은행 817201-04-109230</strong> (개인 명의).
+    </div>
+    <div class="dl-row" data-pair="ewrc2"></div>
+    <div class="req-grid">
+      <div>
+        <div class="req-block-label">필수 작성 서류</div>
+        <ul class="req-list">
+          <li>입회신청서 — 성함 옆 <span class="seal">인감날인</span></li>
+          <li>위임장 — 위임인 옆 <span class="seal">인감날인</span></li>
+          <li>개인정보 수집이용 동의서 — 성명 옆 <span class="seal">인감날인</span></li>
+          <li>외화송금신청서 — 하단 신청인란 <span class="seal">인감날인</span><span class="note">보내는 분(빨간 네모칸)만 기입</span></li>
+          <li>회원가입계약서 2부 — 1부 보관, 1부 성명 옆 <span class="seal">인감날인</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="req-block-label">동봉 서류</div>
+        <ul class="req-list">
+          <li class="attach">개인인감증명서 1부 (원본)<span class="note">최근 1개월 이내 · 금융기관제출용 · 온라인발급 불가</span></li>
+          <li class="attach">여권사본 1부<span class="note">부부의 경우 배우자 여권사본 1부 동봉</span></li>
+          <li class="attach">신분증 사본 1부<span class="note">주민등록증 또는 운전면허증 · 핸드폰 촬영 불가</span></li>
+          <li class="attach">국민은행 CDD/EDD 등록 후 메리트투어로 전화</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 장기숙박형 숙소 ============ -->
+  <div class="section-title">장기숙박형 숙소 (쿠주힐즈)</div>
+
+  <!-- 개인 -->
+  <div class="doc-card longstay" id="card-longstay-ind">
+    <div class="doc-card-head">
+      <div class="doc-card-name">장기숙박형 숙소 — 개인 <span class="en">Long-stay · Individual</span></div>
+      <div class="doc-tags">
+        <span class="tag tag-money">예탁보증금 5,000만원 · 반환형</span>
+        <span class="tag tag-target">EWRC·다이아·골드 회원</span>
+      </div>
+    </div>
+    <div class="doc-summary">
+      계약 5년 · <strong>연 30일 숙박권</strong> · 매년 쿠폰 15만엔 · 쿠주힐즈 신축 별장형 롯지(4인 2동).
+      체류비·송영비는 아소 야마나미 회원가 동일. 입금 <strong class="mono">5,000만원</strong> (개인 명의).
+    </div>
+    <div class="dl-row" data-pair="longstay_individual"></div>
+    <div class="req-grid">
+      <div>
+        <div class="req-block-label">필수 작성 서류</div>
+        <ul class="req-list">
+          <li>장기숙박형 숙소 이용계약서 2부 — 1부 보관, 1부 성명 옆 <span class="seal">인감날인</span></li>
+          <li>위임장 — 위임인 옆 <span class="seal">인감날인</span></li>
+          <li>개인(신용)정보 수집이용 동의서 — 성명 옆 <span class="seal">인감날인</span></li>
+          <li>외화송금신청서 — 하단 신청인란 <span class="seal">인감날인</span><span class="note">보내는 분(빨간 네모칸)만 기입</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="req-block-label">동봉 서류</div>
+        <ul class="req-list">
+          <li class="attach">개인인감증명서 1부 (원본)<span class="note">최근 1개월 이내 · 금융기관제출용 · 온라인발급 불가</span></li>
+          <li class="attach">여권사본 1부 · 신분증 사본 1부<span class="note">주민등록증 또는 운전면허증 · 핸드폰 촬영 불가</span></li>
+          <li class="attach">국민은행 CDD/EDD 등록 후 메리트투어로 전화</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 법인 -->
+  <div class="doc-card longstay" id="card-longstay-corp">
+    <div class="doc-card-head">
+      <div class="doc-card-name">장기숙박형 숙소 — 법인 <span class="en">Long-stay · Corporate</span></div>
+      <div class="doc-tags">
+        <span class="tag tag-money">예탁보증금 5,000만원 · 반환형</span>
+        <span class="tag tag-target corp">법인 회원</span>
+      </div>
+    </div>
+    <div class="doc-summary">
+      개인형과 동일 조건(연 30일 · 쿠폰 15만엔) · <strong>법인 인감·법인 서류</strong>로 가입.
+      입금 <strong class="mono">5,000만원</strong> (법인명으로 입금).
+    </div>
+    <div class="dl-row" data-pair="longstay_corporate"></div>
+    <div class="req-grid">
+      <div>
+        <div class="req-block-label">필수 작성 서류</div>
+        <ul class="req-list">
+          <li>장기숙박형 숙소 이용계약서 2부 — 1부 보관, 1부 <span class="seal">법인인감날인</span></li>
+          <li>위임장 — 위임인 옆 <span class="seal">법인인감날인</span></li>
+          <li>개인(신용)정보 수집이용 동의서 — <span class="seal">법인인감날인</span></li>
+          <li>외화송금신청서 — 신청인란 <span class="seal">법인인감날인</span> / 대리인란 대표(사내)이사 서명</li>
+        </ul>
+      </div>
+      <div>
+        <div class="req-block-label">동봉 서류 (법인)</div>
+        <ul class="req-list">
+          <li class="attach">법인인감증명서 1부 (원본) · 법인등기부등본 1부 (원본)<span class="note">각 최근 1개월 이내</span></li>
+          <li class="attach">사업자등록증 사본 1부 · 주주명부 1부<span class="note">주주명부는 법인인감날인 · 최근 1개월 이내</span></li>
+          <li class="attach">대표(사내)이사 여권사본 1부 · 신분증 사본 1부</li>
+          <li class="attach">국민은행 CDD/EDD <strong>법인</strong> 등록<span class="note">대표이사/대리인에 따라 지참 서류 상이 — 방문 지점에 사전 확인</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 공통 안내 ============ -->
+  <div class="section-title">공통 안내</div>
+  <div class="common-box">
+    <div class="common-grid">
+      <div>
+        <div class="common-item-label">📬 서류 발송 주소</div>
+        <div class="common-item-body">
+          (04001) 서울특별시 마포구 월드컵북로 15<br>엠지엘빌딩 6층 601호 · (주)메리트투어
+        </div>
+      </div>
+      <div>
+        <div class="common-item-label">🏦 입금 계좌</div>
+        <div class="common-item-body">
+          <span class="mono">국민은행 817201-04-109230</span><br>
+          예금주 주식회사 메리트투어
+          <span class="muted">· EWRC II 입회금 700만원 / 장기숙박 보증금 5,000만원</span>
+        </div>
+      </div>
+      <div>
+        <div class="common-item-label">🪪 CDD/EDD 등록</div>
+        <div class="common-item-body">
+          가까운 KB국민은행 방문(계좌 없어도 가능) → 신분증 지참 → 해외송금용 고객확인제도 등록
+          <span class="muted">· 등록 후 메리트투어로 전화</span>
+        </div>
+      </div>
+      <div>
+        <div class="common-item-label">☎ 문의</div>
+        <div class="common-item-body">
+          <span class="mono">02-365-9800</span> · FAX <span class="mono">02-365-9801</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-tip">MERITTOUR · 가입 서류 자료실 · 내부용</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== PDF 링크 설정 — 한 곳에서만 관리 =====
+   기본: index.html과 같은 폴더(tools/library/)에 PDF를 둔 경우.
+   구글 드라이브 등으로 옮길 경우, 아래 값을 전체 URL로 바꾸면 됩니다. */
+const DOCS = {
+  ewrc2:                 { form: 'ewrc2_forms.pdf',                guide: 'ewrc2_forms_guide.pdf' },
+  longstay_individual:   { form: 'longstay_individual_forms.pdf',  guide: 'longstay_individual_forms_guide.pdf' },
+  longstay_corporate:    { form: 'longstay_corporate_forms.pdf',   guide: 'longstay_corporate_forms_guide.pdf' },
+};
+
+function btn(href, cls, ico, label, sub){
+  const broken = !href || href.trim() === '';
+  const a = document.createElement('a');
+  a.className = 'dl-btn ' + cls + (broken ? ' broken' : '');
+  if (broken) {
+    a.href = 'javascript:void(0)';
+    a.onclick = () => toast('아직 PDF 경로가 비어 있습니다');
+  } else {
+    a.href = href; a.target = '_blank'; a.rel = 'noopener';
+  }
+  a.innerHTML = `<span class="dl-ico">${ico}</span>
+    <span class="dl-body"><span class="dl-label">${label}</span><span class="dl-sub">${sub}</span></span>`;
+  return a;
+}
+
+document.querySelectorAll('.dl-row').forEach(row => {
+  const key = row.dataset.pair;
+  const set = DOCS[key] || {};
+  row.appendChild(btn(set.form,  'primary', '📄', '원본 양식 받기', '입회·계약·동의서·송금신청서'));
+  row.appendChild(btn(set.guide, 'outline', '✏️', '작성방법본 받기', '기입 위치·인감날인 표시본'));
+});
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+</script>
+</body>
+</html>
