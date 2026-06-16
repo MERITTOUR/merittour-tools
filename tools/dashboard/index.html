@@ -66,19 +66,20 @@ a{color:inherit}
 .card-sub{font-size:11px;color:var(--text2)}
 
 /* UPLOAD */
-.upload-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem}
-.upload-area{border:1.5px dashed var(--border2);border-radius:12px;padding:1.75rem 1.25rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);display:flex;flex-direction:column}
+.upload-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;margin:0 auto 1.25rem;max-width:760px}
+@media(max-width:560px){.upload-grid{grid-template-columns:1fr;max-width:420px}}
+.upload-area{border:1.5px dashed var(--border2);border-radius:14px;padding:2.4rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);display:flex;flex-direction:column}
 .upload-area:hover,.upload-area.drag{border-color:var(--accent);background:var(--accent-dim)}
 .upload-area.uploaded{border-color:var(--green);border-style:solid;background:var(--green-dim)}
 .upload-area.uploaded .upload-icon{background:var(--green-dim);border-color:var(--green)}
 .upload-area.uploaded .upload-icon svg{stroke:var(--green)}
 .upload-area.uploaded .upload-title{color:var(--green2)}
-.upload-icon{width:44px;height:44px;margin:0 auto .75rem;background:var(--surface3);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center}
-.upload-icon svg{stroke:var(--accent);fill:none;stroke-width:1.5;width:22px;height:22px}
-.upload-title{font-size:14px;font-weight:700;margin-bottom:5px}
-.upload-sub{font-size:11px;color:var(--text2);line-height:1.5;flex:1}
-.upload-meta{margin-top:.75rem;font-size:10px;color:var(--text3);font-family:var(--mono);min-height:14px}
-.upload-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px}
+.upload-icon{width:60px;height:60px;margin:0 auto 1rem;background:var(--surface3);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.upload-icon svg{stroke:var(--accent);fill:none;stroke-width:1.5;width:30px;height:30px}
+.upload-title{font-size:18px;font-weight:700;margin-bottom:7px}
+.upload-sub{font-size:13px;color:var(--text2);line-height:1.55;flex:1}
+.upload-meta{margin-top:1rem;font-size:12px;color:var(--text3);font-family:var(--mono);min-height:16px}
+.upload-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px}
 .upload-dot.empty{background:var(--text3);opacity:.4}
 
 /* BUTTONS */
@@ -1193,43 +1194,6 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
     <div style="background:var(--surface2);padding:12px;border-radius:10px">
       <iframe id="doc-render-frame" style="width:100%;height:640px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
-    </div>
-  </div>
-</div>
-
-      <button class="btn-ghost doc-kind" data-kind="itinerary" onclick="docPickKind('itinerary')">일정표만 보내기</button>
-      <button class="btn-primary doc-kind active" data-kind="confirm" onclick="docPickKind('confirm')">확정서로 보내기</button>
-    </div>
-    <div class="muted" style="font-size:11px;margin-top:8px" id="doc-kind-desc">확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.</div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">입금 계좌 · 문의 전화 설정 <span class="muted" style="font-weight:400;font-size:11px">— 확정서·견적서 요금 박스와 푸터에 들어갑니다. 한 번 입력하면 저장됩니다</span></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input class="rm-input text" id="doc-acct-bank" placeholder="은행명" style="width:110px;text-align:left" onchange="docSaveAcct('bank',this.value)">
-      <input class="rm-input text" id="doc-acct-no" placeholder="계좌번호" style="width:190px;text-align:left" onchange="docSaveAcct('no',this.value)">
-      <input class="rm-input text" id="doc-acct-holder" placeholder="예금주" style="width:130px;text-align:left" onchange="docSaveAcct('holder',this.value)">
-      <input class="rm-input text" id="doc-acct-tel" placeholder="문의 전화 (예: 02-000-0000)" style="width:190px;text-align:left" onchange="docSaveAcct('tel',this.value)">
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 팀을 누르면 아래에 미리보기가 생성됩니다</span></div>
-      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
-    </div>
-    <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
-      먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.
-    </div>
-  </div>
-
-  <div class="card" id="doc-preview-card" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">미리보기 <span class="muted" id="doc-preview-info" style="font-weight:400;font-size:11px"></span></div>
-      <button class="btn-primary" style="padding:9px 20px" onclick="docExportJpg()">⬇ JPG 저장 (카카오톡 발송용)</button>
-    </div>
-    <div style="overflow-x:auto;background:var(--surface2);padding:18px;border-radius:10px;display:flex;justify-content:center">
-      <div id="doc-render"></div>
     </div>
   </div>
 </div>
@@ -5802,7 +5766,7 @@ function docBuildHtmlV7(t, kind){
   const genDate=today.getFullYear()+'.'+docPad(today.getMonth()+1)+'.'+docPad(today.getDate())+' 생성';
   const rt=(t.prodName||'').match(/(트윈|싱글|패밀리룸|소형트윈|관내별장|돔하우스|카라반|맨션)/);
 
-  // 항공 (대시보드 현지도착 보완 필드 우선, 없으면 일행 편명)
+  // 항공 (일행별예약 파생 시각 필드 우선, 없으면 일행 편명)
   const depFlight=t.arrDepFlight||t.flight||(t.pax_list&&t.pax_list[0]&&t.pax_list[0].depFlight)||'';
   const retFlight=t.arrRetFlight||(t.pax_list&&t.pax_list[0]&&t.pax_list[0].retFlight)||'';
 
@@ -5818,7 +5782,7 @@ function docBuildHtmlV7(t, kind){
     depM:docFmtMD(dep), depD:docDow(dep), arrM:docFmtMD(arr), arrD:docDow(arr),
     출발:t.dep, dday, genDate, balanceDue,
     출발편:depFlight, 출발편시각:t.arrDepTime||'', 현지도착:t.arrTimeJP||'',
-    귀국편:retFlight, 귀국편시각:t.retTimeJP||'',
+    귀국편:retFlight, 귀국편시각:t.retTimeJP||'', 귀국도착:t.retTimeKR||'',
     도착공항:m.arrival_airport||'',
     per:docWon(per), deposit:docWon(deposit), balance:docWon(balance),
     itinHTML, extraHTML,
