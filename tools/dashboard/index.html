@@ -1214,31 +1214,38 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div><div class="card-title">⑧ 정산</div><div class="card-sub">현지정산(¥, 사이젠 대조) · 수익정산(₩, 엠클릭 행사별정산 대체) · 개인별 명세 · 엠클릭 대조</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;white-space:nowrap">
-          <input type="checkbox" id="st-incl-prov" onchange="renderSettleAll()"> 견적·대기 포함</label>
-        <div class="st-tabs">
-          <button class="st-tab active" data-st="local" onclick="settleGoto('local')">🇯🇵 현지정산 (¥)</button>
-          <button class="st-tab" data-st="profit" onclick="settleGoto('profit')">💰 수익정산 (₩)</button>
-          <button class="st-tab" data-st="person" onclick="settleGoto('person')">👤 개인별 명세</button>
-          <button class="st-tab" data-st="mclick" onclick="settleGoto('mclick')">🔍 엠클릭 대조</button>
-        </div>
+        <span style="font-size:11px;color:var(--text3)">구분:</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap" id="st-status-chips"></div>
+        <span class="hd-sep"></span>
+        <button class="btn-sm" onclick="settleAirTplExport()" style="border-color:#7C3AED;color:#7C3AED">📤 항공원가 입력틀</button>
+        <button class="btn-sm" onclick="document.getElementById('st-air-upload').click()">📥 항공원가 불러오기</button>
+        <input type="file" id="st-air-upload" accept=".xlsx,.xls" style="display:none" onchange="settleAirCostUpload(this)">
         <button class="btn-sm" onclick="settleExportXlsx()" style="border-color:var(--accent);color:var(--accent)">📥 정산표 엑셀</button>
       </div>
     </div>
 
     <div id="st-empty" class="muted" style="font-size:13px;padding:24px;text-align:center">
       먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 정산이 표시됩니다.<br>
-      <span style="font-size:11px">업로드 전에도 <b>① 리조트 마스터</b>의 현지정산단가와 항공요금 테이블의 발권원가는 미리 입력해둘 수 있습니다.</span>
+      <span style="font-size:11px">업로드 전에도 <b>① 리조트 마스터</b>의 현지정산단가와 항공요금 테이블은 미리 입력해둘 수 있습니다.</span>
     </div>
 
-    <!-- A. 현지정산 (¥) -->
+    <!-- 현지정산 (¥) + 수익 통합 -->
     <div id="st-view-local" style="display:none">
       <div class="note">
-        <b>사이젠 現地精算表 대조용</b> · 숙박비 = 인원 × 박수 × <b>현지정산단가</b>(① 리조트 마스터의 숙소별 값), 송영비 = 인원 × 송영 단가.
-        체재·송영 면제와 단가 보정은 「개인별 명세」에서 반영됩니다. 사이젠과 동일하게 <b>항공조인·구마모토 시내</b> 상품은 제외합니다.
-        차감(쿠폰·포인트·선납)을 입력하면 실정산액 = 총액 − 차감합계로 계산됩니다 — 사이젠 화면과 항목·금액이 같으면 정산이 맞은 것입니다. 처음에는 미선택 상태입니다 — 숙소 칩 또는 [전체 선택]을 누르면 표시됩니다. 정산표 엑셀은 선택과 무관하게 전체 데이터로 생성됩니다.
+        <b>현지정산 + 수익</b> · 숙박비 = 인원 × 박수 × <b>현지정산단가</b>(① 리조트 마스터 숙소별 값), 송영비 = 인원 × 송영 단가.
+        <b>체재마진(¥)</b> = 박수 × (안내 체재비 − 현지정산단가) — 야마나미 예: 박당 ¥1,000. <b>항공수익(₩)</b> = 안내가(마스터 항공요금) − 항공원가(입력).
+        <b>총수익(₩)</b> = 체재마진 × 출국월 환율 + 항공수익. 항공조인·AIR별도·구마모토 시내는 항공 0 처리됩니다.
+        항공원가는 행마다 직접 입력하거나, 「항공원가 입력틀」을 내보내 채운 뒤 「항공원가 불러오기」로 일괄 반영할 수 있습니다.
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0" id="st-local-filter"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;align-items:center" id="st-local-filterbar">
+        <input id="st-l-search" placeholder="행사번호·대표자·상품명 검색" style="font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;width:180px" oninput="stLocalSearchDeb()">
+        <select class="rm-input" id="st-l-origin" style="width:110px;text-align:left;font-family:var(--sans)" onchange="renderSettleLocal()"></select>
+        <span class="hd-sep"></span>
+        <span style="font-size:11px;color:var(--text3)">숙소:</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="st-local-filter"></div>
+        <span class="hd-sep"></span>
+        <button class="st-chip" id="st-l-nocost" onclick="this.classList.toggle('active');renderSettleLocal()">항공원가 미입력만</button>
+      </div>
       <div class="sum-grid" id="st-local-summary"></div>
       <div class="st-cards" id="st-local-cards"></div>
       <div class="cm-box" id="st-ded-box" style="margin-top:4px">
@@ -1252,67 +1259,6 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
           <span style="color:var(--text3)">실정산액 <b class="nv" id="st-net-total">¥0</b></span></div>
       </div>
       <div class="tbl-wrap" style="margin-top:12px"><table id="st-local-table"><thead id="st-local-thead"></thead><tbody id="st-local-tbody"></tbody></table></div>
-    </div>
-
-    <!-- B. 수익정산 (₩) -->
-    <div id="st-view-profit" style="display:none">
-      <div class="note">
-        <b>엠클릭 행사별정산현황과 같은 분해</b> · 지상비 = 현지정산액(¥) × 출국월 환율 · 체재마진 = (안내 체재비 − 현지정산단가) × 박수 × 환율 ·
-        알선수익 = 판매금액 − 발권원가 − 지상비 − 보험료 · 알선수수료 = 알선수익 ÷ 1.1 (부가세 분리) · 총수수료 = 알선수수료 + 체재마진.
-        발권원가는 항공요금 테이블의 「발권원가」 칸 → 개인별 일괄/개별 입력 순으로 적용됩니다.
-      </div>
-      <div class="sum-grid" id="st-profit-summary"></div>
-      <div class="tbl-wrap"><table id="st-profit-table"><thead id="st-profit-thead"></thead><tbody id="st-profit-tbody"></tbody></table></div>
-    </div>
-
-    <!-- C. 개인별 명세 -->
-    <div id="st-view-person" style="display:none">
-      <div class="note">
-        <b>값 우선순위</b> · 발권가: <span class="st-badge b-edit">개별</span> &gt; <span class="st-badge b-bulk">일괄</span> &gt; <span class="st-badge b-table">테이블</span>(항공요금 테이블 발권원가) ·
-        일행별예약에 항공편·PNR이 없는 인원은 <span class="st-badge b-land">지상만</span>으로 발권가 0원 처리(개별 입력으로 변경 가능).
-        체크박스는 <b>Shift 클릭으로 범위 선택</b>이 되고, 필터를 건 뒤 「보이는 행 전체 선택」으로 엑셀 필터처럼 묶어 입력할 수 있습니다. 입력 칸을 비우면 테이블/기본값으로 되돌아갑니다.
-        보험료는 <b>DB손해보험 가입증명서 PDF</b>를 올리면 피보험자 명세(성명·생년월일·인별보험료)를 읽어 자동 입력됩니다(<span class="st-badge b-pdf">PDF</span> 배지). PDF·일괄·개별은 같은 칸에 쓰며 마지막 입력이 적용됩니다.
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;align-items:center" id="st-person-filterbar">
-        <input id="st-p-search" placeholder="대표자·행사번호·성명 검색" style="font-size:11px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;width:180px" oninput="stSearchDeb()">
-        <select class="rm-input" id="st-p-month" style="width:105px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
-        <select class="rm-input" id="st-p-accom" style="width:160px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
-        <select class="rm-input" id="st-p-origin" style="width:105px;text-align:left;font-family:var(--sans)" onchange="renderSettlePerson()"></select>
-        <button class="st-chip" id="st-p-landonly" onclick="this.classList.toggle('active');renderSettlePerson()">지상만</button>
-        <button class="st-chip" id="st-p-noair" onclick="this.classList.toggle('active');renderSettlePerson()">발권가 미입력만</button>
-        <span class="hd-sep"></span>
-        <button class="btn-sm" onclick="settleSelVisible(true)">보이는 행 전체 선택</button>
-        <button class="btn-sm" onclick="settleSelVisible(false)">선택 해제</button>
-        <span class="hd-sep"></span>
-        <button class="btn-sm" style="border-color:#7C3AED;color:#7C3AED" onclick="document.getElementById('st-ins-pdf').click()">📄 보험료 PDF 불러오기</button>
-        <input type="file" id="st-ins-pdf" accept="application/pdf,.pdf" multiple style="display:none" onchange="settleInsPdfUpload(this)">
-      </div>
-      <div id="st-pdf-report" style="display:none"></div>
-      <div class="st-bulkbar" id="st-bulkbar" style="display:none">
-        <b style="font-size:12px;color:var(--accent)" id="st-bulk-count">0명 선택</b>
-        <span class="hd-sep"></span>
-        <label style="font-size:11px;color:var(--text3)">발권가/인 <input class="st-cellin" id="st-bulk-air" placeholder="원"></label>
-        <label style="font-size:11px;color:var(--text3)">보험료/인 <input class="st-cellin" id="st-bulk-ins" placeholder="원"></label>
-        <button class="btn-sm" style="border-color:var(--accent);color:var(--accent)" onclick="settleBulkApply()">선택 인원에 적용</button>
-        <button class="btn-sm" onclick="settleBulkClear()">입력값 지우기(테이블값 복귀)</button>
-      </div>
-      <div class="sum-grid" id="st-person-summary"></div>
-      <div class="tbl-wrap"><table id="st-person-table"><thead id="st-person-thead"></thead><tbody id="st-person-tbody"></tbody></table></div>
-    </div>
-
-    <!-- D. 엠클릭 대조 -->
-    <div id="st-view-mclick" style="display:none">
-      <div class="note">
-        엠클릭 <b>행사별정산현황.xlsx</b>를 올리면 행사번호로 매칭해 판매금액·항공료·지상비·보험료·알선수익·기타수익·총수수료를 도구 계산값과 대조합니다.
-        ±10원 이내는 일치로 봅니다. 차이가 나면 엠클릭 수기 입력 누락(발권가·보험료) 또는 환율·단가 기준 차이입니다.
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap">
-        <input type="file" id="st-mclick-file" accept=".xlsx,.xls" style="font-size:11px" onchange="settleMclickUpload(this)">
-        <span class="muted" style="font-size:11px" id="st-mclick-info">파일 미업로드</span>
-        <button class="st-chip" id="st-m-diffonly" onclick="this.classList.toggle('active');renderSettleMclick()">차이 있는 행사만</button>
-      </div>
-      <div class="sum-grid" id="st-mclick-summary"></div>
-      <div class="tbl-wrap"><table id="st-mclick-table"><thead id="st-mclick-thead"></thead><tbody id="st-mclick-tbody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -5875,6 +5821,7 @@ let settleSel=new Set();                   // 선택된 개인 키
 let stLastIdx=null, stVisibleKeys=[];      // Shift 범위 선택용
 let stLocalFilter=new Set();               // 현지정산 숙소 필터 (빈=전체)
 let settleTab='local';
+let stStatusSel=new Set(['확정','정산']);   // 구분 칩 (기본: 확정·정산)
 let mclickData=null, mclickFileName='';
 
 function saveSettle(){
@@ -5882,10 +5829,10 @@ function saveSettle(){
 }
 function stWon(v){ return v==null?'-':'₩'+Math.round(v).toLocaleString(); }
 function stYen(v){ return v==null?'-':'¥'+Math.round(v).toLocaleString(); }
-function stStatusOk(t){
-  const incl=document.getElementById('st-incl-prov');
-  const base=['확정','정산'];
-  return base.includes(t.status) || (incl&&incl.checked && ['견적','대기'].includes(t.status));
+function stStatusOk(t){ return stStatusSel.has(t.status); }
+function stToggleStatus(s){
+  if(stStatusSel.has(s)) stStatusSel.delete(s); else stStatusSel.add(s);
+  renderSettleAll();
 }
 
 /* 발권원가 조회 — airfareFor와 동일 매칭, cost 필드 반환 */
@@ -5905,7 +5852,8 @@ function airCostFor(t){
 /* 개인 행 구성 — 정산의 최소 단위. 명단 미업로드 팀은 인원수만큼 가상 행 */
 function settlePersons(){
   const rows=[];
-  teams.filter(stStatusOk).forEach(t=>{
+  const pool = stStatusSel.has('취소') ? teams.concat(cancelledTeams||[]) : teams;
+  pool.filter(stStatusOk).forEach(t=>{
     const u=resortUnitFor(t.accom);
     const m=String(t.period||'').match(/(\d+)박/); const nights=m?parseInt(m[1]):(t.nights||0);
     const rate=rateForMonth(t.dep);                 // 100엔당 원
@@ -5968,33 +5916,27 @@ function settleProfitTeams(rows){
 }
 
 /* ── 전체 렌더 (업로드 직후 / 탭 진입 / 마스터 변경 시) ── */
-function renderSettleAll(){
-  if(!teams.length){ settleGoto(settleTab, true); return; }
-  stFillSelects();
-  settleGoto(settleTab, true);
+function renderSettleStatusChips(){
+  const box=document.getElementById('st-status-chips'); if(!box) return;
+  const opts=['견적','대기','확정','정산','취소'];
+  box.innerHTML=opts.map(s=>`<button class="st-chip ${stStatusSel.has(s)?'active':''}" onclick="stToggleStatus('${s}')">${s}</button>`).join('');
 }
-function settleGoto(tab, keep){
-  settleTab=tab;
-  document.querySelectorAll('.st-tab').forEach(b=>b.classList.toggle('active',b.dataset.st===tab));
+function renderSettleAll(){
+  renderSettleStatusChips();
   const empty=document.getElementById('st-empty');
+  const view=document.getElementById('st-view-local');
   if(!teams.length){
     if(empty) empty.style.display='';
-    ['local','profit','person','mclick'].forEach(v=>{
-      const el=document.getElementById('st-view-'+v); if(el) el.style.display='none';
-    });
+    if(view) view.style.display='none';
     return;
   }
   if(empty) empty.style.display='none';
-  ['local','profit','person','mclick'].forEach(v=>{
-    const el=document.getElementById('st-view-'+v);
-    if(el) el.style.display = v===tab?'':'none';
-  });
-  if(tab==='local') renderSettleLocal();
-  else if(tab==='profit') renderSettleProfit();
-  else if(tab==='person') renderSettlePerson();
-  else renderSettleMclick();
-  if(!keep){ try{ attachTopScrollbars(); }catch(e){} }
+  if(view) view.style.display='';
+  stFillSelects();
+  renderSettleLocal();
 }
+/* 하위 호환: settleGoto 호출이 남아있어도 안전 */
+function settleGoto(){ renderSettleAll(); }
 function stFillSelects(){
   const rows=settlePersons();
   const months=[...new Set(rows.map(r=>(r.t.dep||'').slice(0,7)).filter(Boolean))].sort();
@@ -6009,6 +5951,7 @@ function stFillSelects(){
   fill('st-p-month',months,'출발월 전체');
   fill('st-p-accom',accoms,'숙소 전체');
   fill('st-p-origin',origins,'출발지 전체');
+  fill('st-l-origin',origins,'출발지 전체');
 }
 
 /* ════════ A. 현지정산 (¥) ════════ */
@@ -6034,27 +5977,50 @@ function renderSettleLocal(){
     return;
   }
   document.getElementById('st-ded-box').style.display='';
-  const rows=all.filter(r=>stLocalFilter.has(r.t.accom));
+  let rows=all.filter(r=>stLocalFilter.has(r.t.accom));
+  // 추가 필터: 출발지·검색·항공원가 미입력
+  const fo=(document.getElementById('st-l-origin')||{}).value||'';
+  const fq=((document.getElementById('st-l-search')||{}).value||'').trim().toLowerCase();
+  const noCostOnly=(document.getElementById('st-l-nocost')||{}).classList?.contains('active');
+  if(fo) rows=rows.filter(r=>(r.t.apisOrigin||r.t.origin||'')===fo);
+  if(fq) rows=rows.filter(r=>[(r.t.eventNo||''),(r.t.repName||''),(r.t.prodName||'')].join(' ').toLowerCase().includes(fq));
 
-  // 팀 집계
+  // 팀 집계 — 수익 컬럼 포함
+  const rate0=rateForMonth; // 출국월 환율(값은 2달전 기준 적재)
   const bySeq={};
   rows.forEach(r=>{ (bySeq[r.t.eventSeq]=bySeq[r.t.eventSeq]||{t:r.t,ps:[]}).ps.push(r); });
-  const tRows=Object.values(bySeq).map(g=>({
-    t:g.t, pax:g.ps.length, nights:g.ps[0].nights, localRate:g.ps[0].localRate,
-    stay:g.ps.reduce((s,r)=>s+r.stayYen,0), trans:g.ps.reduce((s,r)=>s+r.transYen,0)
-  })).map(r=>({...r,total:r.stay+r.trans}));
+  let tRows=Object.values(bySeq).map(g=>{
+    const t=g.t, ps=g.ps;
+    const rate=ps[0].rate;
+    const stay=ps.reduce((s,r)=>s+r.stayYen,0);
+    const trans=ps.reduce((s,r)=>s+r.transYen,0);
+    const marginYen=ps.reduce((s,r)=>s+r.marginYen,0);
+    const annNull=ps.some(r=>r.annAir===null);
+    const annAir=annNull?null:ps.reduce((s,r)=>s+r.annAir,0);           // 항공 안내가(₩)
+    const costNull=ps.some(r=>r.airCost===null);
+    const airCost=costNull?null:ps.reduce((s,r)=>s+r.airCost,0);        // 항공 원가(₩)
+    const airProfit=(annAir!=null&&airCost!=null)?annAir-airCost:null;  // 항공 수익(₩)
+    const marginKRW=rate?Math.round(marginYen*rate/100):(marginYen?null:0);
+    const totalProfit=(airProfit!=null&&marginKRW!=null)?marginKRW+airProfit:null; // 총수익(₩)
+    return {t,pax:ps.length,nights:ps[0].nights,localRate:ps[0].localRate,rate,
+      stay,trans,total:stay+trans,marginYen,marginKRW,annAir,airCost,airProfit,totalProfit,costNull};
+  });
+  if(noCostOnly) tRows=tRows.filter(r=>r.costNull);
 
   const stayT=tRows.reduce((s,r)=>s+r.stay,0), transT=tRows.reduce((s,r)=>s+r.trans,0), tot=stayT+transT;
   const paxT=tRows.reduce((s,r)=>s+r.pax,0);
+  const profitT=tRows.reduce((s,r)=>s+(r.totalProfit||0),0);
+  const profitNull=tRows.some(r=>r.totalProfit==null);
 
   document.getElementById('st-local-summary').innerHTML=
     `<div class="sum-box"><div class="sum-label">대상</div><div class="sum-val">${tRows.length}건 ${paxT}명</div></div>
      <div class="sum-box"><div class="sum-label">숙박비</div><div class="sum-val">${stYen(stayT)}</div></div>
      <div class="sum-box"><div class="sum-label">송영비</div><div class="sum-val">${stYen(transT)}</div></div>
-     <div class="sum-box"><div class="sum-label">총액</div><div class="sum-val" style="color:var(--accent)">${stYen(tot)}</div></div>
+     <div class="sum-box"><div class="sum-label">현지정산 총액</div><div class="sum-val" style="color:var(--accent)">${stYen(tot)}</div></div>
+     <div class="sum-box"><div class="sum-label">총수익(₩)${profitNull?' *':''}</div><div class="sum-val" style="color:#059669">${stWon(profitT)}${profitNull?'+':''}</div></div>
      ${excluded?`<div class="sum-box"><div class="sum-label">제외(항공조인·시내·미매칭)</div><div class="sum-val">${excluded}명</div></div>`:''}`;
 
-  // 숙소별 카드 (사이젠 동일 구성)
+  // 숙소별 카드
   document.getElementById('st-local-cards').innerHTML=accoms
     .filter(a=>stLocalFilter.has(a))
     .map(a=>{
@@ -6069,8 +6035,8 @@ function renderSettleLocal(){
         <div class="sc-row sc-total"><span>합계</span><span class="v">¥${(s+tr).toLocaleString()}</span></div></div>`;
     }).join('');
 
-  // 명세표 (숙소별 그룹 헤더)
-  const HDR=['No','행사번호','구분','회원권구분','대표자','출발일','도착일','박수','인원','숙소','룸타입','단가(¥)','숙박비(¥)','송영비(¥)','합계(¥)'];
+  // 명세표 (숙소별 그룹 헤더) — 수익 컬럼 + 항공원가 입력
+  const HDR=['No','행사번호','구분','대표자','출발일','박수','인원','숙소','단가(¥)','숙박비(¥)','송영비(¥)','체재마진(¥)','항공안내가(₩)','항공원가(₩)','항공수익(₩)','총수익(₩)'];
   document.getElementById('st-local-thead').innerHTML='<tr>'+HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const sorted=[...tRows].sort((a,b)=>(a.t.accom||'').localeCompare(b.t.accom||'')||(a.t.dep||'').localeCompare(b.t.dep||''));
   let prev='', html='';
@@ -6080,22 +6046,133 @@ function renderSettleLocal(){
       const grp=sorted.filter(x=>x.t.accom===r.t.accom);
       html+=`<tr class="st-sec-row"><td colspan="${HDR.length}">◎ ${r.t.accom} — ${grp.length}건 · ${grp.reduce((s,x)=>s+x.pax,0)}명 · ¥${grp.reduce((s,x)=>s+x.total,0).toLocaleString()}</td></tr>`;
     }
+    const annCell = r.annAir!=null?'₩'+r.annAir.toLocaleString():'<span class="muted">미등록</span>';
+    const costCell = r.costNull
+      ? `<input class="st-cellin st-aircost" data-seq="${r.t.eventSeq}" placeholder="원가 입력" value="" oninput="settleAirCostInput('${r.t.eventSeq}',this.value)">`
+      : `<input class="st-cellin st-aircost" data-seq="${r.t.eventSeq}" value="${r.airCost}" oninput="settleAirCostInput('${r.t.eventSeq}',this.value)">`;
+    const profitCell = r.airProfit!=null
+      ? `<span style="color:${r.airProfit>=0?'#059669':'var(--red2)'}">₩${r.airProfit.toLocaleString()}</span>`
+      : '<span class="muted">-</span>';
+    const totalCell = r.totalProfit!=null
+      ? `<span style="font-weight:700;color:#059669">₩${r.totalProfit.toLocaleString()}</span>`
+      : '<span class="muted">-</span>';
     html+=`<tr><td class="center" style="font-family:var(--mono)">${i+1}</td>
       <td class="center" style="font-family:var(--mono)">${r.t.eventNo}</td>
-      <td class="center">${r.t.status}</td><td class="center">${r.t.memberType}</td>
-      <td>${r.t.repName}</td><td class="center">${r.t.dep}</td><td class="center">${r.t.arr}</td>
+      <td class="center">${r.t.status}</td>
+      <td>${r.t.repName}</td><td class="center">${r.t.dep}</td>
       <td class="center">${r.nights}</td><td class="center">${r.pax}</td>
-      <td class="st-accom">${r.t.accom}</td><td style="font-size:11px">${r.t.roomType||'-'}</td>
+      <td class="st-accom">${r.t.accom}</td>
       <td class="num">¥${(r.localRate||0).toLocaleString()}</td>
       <td class="num">¥${r.stay.toLocaleString()}</td><td class="num">¥${r.trans.toLocaleString()}</td>
-      <td class="num" style="font-weight:700;color:var(--accent)">¥${r.total.toLocaleString()}</td></tr>`;
+      <td class="num" style="color:#0369A1">¥${r.marginYen.toLocaleString()}</td>
+      <td class="num">${annCell}</td>
+      <td class="num">${costCell}</td>
+      <td class="num">${profitCell}</td>
+      <td class="num">${totalCell}</td></tr>`;
   });
-  html+=`<tr style="font-weight:800;background:var(--surface2)"><td colspan="12" style="text-align:right">合計 Total</td>
-    <td class="num">¥${stayT.toLocaleString()}</td><td class="num">¥${transT.toLocaleString()}</td><td class="num" style="color:var(--accent)">¥${tot.toLocaleString()}</td></tr>`;
+  const annGrand=sorted.reduce((s,r)=>s+(r.annAir||0),0);
+  const costGrand=sorted.reduce((s,r)=>s+(r.airCost||0),0);
+  const profGrand=sorted.reduce((s,r)=>s+(r.airProfit||0),0);
+  const marginGrand=sorted.reduce((s,r)=>s+r.marginYen,0);
+  html+=`<tr style="font-weight:800;background:var(--surface2)"><td colspan="9" style="text-align:right">合計 Total</td>
+    <td class="num">¥${stayT.toLocaleString()}</td><td class="num">¥${transT.toLocaleString()}</td>
+    <td class="num" style="color:#0369A1">¥${marginGrand.toLocaleString()}</td>
+    <td class="num">₩${annGrand.toLocaleString()}</td><td class="num">₩${costGrand.toLocaleString()}</td>
+    <td class="num" style="color:#059669">₩${profGrand.toLocaleString()}</td>
+    <td class="num" style="color:#059669">${stWon(profitT)}${profitNull?'+':''}</td></tr>`;
   document.getElementById('st-local-tbody').innerHTML=html;
 
   renderSettleDed(tot);
   try{ attachTopScrollbars(); }catch(e){}
+}
+
+/* 항공원가 직접 입력 — 팀 단위(같은 eventSeq 전체 인원에 1/n 분배 저장) */
+function settleAirCostInput(eventSeq, val){
+  const t=(teams.concat(cancelledTeams||[])).find(x=>String(x.eventSeq)===String(eventSeq));
+  if(!t) return;
+  const n=Math.max(1, t.pax||(t.pax_list?t.pax_list.length:1));
+  const raw=String(val).replace(/[^\d]/g,'');
+  const perTeam = raw===''? null : Number(raw);
+  const perHead = perTeam==null? null : Math.round(perTeam/n);
+  const cnt = t.pax_list&&t.pax_list.length? t.pax_list.length : n;
+  for(let i=0;i<cnt;i++){
+    const key=eventSeq+'#'+i;
+    const ad=settleAdjust[key]||(settleAdjust[key]={});
+    if(perHead==null){ delete ad.airCost; delete ad.airSrc; }
+    else { ad.airCost=perHead; ad.airSrc='개별'; }
+  }
+  saveSettle();
+  clearTimeout(window._stAirCostTimer);
+  window._stAirCostTimer=setTimeout(renderSettleLocal,500);
+}
+let _stLocalSearchTimer=null;
+function stLocalSearchDeb(){ clearTimeout(_stLocalSearchTimer); _stLocalSearchTimer=setTimeout(renderSettleLocal,250); }
+
+/* 항공원가 입력틀 내보내기 — 행사번호·성함·생년월일·출발일·안내가(참고)·항공원가(입력) */
+function settleAirTplExport(){
+  if(!teams.length){ showToast('먼저 통합 분석을 실행하세요'); return; }
+  const ps=settlePersons().filter(r=>!r.localEx);
+  const data=[['행사번호','성함','생년월일','출발일','숙소','항공안내가(참고)','항공원가(입력)']];
+  ps.forEach(r=>{
+    const bd=r.p.birth||r.p.birthDate||'';
+    data.push([r.t.eventNo, r.p.name||'', bd, r.t.dep||'', r.t.accom||'',
+      r.annAir!=null?r.annAir:'', (r.ad&&r.ad.airCost!=null)?r.ad.airCost:'']);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:12},{wch:12},{wch:12},{wch:12},{wch:22},{wch:16},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws,'aircost');
+  XLSX.writeFile(wb,'merittour_aircost_template.xlsx');
+  showToast('항공원가 입력틀을 내려받았습니다 — 「항공원가(입력)」 칸만 채워 다시 올려주세요');
+}
+
+/* 항공원가 불러오기 — 행사번호+성함+생년월일로 매칭해 개인별 airCost 저장 */
+function settleAirCostUpload(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!aoa.length){ showToast('빈 파일입니다'); return; }
+      // 헤더 인덱스 탐색
+      const hdr=aoa[0].map(x=>String(x).trim());
+      const iEv=hdr.findIndex(h=>h.includes('행사번호'));
+      const iNm=hdr.findIndex(h=>h.includes('성함')||h.includes('성명')||h.includes('이름'));
+      const iBd=hdr.findIndex(h=>h.includes('생년월일')||h.includes('생년'));
+      const iCost=hdr.findIndex(h=>h.includes('항공원가'));
+      if(iEv<0||iNm<0||iCost<0){ showToast('틀 형식이 아닙니다 — 행사번호·성함·항공원가 열이 필요합니다'); return; }
+      // 현재 명단 인덱스: (행사번호+성함+생년월일) → eventSeq#idx
+      const idxMap={};
+      teams.concat(cancelledTeams||[]).forEach(t=>{
+        (t.pax_list||[]).forEach((p,i)=>{
+          const bd=String(p.birth||p.birthDate||'').replace(/[^\d]/g,'').slice(0,6);
+          idxMap[[t.eventNo,(p.name||'').trim(),bd].join('|')]=t.eventSeq+'#'+i;
+          idxMap[[t.eventNo,(p.name||'').trim()].join('|')]=t.eventSeq+'#'+i; // 생년 미스 시 폴백
+        });
+      });
+      let ok=0,miss=0;
+      for(let r=1;r<aoa.length;r++){
+        const row=aoa[r]; if(!row||row[iEv]==='') continue;
+        const ev=String(row[iEv]).trim();
+        const nm=String(row[iNm]).trim();
+        const bd=iBd>=0?String(row[iBd]).replace(/[^\d]/g,'').slice(0,6):'';
+        const cost=String(row[iCost]).replace(/[^\d]/g,'');
+        if(cost==='') continue;
+        const key=idxMap[[ev,nm,bd].join('|')]||idxMap[[ev,nm].join('|')];
+        if(!key){ miss++; continue; }
+        const ad=settleAdjust[key]||(settleAdjust[key]={});
+        ad.airCost=Number(cost); ad.airSrc='업로드';
+        ok++;
+      }
+      saveSettle();
+      renderSettleLocal();
+      showToast(`항공원가 ${ok}명 반영${miss?` · ${miss}명 미매칭(행사번호·성함·생년월일 확인)`:''}`);
+    }catch(err){ showToast('파일을 읽지 못했습니다: '+err.message); }
+    finally{ input.value=''; }
+  };
+  rd.readAsArrayBuffer(f);
 }
 function stLocalChip(a){
   if(a==='ALL'){
@@ -6183,12 +6260,13 @@ function renderSettleProfit(){
 
 /* ════════ C. 개인별 명세 ════════ */
 function stPersonFiltered(){
-  const q=(document.getElementById('st-p-search').value||'').toLowerCase();
-  const fm=document.getElementById('st-p-month').value;
-  const fa=document.getElementById('st-p-accom').value;
-  const fo=document.getElementById('st-p-origin').value;
-  const landOnly=document.getElementById('st-p-landonly').classList.contains('active');
-  const noAir=document.getElementById('st-p-noair').classList.contains('active');
+  const elS=document.getElementById('st-p-search'); if(!elS) return [];
+  const q=(elS.value||'').toLowerCase();
+  const fm=(document.getElementById('st-p-month')||{}).value||'';
+  const fa=(document.getElementById('st-p-accom')||{}).value||'';
+  const fo=(document.getElementById('st-p-origin')||{}).value||'';
+  const landOnly=(document.getElementById('st-p-landonly')||{classList:{contains:()=>false}}).classList.contains('active');
+  const noAir=(document.getElementById('st-p-noair')||{classList:{contains:()=>false}}).classList.contains('active');
   return settlePersons().filter(r=>{
     if(fm && (r.t.dep||'').slice(0,7)!==fm) return false;
     if(fa && r.t.accom!==fa) return false;
@@ -6526,7 +6604,7 @@ function settleExportXlsx(){
   const sumAoa=[
     ['메리트투어 정산표'],
     ['생성일', new Date().toISOString().slice(0,10), '', '대상 출발월', months.join(', ')],
-    ['대상 구분', document.getElementById('st-incl-prov').checked?'확정·정산·견적·대기':'확정·정산'],
+    ['대상 구분', [...stStatusSel].join('·')||'(없음)'],
     [],
     ['■ 현지정산(¥) — 사이젠 대조'],
     ['숙소','건수','인원','숙박비(¥)','송영비(¥)','합계(¥)'],
