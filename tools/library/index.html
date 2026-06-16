@@ -82,6 +82,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 /* 안내 주석 */
 .note-bar { font-size: 12px; color: var(--mt-text2); background: var(--mt-amber-dim); border-left: 3px solid var(--mt-amber); border-radius: 6px; padding: 11px 14px; margin: 4px 0 22px; line-height: 1.7; }
 .note-bar strong { color: var(--mt-amber-dark); }
+.archive-link { display:flex; align-items:center; gap:14px; background: var(--mt-surface); border:1px solid var(--mt-border2); border-radius: var(--mt-radius-lg); padding: 14px 18px; margin: 0 0 8px; text-decoration:none; transition: all .15s; box-shadow: var(--mt-shadow); }
+.archive-link:hover { border-color: var(--mt-accent); background: var(--mt-accent-dim); }
+.archive-ico { font-size: 22px; line-height:1; }
+.archive-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+.archive-label { font-size: 14px; font-weight: 800; color: var(--mt-brand); }
+.archive-sub { font-size: 11.5px; color: var(--mt-text2); }
+.archive-arrow { font-size: 18px; color: var(--mt-text3); font-weight: 700; }
+.archive-link:hover .archive-arrow { color: var(--mt-accent); }
 .footer-tip { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 44px; font-family: var(--mt-mono); letter-spacing: 0.06em; }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--mt-brand2); color: #fff; padding: 11px 20px; border-radius: 24px; font-size: 13px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 100; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -113,6 +121,15 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     <strong>내부용 자료입니다.</strong> 양식·약관 버전은 <span class="mono">v1.6</span> 기준이며, 외화송금신청서는 KB국민은행 <span class="mono">26.01 개정</span> 양식입니다.
     버전이 바뀌면 <span class="mono">tools/library/</span> 폴더의 PDF만 교체하시면 됩니다.
   </div>
+
+  <a href="archive/" class="archive-link">
+    <span class="archive-ico">🗂</span>
+    <span class="archive-body">
+      <span class="archive-label">과거 버전 이력 보기</span>
+      <span class="archive-sub">구버전·단종 회원권 조건 — 기존 회원 응대용</span>
+    </span>
+    <span class="archive-arrow">→</span>
+  </a>
 
   <!-- ============ EWRC II 회원권 ============ -->
   <div class="section-title">EWRC II 회원권</div>

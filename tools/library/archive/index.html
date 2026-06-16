@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 회원권 버전 이력</title>
+<link rel="stylesheet" href="../../../shared/core.css">
+<meta name="robots" content="noindex, nofollow" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(--mt-text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+.container { max-width: 980px; margin: 0 auto; padding: 32px 24px 80px; }
+
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--mt-border); }
+.brand-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand-logo { height: 28px; width: auto; display: block; }
+.brand-fallback { font-size: 20px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.02em; }
+.brand-sub { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); letter-spacing: 0.08em; }
+.dept-badge { font-size: 11px; font-weight: 700; font-family: var(--mt-mono); background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-border2); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; }
+.ghost-btn { background: transparent; border: 1px solid var(--mt-border); color: var(--mt-text2); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--mt-sans); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all .15s; }
+.ghost-btn:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+
+.page-title { font-size: 22px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.02em; }
+.page-desc { font-size: 13px; color: var(--mt-text2); margin-top: 6px; line-height: 1.7; }
+.page-desc strong { color: var(--mt-text); font-weight: 700; }
+
+/* 현행 고지 배너 */
+.latest-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background: var(--mt-accent-dim); border:1px solid var(--mt-border2); border-radius: var(--mt-radius); padding: 12px 16px; margin: 16px 0 4px; }
+.latest-badge { font-size: 11px; font-weight: 800; font-family: var(--mt-mono); background: var(--mt-brand); color:#fff; padding: 3px 10px; border-radius: 20px; letter-spacing:0.06em; }
+.latest-text { font-size: 13px; color: var(--mt-text); }
+.latest-text strong { font-weight: 800; }
+
+/* 검색 */
+.search-row { display:flex; gap:8px; margin: 18px 0 6px; }
+.search-input { flex:1; font-size:13px; padding:10px 14px; border:1px solid var(--mt-border2); border-radius: var(--mt-radius); background: var(--mt-surface); font-family: var(--mt-sans); color: var(--mt-text); }
+.search-input:focus { outline:none; border-color: var(--mt-accent); }
+
+.section-title { font-size: 11px; font-weight: 700; color: var(--mt-text2); text-transform: uppercase; letter-spacing: 0.12em; margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
+.section-title::before { content: ''; width: 3px; height: 13px; background: var(--mt-accent); border-radius: 2px; display: block; }
+
+.card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg); padding: 20px 22px; box-shadow: var(--mt-shadow); margin-bottom: 16px; }
+.card.hidden { display:none; }
+.card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom: 14px; }
+.card-name { font-size: 17px; font-weight: 800; color: var(--mt-brand); letter-spacing:-0.01em; }
+.card-name .en { font-size: 11px; font-weight: 600; color: var(--mt-text3); font-family: var(--mt-mono); margin-left: 7px; }
+.count-pill { font-size: 11px; font-weight: 700; font-family: var(--mt-mono); background: var(--mt-surface2); color: var(--mt-text2); padding: 3px 10px; border-radius: 20px; }
+
+/* 타임라인 */
+.timeline { border-left: 2px solid var(--mt-border); padding-left: 18px; margin-left: 5px; }
+.tl-item { position: relative; padding-bottom: 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot { position:absolute; left:-24px; top:3px; width:8px; height:8px; border-radius:50%; background: var(--mt-border2); }
+.tl-item.current .tl-dot { background: var(--mt-accent); width:10px; height:10px; left:-25px; box-shadow: 0 0 0 4px var(--mt-accent-dim); }
+.tl-ver { font-size: 13px; font-weight: 700; color: var(--mt-text); }
+.tl-item.current .tl-ver { color: var(--mt-accent); }
+.tl-ver .meta { font-weight: 500; color: var(--mt-text2); font-family: var(--mt-mono); font-size: 12px; margin-left: 6px; }
+.tl-note { font-size: 12px; color: var(--mt-text3); margin-top: 2px; line-height: 1.6; }
+
+/* 접이식 전문 */
+.accordion { margin-top: 14px; border-top: 1px solid var(--mt-border); padding-top: 12px; }
+.acc-btn { width: 100%; text-align: left; background: var(--mt-surface2); border: 1px solid var(--mt-border); border-radius: var(--mt-radius); padding: 10px 14px; font-size: 12.5px; font-weight: 700; color: var(--mt-accent); cursor: pointer; font-family: var(--mt-sans); display:flex; align-items:center; justify-content:space-between; transition: all .15s; }
+.acc-btn:hover { border-color: var(--mt-accent); }
+.acc-body { display: none; padding: 14px 4px 4px; font-size: 12.5px; color: var(--mt-text); line-height: 1.75; }
+.acc-body.open { display: block; }
+.acc-body h4 { font-size: 12.5px; font-weight: 800; color: var(--mt-brand); margin: 12px 0 5px; }
+.acc-body h4:first-child { margin-top: 0; }
+.acc-body p { margin: 3px 0; color: var(--mt-text2); }
+.acc-body .hl { color: var(--mt-text); font-weight: 700; }
+
+/* 비교 그리드(과거 회원권) */
+.mini-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 680px){ .mini-grid { grid-template-columns: 1fr; } .container{padding:24px 16px 64px;} }
+.mini-card { background: var(--mt-surface2); border-radius: var(--mt-radius); padding: 12px 14px; cursor: pointer; transition: all .15s; border: 1px solid transparent; }
+.mini-card:hover { border-color: var(--mt-border2); background: var(--mt-surface3); }
+.mini-name { font-size: 13px; font-weight: 800; color: var(--mt-brand); }
+.mini-sub { font-size: 11.5px; color: var(--mt-text2); margin-top: 2px; font-family: var(--mt-mono); }
+.mini-detail { display:none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mt-border); font-size: 12px; color: var(--mt-text2); line-height: 1.7; }
+.mini-detail.open { display:block; }
+.mini-detail .hl { color: var(--mt-text); font-weight: 700; }
+
+.note-bar { font-size: 12px; color: var(--mt-text2); background: var(--mt-amber-dim); border-left: 3px solid var(--mt-amber); border-radius: 6px; padding: 11px 14px; margin: 22px 0; line-height: 1.7; }
+.note-bar strong { color: var(--mt-amber-dark); }
+.footer-tip { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 44px; font-family: var(--mt-mono); letter-spacing: 0.06em; }
+.empty { text-align:center; color: var(--mt-text3); font-size: 13px; padding: 30px; display:none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="brand-wrap">
+      <img src="../../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="brand-logo"
+           onerror="this.style.display='none';document.getElementById('brandFallback').style.display='block';">
+      <span class="brand-fallback" id="brandFallback" style="display:none">MERITTOUR</span>
+      <span class="brand-sub">INTERNAL TOOLS</span>
+      <span class="dept-badge">버전 이력</span>
+    </div>
+    <a class="ghost-btn" href="../">← 자료실로</a>
+  </div>
+
+  <h1 class="page-title">회원권 버전 이력</h1>
+  <p class="page-desc">
+    과거·구버전 회원권의 조건을 확인하는 <strong>내부 참조용</strong> 자료입니다.
+    같은 회원권명이라도 가입 시점(버전)에 따라 체재비·운영사·골프장이 다르므로, 기존 회원 응대 시 가입 연도로 버전을 확인하세요.
+  </p>
+
+  <div class="latest-bar">
+    <span class="latest-badge">현재 최신</span>
+    <span class="latest-text">EWRC2 회원권 <strong>v1.6</strong> · 2026 체재비 <strong>15,000¥</strong> · 운영사 <strong>SaiZen</strong> · 외화송금 양식 KB 26.01 개정</span>
+  </div>
+
+  <div class="search-row">
+    <input type="text" class="search-input" id="search" placeholder="회원권명·버전 검색 (예: 다이아몬드, v1.4, 12000)" oninput="filterCards()">
+  </div>
+
+  <!-- ============ EWRC2 버전 이력 ============ -->
+  <div class="section-title">EWRC2 — 현행 판매 회원권</div>
+
+  <div class="card" data-keywords="ewrc2 ewrcii 이용권2 700만 정회원 무기명 사이젠 saizen 12000 13000 15000 v1.2 v1.3 v1.4 v1.5 v1.6">
+    <div class="card-head">
+      <div class="card-name">EWRC2 버전 이력 <span class="en">EWRCⅡ · 2023~</span></div>
+      <span class="count-pill">8개 버전</span>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">2023.04 부칙<span class="meta">T&amp;G</span></div>
+        <div class="tl-note">송영비 부칙(구마모토 왕복 2,000¥·후쿠오카 6,000¥·나고야 7,000¥). 23.04 기준</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">~24.08.14<span class="meta">체재비 12,000¥ · T&amp;G</span></div>
+        <div class="tl-note">1~10조 구조. 추가라운딩·독실료 본문 명기. 토와다·니세코·시티골프 제휴 포함. 24.03 부칙(송영비 인상: 구마모토 왕복 4,000¥ 등)</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">~25.08.12<span class="meta">체재비 13,000¥ · T&amp;G</span></div>
+        <div class="tl-note">나가노 스가다이라 추가. 별도비용 "예약 홈페이지 안내"로 전환. 후쿠로다노타키·시로사토·시즈노야도·타식푸테리 등 제휴 확대</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">v1.2 (~25.11.03)<span class="meta">15,000¥(26년) · T&amp;G</span></div>
+        <div class="tl-note">체재비 "매년 안내" 방식 전환(26년 15,000¥ 명시). 미야자키 국제공항CC·삿포로 셰익스피어 추가</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">v1.3 (25.11.18)<span class="meta">15,000¥ · T&amp;G</span></div>
+        <div class="tl-note">조항 전면 재구성(12개조). 회원관리비 독립 조항화. "제휴 약관이 본 계약 우선" 명시</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">v1.4 (25.12.08)<span class="meta">15,000¥ · T&amp;G</span></div>
+        <div class="tl-note">약관은 v1.3과 동일. 가입준비서류 묶음 포함본</div>
+      </div>
+      <div class="tl-item current">
+        <span class="tl-dot"></span>
+        <div class="tl-ver">v1.5 ~ v1.6 (현행)<span class="meta">15,000¥ · SaiZen</span></div>
+        <div class="tl-note"><span style="color:var(--mt-accent);font-weight:700">운영사 T&amp;G → 株式会社 SaiZen 변경</span>(대표 정영진→윤장환). v1.6은 외화송금 양식만 KB 26.01 개정(ORIS 안내 추가)</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="acc-btn" onclick="toggleAcc(this)">현행 v1.6 약관 핵심 펼치기 <span>▾</span></button>
+      <div class="acc-body">
+        <h4>가입 조건</h4>
+        <p>가입금액 <span class="hl">700만원</span>(소멸성) · 정회원 1인 + 무기명 3인(최대 4인 회원가) · 가입일부터 평생 · 매매 불가, 직계비속 증여·상속 가능(개서 30만원).</p>
+        <h4>체재비 (제5조)</h4>
+        <p>2026년 아소야마나미·나고야 포틴힐즈 <span class="hl">15,000¥</span>(소비세 포함, 1인 1박당). 숙박·3식·골프18홀·카트비 포함. 매년 다음해 예약 전 안내, 환율·세금·운영경비로 조정 가능.</p>
+        <h4>골프장 (제2조)</h4>
+        <p>직영: 아소야마나미, 나고야 포틴힐즈. 제휴: 구마모토 시티골프·시즈노야도 료칸, 미야자키 국제공항CC, 벳부 아키바, 삿포로 셰익스피어, 이바라키 후쿠로다노타키·시로사토, 말레이시아 닐라이스프링스.</p>
+        <h4>회원관리비 (제7조)</h4>
+        <p>예약 1건당 1인 <span class="hl">50,000원</span>(여행자보험 가입비 포함). 개인이 별도 항공·보험 진행해도 제외 안 됨.</p>
+        <h4>운영사</h4>
+        <p>株式会社 SaiZen(대표 윤장환) / 판매대행 (주)메리트투어. 외화송금 수취: SaiZen Co.,Ltd. · The Higo Bank(HIGOJPJT) · 계좌 1452318.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 과거 단종 회원권 ============ -->
+  <div class="section-title">과거 회원권 (단종)</div>
+
+  <div class="card" data-keywords="ewrc 이용권 ewrc이용권 enjoy world resort club 10000 500만 3자 t&g">
+    <div class="card-head">
+      <div class="card-name">EWRC이용권 <span class="en">Enjoy World Resort Club</span></div>
+      <span class="count-pill">단종</span>
+    </div>
+    <div class="acc-body open" style="display:block;padding:0">
+      <h4>핵심 조건</h4>
+      <p>가입금 <span class="hl">500만원</span> · 4인 · 체재비 <span class="hl">10,000¥</span>(1박·18홀 기준) · 추가라운딩 2,200¥ · 독실료 2,200¥ · 양도불가/직계비속 증여·상속(개서 30만원) · 3자 계약(갑·을=T&amp;G·병=메리트투어).</p>
+      <p style="color:var(--mt-text3)">야마나미 전용이 아니라 T&amp;G 인수 신규 골프장·리조트 전체 이용권. 야마나미 예약은 기존 회원 후순위.</p>
+    </div>
+  </div>
+
+  <div class="card" data-keywords="다이아몬드 골드 특별회원 다이아1 다이아2 8500 9700 300만 500만 30만 무기명">
+    <div class="card-head">
+      <div class="card-name">골드 / 다이아몬드 / 특별회원 <span class="en">아소 야마나미</span></div>
+      <span class="count-pill">단종</span>
+    </div>
+    <div class="mini-grid">
+      <div class="mini-card" onclick="toggleMini(this)">
+        <div class="mini-name">골드</div>
+        <div class="mini-sub">300만 · 2인 무기명</div>
+        <div class="mini-detail">체재비 <span class="hl">8,500¥</span> · 추가라운딩 2,000¥ · 독실료 2,000¥ · <span class="hl">양도·양수·상속 가능</span> · 2자 계약.</div>
+      </div>
+      <div class="mini-card" onclick="toggleMini(this)">
+        <div class="mini-name">다이아몬드 Ⅰ</div>
+        <div class="mini-sub">500만 · 4인 무기명</div>
+        <div class="mini-detail">체재비 <span class="hl">8,500¥</span> · 추가라운딩 2,000¥ · 독실료 2,000¥ · <span class="hl">양도·양수·상속 가능</span> · 2자 계약. (Ⅱ와 체재비 다름)</div>
+      </div>
+      <div class="mini-card" onclick="toggleMini(this)">
+        <div class="mini-name">다이아몬드 Ⅱ</div>
+        <div class="mini-sub">500만 · 4인 무기명</div>
+        <div class="mini-detail">체재비 <span class="hl">9,700¥</span>(27홀·별장형) · 추가라운딩 2,000¥ · 독실료 <span class="hl">2,160¥</span> · 양도불가/직계존속 증여·상속 · 2자 계약.</div>
+      </div>
+      <div class="mini-card" onclick="toggleMini(this)">
+        <div class="mini-name">특별회원</div>
+        <div class="mini-sub">30만 · 대표자 기명</div>
+        <div class="mini-detail">체재비 8,500¥ · <span class="hl">양도·양수·상속 불가</span> · 대상: 센다이·EJRC·후쿠오카CC 회원. 만 65세 이상 1회 상속 가능.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty" id="empty">검색 결과가 없습니다.</div>
+
+  <div class="note-bar">
+    <strong>버전 식별이 핵심.</strong> 같은 회원권명이라도 버전마다 체재비·독실료·송영비가 다릅니다. 송영비·추가요금은 계약서에 "OOOO년 O월 현재" 기준이 박혀 있으므로, 현행 요금은 최신 회원 운영 안내문으로 재확인하세요. 정확한 조항 전문은 가입 서류 자료실의 원본 PDF 참조.
+  </div>
+
+  <div class="footer-tip">MERITTOUR · 회원권 버전 이력 · 내부용</div>
+</div>
+
+<script>
+function toggleAcc(btn){
+  const body = btn.nextElementSibling;
+  const open = body.classList.toggle('open');
+  btn.querySelector('span').textContent = open ? '▴' : '▾';
+}
+function toggleMini(card){
+  const d = card.querySelector('.mini-detail');
+  if(d) d.classList.toggle('open');
+}
+function filterCards(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  let shown = 0;
+  document.querySelectorAll('.card').forEach(card => {
+    const kw = (card.dataset.keywords || '') + ' ' + card.textContent.toLowerCase();
+    const match = !q || kw.toLowerCase().includes(q);
+    card.classList.toggle('hidden', !match);
+    if(match) shown++;
+  });
+  document.getElementById('empty').style.display = shown ? 'none' : 'block';
+  document.querySelectorAll('.section-title').forEach(st => {
+    let n = st.nextElementSibling, any = false;
+    while(n && n.classList.contains('card')){ if(!n.classList.contains('hidden')) any = true; n = n.nextElementSibling; }
+    st.style.display = any ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
