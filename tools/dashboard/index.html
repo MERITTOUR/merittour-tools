@@ -1145,6 +1145,16 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       </div>
       <div class="tm-field" style="margin-top:12px">
         <label class="tm-label">내용</label>
+        <textarea class="tm-input" id="bulk-remark-input" rows="3" placeholder="예: 골프: 라운딩 시간 변경 안내" style="resize:vertical;font-family:inherit"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-sm" onclick="document.getElementById('bulk-remark-bg').classList.remove('open')">취소</button>
+      <button class="btn-primary" style="padding:8px 18px" onclick="applyBulkRemark()">등록</button>
+    </div>
+  </div>
+</div>
+
 <!-- ⑦ 확정서 생성 (문서 발송 생성기) -->
 <div class="section" id="sec-doc">
   <div class="card" style="margin-bottom:14px">
