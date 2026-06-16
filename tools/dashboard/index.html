@@ -644,7 +644,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div>
         <div class="card-title">파일 업로드</div>
-        <div class="card-sub">엠클릭 3종 + APIS 정보 엑셀 · 500건 분할 시 여러 파일 동시 선택 가능</div>
+        <div class="card-sub">엠클릭 2종 · 500건 분할 시 여러 파일 동시 선택 가능</div>
       </div>
     </div>
 
@@ -662,29 +662,13 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
         <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
         <div class="upload-title">일행별 예약</div>
-        <div class="upload-sub">일행별예약___.xlsx<br>개인(탑승객) 단위 명단</div>
+        <div class="upload-sub">일행별예약___.xlsx<br>개인 명단 + 항공·PNR·여권 통합</div>
         <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
-      </div>
-      <!-- 현지도착 -->
-      <div class="upload-area" id="drop-arrival" onclick="document.getElementById('inp-arrival').click()" ondragover="onDrag(event,'drop-arrival')" ondragleave="offDrag('drop-arrival')" ondrop="onDrop(event,'arrival')">
-        <input type="file" id="inp-arrival" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'arrival')">
-        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
-        <div class="upload-title">현지도착</div>
-        <div class="upload-sub">현지도착___.xlsx<br>영문명·회원권구분·행사번호 보완</div>
-        <div class="upload-meta"><span class="upload-dot empty" id="dot-arrival"></span><span id="meta-arrival">미선택</span></div>
-      </div>
-      <!-- APIS -->
-      <div class="upload-area" id="drop-apis" onclick="document.getElementById('inp-apis').click()" ondragover="onDrag(event,'drop-apis')" ondragleave="offDrag('drop-apis')" ondrop="onDrop(event,'apis')">
-        <input type="file" id="inp-apis" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'apis')">
-        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><circle cx="12" cy="12" r="10"/></svg></div>
-        <div class="upload-title">APIS 정보</div>
-        <div class="upload-sub">APIS___.xlsx<br>PNR(콤마 분리 전부)·항공 상세</div>
-        <div class="upload-meta"><span class="upload-dot empty" id="dot-apis"></span><span id="meta-apis">미선택</span></div>
       </div>
     </div>
 
     <div class="note">
-      <b>결합 방식</b> · 모든 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약은 같은 eventSeq 하위 개인 명단으로, 현지도착·APIS는 eventSeq(또는 영문명)로 보완됩니다.
+      <b>결합 방식</b> · 두 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약 한 파일에 개인 명단과 항공시각(한국출발·현지도착·현지출발·한국도착)·PNR·여권·사전좌석이 모두 포함됩니다.
       그룹코드 마스터는 이 도구에서 사용하지 않습니다. <b>예약리스트·일행별예약</b>이 모두 업로드되면 통합이 가능합니다.
     </div>
 
@@ -838,8 +822,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       </table>
     </div>
     <div class="note" style="margin-top:1rem">
-      <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 APIS·일행별예약에서 자동 보완되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.<br>
-      <b>점검 칩</b> · 입력 누락·최신화 누락 건을 잡기 위한 필터입니다. <b>PNR 미등록</b>(미발권), <b>사전좌석 Y</b>(좌석 요청 처리 필요), <b>출발·귀국편 누락</b>(편명 미입력), <b>항공사 불일치</b>(예약리스트의 항공 표기와 APIS 항공사가 어긋남 — 최신화 누락 의심).<br>
+      <b>PNR</b> · 콤마로 나뉜 PNR은 발권이 여러 건으로 분리된 것이며 모두 표기됩니다. <b>일행 명단</b>은 일행별예약에서 자동 연동되며, 영문명·생년월일·여권·만료일을 함께 확인할 수 있습니다.<br>
+      <b>점검 칩</b> · 입력 누락·최신화 누락 건을 잡기 위한 필터입니다. <b>PNR 미등록</b>(미발권), <b>사전좌석 Y</b>(좌석 요청 처리 필요), <b>출발·귀국편 누락</b>(편명 미입력), <b>항공사 불일치</b>(예약리스트의 항공 표기와 일행별예약 항공사가 어긋남 — 최신화 누락 의심).<br>
       <b>출발지 칩</b> · 인천·김해·대구 등 출발 공항별로 거를 수 있습니다(데이터에 있는 출발지로 자동 생성, 복수 선택 가능).
     </div>
   </div>
@@ -861,7 +845,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="tf-part-head" style="margin-top:1.5rem">🛫 귀국 송영표 <span class="tf-part-sub">숙소 → 공항 (귀국편 · 현지 출발시간 기준)</span></div>
     <div class="tbl-wrap"><table id="transfer-ret-table"><thead id="transfer-ret-thead"></thead><tbody id="transfer-ret-tbody"></tbody></table></div>
 
-    <div class="note" style="margin-top:1rem"><b>송영 대상</b> · 숙박 예약(호텔 Y) 포함 건만 표시됩니다. 입국/출국 시간은 현지도착 파일에서 가져옵니다.</div>
+    <div class="note" style="margin-top:1rem"><b>송영 대상</b> · 숙박 예약(호텔 Y) 포함 건만 표시됩니다. 입국/출국 시간은 일행별예약의 항공시각(현지도착·현지출발)에서 가져옵니다.</div>
   </div>
 </div>
 <div class="section" id="sec-accom">
@@ -1168,7 +1152,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <div style="font-size:16px;font-weight:700;color:var(--text1)">⑦ 확정서 생성</div>
         <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택해 v7 확정서 HTML을 생성합니다. 개별 다운로드 또는 선택 팀 ZIP으로 받아 GitHub Pages에 올립니다.</div>
       </div>
-      <div class="muted" style="font-size:11px">업로드한 4종 파일(예약리스트·일행별예약·APIS·현지도착)을 사용합니다</div>
+      <div class="muted" style="font-size:11px">업로드한 2종 파일(예약리스트·일행별예약)을 사용합니다</div>
     </div>
   </div>
 
@@ -1311,7 +1295,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div id="st-view-person" style="display:none">
       <div class="note">
         <b>값 우선순위</b> · 발권가: <span class="st-badge b-edit">개별</span> &gt; <span class="st-badge b-bulk">일괄</span> &gt; <span class="st-badge b-table">테이블</span>(항공요금 테이블 발권원가) ·
-        APIS에 항공편·PNR이 없는 인원은 <span class="st-badge b-land">지상만</span>으로 발권가 0원 처리(개별 입력으로 변경 가능).
+        일행별예약에 항공편·PNR이 없는 인원은 <span class="st-badge b-land">지상만</span>으로 발권가 0원 처리(개별 입력으로 변경 가능).
         체크박스는 <b>Shift 클릭으로 범위 선택</b>이 되고, 필터를 건 뒤 「보이는 행 전체 선택」으로 엑셀 필터처럼 묶어 입력할 수 있습니다. 입력 칸을 비우면 테이블/기본값으로 되돌아갑니다.
         보험료는 <b>DB손해보험 가입증명서 PDF</b>를 올리면 피보험자 명세(성명·생년월일·인별보험료)를 읽어 자동 입력됩니다(<span class="st-badge b-pdf">PDF</span> 배지). PDF·일괄·개별은 같은 칸에 쓰며 마지막 입력이 적용됩니다.
       </div>
@@ -1363,10 +1347,11 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 /* ════════════════════════════════════════════════════════════
    상태
 ════════════════════════════════════════════════════════════ */
-let resData=null, ilhaengData=null, arrivalData=null, apisData=null;
-let resMerged=[], ilhaengMerged=[], arrivalMerged=[], apisMerged=[];
-let resPending=0, ilhaengPending=0, arrivalPending=0, apisPending=0;
-let resCount=0, ilhaengCount=0, arrivalCount=0, apisCount=0;
+let resData=null, ilhaengData=null;
+let arrivalData=null, apisData=null; // 폐지(2종 통합). 일행별예약에서 내부 파생 — 외부 업로드 없음
+let resMerged=[], ilhaengMerged=[];
+let resPending=0, ilhaengPending=0;
+let resCount=0, ilhaengCount=0;
 
 let teams = [];        // 통합 결과: 팀(eventSeq) 단위 (유효 예약만 — 통계·집계용)
 let cancelledTeams = []; // 취소(구분=취소) 팀 — 예약관리 조회 전용. 통계·집계에는 미포함
@@ -1561,7 +1546,7 @@ function onDrag(e,id){ e.preventDefault(); document.getElementById(id).classList
 function offDrag(id){ document.getElementById(id).classList.remove('drag'); }
 function onDrop(e,type){
   e.preventDefault();
-  const id={res:'drop-res',ilhaeng:'drop-ilhaeng',arrival:'drop-arrival',apis:'drop-apis'}[type];
+  const id={res:'drop-res',ilhaeng:'drop-ilhaeng'}[type];
   offDrag(id);
   const files=Array.from(e.dataTransfer.files).filter(f=>/\.xlsx?$/i.test(f.name));
   if(!files.length) return;
@@ -1575,8 +1560,6 @@ function loadFile(e,type){
 function startLoad(type, files){
   if(type==='res'){ resData=null; resMerged=[]; resPending=files.length; resCount=files.length; }
   else if(type==='ilhaeng'){ ilhaengData=null; ilhaengMerged=[]; ilhaengPending=files.length; ilhaengCount=files.length; }
-  else if(type==='arrival'){ arrivalData=null; arrivalMerged=[]; arrivalPending=files.length; arrivalCount=files.length; }
-  else if(type==='apis'){ apisData=null; apisMerged=[]; apisPending=files.length; apisCount=files.length; }
   files.forEach(f=>processFile(f,type));
 }
 function processFile(file,type){
@@ -1587,8 +1570,6 @@ function processFile(file,type){
     const json=XLSX.utils.sheet_to_json(ws,{defval:''});
     if(type==='res'){ resMerged=resMerged.concat(json); if(--resPending<=0){ resData=resMerged; markUploaded('res',file,resData.length,resCount); } }
     else if(type==='ilhaeng'){ ilhaengMerged=ilhaengMerged.concat(json); if(--ilhaengPending<=0){ ilhaengData=ilhaengMerged; markUploaded('ilhaeng',file,ilhaengData.length,ilhaengCount); } }
-    else if(type==='arrival'){ arrivalMerged=arrivalMerged.concat(json); if(--arrivalPending<=0){ arrivalData=arrivalMerged; markUploaded('arrival',file,arrivalData.length,arrivalCount); } }
-    else if(type==='apis'){ apisMerged=apisMerged.concat(json); if(--apisPending<=0){ apisData=apisMerged; markUploaded('apis',file,apisData.length,apisCount); } }
   };
   reader.readAsArrayBuffer(file);
 }
@@ -1606,31 +1587,37 @@ function checkReady(){
    통합 분석
 ════════════════════════════════════════════════════════════ */
 function buildArrivalMap(){
+  // 2종 통합: 현지도착 파일 폐지 → 일행별예약의 시각 4종(한국출발·현지도착·현지출발·한국도착)에서 eventSeq 단위 파생
   arrivalMap={};
-  (arrivalData||[]).forEach(r=>{
+  (ilhaengData||[]).forEach(r=>{
+    if(r['cancCd']) return;
     const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
-    const engRaw=String(r['영문명']||'').trim();
+    if(arrivalMap[seq]) return; // eventSeq 첫 행 기준(팀 단위 공통 항공시각)
+    const depFlight=String(r['출발편']||'').trim();
+    const retFlight=String(r['귀국편']||'').trim();
+    if(!depFlight && !retFlight) return; // 현지수배(항공 없음) 건은 시각맵 생성 안 함
     arrivalMap[seq]={
-      engFull: engRaw.replace('/',' ').trim(),
-      memberType: String(r['회원권구분']||'').trim()||'',
-      memberNo: String(r['회원번호']||'').trim()||'',
+      engFull:'',
+      memberType:'',
+      memberNo:'',
       eventNo: String(r['행사번호']||'').trim()||'',
-      depFlight: String(r['한국출발편']||'').trim()||'',
-      depTime: String(r['출발시간']||'').trim()||'',     // 한국 출발시간
+      depFlight,                                          // 출발편(한국→현지)
+      depTime: String(r['한국출발']||'').trim()||'',       // 한국 출발시간
       arrTimeJP: String(r['현지도착']||'').trim()||'',     // 현지 도착시간 (출국 송영)
-      retFlight: String(r['출발편']||'').trim()||'',       // 귀국편
-      retTimeJP: String(r['출발시간_1']||r['출발시간_2']||'').trim()||'', // 귀국 현지 출발시간 (귀국 송영)
-      arrDateLocal: fmtDate(r['현지도착일']),
-      depDateLocal: fmtDate(r['현지출발일_1']||r['현지출발일'])
+      retFlight,                                          // 귀국편(현지→한국)
+      retTimeJP: String(r['현지출발']||'').trim()||'',     // 귀국 현지 출발시간 (귀국 송영)
+      retTimeKR: String(r['한국도착']||'').trim()||'',     // 한국 도착시간
+      arrDateLocal: fmtDate(r['출발일자']),   // 출국(가는편) 날짜 — 송영 출국행
+      depDateLocal: fmtDate(r['도착일자'])    // 귀국(오는편) 날짜 — 송영 귀국행
     };
   });
 }
 
-/* APIS 맵: eventSeq → 항공 집계(PNR 콤마 전부, 항공사/편/좌석) + 개인별 상세(영문명 키) */
+/* 항공/여권 맵: eventSeq → 항공 집계(PNR 콤마 전부, 항공사/편/좌석) + 개인별 상세(영문명 키)
+   2종 통합: APIS 파일 폐지 → 일행별예약 단일 소스에서 파생 */
 function buildApisMap(){
   apisMap={};
-  if(!apisData) return;
-  apisData.forEach(r=>{
+  (ilhaengData||[]).forEach(r=>{
     if(r['cancCd']) return; // 취소 행 제외
     const seq=String(r['eventSeq']||'').trim();
     if(!seq) return;
@@ -1643,7 +1630,7 @@ function buildApisMap(){
       persons:{}  // 영문명 → {pnr, seat, passport, expiry, country, gender, birth, name}
     };
     const m=apisMap[seq];
-    // PNR 콤마(전각 포함) 분리 → 전부 수집
+    // PNR 콤마(전각 포함) 분리 → 전부 수집 (trailing 공백 trim)
     if(pnrRaw) pnrRaw.replace(/，/g,',').split(',').map(s=>s.trim()).filter(Boolean).forEach(p=>m.pnrSet.add(p));
     if(r['항공사']) m.airlineSet.add(String(r['항공사']).trim());
     if(r['출발편']) m.depFlightSet.add(String(r['출발편']).trim());
@@ -1738,7 +1725,7 @@ function analyze(){
     // 대표자 연락처 (pax_list 첫 행 = 대표자)
     t.repPhone = (t.pax_list[0] && t.pax_list[0].phone) ? t.pax_list[0].phone : '';
 
-    // 현지도착 보완
+    // 항공시각 보완 (일행별예약 파생 — 현지도착·현지출발 등)
     const av=arrivalMap[t.eventSeq];
     if(av){
       if(av.memberType) t.memberType=av.memberType;
@@ -1746,9 +1733,10 @@ function analyze(){
       t.pax_list.forEach(p=>{ if(!p.engFull && av.engFull) p.engFull=av.engFull; });
       t.arrDepFlight=av.depFlight; t.arrDepTime=av.depTime;
       t.arrTimeJP=av.arrTimeJP; t.arrRetFlight=av.retFlight; t.retTimeJP=av.retTimeJP;
+      t.retTimeKR=av.retTimeKR||'';
       t.arrDateLocal=av.arrDateLocal; t.depDateLocal=av.depDateLocal;
     } else {
-      t.arrDepFlight=''; t.arrDepTime=''; t.arrTimeJP=''; t.arrRetFlight=''; t.retTimeJP='';
+      t.arrDepFlight=''; t.arrDepTime=''; t.arrTimeJP=''; t.arrRetFlight=''; t.retTimeJP=''; t.retTimeKR='';
       t.arrDateLocal=''; t.depDateLocal='';
     }
 
@@ -2375,7 +2363,7 @@ function renderAir(){
             <td colspan="4"></td>
           </tr>`;
         }).join('')
-      : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+      : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (일행별예약 미연동)</td></tr>`;
     return headRow+paxRows;
   }).join('');
   attachTopScrollbars();
@@ -2457,7 +2445,7 @@ function renderInsurance(){
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b></td>
       <td>${t.dep}</td>
-      <td class="muted" style="font-size:11px">${t.pax_list.length?`일행 ${t.pax_list.length}명${miss?` · <span style="color:var(--amber2)">누락 ${miss}</span>`:''}`:'명단 없음 (APIS·일행별 미연동)'}</td>
+      <td class="muted" style="font-size:11px">${t.pax_list.length?`일행 ${t.pax_list.length}명${miss?` · <span style="color:var(--amber2)">누락 ${miss}</span>`:''}`:'명단 없음 (일행별예약 미연동)'}</td>
       <td class="center">${headStatus}</td>
       <td>${remarkCellFor(t,'ins')}</td>
       <td></td>
@@ -2501,7 +2489,7 @@ function toggleInsExclude(seq,idx,val){
 function paxAccordionRows(t, section, colspanFull){
   const key=`${section}:${t.eventSeq}`;
   if(!t.pax_list.length){
-    return `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="${colspanFull}" class="muted" style="font-size:11px">명단 없음 (APIS·일행별 미연동)</td></tr>`;
+    return `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="${colspanFull}" class="muted" style="font-size:11px">명단 없음 (일행별예약 미연동)</td></tr>`;
   }
   return `<tr class="pax-subhead pax-hidden" data-pax="${key}"><td colspan="${colspanFull}">└ 일행 명단 ${t.pax_list.length}명 — 이름 · 영문 · 성별 · 생년월일</td></tr>`
     + t.pax_list.map(p=>{
@@ -2931,9 +2919,9 @@ function buildAudit(){
   const issues={ engSpace:[], engMismatch:[], expSoon:[], expMiss:[], ppMiss:[], pnrMiss:[] };
   const today=new Date(); today.setHours(0,0,0,0);
 
-  // ── APIS 개인 단위 검수 ──
-  if(apisData){
-    apisData.forEach(r=>{
+  // ── 개인 단위 검수 (2종 통합: 일행별예약 단일 소스) ──
+  if(ilhaengData){
+    ilhaengData.forEach(r=>{
       if(r['cancCd']) return;
       const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
       const name=String(r['고객명']||'').trim();
@@ -2968,27 +2956,7 @@ function buildAudit(){
     });
   }
 
-  // ── APIS ↔ 일행별예약 영문명 교차검증 (pkgPsgrSeq 기준) ──
-  if(apisData && ilhaengData){
-    const apMap={};
-    apisData.forEach(r=>{ if(r['cancCd'])return; const k=String(r['pkgPsgrSeq']||'').trim();
-      if(k) apMap[k]={ln:String(r['영문성']||''),fn:String(r['영문이름']||''),name:String(r['고객명']||'').trim(),seq:String(r['eventSeq']||'').trim(),dep:fmtDate(r['출발일자'])}; });
-    ilhaengData.forEach(r=>{
-      if(r['cancCd'])return;
-      const k=String(r['pkgPsgrSeq']||'').trim(); if(!k||!apMap[k])return;
-      const a=apMap[k];
-      const ilLn=String(r['영문성']||''); const ilFn=String(r['영문이름']||'');
-      const sameJoined = engJoined(a.ln)===engJoined(ilLn) && engJoined(a.fn)===engJoined(ilFn);
-      // 원본 표기가 다른 경우(공백 차이 포함) 또는 철자 자체가 다른 경우 모두 검출
-      if(a.ln+'|'+a.fn !== ilLn+'|'+ilFn){
-        issues.engMismatch.push({seq:a.seq, name:a.name||String(r['고객명']||'').trim(), dep:a.dep,
-          kind: sameJoined?'표기차이(공백)':'철자 불일치',
-          cur:`APIS: ${showSpace(a.ln)} ${showSpace(a.fn)}  /  일행: ${showSpace(ilLn)} ${showSpace(ilFn)}`,
-          rec: sameJoined?`${engJoined(a.ln)} ${engJoined(a.fn)}`:'두 파일·여권 대조 후 통일',
-          severe:true});
-      }
-    });
-  }
+  // ── 영문명 교차검증 폐지 (2종 통합으로 단일 소스 — APIS↔일행별 대조 대상 없음) ──
 
   const byDep=(a,b)=>String(a.dep||'').localeCompare(String(b.dep||''));
   Object.values(issues).forEach(arr=>arr.sort(byDep));
@@ -3002,9 +2970,9 @@ function renderAudit(){
   if(!box) return;
   // 필터 버튼 활성 표시
   ['all','red','amber'].forEach(f=>{ const b=document.getElementById('audit-f-'+f); if(b) b.style.fontWeight=(auditFilter===f)?'700':'500'; });
-  if(!apisData && !ilhaengData){
+  if(!ilhaengData){
     if(sumBox) sumBox.innerHTML='';
-    box.innerHTML='<div class="note" style="border-left-color:var(--text3)">APIS 정보 또는 일행별예약 파일을 업로드하고 [통합 분석 실행]을 누르면 검수가 실행됩니다.</div>';
+    box.innerHTML='<div class="note" style="border-left-color:var(--text3)">일행별예약 파일을 업로드하고 [통합 분석 실행]을 누르면 검수가 실행됩니다.</div>';
     return;
   }
   const I=buildAudit();
@@ -3055,11 +3023,6 @@ function renderAudit(){
     I.engSpace,
     [colSeq,colRep,colProd,colName,{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
     'severe'));
-  blocks.push(block('영문명 파일 간 불일치',
-    'APIS와 일행별예약에서 같은 사람의 영문명이 다른 건(한쪽만 붙여 저장했거나 철자 오타). 두 곳과 여권을 대조해 같은 값으로 통일하세요.',
-    I.engMismatch,
-    [colSeq,colRep,colProd,colName,{h:'유형',f:x=>x.kind},{h:'현재(불일치)',f:x=>'<span style="color:var(--red)">'+x.cur+'</span>'},{h:'권장',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
-    null));
   blocks.push(block('여권 만료 임박',
     '출발일 기준 잔여 6개월 미만(3개월 미만은 긴급). 손님께 여권 갱신 안내가 필요합니다.',
     I.expSoon,
@@ -3069,7 +3032,7 @@ function renderAudit(){
     I.expMiss,[colSeq,colRep,colProd,colName,colDep],null));
   blocks.push(block('여권번호 누락','여권번호가 비어 있는 건.',
     I.ppMiss,[colSeq,colRep,colProd,colName,colDep],null));
-  blocks.push(block('PNR 누락','APIS에 PNR이 비어 있는 건(미발권 또는 미입력).',
+  blocks.push(block('PNR 누락','일행별예약에 PNR이 비어 있는 건(미발권 또는 미입력).',
     I.pnrMiss,[colSeq,colRep,colProd,colName,colDep],null));
 
   const html=blocks.filter(Boolean).join('');
