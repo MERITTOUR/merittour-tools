@@ -3175,7 +3175,7 @@ let vcalSelKey=null;           // 선택된 'YYYY-MM-DD|nights' (한 날짜에 �
 const VCAL_CHK=new Set();
 
 function refreshVerifyView(){
-  if(verifyView==='calendar') renderVcal(); else renderVerify();
+  if(verifyView==='calendar') initVcalControls(); else renderVerify();
 }
 function setVerifyView(v){
   verifyView=v;
@@ -3192,8 +3192,10 @@ function initVcalControls(){
   if(!resortMaster.length) loadResortMaster();
   const rsel=document.getElementById('vcal-resort');
   const cur=vcalResort;
-  rsel.innerHTML=resortMaster.filter(r=>!r.sellStop).map(r=>`<option value="${r.name.replace(/"/g,'&quot;')}">${r.name}</option>`).join('');
-  if(cur && resortMaster.some(r=>r.name===cur)) rsel.value=cur; else vcalResort=rsel.value;
+  const opts=resortMaster.filter(r=>!r.sellStop);
+  rsel.innerHTML=opts.map(r=>`<option value="${r.name.replace(/"/g,'&quot;')}">${r.name}</option>`).join('');
+  if(cur && opts.some(r=>r.name===cur)){ rsel.value=cur; vcalResort=cur; }
+  else { vcalResort = rsel.value || (opts[0]&&opts[0].name) || ''; rsel.value=vcalResort; }
   vcalSyncOrigins();
   renderVcal();
 }
