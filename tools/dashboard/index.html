@@ -255,6 +255,24 @@ tr:hover td{background:#EEF3FA}
 .rm-group:last-child{margin-bottom:0}
 .rm-group-label{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 .rm-hint{font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4}
+.dep-editor{display:flex;flex-direction:column;gap:7px}
+.dep-chips{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center}
+.dep-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:3px 6px 3px 11px}
+.dep-chip.free{background:var(--surface3);color:var(--text2);border-color:var(--border2)}
+.dep-x{border:none;background:transparent;color:inherit;cursor:pointer;font-size:11px;line-height:1;padding:1px 3px;border-radius:50%;opacity:.7}
+.dep-x:hover{opacity:1;background:rgba(0,0,0,.08)}
+.dep-empty{font-size:11px;color:var(--text3)}
+.dep-add{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dep-add-label{font-size:10px;color:var(--text3)}
+.dep-dows{display:inline-flex;gap:3px}
+.dep-dow{width:26px;height:26px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:6px;font-size:12px;cursor:pointer;padding:0}
+.dep-dow:hover{border-color:var(--accent)}
+.dep-dow.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.dep-nights{width:48px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--mono);text-align:center;background:var(--surface2);color:var(--text)}
+.dep-addbtn{font-size:11px;padding:4px 10px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:6px;cursor:pointer;font-weight:600}
+.dep-addbtn:hover{background:var(--accent-dim)}
+.dep-hint{font-size:10px;color:var(--text3);line-height:1.4}
+.dep-link{border:none;background:transparent;color:var(--accent);cursor:pointer;font-size:10px;text-decoration:underline;padding:0}
 /* 취소 행: 흐리게 (금액 정보는 보존) */
 .bk-row-cancel{background:repeating-linear-gradient(45deg,var(--surface2),var(--surface2) 10px,var(--surface) 10px,var(--surface) 20px)}
 .bk-row-cancel td{color:var(--text3)}
@@ -655,7 +673,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input type="file" id="inp-res" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'res')">
         <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
         <div class="upload-title">예약 리스트</div>
-        <div class="upload-sub">예약리스트___.xlsx<br>판매금액·미수금액·구분·비고 포함</div>
+        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 예약현황</b> 탭에서 다운로드<br>판매금액·미수금액·구분·비고 포함 · 500행씩 분할 시 여러 파일 등록 가능</div>
         <div class="upload-meta"><span class="upload-dot empty" id="dot-res"></span><span id="meta-res">미선택</span></div>
       </div>
       <!-- 일행별예약 -->
@@ -663,13 +681,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
         <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
         <div class="upload-title">일행별 예약</div>
-        <div class="upload-sub">일행별예약___.xlsx<br>개인 명단 + 항공·PNR·여권 통합</div>
+        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 탑승자정보</b> 탭에서 다운로드<br>개인 명단 + 항공·PNR·여권 통합 · 500행씩 분할 시 여러 파일 등록 가능</div>
         <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
       </div>
     </div>
 
     <div class="note">
       <b>결합 방식</b> · 두 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약 한 파일에 개인 명단과 항공시각(한국출발·현지도착·현지출발·한국도착)·PNR·여권·사전좌석이 모두 포함됩니다.
+      두 파일 모두 엠클릭의 <b>출발일별 / 예약일별</b> 화면에서 받습니다 — <b>예약현황</b> 탭 → 예약 리스트, <b>탑승자정보</b> 탭 → 일행별예약. 한 번에 500행씩 다운로드되므로, 건수가 많으면 나눠 받은 파일을 <b>같은 칸에 여러 개 등록</b>하면 자동 병합됩니다.
       그룹코드 마스터는 이 도구에서 사용하지 않습니다. <b>예약리스트·일행별예약</b>이 모두 업로드되면 통합이 가능합니다.
     </div>
 
@@ -3984,9 +4003,8 @@ function renderResortMaster(){
           </div>
           <div class="rm-group">
             <div class="rm-group-label">출발 정보</div>
-            <div class="rm-row"><label>출발 일정</label>
-              <input class="rm-input text" style="width:170px" type="text" value="${(r.depart||'').replace(/"/g,'&quot;')}" placeholder="예: 목3박, 일4박"
-                onchange="updateResort('${r.key}','depart',this.value,this)"></div>
+            <div class="rm-row" style="align-items:flex-start"><label style="padding-top:4px">출발 일정</label>
+              <div style="flex:1">${departEditorHTML(r.key, r.depart||'')}</div></div>
             <div class="rm-row"><label>출발 공항</label>
               ${aptMultiHTML({value:r.airOut||'', onpick:'rmPickAirOut', ctx:r.key, width:185})}</div>
             <div class="rm-row"><label>도착 공항</label>
@@ -4468,6 +4486,68 @@ function blkParseDepart(s){
     return m?{dow:BLK_WDMAP[m[1]],nights:parseInt(m[2]),label:tok}:null;
   }).filter(Boolean);
 }
+
+/* ── 출발 일정 클릭 에디터 (요일칩 + 박수). 저장값은 "목3박, 일4박" 문자열 유지 ── */
+const DEPART_DOW=['일','월','화','수','목','금','토'];
+let _departPick={};   // key → 현재 추가영역에서 고른 요일(없으면 null)
+function departEditorHTML(key, departStr){
+  const items=blkParseDepart(departStr).filter(d=>!d.free);
+  const isFree=(departStr||'').trim()==='자유';
+  const chips = isFree
+    ? `<span class="dep-chip free">자유 일정 <button class="dep-x" onclick="departClear('${key}')" title="비우기">✕</button></span>`
+    : (items.length
+        ? items.map((d,i)=>`<span class="dep-chip">${DEPART_DOW[d.dow]} ${d.nights}박 <button class="dep-x" onclick="departRemove('${key}',${i})" title="삭제">✕</button></span>`).join('')
+        : '<span class="dep-empty">등록된 출발편 없음</span>');
+  const picked=_departPick[key];
+  const dowChips=DEPART_DOW.map((w,i)=>`<button class="dep-dow ${picked===i?'on':''}" onclick="departPickDow('${key}',${i})">${w}</button>`).join('');
+  return `<div class="dep-editor" id="dep-ed-${key}">
+    <div class="dep-chips">${chips}</div>
+    <div class="dep-add">
+      <span class="dep-add-label">요일</span>
+      <div class="dep-dows">${dowChips}</div>
+      <span class="dep-add-label">박수</span>
+      <input class="dep-nights" id="dep-n-${key}" type="number" min="1" max="30" placeholder="3" onkeydown="if(event.key==='Enter')departAdd('${key}')">
+      <button class="dep-addbtn" onclick="departAdd('${key}')">＋ 추가</button>
+    </div>
+    <div class="dep-hint">요일을 고르고 박수를 입력해 출발편을 추가하세요. 예: 목 3박 · 일 4박. 매일 출발이면 「자유」로 두려면 <button class="dep-link" onclick="departSetFree('${key}')">자유 일정</button>.</div>
+  </div>`;
+}
+function departRefresh(key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const host=document.getElementById('dep-ed-'+key);
+  if(host) host.outerHTML=departEditorHTML(key, r.depart||'');
+}
+function departPickDow(key, dow){
+  _departPick[key] = (_departPick[key]===dow) ? null : dow;
+  departRefresh(key);
+  const n=document.getElementById('dep-n-'+key); if(n) n.focus();
+}
+function departAdd(key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const dow=_departPick[key];
+  const nv=parseInt((document.getElementById('dep-n-'+key)||{}).value);
+  if(dow==null){ showToast('요일을 먼저 선택하세요'); return; }
+  if(!nv||nv<1){ showToast('박수를 입력하세요'); return; }
+  const tok=DEPART_DOW[dow]+nv+'박';
+  let items=blkParseDepart(r.depart||'').filter(d=>!d.free);
+  if(items.some(d=>d.dow===dow && d.nights===nv)){ showToast('이미 추가된 출발편입니다'); _departPick[key]=null; departRefresh(key); return; }
+  items.push({dow,nights:nv});
+  items.sort((a,b)=>a.nights-b.nights || a.dow-b.dow);
+  const str=items.map(d=>DEPART_DOW[d.dow]+d.nights+'박').join(', ');
+  _departPick[key]=null;
+  updateResort(key,'depart',str);   // 저장·이력·blk 동기화는 기존 로직 재사용
+  departRefresh(key);
+}
+function departRemove(key, idx){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  let items=blkParseDepart(r.depart||'').filter(d=>!d.free);
+  items.splice(idx,1);
+  const str=items.map(d=>DEPART_DOW[d.dow]+d.nights+'박').join(', ');
+  updateResort(key,'depart',str);
+  departRefresh(key);
+}
+function departClear(key){ updateResort(key,'depart',''); _departPick[key]=null; departRefresh(key); }
+function departSetFree(key){ updateResort(key,'depart','자유'); _departPick[key]=null; departRefresh(key); }
 function blkIsAssignPool(pool){ return !!pool.assign; }
 
 /* 호텔 유형 (매트릭스용) */
