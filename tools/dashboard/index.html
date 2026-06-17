@@ -262,16 +262,37 @@ tr:hover td{background:#EEF3FA}
 .dep-x{border:none;background:transparent;color:inherit;cursor:pointer;font-size:11px;line-height:1;padding:1px 3px;border-radius:50%;opacity:.7}
 .dep-x:hover{opacity:1;background:rgba(0,0,0,.08)}
 .dep-empty{font-size:11px;color:var(--text3)}
-.dep-add{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.dep-add-label{font-size:10px;color:var(--text3)}
-.dep-dows{display:inline-flex;gap:3px}
-.dep-dow{width:26px;height:26px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:6px;font-size:12px;cursor:pointer;padding:0}
+.dep-add{display:flex;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
+.dep-add-grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dep-add-label{font-size:10px;color:var(--text3);white-space:nowrap}
+.dep-dows{display:flex;flex-wrap:wrap;gap:3px}
+.dep-dow{width:26px;height:26px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);border-radius:6px;font-size:12px;cursor:pointer;padding:0;flex:none}
 .dep-dow:hover{border-color:var(--accent)}
 .dep-dow.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 .dep-nights{width:48px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--mono);text-align:center;background:var(--surface2);color:var(--text)}
 .dep-addbtn{font-size:11px;padding:4px 10px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:6px;cursor:pointer;font-weight:600}
 .dep-addbtn:hover{background:var(--accent-dim)}
-.dep-hint{font-size:10px;color:var(--text3);line-height:1.4}
+.dep-hint{font-size:10px;color:var(--text3);line-height:1.4;word-break:keep-all;overflow-wrap:anywhere}
+.audit-acc{display:flex;flex-direction:column;gap:8px}
+.audit-acc-head{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .12s,border-color .12s}
+.audit-acc-head:hover:not(.empty){background:var(--surface2);border-color:var(--accent)}
+.audit-acc-head.open{border-color:var(--accent);border-bottom-left-radius:0;border-bottom-right-radius:0;background:var(--surface2)}
+.audit-acc-head.empty{cursor:default;opacity:.55}
+.audit-acc-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.audit-acc-title{font-size:13px;font-weight:700;color:var(--text)}
+.audit-acc-cnt{margin-left:auto;font-size:12px;color:var(--text2);font-weight:600}
+.audit-acc-chev{font-size:9px;color:var(--text3);width:14px;text-align:center}
+.audit-ok{color:var(--green);font-weight:600}
+.audit-acc-body{border:1px solid var(--accent);border-top:none;border-radius:0 0 10px 10px;padding:4px 14px 14px;background:var(--surface2);margin-top:-8px}
+.bk-remark-cell{font-size:11px;line-height:1.6;max-width:280px}
+.rmk3{display:inline-block;margin:1px 6px 1px 0}
+.rmk3-lbl{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:4px;vertical-align:middle}
+.rmk3-비고{background:#E0E7F1;color:#2E5A88}
+.rmk3-현지{background:#FDE8D4;color:#B45309}
+.rmk3-기타{background:#E5E0F1;color:#6B4FA8}
+.rm-cmpl{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.rm-cmpl-ok{background:rgba(5,150,105,.18);color:#34D399}
+.rm-cmpl-miss{background:rgba(217,119,6,.2);color:#FbBf24}
 .dep-link{border:none;background:transparent;color:var(--accent);cursor:pointer;font-size:10px;text-decoration:underline;padding:0}
 /* 취소 행: 흐리게 (금액 정보는 보존) */
 .bk-row-cancel{background:repeating-linear-gradient(45deg,var(--surface2),var(--surface2) 10px,var(--surface) 10px,var(--surface) 20px)}
@@ -654,7 +675,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="nav-tab" id="nav-resort" onclick="gotoSection('resort')"><div class="nav-dot"></div> ① 리조트 마스터</div>
   <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ② 호텔 블록</div>
   <div class="nav-tab" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ③ 데이터 검수</div>
-  <div class="nav-tab" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ④ 요금 검증</div>
+  <div class="nav-tab" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ④ 요금 관리</div>
   <div class="nav-tab" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ⑤ 예약 관리</div>
   <div class="nav-tab" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑥ 항공 정보</div>
   <div class="nav-tab" id="nav-doc" onclick="gotoSection('doc')"><div class="nav-dot"></div> ⑦ 확정서 생성</div>
@@ -722,6 +743,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
     </div>
+    <div class="note" style="border-left-color:var(--accent);margin:2px 0 12px">
+      <b>📦 배포 방법</b> · 마스터(단가·환율·항공요금)는 이 브라우저(PC)에만 저장됩니다. 관리자가 모두 입력한 뒤 <b>「마스터 내보내기」</b>로 JSON 파일을 만들어 직원들에게 전달하면, 각 직원은 <b>「마스터 불러오기」</b>로 한 번 등록하고 이후 각자 엠클릭 파일만 올려 사용합니다. 마스터가 바뀌면 새 JSON을 다시 배포하세요.
+      <div id="rm-completeness" style="margin-top:8px"></div>
+    </div>
     <div id="resort-cards"></div>
   </div>
   <div class="card">
@@ -750,6 +775,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <button class="bk-clear" id="bk-clear" onclick="bkClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
       </div>
       <div class="bk-chip-row">
+        <span class="bk-chip-grp" id="bk-chip-agency"></span>
+        <span class="bk-chip-sep"></span>
         <span class="bk-chip-grp" id="bk-chip-status"></span>
         <span class="bk-chip-sep"></span>
         <span class="bk-chip-grp" id="bk-chip-hotel"></span>
@@ -916,13 +943,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <div class="section" id="sec-verify">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">④ 요금 검증</div><div class="card-sub">리조트 마스터 단가 × 월별 환율 + 항공요금으로 예상 판매금액을 산출해 실제와 대조</div></div>
+      <div><div class="card-title">④ 요금 관리</div><div class="card-sub">요금 달력으로 출발일별 안내가를 산출하고, 표 보기로 실제 판매금액과 대조합니다</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <div class="verify-viewtoggle">
-          <button class="vt-btn active" id="vt-table" onclick="setVerifyView('table')">📋 표 보기</button>
-          <button class="vt-btn" id="vt-cal" onclick="setVerifyView('calendar')">📅 요금 달력</button>
+          <button class="vt-btn active" id="vt-cal" onclick="setVerifyView('calendar')">📅 요금 달력</button>
+          <button class="vt-btn" id="vt-table" onclick="setVerifyView('table')">📋 표 보기</button>
         </div>
-        <span id="verify-table-filters" style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="bk-chip-grp" id="verify-chip-agency" style="display:flex;gap:5px;align-items:center"></span>
+        <span id="verify-table-filters" style="display:none;gap:8px;flex-wrap:wrap">
           <button class="btn-sm" onclick="filterVerify('all')">전체</button>
           <button class="btn-sm" onclick="filterVerify('diff')">차액 있음만</button>
           <button class="btn-sm" onclick="filterVerify('big')">큰 차이만</button>
@@ -935,10 +963,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       환율·항공요금이 등록되지 않은 팀은 "기준 미등록"으로 표시됩니다. <b>리조트 마스터 → 월별 환율·항공요금 테이블</b>을 먼저 채워주세요.<br>
       <b>패키지가(1인)</b> · 벳푸 박수별·나가노 기간별처럼 <b>항공까지 합쳐 단일가로 안내</b>하는 상품은, 팀별 <b>패키지가(1인)</b> 칸에 1인 원화 총액을 넣으세요. 입력 시 분해식(체재비·송영비·항공·환율) 대신 <b>패키지가 × 인원</b>으로 산출되며, 숙소 옆에 「패키지」 배지가 붙고 분해 항목은 흐리게 표시됩니다. 동일한 패키지가는 <b>리조트 마스터 → 패키지가 프리셋</b>(숙소+박수)에 등록하면, 칸을 비워둬도 해당 팀에 자동 적용됩니다(「패키지·프리셋」 배지). 팀별 직접 입력값이 있으면 그게 우선입니다.
     </div>
-    <div id="verify-view-table">
+    <div id="verify-view-table" style="display:none">
       <div class="tbl-wrap"><table id="verify-table"><thead id="verify-thead"></thead><tbody id="verify-tbody"></tbody></table></div>
     </div>
-    <div id="verify-view-calendar" style="display:none">
+    <div id="verify-view-calendar">
       <div class="vcal-bar">
         <select class="vcal-sel" id="vcal-resort" onchange="vcalOnResort()"></select>
         <select class="vcal-sel" id="vcal-origin" onchange="renderVcal()"></select>
@@ -1221,7 +1249,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="card" style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 팀을 누르면 아래에 미리보기가 생성됩니다</span></div>
-      <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span>
+        <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
+      </div>
     </div>
     <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
       먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.
@@ -1314,6 +1345,26 @@ let resCount=0, ilhaengCount=0;
 
 let teams = [];        // 통합 결과: 팀(eventSeq) 단위 (유효 예약만 — 통계·집계용)
 let cancelledTeams = []; // 취소(구분=취소) 팀 — 예약관리 조회 전용. 통계·집계에는 미포함
+
+/* ── 전역 거래유형(일반/여행사 B2B) 필터 — 전 탭 공유, PC별 기억 ── */
+const STORE_AGENCY='mt_agency_filter';
+let agencySel=new Set(['일반']);   // 기본: 일반만 (여행사 B2B 분리). 둘 다 켜면 합산
+(function(){ try{ const s=localStorage.getItem(STORE_AGENCY); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) agencySel=new Set(a.length?a:['일반']); } }catch(e){} })();
+function agencyOk(t){
+  if(!agencySel.size) return true;            // 안전장치: 둘 다 끄면 전체 표시
+  return agencySel.has(t.isAgency?'여행사':'일반');
+}
+function agencyBadge(t){ return t&&t.isAgency?' <span class="tag tag-agency" title="여행사 B2B">여행사</span>':''; }
+function toggleAgency(k){
+  if(agencySel.has(k)) agencySel.delete(k); else agencySel.add(k);
+  try{ localStorage.setItem(STORE_AGENCY, JSON.stringify([...agencySel])); }catch(e){}
+  // 모든 탭 재렌더 (현재 보이는 것 위주, 나머지는 자연 반영)
+  ['renderBooking','renderAir','renderVerify','renderAudit','renderDocTeams','renderSettleAll'].forEach(fn=>{ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
+}
+function agencyChipsHTML(){
+  return [['일반','일반'],['여행사','여행사 (B2B)']].map(([k,lbl])=>
+    `<button class="st-chip ${k==='여행사'?'c-agency':''} ${agencySel.has(k)?'active':''}" onclick="toggleAgency('${k}')">${lbl}</button>`).join('');
+}
 let arrivalMap = {};   // eventSeq → 현지도착 보완
 let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
 let teamAssign = {};   // eventSeq → 사용자 지정 팀명
@@ -1469,8 +1520,19 @@ function parseRemarkSections(remark){
   return out;
 }
 /* 특정 섹션용 비고 셀 HTML — 해당 섹션 메모는 진하게, 공통은 흐리게 */
+/* 비고 3종(비고·현지·기타)을 라벨과 함께 표시. 팀명 태그(팀:…)는 제외한 본문만 */
+function remark3CellHTML(t){
+  const strip=s=>remarkSpecial(String(s||''));  // 팀:… 제거
+  const parts=[
+    ['비고', strip(t.remark)],
+    ['현지', strip(t.remarkLocal)],
+    ['기타', strip(t.remarkEtc)],
+  ].filter(([,v])=>v);
+  if(!parts.length) return '<span class="muted">-</span>';
+  return parts.map(([lbl,v])=>`<span class="rmk3"><span class="rmk3-lbl rmk3-${lbl}">${lbl}</span>${docEsc(v)}</span>`).join('');
+}
 function remarkCellFor(t, section){
-  const r=parseRemarkSections(t.remark);
+  const r=parseRemarkSections([t.remark,t.remarkLocal,t.remarkEtc].filter(Boolean).join(' / '));
   const own=r[section]||[];
   const common=r.common||[];
   if(!own.length && !common.length) return '<span class="muted">-</span>';
@@ -1628,6 +1690,9 @@ function analyze(){
     const prodName=String(r['상품명']||'');
     const {accom,roomType,region,golf,nights,isAgency}=parseProduct(prodName);
     const remark=String(r['비고']||'');
+    const remarkLocal=String(r['현지 비고']||'');
+    const remarkEtc=String(r['기타 비고']||'');
+    const remarkAll=[remark,remarkLocal,remarkEtc].filter(Boolean).join(' / ');
     const dep=fmtDate(r['출발일자']);
     const arr=fmtDate(r['도착일자']);
     const period=String(r['기간']||'').trim() || (nights?`${nights}박`:'');
@@ -1647,8 +1712,10 @@ function analyze(){
       sales: num(r['판매금액']),
       due: num(r['미수금액']),
       remark,
-      teamAuto: parseTeamName(remark),
-      special: remarkSpecial(remark),
+      remarkLocal,
+      remarkEtc,
+      teamAuto: parseTeamName(remarkAll),
+      special: remarkSpecial(remarkAll),
       pax_list: [],
       raw: r
     });
@@ -1744,6 +1811,9 @@ function analyze(){
     const prodName=String(r['상품명']||'');
     const {accom,roomType,region,golf,nights,isAgency}=parseProduct(prodName);
     const remark=String(r['비고']||'');
+    const remarkLocal=String(r['현지 비고']||'');
+    const remarkEtc=String(r['기타 비고']||'');
+    const remarkAll=[remark,remarkLocal,remarkEtc].filter(Boolean).join(' / ');
     cancelledTeams.push({
       eventSeq: seq,
       status: '취소',
@@ -1763,8 +1833,10 @@ function analyze(){
       sales: num(r['판매금액']),    // 취소 후 남은 청구액(패널티 등)일 수 있음
       due: num(r['미수금액']),      // 취소 패널티 미수 등
       remark,
-      teamAuto: parseTeamName(remark),
-      special: remarkSpecial(remark),
+      remarkLocal,
+      remarkEtc,
+      teamAuto: parseTeamName(remarkAll),
+      special: remarkSpecial(remarkAll),
       pax_list: [],
       apisOrigin:'', pnrList:[],
       raw: r
@@ -1788,7 +1860,7 @@ function analyze(){
   renderAccom();
   renderGolf();
   renderDinner();
-  renderVerify();
+  refreshVerifyView();
   renderAudit();
   renderSettleAll();
   renderDocTeams();
@@ -1834,6 +1906,7 @@ function bkFilteredTeams(){
   // 취소 칩이 켜져 있을 때만 취소 팀을 소스에 합류 (기본 숨김)
   const src = bkFilter.status.has('취소') ? teams.concat(cancelledTeams) : teams;
   return src.filter(t=>{
+    if(!agencyOk(t)) return false;   // 전역 거래유형 필터
     if(bkFilter.status.size>0 && !bkFilter.status.has(t.status)) return false;
     if(bkFilter.hotel!=='전체' && (t.hotelY?'Y':'N')!==bkFilter.hotel) return false;
     if(bkFilter.list!=='전체' && (t.listY?'Y':'N')!==bkFilter.list) return false;
@@ -1849,6 +1922,7 @@ function bkFilteredTeams(){
   });
 }
 function renderBooking(){
+  const agBox=document.getElementById('bk-chip-agency'); if(agBox) agBox.innerHTML=agencyChipsHTML();
   // 정렬 가능한 헤더 (☑·No·요일 제외 나머지 정렬 가능)
   const thead='<tr>'+
     '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'booking\',this.checked)"></th>'+
@@ -1931,7 +2005,7 @@ function renderBooking(){
       <td class="num">${won(t.sales)}</td>
       <td class="num" style="color:${t.due>0?'var(--red)':'var(--text3)'}">${t.due>0?won(t.due):'-'}</td>
       <td class="center">${teamCell}</td>
-      <td class="muted">${t.special||'-'}${t.edited?'<span class="bk-edited-dot" title="일괄 수정됨"></span>':''}</td>
+      <td class="bk-remark-cell">${remark3CellHTML(t)}${t.edited?'<span class="bk-edited-dot" title="일괄 수정됨"></span>':''}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="20" class="center muted" style="padding:30px">검색·필터 조건에 맞는 예약이 없습니다.</td></tr>`;
   attachTopScrollbars();
@@ -2206,7 +2280,8 @@ function airRenderChips(){
       `<span class="bk-chip ${airOrigin.size===0?'on':''}" onclick="airToggleOrigin('전체')">전체</span>`+
       origins.map(o=>{ const n=teams.filter(t=>airOriginOf(t)===o).length; const c=AIRPORT_CODE[o]?` ${AIRPORT_CODE[o]}`:''; return `<span class="bk-chip ${airOrigin.has(o)?'on':''}" onclick="airToggleOrigin('${o}')">${o}${c} (${n})</span>`; }).join('')
     : '';
-  c.innerHTML='<span class="bk-chip-lbl">점검</span>'+
+  c.innerHTML='<span class="bk-chip-lbl">유형</span>'+agencyChipsHTML()+'<span class="bk-chip-sep"></span>'+
+    '<span class="bk-chip-lbl">점검</span>'+
     chip('nopnr','PNR 미등록')+chip('seat','사전좌석 Y')+
     chip('flightmiss','출발·귀국편 누락')+chip('airmismatch','항공사 불일치')+
     `<span class="bk-chip-sep"></span><span class="bk-chip-lbl">출국</span>`+
@@ -2237,6 +2312,7 @@ function renderAir(){
   const q=(document.getElementById('air-search')?.value||'').trim().toLowerCase();
   const cl=document.getElementById('air-clear'); if(cl) cl.style.display=q?'flex':'none';
   let rows=teams.filter(t=>{
+    if(!agencyOk(t)) return false;   // 전역 거래유형 필터
     if(airFilter==='d7'){ const d=daysUntil(t.dep); if(!(d!==null && d>=0 && d<=7)) return false; }
     if(airOrigin.size>0 && !airOrigin.has(airOriginOf(t))) return false;
     if(airQuick.has('nopnr') && (t.pnrList&&t.pnrList.length)) return false;
@@ -2290,7 +2366,7 @@ function renderAir(){
       <td class="center">${caret}${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
-      <td><b>${t.repName}</b></td>
+      <td><b>${t.repName}</b>${agencyBadge(t)}</td>
       <td class="center">${t.apisOrigin||t.origin}</td>
       <td style="font-size:11px">${airlineHtml}</td>
       <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'<span class="muted">-</span>'}</td>
@@ -2661,7 +2737,7 @@ function renderDinner(){
 }
 
 /* ════════════════════════════════════════════════════════════
-   ④ 요금 검증
+   ④ 요금 관리
 ════════════════════════════════════════════════════════════ */
 let verifyFilter='all';
 function filterVerify(f){ verifyFilter=f; renderVerify(); }
@@ -2770,8 +2846,9 @@ function updateActualHotel(seq, val){
 
 const VERIFY_HDR=['No','구분','대표고객','숙소','박수','인원','체재비합(엔)','송영비합(엔)','엔화기타','환율','엔화→원화','항공요금','관리비','원화기타','패키지가(1인)','예상 판매금액','실제 판매금액','차액','상태'];
 function renderVerify(){
+  const agBox=document.getElementById('verify-chip-agency'); if(agBox) agBox.innerHTML='<span class="bk-chip-lbl">유형</span>'+agencyChipsHTML();
   document.getElementById('verify-thead').innerHTML='<tr>'+VERIFY_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-  let list=teams.filter(t=>t.accom).map(t=>({t, c:calcExpected(t)}));
+  let list=teams.filter(t=>t.accom&&agencyOk(t)).map(t=>({t, c:calcExpected(t)}));
   // 상태 판정
   list.forEach(x=>{
     if(x.c.expected==null){ x.status='no-base'; x.diff=null; }
@@ -2786,8 +2863,7 @@ function renderVerify(){
   // 차액 큰 순 정렬
   list.sort((a,b)=>Math.abs(b.diff||0)-Math.abs(a.diff||0));
 
-  const matchCnt=teams.filter(t=>t.accom).map(t=>calcExpected(t)).filter((c,i)=>{ const t=teams.filter(x=>x.accom)[i]; return c.expected!=null && Math.abs(t.sales-c.expected)<=1; }).length;
-  const all=teams.filter(t=>t.accom);
+  const all=teams.filter(t=>t.accom&&agencyOk(t));
   const calced=all.map(t=>({t,c:calcExpected(t)}));
   const okN=calced.filter(x=>x.c.expected!=null&&Math.abs(x.t.sales-x.c.expected)<=1).length;
   const minorN=calced.filter(x=>x.c.expected!=null&&Math.abs(x.t.sales-x.c.expected)>1&&Math.abs(x.t.sales-x.c.expected)<=5000).length;
@@ -2817,7 +2893,7 @@ function renderVerify(){
     return `<tr>
       <td class="center">${t.no}</td>
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
-      <td><b>${t.repName}</b></td>
+      <td><b>${t.repName}</b>${agencyBadge(t)}</td>
       <td>${accomTag(t.accom)} ${t.unit&&!c.unit.matched?'<span class="muted" style="font-size:9px">기본단가</span>':''} ${c.isPkg?`<span class="tag" style="background:var(--accent-dim);color:var(--accent);font-size:9px">패키지${c.pkgFromPreset?'·프리셋':''}</span>`:''}</td>
       <td class="center">${c.nights}박</td>
       <td class="num">${c.pax}</td>
@@ -2874,8 +2950,66 @@ function eventNoOf(seq){
   return String(seq||'');
 }
 
+/* 한글 성씨 → 허용 영문 표기(여권 통용, 흔한 변형 포함). 표준에 없어도 초성 자음이 맞으면 통과 */
+const SURNAME_ROMAN={
+ '김':['KIM','GIM'],'이':['LEE','YI','RHEE','I','LE'],'박':['PARK','BAK','PAK'],'최':['CHOI','CHOE'],
+ '정':['JUNG','JEONG','CHUNG','JONG'],'강':['KANG','GANG'],'조':['CHO','JO','JOH'],'윤':['YOON','YUN','YOUN'],
+ '장':['JANG','CHANG'],'임':['LIM','IM','RIM','YIM'],'한':['HAN'],'오':['OH','O'],'서':['SEO','SUH','SO'],
+ '신':['SHIN','SIN'],'권':['KWON','GWON','KWEON'],'황':['HWANG','WHANG'],'안':['AN','AHN'],'송':['SONG'],
+ '전':['JEON','JUN','CHUN','CHEON','JEOUN'],'홍':['HONG'],'유':['YOO','YU','RYU','YOU','RYOO'],'고':['KO','GO','KOH','KHO'],
+ '문':['MOON','MUN'],'양':['YANG'],'손':['SON','SOHN'],'배':['BAE','PAE','BEA'],'백':['BAEK','BAIK','PAIK','BAK','BAIG','BEAK'],
+ '허':['HEO','HUH','HUR'],'남':['NAM'],'심':['SIM','SHIM'],'노':['NO','ROH','NOH'],'하':['HA'],
+ '곽':['KWAK','GWAK'],'성':['SUNG','SEONG'],'차':['CHA'],'주':['JOO','JU','CHU'],'우':['WOO','U'],
+ '구':['KOO','KU','GU','GOO'],'민':['MIN'],'류':['RYU','YOO','RYOO'],'나':['NA','RA','RHA'],'진':['JIN','CHIN'],
+ '지':['JI','CHI'],'엄':['EOM','UM','OM'],'채':['CHAE'],'원':['WON'],'천':['CHEON','CHUN'],
+ '방':['BANG','PANG'],'공':['KONG','GONG'],'현':['HYUN','HYEON'],'함':['HAM'],'변':['BYUN','BYEON','BEUN'],
+ '염':['YEOM','YOM'],'여':['YEO','YO'],'추':['CHU','CHOO'],'도':['DO','DOH','TO'],
+};
+/* 성씨 초성 → 허용 영문 첫 자음(군). 표준표기에 없어도 이게 맞으면 정상으로 본다 */
+const SURNAME_INITIAL={
+ '김':['K','G'],'이':['L','Y','R','I'],'박':['P','B'],'최':['C'],'정':['J','C'],'강':['K','G'],
+ '조':['C','J'],'윤':['Y'],'장':['J','C'],'임':['L','I','R','Y'],'한':['H'],'오':['O'],'서':['S'],
+ '신':['S'],'권':['K','G'],'황':['H','W'],'안':['A'],'송':['S'],'전':['J','C'],'홍':['H'],
+ '유':['Y','R'],'고':['K','G'],'문':['M'],'양':['Y'],'손':['S'],'배':['B','P'],'백':['B','P'],
+ '허':['H'],'남':['N'],'심':['S'],'노':['N','R'],'하':['H'],'곽':['K','G'],'성':['S'],'차':['C'],
+ '주':['J','C'],'우':['W','U'],'구':['K','G'],'민':['M'],'류':['R','Y','L'],'나':['N','R'],
+ '진':['J','C'],'지':['J','C'],'엄':['E','U','O'],'채':['C'],'원':['W'],'천':['C'],'방':['B','P'],
+ '공':['K','G'],'현':['H'],'함':['H'],'변':['B','P'],'염':['Y'],'여':['Y'],'추':['C'],'도':['D','T'],
+};
+/* 영문명 재확인 판정. null=정상 / {severe, reason, cur, rec} */
+function auditEngName(name, ln, fn){
+  const L=(ln||'').trim(), F=(fn||'').trim();
+  const hasHangul=s=>/[가-힣]/.test(s);
+  const cur=`${L||'(빈)'} / ${F||'(빈)'}`;
+  // 한글명 칸이 한글이 아닌 경우(외국인·일본인 등) → 판정 보류 (오탐 방지)
+  if(name && !hasHangul(name)) {
+    if(!L && !F) return {severe:false, reason:'외국인 추정 · 영문 미입력', cur, rec:'여권 영문 확인'};
+    return null;
+  }
+  // 1) 영문에 한글/숫자/특수문자 섞임 → 🔴
+  if(/[가-힣]/.test(L+F)) return {severe:true, reason:'영문칸에 한글 섞임', cur, rec:'여권 영문으로 재입력'};
+  if(/[0-9!@#$%^&*()_+=\[\]{}<>?]/.test(L+F)) return {severe:true, reason:'숫자·특수문자 포함', cur, rec:'여권 영문으로 재입력'};
+  // 2) 한국인인데 영문 성 또는 이름 미입력 → 🔴
+  if(name && hasHangul(name) && (!L || !F))
+    return {severe:true, reason: (!L&&!F)?'영문 성·이름 미입력':(!L?'영문성 미입력':'영문이름 미입력'), cur, rec:'발권 전 영문 입력 필요'};
+  // 3) 성씨 초성 자음 대조 (한글 성씨 1글자 기준)
+  if(name && hasHangul(name) && L){
+    const sur=name[0];
+    const inits=SURNAME_INITIAL[sur];
+    if(inits){
+      const firstCh=L[0].toUpperCase();
+      if(!inits.includes(firstCh))
+        return {severe:true, reason:`성씨 불일치 (${sur}→${inits.join('/')} 예상, ${firstCh} 입력)`, cur, rec:`${sur}씨 영문표기 확인`};
+      // 초성은 맞지만 표준 표기군에 없음 → 🟠 참고
+      const std=SURNAME_ROMAN[sur];
+      if(std && !std.includes(L.toUpperCase()))
+        return {severe:false, reason:`표기 변형 확인 (${sur}: ${std.slice(0,3).join('/')} 일반적)`, cur, rec:'여권 표기 그대로면 정상'};
+    }
+  }
+  return null;
+}
 function buildAudit(){
-  const issues={ engSpace:[], engMismatch:[], expSoon:[], expMiss:[], ppMiss:[], pnrMiss:[] };
+  const issues={ engSpace:[], engCheck:[], expSoon:[], expMiss:[], ppMiss:[], pnrMiss:[] };
   const today=new Date(); today.setHours(0,0,0,0);
 
   // ── 개인 단위 검수 (2종 통합: 일행별예약 단일 소스) ──
@@ -2912,6 +3046,9 @@ function buildAudit(){
       if(!String(r['여권번호']||'').trim()) issues.ppMiss.push({...base});
       // 4) PNR 누락
       if(!String(r['PNR']||'').trim()) issues.pnrMiss.push({...base});
+      // 5) 영문명 재확인 — 미입력(한국인)·한글/숫자 섞임·성씨 초성 불일치(🔴) / 표준표기 변형(🟠)
+      const er=auditEngName(name, ln, fn);
+      if(er) issues.engCheck.push({...base, ...er});
     });
   }
 
@@ -2935,8 +3072,8 @@ function renderAudit(){
     return;
   }
   const I=buildAudit();
-  const totalRed = I.engSpace.filter(x=>x.severe).length + I.engMismatch.length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length + I.pnrMiss.length;
-  const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length;
+  const totalRed = I.engSpace.filter(x=>x.severe).length + I.engCheck.filter(x=>x.severe).length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length + I.pnrMiss.length;
+  const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.engCheck.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length;
   const totalAll = totalRed+totalAmber;
 
   if(sumBox) sumBox.innerHTML=`
@@ -2949,26 +3086,36 @@ function renderAudit(){
     return;
   }
 
-  const block=(title,desc,arr,cols,sevKey)=>{
+  const block=(id,title,desc,arr,cols,sevKey)=>{
     let rows=arr;
     if(auditFilter==='red') rows=arr.filter(x=> sevKey? x[sevKey] : true );
     else if(auditFilter==='amber') rows=arr.filter(x=> sevKey? !x[sevKey] : false );
-    if(!rows.length) return '';
-    const head=cols.map(c=>`<th>${c.h}</th>`).join('');
+    const cnt=rows.length;
+    const redCnt = sevKey ? rows.filter(x=>x[sevKey]).length : cnt;
+    const open = auditOpen===id && cnt>0;
+    // 헤더 (건수 0이면 흐리게·클릭 불가)
+    const dotColor = cnt===0 ? 'var(--text3)' : (redCnt>0 ? 'var(--red)' : 'var(--amber2,#D97706)');
+    const head=`<div class="audit-acc-head ${cnt===0?'empty':''} ${open?'open':''}" ${cnt>0?`onclick="auditToggle('${id}')"`:''}>
+      <span class="audit-acc-dot" style="background:${dotColor}"></span>
+      <span class="audit-acc-title">${title}</span>
+      <span class="audit-acc-cnt">${cnt===0?'<span class="audit-ok">정상</span>':`${cnt}건${redCnt>0&&redCnt<cnt?` <span style="color:var(--red)">(🔴${redCnt})</span>`:''}`}</span>
+      ${cnt>0?`<span class="audit-acc-chev">${open?'▲':'▼'}</span>`:''}
+    </div>`;
+    if(!open) return head;
+    const headTh=cols.map(c=>`<th>${c.h}</th>`).join('');
     const body=rows.map(x=>{
       const sev = sevKey ? (x[sevKey]?'red':'amber') : 'red';
       const dot = sev==='red'?'🔴':'🟠';
       return '<tr>'+`<td class="center">${dot}</td>`+cols.map(c=>`<td>${c.f(x)}</td>`).join('')+'</tr>';
     }).join('');
-    return `<div style="margin-bottom:1.5rem">
-      <div class="card-title" style="font-size:13px;margin-bottom:4px">${title} <span class="muted" style="font-weight:400">· ${rows.length}건</span></div>
-      <div class="card-sub" style="margin-bottom:8px">${desc}</div>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:32px"></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    return `${head}<div class="audit-acc-body">
+      <div class="card-sub" style="margin:6px 2px 8px">${desc}</div>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:32px"></th>${headTh}</tr></thead><tbody>${body}</tbody></table></div>
     </div>`;
   };
 
   const colSeq={h:'행사번호',f:x=>eventNoOf(x.seq)};
-  const colRep={h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'};
+  const colRep={h:'대표고객',f:x=>'<b>'+(repNameOf(x.seq)||'-')+'</b>'+agencyBadge(teamOf(x.seq))};
   const colProd={h:'상품명',f:x=>{
     const t=teamOf(x.seq); const p=t&&t.prodName?String(t.prodName):'';
     return p?'<div style="white-space:normal;max-width:200px;font-size:11px;color:var(--text3);line-height:1.4">'+p+'</div>':'<span class="muted">-</span>';
@@ -2977,26 +3124,36 @@ function renderAudit(){
   const colDep={h:'출발일',f:x=>x.dep||'-'};
 
   const blocks=[];
-  blocks.push(block('영문명 공백·특수문자',
+  blocks.push(block('engSpace','영문명 공백·특수문자',
     '엠클릭 외교부 여권검수 후 다시 붙이지 않아 공백이 남은 건. 발권·온라인 체크인 안내(붙여서)와 어긋납니다. 엠클릭에서 공백 제거 후 저장하세요.',
     I.engSpace,
     [colSeq,colRep,colProd,colName,{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
     'severe'));
-  blocks.push(block('여권 만료 임박',
+  blocks.push(block('engCheck','영문명 재확인 필요',
+    '한글명 대비 영문 표기를 점검합니다. 🔴 미입력·한글/숫자 섞임·성씨 초성 불일치는 발권 전 수정이 필요합니다. 🟠 표기 변형은 여권에 그대로면 정상이니 참고만 하세요(로마자 표기는 사람마다 다를 수 있습니다).',
+    I.engCheck,
+    [colSeq,colRep,colName,{h:'사유',f:x=>'<span style="color:'+(x.severe?'var(--red)':'var(--amber2,#D97706)')+';font-weight:600">'+x.reason+'</span>'},{h:'현재 (성/이름)',f:x=>'<span style="font-family:var(--mono)">'+x.cur+'</span>'},{h:'조치',f:x=>'<span style="color:var(--text3)">'+x.rec+'</span>'},colDep],
+    'severe'));
+  blocks.push(block('expSoon','여권 만료 임박',
     '출발일 기준 잔여 6개월 미만(3개월 미만은 긴급). 손님께 여권 갱신 안내가 필요합니다.',
     I.expSoon,
     [colSeq,colRep,colProd,colName,{h:'만료일',f:x=>'<span style="color:var(--red);font-weight:700">'+x.expiry+'</span>'},colDep,{h:'잔여',f:x=>x.days+'일'}],
     'severe'));
-  blocks.push(block('여권 만료일 누락','만료일이 비어 있는 건. 발권·체크인 전 입력이 필요합니다.',
+  blocks.push(block('expMiss','여권 만료일 누락','만료일이 비어 있는 건. 발권·체크인 전 입력이 필요합니다.',
     I.expMiss,[colSeq,colRep,colProd,colName,colDep],null));
-  blocks.push(block('여권번호 누락','여권번호가 비어 있는 건.',
+  blocks.push(block('ppMiss','여권번호 누락','여권번호가 비어 있는 건.',
     I.ppMiss,[colSeq,colRep,colProd,colName,colDep],null));
-  blocks.push(block('PNR 누락','일행별예약에 PNR이 비어 있는 건(미발권 또는 미입력).',
+  blocks.push(block('pnrMiss','PNR 누락','일행별예약에 PNR이 비어 있는 건(미발권 또는 미입력).',
     I.pnrMiss,[colSeq,colRep,colProd,colName,colDep],null));
 
   const html=blocks.filter(Boolean).join('');
-  box.innerHTML = html || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
+  box.innerHTML = `<div class="audit-acc">${html}</div>` || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
   attachTopScrollbars();
+}
+let auditOpen=null;   // 현재 펼친 검수 항목 id (한 번에 하나만)
+function auditToggle(id){
+  auditOpen = (auditOpen===id) ? null : id;
+  renderAudit();
 }
 function setVAdj(seq, field, val){
   vAdjust[seq]=vAdjust[seq]||{};
@@ -3006,11 +3163,11 @@ function setVAdj(seq, field, val){
 }
 
 /* ════════════════════════════════════════════════════════════
-   요금 달력 — ④ 요금 검증의 두 번째 뷰 (정방향)
+   요금 달력 — ④ 요금 관리의 두 번째 뷰 (정방향)
    리조트·출발지 선택 → 출발 패턴 달력 → 날짜별 안내 투어피 명세
    (리조트 마스터 단가 + 그 달 안내 환율 + 항공요금으로 정방향 계산)
 ════════════════════════════════════════════════════════════ */
-let verifyView='table';
+let verifyView='calendar';
 let vcalMonth=null;            // 'YYYY-MM'
 let vcalResort='';             // 리조트 마스터 name
 let vcalOrigin='';             // 출발지(한글 또는 코드)
@@ -3510,8 +3667,11 @@ function resetEditOverrides(){
     t.hotelY=String(r['호텔']||'').trim().toUpperCase()==='Y';
     t.listY=String(r['명단']||'').trim().toUpperCase()==='Y';
     t.remark=String(r['비고']||'');
-    t.teamAuto=parseTeamName(t.remark);
-    t.special=remarkSpecial(t.remark);
+    t.remarkLocal=String(r['현지 비고']||'');
+    t.remarkEtc=String(r['기타 비고']||'');
+    const _rAll=[t.remark,t.remarkLocal,t.remarkEtc].filter(Boolean).join(' / ');
+    t.teamAuto=parseTeamName(_rAll);
+    t.special=remarkSpecial(_rAll);
     t.edited=false;
   });
   rerenderAfterEdit();
@@ -3974,6 +4134,38 @@ function rmAddRoom(key){
   updateResort(key,'room:'+rt,n,null);
 }
 
+/* 숙소 입력 완성도 — 체재비·도착공항·항공요금(해당 도착지 노선) */
+function rmCompleteness(r){
+  const hasStay = Number(r.stay)>0;
+  const hasArr = !!(r.arrCode||'').trim();
+  const fares = (commonMaster.airfares||[]);
+  const dest = airportCode(r.arrCode||'');
+  const hasFare = dest ? fares.some(a=>airportCode(a.dest)===dest && Number(a.fare)>0) : false;
+  const items=[['단가',hasStay],['도착공항',hasArr],['항공요금',hasFare]];
+  const done=items.filter(x=>x[1]).length;
+  return {items, done, total:items.length, full:done===items.length};
+}
+function rmCompleteBadge(r){
+  if(r.sellStop) return '';
+  const c=rmCompleteness(r);
+  if(c.full) return '<span class="rm-cmpl rm-cmpl-ok" title="단가·도착공항·항공요금 입력 완료">✓ 입력완료</span>';
+  const miss=c.items.filter(x=>!x[1]).map(x=>x[0]).join('·');
+  return `<span class="rm-cmpl rm-cmpl-miss" title="미입력: ${miss}">▲ ${c.done}/${c.total} · ${miss} 필요</span>`;
+}
+function renderRmCompletenessSummary(){
+  const box=document.getElementById('rm-completeness'); if(!box) return;
+  const active=resortMaster.filter(r=>!r.sellStop);
+  if(!active.length){ box.innerHTML=''; return; }
+  const full=active.filter(r=>rmCompleteness(r).full).length;
+  const pct=Math.round(full/active.length*100);
+  const incomplete=active.filter(r=>!rmCompleteness(r).full);
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px">
+    <b>입력 완성도</b>
+    <span style="flex:1;min-width:120px;max-width:240px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:inline-block"><span style="display:block;height:100%;width:${pct}%;background:${pct===100?'var(--green)':'var(--accent)'}"></span></span>
+    <b style="color:${pct===100?'var(--green)':'var(--accent)'}">${full}/${active.length} (${pct}%)</b>
+    ${incomplete.length?`<span style="color:var(--text3)">미완: ${incomplete.slice(0,5).map(r=>r.name).join(', ')}${incomplete.length>5?` 외 ${incomplete.length-5}곳`:''}</span>`:'<span style="color:var(--green)">전 숙소 입력 완료 — 내보내 배포 준비 완료</span>'}
+  </div>`;
+}
 function renderResortMaster(){
   if(!resortMaster.length) loadResortMaster();
   document.getElementById('resort-cards').innerHTML=resortMaster.map((r,i)=>{
@@ -3989,6 +4181,7 @@ function renderResortMaster(){
           ${r.sellStop?'<span class="rm-stop-badge">판매중지</span>':''}
         </div>
         <div class="rm-acc-meta">
+          ${rmCompleteBadge(r)}
           <button class="btn-sm rm-sell-toggle" onclick="event.stopPropagation();toggleSellStop('${r.key}')" title="판매 상태 전환">${r.sellStop?'▶ 판매재개':'⏸ 판매중지'}</button>
           ${cap!=null?`<span class="rm-cap-badge">정원 ${cap}</span>`:''}
           ${r.depart?`<span class="rm-dep-badge">${r.depart}</span>`:''}
@@ -4090,7 +4283,7 @@ function renderResortMaster(){
       <span class="af-divider"></span>
       <div class="af-money af-sell">
         <span class="af-money-lab">안내 요금 · 고객</span>
-        <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="원" style="width:100px" title="고객에게 안내하는 1인 항공요금. ④ 요금 검증의 예상 판매금액에 들어갑니다">
+        <input class="rm-input" id="af-fare" type="text" inputmode="numeric" placeholder="원" style="width:100px" title="고객에게 안내하는 1인 항공요금. ④ 요금 관리의 예상 판매금액에 들어갑니다">
       </div>
       <div class="af-money af-cost-box">
         <span class="af-money-lab">발권원가 · 내부</span>
@@ -4119,6 +4312,7 @@ function renderResortMaster(){
   renderAirfares();
   renderPkgPresets();
   renderChangeLog();
+  renderRmCompletenessSummary();
 }
 
 /* 월별 환율 테이블 렌더 (통화별: 엔=YYYY-MM, 달러=YYYY-MM|USD, 링깃=YYYY-MM|MYR) */
@@ -4171,6 +4365,7 @@ function renderAirfares(){
         <td class="center"><button class="btn-sm" style="padding:1px 7px;color:var(--red);border-color:var(--red)" onclick="delAirfare(${i})">×</button></td></tr>`;}).join('')+
       '</tbody></table></div>'
     : '<div class="muted" style="font-size:11px">등록된 항공요금이 없습니다.</div>';
+  if(typeof renderRmCompletenessSummary==='function') renderRmCompletenessSummary();
 }
 /* 항공요금 입력 출발지·도착지 콤보 선택 → hidden input에 코드 저장 */
 function afPickOrigin(code){ const el=document.getElementById('af-origin'); if(el) el.value=code; }
@@ -4523,11 +4718,15 @@ function departEditorHTML(key, departStr){
   return `<div class="dep-editor" id="dep-ed-${key}">
     <div class="dep-chips">${chips}</div>
     <div class="dep-add">
-      <span class="dep-add-label">요일</span>
-      <div class="dep-dows">${dowChips}</div>
-      <span class="dep-add-label">박수</span>
-      <input class="dep-nights" id="dep-n-${key}" type="number" min="1" max="30" placeholder="3" onkeydown="if(event.key==='Enter')departAdd('${key}')">
-      <button class="dep-addbtn" onclick="departAdd('${key}')">＋ 추가</button>
+      <div class="dep-add-grp">
+        <span class="dep-add-label">요일</span>
+        <div class="dep-dows">${dowChips}</div>
+      </div>
+      <div class="dep-add-grp">
+        <span class="dep-add-label">박수</span>
+        <input class="dep-nights" id="dep-n-${key}" type="number" min="1" max="30" placeholder="3" onkeydown="if(event.key==='Enter')departAdd('${key}')">
+        <button class="dep-addbtn" onclick="departAdd('${key}')">＋ 추가</button>
+      </div>
     </div>
     <div class="dep-hint">요일을 고르고 박수를 입력해 출발편을 추가하세요. 예: 목 3박 · 일 4박. 매일 출발이면 「자유」로 두려면 <button class="dep-link" onclick="departSetFree('${key}')">자유 일정</button>.</div>
   </div>`;
@@ -5718,6 +5917,7 @@ const docSearchDeb=(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(rend
 
 /* 팀 목록 (체크박스 = ZIP 일괄용) */
 function renderDocTeams(){
+  const agBox=document.getElementById('doc-chip-agency'); if(agBox) agBox.innerHTML=agencyChipsHTML();
   const box=document.getElementById('doc-team-list'); if(!box) return;
   if(!teams.length){
     box.innerHTML='먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.';
@@ -5726,6 +5926,7 @@ function renderDocTeams(){
   const q=(document.getElementById('doc-search').value||'').toLowerCase();
   const list=teams.filter(t=>{
     if(t.status!=='확정'&&t.status!=='정산') return false; // 확정서 대상만
+    if(!agencyOk(t)) return false;   // 전역 거래유형 필터
     if(!q) return true;
     return [t.eventNo,t.repName,t.prodName,t.accom].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
   }).sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
@@ -5746,7 +5947,7 @@ function renderDocTeams(){
       <td class="center"><input type="radio" name="doc-team" ${_docTeam===t.eventSeq?'checked':''} onclick="docPickTeam('${t.eventSeq}')"></td>
       <td class="center"><span style="font-weight:700;color:${stColor[t.status]||'var(--text3)'}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono);font-size:11px;cursor:pointer" onclick="docPickTeam('${t.eventSeq}')">${t.eventNo}</td>
-      <td style="font-weight:600">${t.repName}</td>
+      <td style="font-weight:600">${t.repName}${agencyBadge(t)}</td>
       <td class="center">${t.dep}</td><td class="center">${t.period}</td><td class="center">${t.pax}명</td>
       <td class="st-accom">${t.accom||'-'}</td>
       <td style="font-size:11px;color:var(--text3)">${t.prodName||'-'}</td>
@@ -5922,7 +6123,6 @@ let stLastIdx=null, stVisibleKeys=[];      // Shift 범위 선택용
 let stLocalFilter=new Set();               // 현지정산 숙소 필터 (빈=전체)
 let settleTab='local';
 let stStatusSel=new Set(['확정','정산']);   // 구분 칩 (기본: 확정·정산)
-let stAgencySel=new Set(['일반']);          // 거래유형 칩 (기본: 일반만 — 섞어 켜되 표에서 배지로 구분)
 let stOriginSel=new Set();                  // 출발지 다중선택 (빈=전체)
 let mclickData=null, mclickFileName='';
 
@@ -5933,17 +6133,11 @@ function stWon(v){ return v==null?'-':'₩'+Math.round(v).toLocaleString(); }
 function stYen(v){ return v==null?'-':'¥'+Math.round(v).toLocaleString(); }
 function stStatusOk(t){
   if(!stStatusSel.has(t.status)) return false;
-  // 거래유형: 일반/여행사 분리 (B2B는 기본 제외)
-  const kind = t.isAgency ? '여행사' : '일반';
-  if(stAgencySel.size && !stAgencySel.has(kind)) return false;
+  if(!agencyOk(t)) return false;   // 전역 거래유형 필터
   return true;
 }
 function stToggleStatus(s){
   if(stStatusSel.has(s)) stStatusSel.delete(s); else stStatusSel.add(s);
-  renderSettleAll();
-}
-function stToggleAgency(k){
-  if(stAgencySel.has(k)) stAgencySel.delete(k); else stAgencySel.add(k);
   renderSettleAll();
 }
 function stToggleOrigin(o){
@@ -6039,8 +6233,7 @@ function renderSettleStatusChips(){
 }
 function renderSettleAgencyChips(){
   const box=document.getElementById('st-agency-chips'); if(!box) return;
-  const opts=[['일반','일반'],['여행사','여행사 (B2B)']];
-  box.innerHTML=opts.map(([k,lbl])=>`<button class="st-chip ${k==='여행사'?'c-agency':''} ${stAgencySel.has(k)?'active':''}" onclick="stToggleAgency('${k}')">${lbl}</button>`).join('');
+  box.innerHTML=agencyChipsHTML();
 }
 function renderSettleOriginChips(){
   const box=document.getElementById('st-origin-chips'); if(!box) return;
