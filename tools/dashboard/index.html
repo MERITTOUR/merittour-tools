@@ -604,6 +604,8 @@ tr:hover td{background:#EEF3FA}
 .st-tab.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(26,35,50,.12)}
 .st-chip{padding:5px 12px;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text3);cursor:pointer}
 .st-fl-label{font-size:11px;color:var(--text3);font-weight:600;white-space:nowrap}
+.st-fl-grp{display:inline-flex;align-items:center;gap:6px}
+.st-fl-chips{display:flex;gap:5px;flex-wrap:wrap}
 .st-search-wrap{position:relative;display:inline-flex;align-items:center}
 .st-search-ico{position:absolute;left:9px;color:var(--text3);pointer-events:none}
 .st-search-input{font-size:12px;padding:7px 10px 7px 30px;border:1.5px solid var(--border2);border-radius:8px;width:210px;background:#fff;color:var(--text);transition:border-color .15s,box-shadow .15s}
@@ -678,9 +680,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="nav-tab" id="nav-verify" onclick="gotoSection('verify')"><div class="nav-dot"></div> ④ 요금 관리</div>
   <div class="nav-tab" id="nav-booking" onclick="gotoSection('booking')"><div class="nav-dot"></div> ⑤ 예약 관리</div>
   <div class="nav-tab" id="nav-air" onclick="gotoSection('air')"><div class="nav-dot"></div> ⑥ 항공 정보</div>
-  <div class="nav-tab" id="nav-doc" onclick="gotoSection('doc')"><div class="nav-dot"></div> ⑦ 확정서 생성</div>
-  <div class="nav-tab" id="nav-settle" onclick="gotoSection('settle')"><div class="nav-dot"></div> ⑧ 정산</div>
   <div class="nav-sep" title="준비 중 — 추후 활성화"></div>
+  <div class="nav-tab locked" id="nav-doc" onclick="gotoSection('doc')"><div class="nav-dot"></div> 확정서 생성 <span class="nav-soon">준비중</span></div>
+  <div class="nav-tab locked" id="nav-settle" onclick="gotoSection('settle')"><div class="nav-dot"></div> 정산 <span class="nav-soon">준비중</span></div>
   <div class="nav-tab locked" id="nav-insurance" onclick="gotoSection('insurance')"><div class="nav-dot"></div> 보험 정보 <span class="nav-soon">준비중</span></div>
   <div class="nav-tab locked" id="nav-transfer" onclick="gotoSection('transfer')"><div class="nav-dot"></div> 송영 정보 <span class="nav-soon">준비중</span></div>
   <div class="nav-tab locked" id="nav-accom" onclick="gotoSection('accom')"><div class="nav-dot"></div> 숙소 정보 <span class="nav-soon">준비중</span></div>
@@ -831,7 +833,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <div class="section" id="sec-insurance">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑥ 보험 정보</div><div class="card-sub">DB손해보험 여행자보험 — 전원 기본 가입(필수). 가입 정보는 생년월일·성별만 필요 · 제외 요청자만 개인 단위로 제외</div></div>
+      <div><div class="card-title">보험 정보</div><div class="card-sub">DB손해보험 여행자보험 — 전원 기본 가입(필수). 가입 정보는 생년월일·성별만 필요 · 제외 요청자만 개인 단위로 제외</div></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn-sm" id="ins-pax-toggle" onclick="toggleAllPax(this,['ins'])">명단 전체 펼치기</button>
         <span class="hd-sep"></span>
@@ -855,7 +857,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <div class="section" id="sec-air">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑦ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 출국 1주일 전 안내</div></div>
+      <div><div class="card-title">⑥ 항공 정보</div><div class="card-sub">대표자 포함 일행 전원 · PNR(콤마 전부) · 출국 1주일 전 안내</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-sm" id="air-pax-toggle" onclick="toggleAllPax(this,['air'])">명단 전체 펼치기</button>
         <button class="btn-sm" onclick="openDdayModal()">📅 출국 임박</button>
@@ -891,7 +893,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <!-- ════════ ⑧ 송영 / ⑨ 숙소 / ⑩ 골프 / ⑪ 식사 ════════ -->
 <div class="section" id="sec-transfer">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑧ 송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div>
+    <div class="card-head"><div><div class="card-title">송영 정보</div><div class="card-sub">팀별 입국/출국편·시간·출발지·숙소 — 출국 송영 / 귀국 송영 분리</div></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sm" id="transfer-pax-toggle" onclick="toggleAllPax(this,['transferOut','transferRet'])">명단 전체 펼치기</button>
       </div>
@@ -909,7 +911,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 </div>
 <div class="section" id="sec-accom">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑨ 숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div>
+    <div class="card-head"><div><div class="card-title">숙소 정보</div><div class="card-sub">숙소별 팀·인원·룸타입·기간 집계</div></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sm" id="accom-pax-toggle" onclick="toggleAllPax(this,['accom'])">명단 전체 펼치기</button>
       </div>
@@ -920,7 +922,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 </div>
 <div class="section" id="sec-golf">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑩ 골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div>
+    <div class="card-head"><div><div class="card-title">골프 정보</div><div class="card-sub">팀별 골프장·라운딩 일정 (상품명 기준)</div></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sm" id="golf-pax-toggle" onclick="toggleAllPax(this,['golf'])">명단 전체 펼치기</button>
       </div>
@@ -931,7 +933,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 </div>
 <div class="section" id="sec-dinner">
   <div class="card">
-    <div class="card-head"><div><div class="card-title">⑪ 식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div>
+    <div class="card-head"><div><div class="card-title">식사 정보</div><div class="card-sub">팀별 식사 인원·기간 집계</div></div>
       <div style="display:flex;gap:8px">
         <button class="btn-sm" id="dinner-pax-toggle" onclick="toggleAllPax(this,['dinner'])">명단 전체 펼치기</button>
       </div>
@@ -1219,7 +1221,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="card" style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--text1)">⑦ 확정서 생성</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text1)">확정서 생성</div>
         <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택해 v7 확정서 HTML을 생성합니다. 개별 다운로드 또는 선택 팀 ZIP으로 받아 GitHub Pages에 올립니다.</div>
       </div>
       <div class="muted" style="font-size:11px">업로드한 2종 파일(예약리스트·일행별예약)을 사용합니다</div>
@@ -1274,7 +1276,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 <div class="section" id="sec-settle">
   <div class="card">
     <div class="card-head">
-      <div><div class="card-title">⑧ 정산</div><div class="card-sub">현지정산(¥, 사이젠 대조) · 수익정산(₩, 엠클릭 행사별정산 대체) · 개인별 명세 · 엠클릭 대조</div></div>
+      <div><div class="card-title">정산</div><div class="card-sub">현지정산(¥) + 수익(체재마진·항공수익·총수익) 통합 · 구분/거래유형/출발지 필터 · 항공원가 입력</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <span style="font-size:11px;color:var(--text3)">구분:</span>
         <div style="display:flex;gap:5px;flex-wrap:wrap" id="st-status-chips"></div>
@@ -1299,21 +1301,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <b>총수익(₩)</b> = 체재마진 × 출국월 환율 + 항공수익. 항공조인·AIR별도·구마모토 시내는 항공 0 처리됩니다.
         항공원가는 행마다 직접 입력하거나, 「항공원가 입력틀」을 내보내 채운 뒤 「항공원가 불러오기」로 일괄 반영할 수 있습니다.
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0" id="st-local-filterbar">
+      <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;margin:10px 0" id="st-local-filterbar">
         <div class="st-search-wrap">
           <svg class="st-search-ico" viewBox="0 0 24 24" width="15" height="15"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           <input id="st-l-search" class="st-search-input" placeholder="행사번호 · 대표자 · 상품명 검색" oninput="stLocalSearchDeb()">
         </div>
-        <span class="hd-sep"></span>
-        <span class="st-fl-label">거래유형:</span>
-        <div style="display:flex;gap:5px;flex-wrap:wrap" id="st-agency-chips"></div>
-        <span class="hd-sep"></span>
-        <span class="st-fl-label">출발지:</span>
-        <div style="display:flex;gap:5px;flex-wrap:wrap" id="st-origin-chips"></div>
-        <span class="hd-sep"></span>
-        <span class="st-fl-label">숙소:</span>
-        <div style="display:flex;gap:5px;flex-wrap:wrap" id="st-local-filter"></div>
-        <span class="hd-sep"></span>
+        <div class="st-fl-grp"><span class="st-fl-label">거래유형</span><div class="st-fl-chips" id="st-agency-chips"></div></div>
+        <div class="st-fl-grp"><span class="st-fl-label">출발지</span><div class="st-fl-chips" id="st-origin-chips"></div></div>
+        <div class="st-fl-grp"><span class="st-fl-label">숙소</span><div class="st-fl-chips" id="st-local-filter"></div></div>
         <button class="st-chip" id="st-l-nocost" onclick="this.classList.toggle('active');renderSettleLocal()">항공원가 미입력만</button>
       </div>
       <div class="sum-grid" id="st-local-summary"></div>
@@ -1845,7 +1840,7 @@ function analyze(){
   cancelledTeams.forEach((t,i)=>t.no=i+1);
 
   // 탭 해제
-  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit'].forEach(s=>
+  ['booking','insurance','air','transfer','accom','golf','dinner','verify','audit','doc','settle'].forEach(s=>
     document.getElementById('nav-'+s).classList.remove('locked'));
 
   // 세션 배지
