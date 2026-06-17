@@ -869,7 +869,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="bk-filterbar">
       <div class="bk-search-row">
         <span class="bk-search-ico">🔍</span>
-        <input type="text" id="air-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 영문명 · PNR · 항공편 · 항공사 · 출발지(인천·ICN) 검색  ( / 키로 포커스 )" oninput="renderAir()">
+        <input type="text" id="air-search" class="bk-search-input" placeholder="대표자 · 행사번호 · 상품명 · 영문명 · PNR · 항공편 · 항공사 · 출발지(인천·ICN) 검색  ( / 키로 포커스 )" oninput="renderAir()">
         <button class="bk-clear" id="air-clear" onclick="airClearSearch()" title="검색 비우기 (Esc)" style="display:none">×</button>
       </div>
       <div class="bk-chip-row">
@@ -2283,7 +2283,7 @@ function airRenderChips(){
     `<span class="bk-chip ${airFilter==='d7'?'on':''}" onclick="filterAir('${airFilter==='d7'?'all':'d7'}')">D-7 이내</span>`+
     originChips;
 }
-const AIR_HDR=['☑','No','구분','행사번호','대표고객','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
+const AIR_HDR=['☑','No','구분','행사번호','대표고객','상품명','출발지','항공사','출발편','귀국편','출발일자','도착일자','사전좌석','일행 명단 (영문·생년월일·여권·만료)','PNR','출국 안내'];
 function renderAir(){
   const thead='<tr>'+
     '<th class="center"><input type="checkbox" class="chk" onchange="toggleAllSel(\'air\',this.checked)"></th>'+
@@ -2315,7 +2315,7 @@ function renderAir(){
     if(airQuick.has('flightmiss') && !airFlightMissing(t)) return false;
     if(airQuick.has('airmismatch') && !airMismatch(t)) return false;
     if(q){
-      const hay=[t.repName,t.eventNo,originSearchTokens(airOriginOf(t)),t.flight,
+      const hay=[t.repName,t.eventNo,t.prodName,originSearchTokens(airOriginOf(t)),t.flight,
                  (t.airlines||[]).map(a=>`${a} ${airlineLabel(a)} ${airlineCode(a)}`).join(' '),
                  t.apisDepFlight,t.apisRetFlight,(t.pnrList||[]).join(' '),
                  ...t.pax_list.map(p=>`${p.name} ${p.engFull}`)].map(x=>(x||'').toString().toLowerCase()).join(' ');
@@ -2362,6 +2362,7 @@ function renderAir(){
       <td><span class="tag tag-status-${t.status}">${t.status}</span></td>
       <td class="center" style="font-family:var(--mono)">${t.eventNo}</td>
       <td><b>${t.repName}</b>${agencyBadge(t)}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:180px;white-space:normal;line-height:1.35">${t.prodName||'<span class="muted">-</span>'}</td>
       <td class="center">${t.apisOrigin||t.origin}</td>
       <td style="font-size:11px">${airlineHtml}</td>
       <td class="center" style="font-family:var(--mono);font-size:11px">${t.apisDepFlight||'<span class="muted">-</span>'}</td>
@@ -2385,12 +2386,13 @@ function renderAir(){
           return `<tr class="air-pax-row pax-hidden" data-pax="${key}">
             <td></td><td></td><td></td><td></td>
             <td class="pax-name">${p.isRep?'★ ':'└ '}${p.name}</td>
+            <td></td>
             <td colspan="2" style="font-size:11px">${p.engFull||'<span class="muted">영문명 없음</span>'}</td>
             <td class="center" style="font-size:11px">${p.gender||''}</td>
             <td class="center" style="font-family:var(--mono);font-size:11px">${bd}</td>
             <td colspan="2" style="font-family:var(--mono);font-size:11px">${pass} <span class="muted">${exp}</span> ${cntry}</td>
             <td class="center">${seat}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
           </tr>`;
         }).join('')
       : `<tr class="air-pax-row pax-hidden" data-pax="${key}"><td colspan="4"></td><td colspan="12" class="muted">명단 없음 (일행별예약 미연동)</td></tr>`;
