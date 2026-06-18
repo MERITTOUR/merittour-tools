@@ -1223,7 +1223,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:16px;font-weight:700;color:var(--text1)">확정서 생성</div>
-        <div class="muted" style="font-size:12px;margin-top:3px">팀을 선택해 v7 확정서 HTML을 생성합니다. 개별 다운로드 또는 선택 팀 ZIP으로 받아 GitHub Pages에 올립니다.</div>
+        <div class="muted" style="font-size:12px;margin-top:3px">행마다 [미리보기]를 누르면 JPG 미리보기·이미지 복사·링크 생성 창이 열립니다. 보낼 팀을 체크해 알림톡으로 일괄 발송할 수 있습니다.</div>
       </div>
       <div class="muted" style="font-size:11px">업로드한 2종 파일(예약리스트·일행별예약)을 사용합니다</div>
     </div>
@@ -1250,8 +1250,20 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   </div>
 
   <div class="card" style="margin-bottom:14px">
+    <details>
+      <summary style="font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">🔗 연동 설정 (Supabase 링크 · 알림톡) <span class="muted" style="font-weight:400;font-size:11px">— 한 번 입력하면 이 PC에 저장됩니다. 미설정 시 링크는 비활성, 알림톡은 알리고 엑셀 내보내기로 대체됩니다</span></summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <input class="rm-input text" id="doc-cfg-suburl" placeholder="Supabase URL (https://xxx.supabase.co)" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseUrl',this.value)">
+        <input class="rm-input text" id="doc-cfg-subkey" placeholder="Supabase anon key" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseKey',this.value)">
+        <input class="rm-input text" id="doc-cfg-bucket" placeholder="Storage 버킷명 (기본 confirm-docs)" style="width:200px;text-align:left" onchange="docSaveCfg('bucket',this.value)">
+        <input class="rm-input text" id="doc-cfg-aligo" placeholder="알림톡 Edge Function URL (선택)" style="width:300px;text-align:left" onchange="docSaveCfg('aligoEndpoint',this.value)">
+      </div>
+    </details>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 팀을 누르면 아래에 미리보기가 생성됩니다</span></div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 헤더를 누르면 정렬, 행의 [미리보기]로 JPG·링크 창, 체크 후 일괄 발송</span></div>
       <div style="display:flex;gap:8px;align-items:center">
         <span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span>
         <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
@@ -1262,15 +1274,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
   </div>
 
-  <div class="card" id="doc-preview-card" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">미리보기 <span class="muted" id="doc-preview-info" style="font-weight:400;font-size:11px"></span></div>
-      <button class="btn-primary" style="padding:9px 20px" onclick="docDownloadOne()">⬇ 이 팀 HTML 다운로드</button>
-    </div>
-    <div style="background:var(--surface2);padding:12px;border-radius:10px">
-      <iframe id="doc-render-frame" style="width:100%;height:640px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
-    </div>
-  </div>
+  <!-- 오프스크린 렌더용 iframe — 확정서를 JPG로 변환할 때만 사용(화면 비표시) -->
+  <iframe id="doc-render-frame" aria-hidden="true" tabindex="-1" style="position:fixed;left:-10000px;top:0;width:760px;height:1400px;border:0;background:#fff"></iframe>
 </div>
 
 <!-- ════════ ⑧ 정산 ════════ -->
@@ -5870,7 +5875,22 @@ function PAGE_TEMPLATE(d){
    ⑦ 확정서 생성 — v7 인터랙티브 HTML (견적서/일정표/확정서)
    대시보드 teams[] 데이터를 그대로 사용. 마스터 매칭 + v7 디자인.
 ════════════════════════════════════════════════════════════ */
-let _docTeam=null, _docAcct={};
+let _docAcct={};
+let _docModalSeq=null, _docModalCanvas=null, _docModalHtml='';
+let _docLinks={};                 // eventSeq → 공개 공유 URL
+let _docSort={key:'dep',dir:1};   // 팀 목록 정렬 상태
+
+/* 연동 설정 — 채워지면 Supabase 링크/알림톡 자동 활성화. localStorage(mt_doc_cfg)에 저장 */
+let DOC_CFG={ supabaseUrl:'', supabaseKey:'', bucket:'confirm-docs', aligoEndpoint:'' };
+try{ Object.assign(DOC_CFG, JSON.parse(localStorage.getItem('mt_doc_cfg')||'{}')); }catch(e){}
+function docCfgReady(){ return !!(DOC_CFG.supabaseUrl && DOC_CFG.supabaseKey); }
+function docSaveCfg(k,v){ DOC_CFG[k]=String(v||'').trim(); try{ localStorage.setItem('mt_doc_cfg',JSON.stringify(DOC_CFG)); }catch(e){} }
+function docLoadCfg(){
+  [['supabaseUrl','doc-cfg-suburl'],['supabaseKey','doc-cfg-subkey'],['bucket','doc-cfg-bucket'],['aligoEndpoint','doc-cfg-aligo']].forEach(([k,id])=>{
+    const el=document.getElementById(id); if(el) el.value=DOC_CFG[k]||'';
+  });
+}
+
 const DOC_KIND_LABEL={quote:'견 적 서', itinerary:'일 정 표', confirm:'확 정 서'};
 const DOC_KIND_FILE={quote:'견적서', itinerary:'일정표', confirm:'확정서'};
 const DOC_DEPOSIT_PP=300000;
@@ -5891,7 +5911,7 @@ function docLoadAcct(){
 function docSaveAcct(k,v){
   _docAcct[k]=String(v||'').trim();
   try{ localStorage.setItem('mt_doc_acct',JSON.stringify(_docAcct)); }catch(e){}
-  if(_docTeam) docGenerate();
+  if(_docModalSeq) docOpenModal(_docModalSeq);
 }
 
 /* 문서 종류 토글 */
@@ -5910,12 +5930,17 @@ function docPickKind(kind){
     confirm:'확정서: 요금(예약금·잔금)·항공·일정·안내사항을 모두 포함합니다.'
   };
   const el=document.getElementById('doc-kind-desc'); if(el) el.textContent=desc[kind]||'';
-  if(_docTeam) docGenerate();
+  renderDocTeams();
+  if(_docModalSeq) docOpenModal(_docModalSeq);
 }
 
 const docSearchDeb=(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(renderDocTeams,200); }; })();
 
-/* 팀 목록 (체크박스 = ZIP 일괄용) */
+/* 팀 목록 (체크박스 = 일괄 발송/ZIP 대상, 행의 [미리보기] = 모달) */
+function docSetSort(key){
+  if(_docSort.key===key) _docSort.dir*=-1; else { _docSort.key=key; _docSort.dir=1; }
+  renderDocTeams();
+}
 function renderDocTeams(){
   const agBox=document.getElementById('doc-chip-agency'); if(agBox) agBox.innerHTML=agencyChipsHTML();
   const box=document.getElementById('doc-team-list'); if(!box) return;
@@ -5929,29 +5954,55 @@ function renderDocTeams(){
     if(!agencyOk(t)) return false;   // 전역 거래유형 필터
     if(!q) return true;
     return [t.eventNo,t.repName,t.prodName,t.accom].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
-  }).sort((a,b)=>(a.dep||'').localeCompare(b.dep||''));
+  });
+  const sk=_docSort.key, dir=_docSort.dir;
+  list.sort((a,b)=>{
+    if(sk==='pax') return ((a.pax||0)-(b.pax||0))*dir;
+    const pick={status:'status',rep:'repName',eventNo:'eventNo',dep:'dep'}[sk]||'dep';
+    return String(a[pick]||'').localeCompare(String(b[pick]||''),'ko')*dir;
+  });
   const stColor={'확정':'#059669','정산':'#2E5A88'};
+  const arrow=k=>_docSort.key===k?(_docSort.dir===1?' ▲':' ▼'):'';
   box.className=''; box.style.padding='0';
-  box.innerHTML = list.length ? `<div style="display:flex;gap:8px;margin-bottom:8px">
+  box.innerHTML = list.length ? `<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
     <button class="btn-sm" onclick="docSelectAll(true)">전체 선택</button>
     <button class="btn-sm" onclick="docSelectAll(false)">전체 해제</button>
     <span class="muted" id="doc-sel-count" style="font-size:12px;align-self:center">0개 선택</span>
-    <button class="btn-primary" id="doc-zip-btn" style="margin-left:auto;padding:7px 16px;font-size:12px" onclick="docGenerateZip()" disabled>선택 팀 ZIP 생성</button>
+    <span class="muted" style="font-size:11px;align-self:center">· 문서 <b>${DOC_KIND_FILE[_docKind]}</b></span>
+    <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn-sm" id="doc-link-btn" onclick="docBulkLink()" disabled>🔗 선택 링크 생성</button>
+      <button class="btn-primary" id="doc-send-btn" style="padding:7px 16px;font-size:12px" onclick="docBulkSend()" disabled>📨 알림톡 일괄 발송</button>
+      <button class="btn-sm" id="doc-zip-btn" onclick="docGenerateZip()" disabled>ZIP</button>
+    </span>
   </div>
-  <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table style="font-size:12px">
-    <thead><tr><th style="width:30px"></th><th></th><th>구분</th><th>행사번호</th><th>대표고객</th><th>출발일</th><th>기간</th><th>인원</th><th>숙소</th><th>상품명</th><th>매칭</th></tr></thead><tbody>`+
+  <div class="tbl-wrap" style="max-height:340px;overflow-y:auto"><table style="font-size:12px">
+    <thead><tr><th style="width:30px"></th>
+      <th class="sortable" onclick="docSetSort('status')">구분${arrow('status')}</th>
+      <th class="sortable" onclick="docSetSort('eventNo')">행사번호${arrow('eventNo')}</th>
+      <th class="sortable" onclick="docSetSort('rep')">대표고객${arrow('rep')}</th>
+      <th>연락처</th>
+      <th class="sortable" onclick="docSetSort('dep')">출발일${arrow('dep')}</th>
+      <th>기간</th><th class="sortable" onclick="docSetSort('pax')">인원${arrow('pax')}</th>
+      <th>숙소</th><th>상품명</th><th>매칭</th><th>링크</th><th></th></tr></thead><tbody>`+
     list.map(t=>{
       const matched=!!matchMaster(t.prodName);
-      return `<tr style="${_docTeam===t.eventSeq?'background:rgba(46,90,136,.08)':''}">
+      const phone=t.repPhone||'';
+      const link=_docLinks[t.eventSeq];
+      const linkCell = link
+        ? `<a href="${link}" target="_blank" style="color:var(--accent)">열기</a> · <span style="cursor:pointer;color:var(--text3)" onclick="docCopyLink('${t.eventSeq}')">복사</span>`
+        : '<span class="muted">-</span>';
+      return `<tr>
       <td class="center"><input type="checkbox" class="doc-chk" data-seq="${t.eventSeq}" ${matched?'':'disabled'} onclick="docUpdateCount()"></td>
-      <td class="center"><input type="radio" name="doc-team" ${_docTeam===t.eventSeq?'checked':''} onclick="docPickTeam('${t.eventSeq}')"></td>
       <td class="center"><span style="font-weight:700;color:${stColor[t.status]||'var(--text3)'}">${t.status}</span></td>
-      <td class="center" style="font-family:var(--mono);font-size:11px;cursor:pointer" onclick="docPickTeam('${t.eventSeq}')">${t.eventNo}</td>
+      <td class="center" style="font-family:var(--mono);font-size:11px">${t.eventNo}</td>
       <td style="font-weight:600">${t.repName}${agencyBadge(t)}</td>
+      <td class="center" style="font-size:11px;color:${phone?'var(--text2)':'#DC2626'}">${phone||'없음'}</td>
       <td class="center">${t.dep}</td><td class="center">${t.period}</td><td class="center">${t.pax}명</td>
       <td class="st-accom">${t.accom||'-'}</td>
       <td style="font-size:11px;color:var(--text3)">${t.prodName||'-'}</td>
-      <td class="center">${matched?'<span style="color:#059669;font-weight:700">●</span>':'<span style="color:#DC2626">미매칭</span>'}</td></tr>`;
+      <td class="center">${matched?'<span style="color:#059669;font-weight:700">●</span>':'<span style="color:#DC2626">미매칭</span>'}</td>
+      <td class="center" style="font-size:11px">${linkCell}</td>
+      <td class="center"><button class="btn-sm" ${matched?'':'disabled'} onclick="docOpenModal('${t.eventSeq}')">미리보기</button></td></tr>`;
     }).join('')+
     '</tbody></table></div>'
     : '<div class="muted" style="font-size:12px;padding:16px;text-align:center">검색 결과가 없습니다.</div>';
@@ -5964,9 +6015,8 @@ function docSelectAll(on){
 function docUpdateCount(){
   const n=document.querySelectorAll('.doc-chk:checked').length;
   const c=document.getElementById('doc-sel-count'); if(c) c.textContent=n+'개 선택';
-  const b=document.getElementById('doc-zip-btn'); if(b) b.disabled=n===0;
+  ['doc-zip-btn','doc-link-btn','doc-send-btn'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=n===0; });
 }
-function docPickTeam(seq){ _docTeam=seq; renderDocTeams(); docGenerate(); }
 
 /* teams[] → v7 데이터 어댑터 */
 function docBuildHtmlV7(t, kind){
@@ -6069,29 +6119,173 @@ function docBuildHtmlV7(t, kind){
 }
 function docEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* 미리보기 생성 */
-function docGenerate(){
-  const t=teams.find(x=>x.eventSeq===_docTeam);
-  if(!t) return;
-  const card=document.getElementById('doc-preview-card');
-  card.style.display='';
-  document.getElementById('doc-preview-info').textContent=`— ${DOC_KIND_FILE[_docKind]} · ${t.repName} (${t.eventNo})`;
-  const html=docBuildHtmlV7(t,_docKind);
+/* ── 확정서 HTML → 오프스크린 iframe 렌더 → html2canvas → 캔버스 ── */
+function docRenderToCanvas(html, cb){
   const ifr=document.getElementById('doc-render-frame');
-  if(ifr) ifr.srcdoc=html;
+  if(!ifr){ cb(null,'렌더 프레임이 없습니다'); return; }
+  ifr.onload=()=>{
+    const doc=ifr.contentDocument;
+    const target=doc&&(doc.querySelector('.doc')||doc.body);
+    if(!target){ cb(null,'문서 본문을 찾지 못했습니다'); return; }
+    const go=()=>html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:760,windowWidth:760,scrollX:0,scrollY:0})
+      .then(c=>cb(c,null)).catch(e=>cb(null,e.message));
+    if(doc.fonts&&doc.fonts.ready){ doc.fonts.ready.then(()=>setTimeout(go,150)); }
+    else setTimeout(go,350);
+  };
+  ifr.srcdoc=html;
 }
 
-/* 개별 HTML 다운로드 */
-function docDownloadOne(){
-  const t=teams.find(x=>x.eventSeq===_docTeam);
-  if(!t){ alert('먼저 팀을 선택해주세요.'); return; }
-  const html=docBuildHtmlV7(t,_docKind);
+/* 행별 미리보기 모달 — JPG 렌더 + 이미지 복사 + 링크 */
+function docOpenModal(seq){
+  const t=teams.find(x=>x.eventSeq===seq); if(!t) return;
+  if(!matchMaster(t.prodName)){ alert('상품 마스터에 매칭되지 않는 팀입니다.'); return; }
+  _docModalSeq=seq; _docModalCanvas=null;
+  document.getElementById('doc-modal-title').textContent=`${DOC_KIND_FILE[_docKind]} · ${t.repName} (${t.eventNo})`;
+  const wrap=document.getElementById('doc-modal-imgwrap');
+  wrap.innerHTML='<div class="muted" style="padding:40px;text-align:center">미리보기 이미지 생성 중…</div>';
+  docRenderModalLink(seq);
+  document.getElementById('doc-modal-bg').classList.add('open');
+  _docModalHtml=docBuildHtmlV7(t,_docKind);
+  docRenderToCanvas(_docModalHtml,(canvas,err)=>{
+    if(_docModalSeq!==seq) return;                 // 그 사이 다른 팀 열림
+    if(err||!canvas){ wrap.innerHTML='<div style="padding:40px;text-align:center;color:#DC2626">이미지 생성 실패: '+(err||'')+'</div>'; return; }
+    _docModalCanvas=canvas;
+    const im=document.createElement('img');
+    im.src=canvas.toDataURL('image/jpeg',0.92);
+    im.style.cssText='width:100%;border:1px solid var(--line);border-radius:8px;display:block';
+    wrap.innerHTML=''; wrap.appendChild(im);
+  });
+}
+function docRenderModalLink(seq){
+  const box=document.getElementById('doc-modal-link'); if(!box) return;
+  const u=_docLinks[seq];
+  box.innerHTML=u
+    ? `<span style="color:var(--text3)">링크 </span><a href="${u}" target="_blank">${u}</a> <button class="btn-sm" onclick="docCopyLink('${seq}')">복사</button>`
+    : '<span class="muted">아직 링크 없음 — [링크 생성]을 누르면 공유 URL이 만들어집니다</span>';
+}
+
+/* 이미지 복사 (클립보드 → 카톡·메일에 Ctrl+V) */
+async function docCopyImage(){
+  if(!_docModalCanvas){ alert('이미지가 아직 준비되지 않았습니다.'); return; }
+  try{
+    const blob=await new Promise(r=>_docModalCanvas.toBlob(r,'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    showToast('이미지가 복사되었습니다 · 카톡·메일에 Ctrl+V로 붙여넣으세요');
+  }catch(e){ alert('이미지 복사가 지원되지 않는 환경입니다.\nJPG 다운로드를 이용해주세요.\n('+e.message+')'); }
+}
+function docDownloadJpg(){
+  if(!_docModalCanvas){ alert('이미지가 아직 준비되지 않았습니다.'); return; }
+  const t=teams.find(x=>x.eventSeq===_docModalSeq); if(!t) return;
+  const a=document.createElement('a');
+  a.download=`${t.eventNo}_${_docKind}.jpg`;
+  a.href=_docModalCanvas.toDataURL('image/jpeg',0.92); a.click();
+}
+function docModalDownloadHtml(){
+  const t=teams.find(x=>x.eventSeq===_docModalSeq); if(!t) return;
+  const html=_docModalHtml||docBuildHtmlV7(t,_docKind);
   const blob=new Blob([html],{type:'text/html'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`${t.eventNo}.html`; a.click();
 }
 
-/* 선택 팀 ZIP 일괄 */
+/* ── Supabase Storage 업로드 → 공개 링크 ── */
+async function docUploadSupabase(t, html){
+  if(!docCfgReady()) throw new Error('Supabase 연동 설정이 비어 있습니다 ([연동 설정]에서 URL·Key 입력)');
+  const base=DOC_CFG.supabaseUrl.replace(/\/$/,'');
+  const bucket=DOC_CFG.bucket||'confirm-docs';
+  const path=`${_docKind}/${encodeURIComponent(t.eventNo)}.html`;
+  const res=await fetch(`${base}/storage/v1/object/${bucket}/${path}`,{
+    method:'POST',
+    headers:{ 'Authorization':'Bearer '+DOC_CFG.supabaseKey, 'apikey':DOC_CFG.supabaseKey,
+              'Content-Type':'text/html; charset=utf-8', 'x-upsert':'true' },
+    body:html
+  });
+  if(!res.ok) throw new Error('업로드 실패('+res.status+') '+(await res.text()).slice(0,140));
+  const pub=`${base}/storage/v1/object/public/${bucket}/${path}`;
+  _docLinks[t.eventSeq]=pub;
+  return pub;
+}
+async function docMakeLink(){
+  const t=teams.find(x=>x.eventSeq===_docModalSeq); if(!t) return;
+  const box=document.getElementById('doc-modal-link');
+  box.innerHTML='<span class="muted">링크 생성 중…</span>';
+  try{
+    await docUploadSupabase(t, _docModalHtml||docBuildHtmlV7(t,_docKind));
+    docRenderModalLink(t.eventSeq);
+    renderDocTeams();
+  }catch(e){ box.innerHTML='<span style="color:#DC2626">'+e.message+'</span>'; }
+}
+function docCopyLink(seq){
+  const u=_docLinks[seq]; if(!u) return;
+  navigator.clipboard.writeText(u).then(()=>showToast('링크가 복사되었습니다')).catch(()=>{});
+}
+
+/* ── 선택 팀 일괄 링크 생성 ── */
+async function docBulkLink(){
+  const checks=[...document.querySelectorAll('.doc-chk:checked')];
+  if(!checks.length){ alert('팀을 선택해주세요.'); return; }
+  if(!docCfgReady()){ alert('Supabase 연동 설정이 필요합니다.\n[연동 설정]에서 URL·anon key를 입력하세요.'); return; }
+  showToast('링크 생성 중…');
+  let ok=0, fail=0;
+  for(const c of checks){
+    const t=teams.find(x=>x.eventSeq===c.dataset.seq); if(!t) continue;
+    try{ await docUploadSupabase(t, docBuildHtmlV7(t,_docKind)); ok++; }catch(e){ fail++; }
+  }
+  renderDocTeams();
+  showToast(`링크 생성 완료 · 성공 ${ok}${fail?(' / 실패 '+fail):''}`);
+}
+
+/* ── 선택 팀 알림톡 일괄 발송 (Edge Function) / 미설정 시 알리고 엑셀 ── */
+async function docBulkSend(){
+  const checks=[...document.querySelectorAll('.doc-chk:checked')];
+  if(!checks.length){ alert('팀을 선택해주세요.'); return; }
+  const sel=checks.map(c=>teams.find(x=>x.eventSeq===c.dataset.seq)).filter(Boolean);
+  // 링크가 없는 팀은 가능하면 먼저 업로드
+  const missing=sel.filter(t=>!_docLinks[t.eventSeq]);
+  if(missing.length && docCfgReady()){
+    showToast('링크 생성 중…');
+    for(const t of missing){ try{ await docUploadSupabase(t, docBuildHtmlV7(t,_docKind)); }catch(e){} }
+    renderDocTeams();
+  }
+  const recipients=sel.map(t=>({
+    phone:String(t.repPhone||'').replace(/[^0-9]/g,''),
+    name:t.repName||'', eventNo:t.eventNo||'', dep:t.dep||'',
+    prod:t.prodName||'', link:_docLinks[t.eventSeq]||''
+  }));
+  const noPhone=recipients.filter(r=>!r.phone).length;
+  const noLink=recipients.filter(r=>!r.link).length;
+
+  if(DOC_CFG.aligoEndpoint){
+    const msg=`${recipients.length}팀에게 ${DOC_KIND_FILE[_docKind]} 알림톡을 발송합니다.\n`+
+      (noPhone?`· 연락처 없는 팀 ${noPhone}건은 제외됩니다\n`:'')+
+      (noLink?`· 링크 없는 팀 ${noLink}건\n`:'')+`진행할까요?`;
+    if(!confirm(msg)) return;
+    showToast('알림톡 발송 요청 중…');
+    try{
+      const res=await fetch(DOC_CFG.aligoEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:_docKind, recipients:recipients.filter(r=>r.phone)})});
+      const j=await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(j.error||('HTTP '+res.status));
+      showToast(`알림톡 발송 요청 완료 · ${j.sent!=null?j.sent:recipients.filter(r=>r.phone).length}건`);
+    }catch(e){ alert('발송 실패: '+e.message); }
+  } else {
+    docExportAligoXlsx(recipients);
+    alert('알림톡 Edge Function이 아직 설정되지 않아\n알리고 일괄발송 엑셀로 내보냈습니다. 알리고 콘솔에 업로드해 발송하세요.'+
+      (noPhone?`\n\n· 연락처 없는 팀 ${noPhone}건은 빈칸으로 출력됩니다.`:''));
+  }
+}
+function docExportAligoXlsx(recipients){
+  const HEADER=['메시지 수신 휴대폰 번호','#{고객명}','#{행사번호}','#{출발일}','#{상품명}','#{링크}'];
+  const rows=[HEADER];
+  recipients.forEach(r=>rows.push([r.phone, r.name, r.eventNo, r.dep, r.prod, r.link]));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:18},{wch:10},{wch:12},{wch:12},{wch:30},{wch:48}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  const ymd=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb,`confirm_aligo_${_docKind}_${ymd}.xlsx`);
+}
+
+/* 선택 팀 ZIP 일괄 (HTML) */
 async function docGenerateZip(){
   if(typeof JSZip==='undefined'){ alert('ZIP 라이브러리를 불러오지 못했습니다.'); return; }
   const checks=[...document.querySelectorAll('.doc-chk:checked')];
@@ -6105,10 +6299,11 @@ async function docGenerateZip(){
   const blob=await zip.generateAsync({type:'blob'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   const ymd=new Date().toISOString().slice(0,10).replace(/-/g,'');
-  a.download=`confirm_${DOC_KIND_FILE[_docKind]}_${ymd}.zip`; a.click();
+  a.download=`confirm_${_docKind}_${ymd}.zip`; a.click();
   showToast(`${checks.length}개 ${DOC_KIND_FILE[_docKind]} ZIP 저장 완료`);
 }
 docLoadAcct();
+docLoadCfg();
 
 /* ════════════════════════════════════════════════════════════
    ⑧ 정산 — 현지정산(¥, 사이젠 대조) · 수익정산(₩) · 개인별 명세 · 엠클릭 대조
@@ -7065,6 +7260,26 @@ renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
   <div class="modal" style="max-width:520px">
     <div class="modal-head"><div class="modal-title" id="blk-detail-title">블록 상세</div><button class="modal-close" onclick="document.getElementById('blk-detail-bg').classList.remove('open')">×</button></div>
     <div class="modal-body" id="blk-detail-body"></div>
+  </div>
+</div>
+
+<!-- ════════ 확정서 행별 미리보기 모달 (JPG · 이미지 복사 · 링크) ════════ -->
+<div class="modal-bg" id="doc-modal-bg">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-head">
+      <div><div class="modal-title" id="doc-modal-title">미리보기</div><div class="card-sub">이미지를 복사해 카톡·메일에 바로 붙여넣거나, 링크를 생성해 발송할 수 있습니다</div></div>
+      <button class="modal-close" onclick="document.getElementById('doc-modal-bg').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <button class="btn-primary" onclick="docCopyImage()">📋 이미지 복사</button>
+        <button class="btn-sm" onclick="docDownloadJpg()">🖼 JPG 다운로드</button>
+        <button class="btn-sm" onclick="docModalDownloadHtml()">⬇ HTML</button>
+        <button class="btn-sm" onclick="docMakeLink()" style="border-color:var(--accent);color:var(--accent)">🔗 링크 생성</button>
+      </div>
+      <div id="doc-modal-link" style="font-size:12px;margin-bottom:10px;word-break:break-all"></div>
+      <div id="doc-modal-imgwrap" style="background:var(--surface2);padding:12px;border-radius:10px;max-height:62vh;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 
