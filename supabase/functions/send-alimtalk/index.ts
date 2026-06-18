@@ -35,6 +35,7 @@ function tplCodeFor(kind: string): string {
 }
 
 // 승인된 템플릿 본문과 일치해야 함 — 템플릿 변경 시 이 문구도 함께 수정할 것.
+// 링크(URL)는 본문이 아니라 웹링크 버튼으로 넣는다(카카오 알림톡 규칙).
 function buildMessage(kind: string, r: Recipient): string {
   const label = KIND_LABEL[kind] ?? "안내문";
   return [
@@ -44,8 +45,7 @@ function buildMessage(kind: string, r: Recipient): string {
     `· 출발일 : ${r.dep}`,
     `· 상품 : ${r.prod}`,
     ``,
-    `아래 링크에서 ${label}를 확인해 주세요.`,
-    r.link,
+    `아래 버튼에서 ${label}를 확인해 주세요.`,
   ].join("\n");
 }
 
