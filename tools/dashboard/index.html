@@ -1273,6 +1273,19 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
       </div>
     </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;background:var(--soft,#F4F7FB);border-radius:8px">
+      <span style="font-size:11px;color:var(--text3)">출발일</span>
+      <input type="date" id="doc-dep-from" onchange="docSetDep('depFrom',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px">
+      <span class="muted" style="font-size:11px">~</span>
+      <input type="date" id="doc-dep-to" onchange="docSetDep('depTo',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px">
+      <span style="width:1px;height:16px;background:var(--line)"></span>
+      <span style="font-size:11px;color:var(--text3)">준비</span>
+      <span id="doc-ready-chips" style="display:flex;gap:5px"></span>
+      <span style="width:1px;height:16px;background:var(--line)"></span>
+      <span style="font-size:11px;color:var(--text3)">숙소</span>
+      <select id="doc-accom-sel" onchange="docSetAccom(this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;max-width:180px"></select>
+      <button class="btn-sm" onclick="docClearFilters()" style="margin-left:auto">필터 초기화</button>
+    </div>
     <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
       먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.
     </div>
@@ -5886,6 +5899,7 @@ let _docAcct={};
 let _docModalSeq=null, _docModalCanvas=null, _docModalHtml='';
 let _docLinks={};                 // eventSeq → 서명 공유 URL (만료형)
 let _docSort={key:'dep',dir:1};   // 팀 목록 정렬 상태
+let docFilter={ depFrom:'', depTo:'', ready:'', accom:'' };  // 확정서 목록 필터(출발일기간·준비상태·숙소)
 const DOC_LINK_TTL=90*24*60*60;   // 확정서 공유 링크 유효기간(초) — 90일
 
 /* 연동 설정 — 채워지면 Supabase 링크/알림톡 자동 활성화. localStorage(mt_doc_cfg)에 저장 */
@@ -5949,6 +5963,14 @@ function docSetSort(key){
   if(_docSort.key===key) _docSort.dir*=-1; else { _docSort.key=key; _docSort.dir=1; }
   renderDocTeams();
 }
+function docSetReady(v){ docFilter.ready=(docFilter.ready===v?'':v); renderDocTeams(); }
+function docSetDep(which,v){ docFilter[which]=v; renderDocTeams(); }
+function docSetAccom(v){ docFilter.accom=v; renderDocTeams(); }
+function docClearFilters(){
+  docFilter={ depFrom:'', depTo:'', ready:'', accom:'' };
+  ['doc-dep-from','doc-dep-to','doc-search'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  renderDocTeams();
+}
 function renderDocTeams(){
   const agBox=document.getElementById('doc-chip-agency'); if(agBox) agBox.innerHTML=agencyChipsHTML();
   const box=document.getElementById('doc-team-list'); if(!box) return;
@@ -5957,9 +5979,30 @@ function renderDocTeams(){
     return;
   }
   const q=(document.getElementById('doc-search').value||'').toLowerCase();
+  // 필터 컨트롤 채우기 — 숙소 옵션(상태+거래유형 기준), 준비상태 칩
+  const base=teams.filter(t=>(t.status==='확정'||t.status==='정산')&&agencyOk(t));
+  const accomSel=document.getElementById('doc-accom-sel');
+  if(accomSel){
+    const accoms=[...new Set(base.map(t=>t.accom).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+    accomSel.innerHTML='<option value="">숙소 전체</option>'+accoms.map(a=>`<option value="${a}">${a}</option>`).join('');
+    accomSel.value=docFilter.accom;
+  }
+  const readyBox=document.getElementById('doc-ready-chips');
+  if(readyBox){
+    readyBox.innerHTML=[['nolink','링크 없음'],['nophone','연락처 없음'],['nomatch','미매칭']]
+      .map(([v,l])=>`<span class="bk-chip ${docFilter.ready===v?'on':''}" onclick="docSetReady('${v}')">${l}</span>`).join('');
+  }
   const list=teams.filter(t=>{
     if(t.status!=='확정'&&t.status!=='정산') return false; // 확정서 대상만
     if(!agencyOk(t)) return false;   // 전역 거래유형 필터
+    if(docFilter.depFrom && (t.dep||'')<docFilter.depFrom) return false;   // 출발일 기간
+    if(docFilter.depTo   && (t.dep||'')>docFilter.depTo)   return false;
+    if(docFilter.accom   && (t.accom||'')!==docFilter.accom) return false; // 숙소
+    if(docFilter.ready){                                                    // 준비상태
+      if(docFilter.ready==='nolink'  &&  _docLinks[t.eventSeq]) return false;
+      if(docFilter.ready==='nophone' &&  t.repPhone)           return false;
+      if(docFilter.ready==='nomatch' &&  matchMaster(t.prodName)) return false;
+    }
     if(!q) return true;
     return [t.eventNo,t.repName,t.prodName,t.accom].map(x=>(x||'').toString().toLowerCase()).join(' ').includes(q);
   });
