@@ -1258,6 +1258,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input class="rm-input text" id="doc-cfg-bucket" placeholder="Storage 버킷명 (기본 confirm-docs)" style="width:200px;text-align:left" onchange="docSaveCfg('bucket',this.value)">
         <input class="rm-input text" id="doc-cfg-aligo" placeholder="알림톡 Edge Function URL (선택)" style="width:300px;text-align:left" onchange="docSaveCfg('aligoEndpoint',this.value)">
       </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm" onclick="docSyncSupabase()" style="border-color:var(--accent);color:var(--accent)">↻ Supabase 동기화 (자동발송용)</button>
+        <span class="muted" style="font-size:11px">분석한 <b>확정·정산</b> 팀을 서버에 올립니다. 출발 <b>D-7 항공/PNR 자동발송</b>이 이 데이터를 사용합니다.</span>
+      </div>
     </details>
   </div>
 
@@ -6218,6 +6222,35 @@ async function docMakeLink(){
 function docCopyLink(seq){
   const u=_docLinks[seq]; if(!u) return;
   navigator.clipboard.writeText(u).then(()=>showToast('링크가 복사되었습니다')).catch(()=>{});
+}
+
+/* ── Supabase 동기화 (D-7 항공/PNR 자동발송용 예약 데이터 업로드) ── */
+async function docSyncSupabase(){
+  if(!docCfgReady()){ alert('먼저 [연동 설정]에 Supabase URL·anon key를 입력하세요.'); return; }
+  if(!teams.length){ alert('먼저 업로드 탭에서 [통합 분석 실행]을 해주세요.'); return; }
+  const rows=teams.filter(t=>t.status==='확정'||t.status==='정산').map(t=>({
+    event_seq:String(t.eventSeq), event_no:t.eventNo||'', rep_name:t.repName||'',
+    rep_phone:String(t.repPhone||'').replace(/[^0-9]/g,''), status:t.status||'',
+    dep:t.dep||null, arr:t.arr||null, prod_name:t.prodName||'',
+    origin:t.apisOrigin||t.origin||'', dest:t.apisDest||'',
+    dep_flight:t.apisDepFlight||t.arrDepFlight||t.flight||'',
+    ret_flight:t.apisRetFlight||t.arrRetFlight||'',
+    pnr:(t.pnrList&&t.pnrList.length)?t.pnrList.join(', '):'',
+    pax:t.pax||0
+  }));
+  if(!rows.length){ alert('동기화할 확정·정산 팀이 없습니다.'); return; }
+  showToast('Supabase 동기화 중…');
+  try{
+    const base=DOC_CFG.supabaseUrl.replace(/\/$/,'');
+    const res=await fetch(`${base}/rest/v1/reservations?on_conflict=event_seq`,{
+      method:'POST',
+      headers:{ apikey:DOC_CFG.supabaseKey, 'Authorization':'Bearer '+DOC_CFG.supabaseKey,
+        'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body:JSON.stringify(rows)
+    });
+    if(!res.ok) throw new Error('('+res.status+') '+(await res.text()).slice(0,160));
+    showToast(`Supabase 동기화 완료 · ${rows.length}팀`);
+  }catch(e){ alert('동기화 실패: '+e.message); }
 }
 
 /* ── 선택 팀 일괄 링크 생성 ── */
