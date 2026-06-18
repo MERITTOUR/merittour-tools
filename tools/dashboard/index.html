@@ -1266,27 +1266,13 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 헤더를 누르면 정렬, 행의 [미리보기]로 JPG·링크 창, 체크 후 일괄 발송</span></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;background:var(--soft,#F4F7FB);border-radius:8px">
-      <span style="font-size:11px;color:var(--text3)">유형</span>
-      <span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span>
-      <span style="width:1px;height:16px;background:var(--line)"></span>
-      <span style="font-size:11px;color:var(--text3)">출발일</span>
-      <input type="date" id="doc-dep-from" onchange="docSetDep('depFrom',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px">
-      <span class="muted" style="font-size:11px">~</span>
-      <input type="date" id="doc-dep-to" onchange="docSetDep('depTo',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px">
-      <span style="width:1px;height:16px;background:var(--line)"></span>
-      <span style="font-size:11px;color:var(--text3)">준비</span>
-      <span id="doc-ready-chips" style="display:flex;gap:5px"></span>
-      <span style="width:1px;height:16px;background:var(--line)"></span>
-      <span style="font-size:11px;color:var(--text3)">숙소</span>
-      <span id="doc-accom-chips" style="display:flex;gap:5px;flex-wrap:wrap"></span>
-      <button class="btn-sm" onclick="docClearFilters()" style="margin-left:auto">필터 초기화</button>
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 헤더를 누르면 정렬, 행의 [미리보기]로 JPG·링크 창, 체크 후 일괄 발송</span></div>
+    <div style="display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:10px 12px;background:var(--soft,#F4F7FB);border-radius:8px">
+      <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-size:11px;color:var(--text3)">유형</span><span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span></span>
+      <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-size:11px;color:var(--text3)">출발일</span><input type="date" id="doc-dep-from" onchange="docSetDep('depFrom',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"><span class="muted" style="font-size:11px">~</span><input type="date" id="doc-dep-to" onchange="docSetDep('depTo',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"></span>
+      <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="font-size:11px;color:var(--text3)">준비</span><span id="doc-ready-chips" style="display:flex;gap:5px"></span></span>
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-left:auto"><input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:220px" oninput="docSearchDeb()"><button class="btn-sm" onclick="docClearFilters()">필터 초기화</button></span>
+      <span style="display:flex;align-items:flex-start;gap:6px;flex-basis:100%"><span style="font-size:11px;color:var(--text3);padding-top:5px;flex-shrink:0">숙소</span><span id="doc-accom-chips" style="display:flex;gap:5px;flex-wrap:wrap;flex:1"></span></span>
     </div>
     <div id="doc-team-list" class="muted" style="font-size:13px;padding:20px;text-align:center">
       먼저 <b>업로드</b> 탭에서 파일을 올리고 [통합 분석 실행]을 누르면 팀 목록이 표시됩니다.
@@ -6034,14 +6020,14 @@ function renderDocTeams(){
     </span>
   </div>
   <div class="tbl-wrap" style="max-height:340px;overflow-y:auto"><table style="font-size:12px">
-    <thead><tr><th style="width:30px"></th>
-      <th class="sortable" onclick="docSetSort('status')">구분${arrow('status')}</th>
-      <th class="sortable" onclick="docSetSort('eventNo')">행사번호${arrow('eventNo')}</th>
+    <thead><tr><th class="center" style="width:30px"></th>
+      <th class="sortable center" onclick="docSetSort('status')">구분${arrow('status')}</th>
+      <th class="sortable center" onclick="docSetSort('eventNo')">행사번호${arrow('eventNo')}</th>
       <th class="sortable" onclick="docSetSort('rep')">대표고객${arrow('rep')}</th>
-      <th>연락처</th>
-      <th class="sortable" onclick="docSetSort('dep')">출발일${arrow('dep')}</th>
-      <th>기간</th><th class="sortable" onclick="docSetSort('pax')">인원${arrow('pax')}</th>
-      <th>숙소</th><th>상품명</th><th>매칭</th><th>링크</th><th></th></tr></thead><tbody>`+
+      <th class="center">연락처</th>
+      <th class="sortable center" onclick="docSetSort('dep')">출발일${arrow('dep')}</th>
+      <th class="center">기간</th><th class="sortable center" onclick="docSetSort('pax')">인원${arrow('pax')}</th>
+      <th>숙소</th><th>상품명</th><th class="center">매칭</th><th class="center">링크</th><th></th></tr></thead><tbody>`+
     list.map(t=>{
       const matched=!!matchMaster(t.prodName);
       const phone=t.repPhone||'';
