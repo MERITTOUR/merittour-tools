@@ -1269,11 +1269,13 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-size:13px;font-weight:600;color:var(--text2)">팀 선택 <span class="muted" style="font-weight:400;font-size:11px">— 헤더를 누르면 정렬, 행의 [미리보기]로 JPG·링크 창, 체크 후 일괄 발송</span></div>
       <div style="display:flex;gap:8px;align-items:center">
-        <span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span>
         <input id="doc-search" placeholder="행사번호·고객명·상품명 검색" style="font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;width:240px;max-width:50%" oninput="docSearchDeb()">
       </div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;background:var(--soft,#F4F7FB);border-radius:8px">
+      <span style="font-size:11px;color:var(--text3)">유형</span>
+      <span class="bk-chip-grp" id="doc-chip-agency" style="display:flex;gap:5px"></span>
+      <span style="width:1px;height:16px;background:var(--line)"></span>
       <span style="font-size:11px;color:var(--text3)">출발일</span>
       <input type="date" id="doc-dep-from" onchange="docSetDep('depFrom',this.value)" style="font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:6px">
       <span class="muted" style="font-size:11px">~</span>
