@@ -1255,7 +1255,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
         <input class="rm-input text" id="doc-cfg-suburl" placeholder="Supabase URL (https://xxx.supabase.co)" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseUrl',this.value)">
         <input class="rm-input text" id="doc-cfg-subkey" placeholder="Supabase anon key" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseKey',this.value)">
-        <input class="rm-input text" id="doc-cfg-bucket" placeholder="Storage 버킷명 (기본 confirm-docs)" style="width:200px;text-align:left" onchange="docSaveCfg('bucket',this.value)">
+        <input class="rm-input text" id="doc-cfg-bucket" placeholder="Storage 버킷명 (기본 confirm-docs · private)" style="width:240px;text-align:left" onchange="docSaveCfg('bucket',this.value)">
         <input class="rm-input text" id="doc-cfg-aligo" placeholder="알림톡 Edge Function URL (선택)" style="width:300px;text-align:left" onchange="docSaveCfg('aligoEndpoint',this.value)">
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -5884,8 +5884,9 @@ function PAGE_TEMPLATE(d){
 ════════════════════════════════════════════════════════════ */
 let _docAcct={};
 let _docModalSeq=null, _docModalCanvas=null, _docModalHtml='';
-let _docLinks={};                 // eventSeq → 공개 공유 URL
+let _docLinks={};                 // eventSeq → 서명 공유 URL (만료형)
 let _docSort={key:'dep',dir:1};   // 팀 목록 정렬 상태
+const DOC_LINK_TTL=90*24*60*60;   // 확정서 공유 링크 유효기간(초) — 90일
 
 /* 연동 설정 — 채워지면 Supabase 링크/알림톡 자동 활성화. localStorage(mt_doc_cfg)에 저장 */
 let DOC_CFG={ supabaseUrl:'', supabaseKey:'', bucket:'confirm-docs', aligoEndpoint:'' };
@@ -6208,9 +6209,18 @@ async function docUploadSupabase(t, html){
     body:html
   });
   if(!res.ok) throw new Error('업로드 실패('+res.status+') '+(await res.text()).slice(0,140));
-  const pub=`${base}/storage/v1/object/public/${bucket}/${path}`;
-  _docLinks[t.eventSeq]=pub;
-  return pub;
+  // 만료형 서명 링크 발급 (private 버킷, 90일 후 자동 소멸)
+  const sg=await fetch(`${base}/storage/v1/object/sign/${bucket}/${path}`,{
+    method:'POST',
+    headers:{ 'Authorization':'Bearer '+DOC_CFG.supabaseKey, 'apikey':DOC_CFG.supabaseKey,
+              'Content-Type':'application/json' },
+    body:JSON.stringify({ expiresIn: DOC_LINK_TTL })
+  });
+  if(!sg.ok) throw new Error('링크 발급 실패('+sg.status+') '+(await sg.text()).slice(0,140));
+  const j=await sg.json();
+  const link=`${base}/storage/v1${j.signedURL||j.signedUrl}`;
+  _docLinks[t.eventSeq]=link;
+  return link;
 }
 async function docMakeLink(){
   const t=teams.find(x=>x.eventSeq===_docModalSeq); if(!t) return;
