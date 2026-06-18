@@ -6196,17 +6196,34 @@ function docModalDownloadHtml(){
   a.download=`${t.eventNo}.html`; a.click();
 }
 
-/* ── Supabase Storage 업로드 → 공개 링크 ── */
-async function docUploadSupabase(t, html){
+/* ── Supabase Storage 업로드 → 만료형 공유 링크 ──
+   주의: Supabase Storage는 HTML 파일을 보안상 text/plain 으로 강제 변환해
+   브라우저에서 소스코드로 보인다. 그래서 확정서를 JPG 이미지로 올려 링크를 만든다
+   (이미지는 변환 없이 그대로 렌더 + 한글 깨짐 없음 + 고객 발송물 JPG 원칙과 일치). */
+function docCanvasToBlob(canvas){
+  return new Promise((resolve,reject)=>{
+    canvas.toBlob(b=> b?resolve(b):reject(new Error('이미지 변환 실패')), 'image/jpeg', 0.92);
+  });
+}
+function docTeamJpgBlob(t){
+  return new Promise((resolve,reject)=>{
+    docRenderToCanvas(docBuildHtmlV7(t,_docKind), async (canvas,err)=>{
+      if(err||!canvas){ reject(new Error('이미지 렌더 실패: '+(err||''))); return; }
+      try{ resolve(await docCanvasToBlob(canvas)); }catch(e){ reject(e); }
+    });
+  });
+}
+async function docUploadSupabase(t, blob){
   if(!docCfgReady()) throw new Error('Supabase 연동 설정이 비어 있습니다 ([연동 설정]에서 URL·Key 입력)');
+  if(!blob) blob = await docTeamJpgBlob(t);          // 호출자가 이미지를 안 주면 직접 렌더
   const base=DOC_CFG.supabaseUrl.replace(/\/+$/,'').replace(/\/rest\/v1$/,'');
   const bucket=DOC_CFG.bucket||'confirm-docs';
-  const path=`${_docKind}/${encodeURIComponent(t.eventNo)}.html`;
+  const path=`${_docKind}/${encodeURIComponent(t.eventNo)}.jpg`;
   const res=await fetch(`${base}/storage/v1/object/${bucket}/${path}`,{
     method:'POST',
     headers:{ 'Authorization':'Bearer '+DOC_CFG.supabaseKey, 'apikey':DOC_CFG.supabaseKey,
-              'Content-Type':'text/html; charset=utf-8', 'x-upsert':'true' },
-    body:html
+              'Content-Type':'image/jpeg', 'x-upsert':'true' },
+    body:blob
   });
   if(!res.ok) throw new Error('업로드 실패('+res.status+') '+(await res.text()).slice(0,140));
   // 만료형 서명 링크 발급 (private 버킷, 90일 후 자동 소멸)
@@ -6227,7 +6244,9 @@ async function docMakeLink(){
   const box=document.getElementById('doc-modal-link');
   box.innerHTML='<span class="muted">링크 생성 중…</span>';
   try{
-    await docUploadSupabase(t, _docModalHtml||docBuildHtmlV7(t,_docKind));
+    // 모달에 이미 렌더된 캔버스가 있으면 재사용(빠름), 없으면 docUploadSupabase가 직접 렌더
+    const blob = _docModalCanvas ? await docCanvasToBlob(_docModalCanvas) : null;
+    await docUploadSupabase(t, blob);
     docRenderModalLink(t.eventSeq);
     renderDocTeams();
   }catch(e){ box.innerHTML='<span style="color:#DC2626">'+e.message+'</span>'; }
@@ -6275,7 +6294,7 @@ async function docBulkLink(){
   let ok=0, fail=0;
   for(const c of checks){
     const t=teams.find(x=>x.eventSeq===c.dataset.seq); if(!t) continue;
-    try{ await docUploadSupabase(t, docBuildHtmlV7(t,_docKind)); ok++; }catch(e){ fail++; }
+    try{ await docUploadSupabase(t); ok++; }catch(e){ fail++; }
   }
   renderDocTeams();
   showToast(`링크 생성 완료 · 성공 ${ok}${fail?(' / 실패 '+fail):''}`);
@@ -6290,7 +6309,7 @@ async function docBulkSend(){
   const missing=sel.filter(t=>!_docLinks[t.eventSeq]);
   if(missing.length && docCfgReady()){
     showToast('링크 생성 중…');
-    for(const t of missing){ try{ await docUploadSupabase(t, docBuildHtmlV7(t,_docKind)); }catch(e){} }
+    for(const t of missing){ try{ await docUploadSupabase(t); }catch(e){} }
     renderDocTeams();
   }
   const recipients=sel.map(t=>({
