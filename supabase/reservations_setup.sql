@@ -39,4 +39,7 @@ create policy "reservations anon read"   on public.reservations for select to an
 create policy "reservations anon insert" on public.reservations for insert to anon with check (true);
 create policy "reservations anon update" on public.reservations for update to anon using (true) with check (true);
 
+-- RLS 정책과 별개로 테이블 레벨 권한도 필요 (없으면 42501 permission denied)
+grant select, insert, update on public.reservations to anon;
+
 -- notice_sent 는 서버(service_role)만 접근(정책 없음 → anon 차단). cron 함수는 service_role 로 동작.
