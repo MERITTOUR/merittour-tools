@@ -6199,7 +6199,7 @@ function docModalDownloadHtml(){
 /* ── Supabase Storage 업로드 → 공개 링크 ── */
 async function docUploadSupabase(t, html){
   if(!docCfgReady()) throw new Error('Supabase 연동 설정이 비어 있습니다 ([연동 설정]에서 URL·Key 입력)');
-  const base=DOC_CFG.supabaseUrl.replace(/\/$/,'');
+  const base=DOC_CFG.supabaseUrl.replace(/\/+$/,'').replace(/\/rest\/v1$/,'');
   const bucket=DOC_CFG.bucket||'confirm-docs';
   const path=`${_docKind}/${encodeURIComponent(t.eventNo)}.html`;
   const res=await fetch(`${base}/storage/v1/object/${bucket}/${path}`,{
@@ -6254,7 +6254,7 @@ async function docSyncSupabase(silent){
   if(!rows.length){ if(!silent) alert('동기화할 확정·정산 팀이 없습니다.'); return; }
   if(!silent) showToast('Supabase 동기화 중…');
   try{
-    const base=DOC_CFG.supabaseUrl.replace(/\/$/,'');
+    const base=DOC_CFG.supabaseUrl.replace(/\/+$/,'').replace(/\/rest\/v1$/,'');
     const res=await fetch(`${base}/rest/v1/reservations?on_conflict=event_seq`,{
       method:'POST',
       headers:{ apikey:DOC_CFG.supabaseKey, 'Authorization':'Bearer '+DOC_CFG.supabaseKey,
