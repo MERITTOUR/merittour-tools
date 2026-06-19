@@ -699,7 +699,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div>
         <div class="card-title">파일 업로드</div>
-        <div class="card-sub">엠클릭 2종 · 500건 분할 시 여러 파일 동시 선택 가능</div>
+        <div class="card-sub">엠클릭 2종 · 예약리스트는 500행 분할, 일행별예약은 1개월 단위 다운로드 — 여러 파일 동시 선택 가능</div>
       </div>
     </div>
 
@@ -717,14 +717,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
         <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
         <div class="upload-title">일행별 예약</div>
-        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 탑승자정보</b> 탭에서 다운로드<br>개인 명단 + 항공·PNR·여권 통합 · 500행씩 분할 시 여러 파일 등록 가능</div>
+        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 탑승자정보</b> 탭에서 다운로드<br>개인 명단 + 항공·PNR·여권 통합 · <b>1개월 단위</b>로 명단 인원수 관계없이 한 번에 다운로드(여러 달이면 월별 파일 여러 개 등록)</div>
         <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
       </div>
     </div>
 
     <div class="note">
       <b>결합 방식</b> · 두 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약 한 파일에 개인 명단과 항공시각(한국출발·현지도착·현지출발·한국도착)·PNR·여권·사전좌석이 모두 포함됩니다.
-      두 파일 모두 엠클릭의 <b>출발일별 / 예약일별</b> 화면에서 받습니다 — <b>예약현황</b> 탭 → 예약 리스트, <b>탑승자정보</b> 탭 → 일행별예약. 한 번에 500행씩 다운로드되므로, 건수가 많으면 나눠 받은 파일을 <b>같은 칸에 여러 개 등록</b>하면 자동 병합됩니다.
+      두 파일 모두 엠클릭의 <b>출발일별 / 예약일별</b> 화면에서 받습니다 — <b>예약현황</b> 탭 → 예약 리스트, <b>탑승자정보</b> 탭 → 일행별예약. <b>예약리스트</b>는 한 번에 500행씩 다운로드되어 건수가 많으면 나눠 받고, <b>일행별예약</b>은 <b>1개월 단위</b>로 명단 인원수와 관계없이 한 번에 받습니다. 기간이 여러 달이거나 분할분이 생기면 <b>같은 칸에 여러 개 등록</b>하면 자동 병합됩니다.
       그룹코드 마스터는 이 도구에서 사용하지 않습니다. <b>예약리스트·일행별예약</b>이 모두 업로드되면 통합이 가능합니다.
     </div>
 
