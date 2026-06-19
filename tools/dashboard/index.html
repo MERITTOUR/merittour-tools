@@ -2987,6 +2987,18 @@ const SURNAME_INITIAL={
  '진':['J','C'],'지':['J','C'],'엄':['E','U','O'],'채':['C'],'원':['W'],'천':['C'],'방':['B','P'],
  '공':['K','G'],'현':['H'],'함':['H'],'변':['B','P'],'염':['Y'],'여':['Y'],'추':['C'],'도':['D','T'],
 };
+/* 한글 음절의 초성(자음) 추출 → 허용 영문 첫 글자(군). 이름 검수용(성씨표는 특정 글자만 커버).
+   인덱스 11=ㅇ은 모음으로 시작해 영문 첫 글자가 다양 → 검증 보류(빈 배열). */
+const CHOSUNG_ROMAN=[
+ ['G','K'], ['K','G'], ['N'], ['D','T'], ['T','D'], ['R','L'], ['M'], ['B','P'], ['P','B'],
+ ['S'], ['S'], [], ['J','C'], ['J','C'], ['C'], ['K'], ['T'], ['P'], ['H'],
+];
+function chosungOf(ch){
+  if(!ch) return -1;
+  const c=ch.charCodeAt(0)-0xAC00;
+  if(c<0||c>11171) return -1;
+  return Math.floor(c/588);   // 0~18
+}
 /* 영문명 재확인 판정. null=정상 / {severe, reason, cur, rec} */
 function auditEngName(name, ln, fn){
   const L=(ln||'').trim(), F=(fn||'').trim();
@@ -3015,6 +3027,20 @@ function auditEngName(name, ln, fn){
       const std=SURNAME_ROMAN[sur];
       if(std && !std.includes(L.toUpperCase()))
         return {severe:false, reason:`표기 변형 확인 (${sur}: ${std.slice(0,3).join('/')} 일반적)`, cur, rec:'여권 표기 그대로면 정상'};
+    }
+  }
+  // 4) 이름 첫 글자 초성 자음 대조 (1글자 성 가정 → 이름 첫 글자 = name[1])
+  //    ㅇ(모음 시작)은 영문 첫 글자가 다양해 보류. 자음 군이 다르면 🔴(오타·성/이름 뒤바뀜 등)
+  if(name && hasHangul(name) && F && name.length>=2){
+    const gv=name[1];
+    const ci=chosungOf(gv);
+    if(ci>=0){
+      const allowed=CHOSUNG_ROMAN[ci];
+      if(allowed.length){
+        const f0=F[0].toUpperCase();
+        if(!allowed.includes(f0))
+          return {severe:true, reason:`이름 불일치 (${gv}→${allowed.join('/')} 예상, ${f0} 입력)`, cur, rec:`${gv} 영문표기 확인`};
+      }
     }
   }
   return null;
@@ -3141,7 +3167,7 @@ function renderAudit(){
     [colSeq,colRep,colProd,colName,{h:'위치',f:x=>x.field},{h:'현재 값',f:x=>'<span style="color:var(--red);font-weight:700">'+x.cur+'</span>'},{h:'권장(붙임)',f:x=>'<span style="color:var(--green)">'+x.rec+'</span>'},colDep],
     'severe'));
   blocks.push(block('engCheck','영문명 재확인 필요',
-    '한글명 대비 영문 표기를 점검합니다. 🔴 미입력·한글/숫자 섞임·성씨 초성 불일치는 발권 전 수정이 필요합니다. 🟠 표기 변형은 여권에 그대로면 정상이니 참고만 하세요(로마자 표기는 사람마다 다를 수 있습니다).',
+    '한글명 대비 영문 표기를 점검합니다. 🔴 미입력·한글/숫자 섞임·성씨/이름 초성 불일치는 발권 전 수정이 필요합니다. 🟠 표기 변형은 여권에 그대로면 정상이니 참고만 하세요(로마자 표기는 사람마다 다를 수 있습니다). 이름 첫 글자가 모음(ㅇ)으로 시작하면 영문 첫 글자가 다양해 검증을 보류합니다.',
     I.engCheck,
     [colSeq,colRep,colName,{h:'사유',f:x=>'<span style="color:'+(x.severe?'var(--red)':'var(--amber2,#D97706)')+';font-weight:600">'+x.reason+'</span>'},{h:'현재 (성/이름)',f:x=>'<span style="font-family:var(--mono)">'+x.cur+'</span>'},{h:'조치',f:x=>'<span style="color:var(--text3)">'+x.rec+'</span>'},colDep],
     'severe'));
