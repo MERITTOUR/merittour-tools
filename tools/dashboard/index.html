@@ -3046,7 +3046,7 @@ function auditEngName(name, ln, fn){
   return null;
 }
 function buildAudit(){
-  const issues={ engSpace:[], engCheck:[], expSoon:[], expMiss:[], ppMiss:[], pnrMiss:[] };
+  const issues={ engSpace:[], engCheck:[], expSoon:[], expMiss:[], ppMiss:[] };
   const today=new Date(); today.setHours(0,0,0,0);
 
   // ── 개인 단위 검수 (2종 통합: 일행별예약 단일 소스) ──
@@ -3081,9 +3081,7 @@ function buildAudit(){
       }
       // 3) 여권번호 누락
       if(!String(r['여권번호']||'').trim()) issues.ppMiss.push({...base});
-      // 4) PNR 누락
-      if(!String(r['PNR']||'').trim()) issues.pnrMiss.push({...base});
-      // 5) 영문명 재확인 — 미입력(한국인)·한글/숫자 섞임·성씨 초성 불일치(🔴) / 표준표기 변형(🟠)
+      // 4) 영문명 재확인 — 미입력(한국인)·한글/숫자 섞임·성씨 초성 불일치(🔴) / 표준표기 변형(🟠)
       const er=auditEngName(name, ln, fn);
       if(er) issues.engCheck.push({...base, ...er});
     });
@@ -3109,7 +3107,7 @@ function renderAudit(){
     return;
   }
   const I=buildAudit();
-  const totalRed = I.engSpace.filter(x=>x.severe).length + I.engCheck.filter(x=>x.severe).length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length + I.pnrMiss.length;
+  const totalRed = I.engSpace.filter(x=>x.severe).length + I.engCheck.filter(x=>x.severe).length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length;
   const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.engCheck.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length;
   const totalAll = totalRed+totalAmber;
 
@@ -3180,8 +3178,6 @@ function renderAudit(){
     I.expMiss,[colSeq,colRep,colProd,colName,colDep],null));
   blocks.push(block('ppMiss','여권번호 누락','여권번호가 비어 있는 건.',
     I.ppMiss,[colSeq,colRep,colProd,colName,colDep],null));
-  blocks.push(block('pnrMiss','PNR 누락','일행별예약에 PNR이 비어 있는 건(미발권 또는 미입력).',
-    I.pnrMiss,[colSeq,colRep,colProd,colName,colDep],null));
 
   const html=blocks.filter(Boolean).join('');
   box.innerHTML = `<div class="audit-acc">${html}</div>` || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
