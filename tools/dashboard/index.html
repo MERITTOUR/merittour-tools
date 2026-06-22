@@ -3046,7 +3046,7 @@ function auditEngName(name, ln, fn){
   return null;
 }
 function buildAudit(){
-  const issues={ engSpace:[], engCheck:[], expSoon:[], expMiss:[], ppMiss:[] };
+  const issues={ engSpace:[], engCheck:[], expSoon:[], expMiss:[], ppMiss:[], ticketMix:[] };
   const today=new Date(); today.setHours(0,0,0,0);
 
   // ── 개인 단위 검수 (2종 통합: 일행별예약 단일 소스) ──
@@ -3089,6 +3089,30 @@ function buildAudit(){
 
   // ── 영문명 교차검증 폐지 (2종 통합으로 단일 소스 — APIS↔일행별 대조 대상 없음) ──
 
+  // ── 발권-명단 점검: 한 행사에서 PNR 보유자와 미보유자가 섞인 건(발권 후 탑승자 변경/추가 의심) ──
+  // 발권된 손님 일부만 PNR이 있고 나머지가 비어 있으면, 발권 이후 명단이 바뀌었을 가능성 → 출발 전 확인 필요.
+  if(ilhaengData){
+    const byTeam={};
+    ilhaengData.forEach(r=>{
+      if(r['cancCd']) return;
+      const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
+      (byTeam[seq]=byTeam[seq]||[]).push(r);
+    });
+    Object.entries(byTeam).forEach(([seq,rows])=>{
+      const withP=rows.filter(r=>String(r['PNR']||'').trim());
+      const noP  =rows.filter(r=>!String(r['PNR']||'').trim());
+      if(withP.length && noP.length){   // 혼재 = 의심
+        const dep=fmtDate(rows[0]['출발일자']);
+        const teamPnr=[...new Set(withP.map(r=>String(r['PNR']||'').replace(/，/g,',').split(',').map(s=>s.trim())).flat().filter(Boolean))].join(', ');
+        const ticked=[...new Set(withP.map(r=>String(r['고객명']||'').trim()).filter(Boolean))].join('·');
+        noP.forEach(r=>{
+          issues.ticketMix.push({ seq, dep, severe:false,
+            name:String(r['고객명']||'').trim()||'(이름없음)', teamPnr, ticked });
+        });
+      }
+    });
+  }
+
   const byDep=(a,b)=>String(a.dep||'').localeCompare(String(b.dep||''));
   Object.values(issues).forEach(arr=>arr.sort(byDep));
   auditResult=issues;
@@ -3108,7 +3132,7 @@ function renderAudit(){
   }
   const I=buildAudit();
   const totalRed = I.engSpace.filter(x=>x.severe).length + I.engCheck.filter(x=>x.severe).length + I.expSoon.filter(x=>x.severe).length + I.expMiss.length + I.ppMiss.length;
-  const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.engCheck.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length;
+  const totalAmber = I.engSpace.filter(x=>!x.severe).length + I.engCheck.filter(x=>!x.severe).length + I.expSoon.filter(x=>!x.severe).length + I.ticketMix.length;
   const totalAll = totalRed+totalAmber;
 
   if(sumBox) sumBox.innerHTML=`
@@ -3117,7 +3141,7 @@ function renderAudit(){
     <div class="sum-box"><div class="sum-label">🟠 확인 필요</div><div class="sum-val" style="color:var(--amber2,#D97706)">${totalAmber}건</div></div>`;
 
   if(totalAll===0){
-    box.innerHTML='<div class="note" style="border-left-color:var(--green)"><b>검출된 문제가 없습니다.</b> 영문명 공백·여권 만료·누락·표기 불일치가 발견되지 않았습니다.</div>';
+    box.innerHTML='<div class="note" style="border-left-color:var(--green)"><b>검출된 문제가 없습니다.</b> 영문명 공백·여권 만료·누락·표기 불일치·발권-명단 혼재가 발견되지 않았습니다.</div>';
     return;
   }
 
@@ -3178,6 +3202,11 @@ function renderAudit(){
     I.expMiss,[colSeq,colRep,colProd,colName,colDep],null));
   blocks.push(block('ppMiss','여권번호 누락','여권번호가 비어 있는 건.',
     I.ppMiss,[colSeq,colRep,colProd,colName,colDep],null));
+  blocks.push(block('ticketMix','발권-명단 점검 (발권 후 변경 의심)',
+    '한 행사에서 PNR(발권)이 있는 손님과 없는 손님이 섞인 건입니다. 발권 이후 명단이 바뀌었거나 일부만 발권된 상태일 수 있어, 발권자↔명단 불일치로 취소수수료·재발권이 발생할 수 있습니다. 발권된 PNR과 현재 명단이 맞는지 확인하세요. (발권 진행 중이면 정상일 수 있습니다)',
+    I.ticketMix,
+    [colSeq,colRep,colProd,{h:'미발권 손님',f:x=>'<b style="color:var(--amber2,#D97706)">'+x.name+'</b>'},{h:'팀 발권 PNR',f:x=>'<span style="font-family:var(--mono)">'+(x.teamPnr||'-')+'</span>'},{h:'발권된 손님',f:x=>'<span class="muted">'+(x.ticked||'-')+'</span>'},colDep],
+    'severe'));
 
   const html=blocks.filter(Boolean).join('');
   box.innerHTML = `<div class="audit-acc">${html}</div>` || '<div class="note">현재 필터에 해당하는 항목이 없습니다.</div>';
