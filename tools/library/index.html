@@ -60,6 +60,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 .dl-sub { font-size: 11px; opacity: 0.8; }
 .dl-btn.broken { opacity: 0.55; cursor: not-allowed; }
 
+/* 비회원용 서브블록 */
+.nm-block { margin: -2px 0 18px; padding: 13px 15px; background: var(--mt-surface2); border-left: 3px solid var(--mt-point); border-radius: var(--mt-radius); }
+.nm-label { font-size: 12.5px; font-weight: 800; color: var(--mt-brand); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.nm-desc { font-size: 11.8px; color: var(--mt-text2); line-height: 1.65; margin-bottom: 11px; }
+.nm-desc b { color: var(--mt-text); font-weight: 700; }
+.nm-dl { display: flex; }
+.nm-block .dl-btn { flex: 0 1 360px; }
+
 /* 체크리스트 그리드 */
 .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 680px){ .req-grid { grid-template-columns: 1fr; } .container{padding:24px 16px 64px;} }
@@ -116,6 +124,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
   <p class="page-desc">
     EWRC II 회원권 · 장기숙박형 숙소(쿠주힐즈) 가입 서류를 한곳에 모았습니다.
     각 상품의 <strong>원본 양식</strong>과 <strong>작성방법본</strong>을 받아 고객님께 발송하세요.
+    장기숙박형은 기존 회원이 아닌 고객을 위한 <strong>비회원용 계약서</strong>(EWRC Ⅱ 입회신청서 포함)를 별도로 제공합니다.
   </p>
 
   <div class="note-bar">
@@ -188,6 +197,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       체류비·송영비는 아소 야마나미 회원가 동일. 입금 <strong class="mono">5,000만원</strong> (개인 명의).
     </div>
     <div class="dl-row" data-pair="longstay_individual"></div>
+    <div class="nm-block">
+      <div class="nm-label">📋 비회원용 — EWRC Ⅱ 미가입 고객</div>
+      <div class="nm-desc">기존 회원(EWRC·다이아·골드)이 아닌 고객은 <b>EWRC Ⅱ 입회신청서가 포함된 비회원용 계약서</b>를 사용하세요. 가입 시 EWRC Ⅱ 회원 자격이 부여되며, <b>연 쿠폰(15만엔)은 EWRC Ⅱ 회원권으로 갈음</b>됩니다(입회금 700만원 면제). 계약서에 '쿠폰 지급' 문구가 없어 분쟁 소지가 없습니다.</div>
+      <div class="nm-dl"><a class="dl-btn primary" href="longstay_individual_nonmember_forms.pdf" target="_blank" rel="noopener">
+        <span class="dl-ico">📄</span>
+        <span class="dl-body"><span class="dl-label">비회원용 계약서 받기</span><span class="dl-sub">계약서·EWRC Ⅱ 입회신청서·위임장·동의서·송금신청서</span></span>
+      </a></div>
+    </div>
     <div class="req-grid">
       <div>
         <div class="req-block-label">필수 작성 서류</div>
@@ -223,6 +240,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       입금 <strong class="mono">5,000만원</strong> (법인명으로 입금).
     </div>
     <div class="dl-row" data-pair="longstay_corporate"></div>
+    <div class="nm-block">
+      <div class="nm-label">📋 비회원용 — EWRC Ⅱ 미가입 법인</div>
+      <div class="nm-desc">기존 회원(EWRC·다이아·골드)이 아닌 법인은 <b>EWRC Ⅱ 입회신청서가 포함된 비회원용 계약서</b>를 사용하세요. 가입 시 EWRC Ⅱ 회원 자격이 부여되며, <b>연 쿠폰(15만엔)은 EWRC Ⅱ 회원권으로 갈음</b>됩니다(입회금 700만원 면제). 계약서에 '쿠폰 지급' 문구가 없어 분쟁 소지가 없습니다.</div>
+      <div class="nm-dl"><a class="dl-btn primary" href="longstay_corporate_nonmember_forms.pdf" target="_blank" rel="noopener">
+        <span class="dl-ico">📄</span>
+        <span class="dl-body"><span class="dl-label">비회원용 계약서 받기 (법인)</span><span class="dl-sub">계약서·EWRC Ⅱ 입회신청서·위임장·동의서·송금신청서</span></span>
+      </a></div>
+    </div>
     <div class="req-grid">
       <div>
         <div class="req-block-label">필수 작성 서류</div>
