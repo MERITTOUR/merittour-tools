@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 문서 번역</title>
+<script src="../../shared/gate.js"></script>
+<link rel="stylesheet" href="../../shared/core.css">
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(--mt-text); font-size: 14px; line-height: 1.6; padding: 28px 16px 80px; min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--mt-text2); text-decoration: none; border: 1px solid var(--mt-border); padding: 6px 12px; border-radius: 6px; transition: all .15s; }
+  .back-link:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+  header { padding-bottom: 16px; margin-bottom: 22px; border-bottom: 1px solid var(--mt-border); }
+  h1 { font-size: 20px; font-weight: 700; color: var(--mt-brand); letter-spacing: -0.02em; }
+  h1 .ver { font-size: 11px; font-family: var(--mt-mono); background: var(--mt-accent-dim); color: var(--mt-accent); border: 1px solid var(--mt-accent); padding: 2px 8px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+  .sub { font-size: 12.5px; color: var(--mt-text2); margin-top: 6px; }
+  .card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 18px 20px; box-shadow: var(--mt-shadow); margin-bottom: 16px; }
+  .card h2 { font-size: 12px; font-weight: 700; color: var(--mt-text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card h2::before { content: ''; width: 3px; height: 12px; background: var(--mt-accent); border-radius: 2px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  label.fld { font-size: 12px; color: var(--mt-text2); display: flex; flex-direction: column; gap: 4px; }
+  input.txt, select { font-family: var(--mt-sans); font-size: 13px; padding: 8px 10px; border: 1px solid var(--mt-border); border-radius: 6px; background: var(--mt-bg); color: var(--mt-text); }
+  input.txt { width: 100%; }
+  .drop { border: 1.5px dashed var(--mt-border2); border-radius: 10px; padding: 30px 18px; text-align: center; color: var(--mt-text3); cursor: pointer; transition: all .15s; background: var(--mt-surface2); }
+  .drop:hover, .drop.over { border-color: var(--mt-accent); background: var(--mt-accent-dim); color: var(--mt-accent); }
+  .drop strong { display: block; color: var(--mt-text2); font-size: 14px; margin-bottom: 4px; }
+  .drop .hint { font-size: 11.5px; }
+  .btn { font-family: var(--mt-sans); font-size: 13.5px; font-weight: 600; padding: 9px 18px; border-radius: 7px; border: 1px solid var(--mt-accent); background: var(--mt-accent); color: #fff; cursor: pointer; transition: all .15s; }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--mt-text2); border-color: var(--mt-border); font-weight: 500; }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--mt-accent); color: var(--mt-accent); filter: none; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  .pane-title { font-size: 11.5px; font-weight: 700; color: var(--mt-text2); margin-bottom: 8px; letter-spacing: .04em; }
+  .preview { border: 1px solid var(--mt-border); border-radius: 8px; background: var(--mt-surface2); padding: 10px; min-height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .preview img { max-width: 100%; max-height: 480px; border-radius: 4px; }
+  .preview .file-chip { font-size: 13px; color: var(--mt-text2); font-family: var(--mt-mono); }
+  .result { border: 1px solid var(--mt-border); border-radius: 8px; background: var(--mt-surface2); padding: 14px; min-height: 120px; white-space: pre-wrap; word-break: break-word; font-size: 13.5px; line-height: 1.7; color: var(--mt-text); }
+  .result.empty { color: var(--mt-text3); display: flex; align-items: center; justify-content: center; text-align: center; }
+  .status { font-size: 12.5px; margin: 4px 0 0; min-height: 18px; }
+  .status.err { color: var(--mt-red); }
+  .status.ok { color: var(--mt-green); }
+  .status.busy { color: var(--mt-accent); }
+  .disclaimer { font-size: 11.5px; color: var(--mt-text3); background: var(--mt-amber-dim); border: 1px solid var(--mt-amber); border-radius: 8px; padding: 10px 12px; margin-top: 8px; line-height: 1.6; }
+  .meta { font-size: 11px; color: var(--mt-text3); font-family: var(--mt-mono); margin-top: 8px; }
+  details.cfg summary { cursor: pointer; font-size: 12px; color: var(--mt-text2); font-weight: 600; }
+  details.cfg[open] summary { margin-bottom: 12px; }
+  .footer-tip { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 40px; font-family: var(--mt-mono); letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <a href="../../sales/" class="back-link">← 영업 도구</a>
+  </div>
+
+  <header>
+    <h1>문서 번역 <span class="ver">MVP</span></h1>
+    <div class="sub">일본·영문 계약서·정산서를 한국어로 — 사내 전용 번역(외부 무료 사이트 업로드 대체). 이미지·스캔 PDF 모두 OCR+번역.</div>
+  </header>
+
+  <details class="cfg card">
+    <summary>🔗 연동 설정 — 최초 1회만 입력하면 이 PC에 저장됩니다</summary>
+    <label class="fld" style="width:100%">번역 Edge Function URL
+      <input class="txt" id="cfgUrl" placeholder="https://xxxx.supabase.co/functions/v1/translate">
+    </label>
+    <div class="meta">관리자가 <code>supabase functions deploy translate</code>로 배포한 함수 주소입니다. API 키는 서버 secret에만 있고 여기엔 들어가지 않습니다.</div>
+  </details>
+
+  <div class="card">
+    <h2>1 · 문서 올리기</h2>
+    <div class="drop" id="drop">
+      <strong>여기에 파일을 끌어다 놓거나 클릭</strong>
+      <div class="hint">JPG · PNG · WebP · 스캔 PDF (1개)</div>
+    </div>
+    <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" style="display:none">
+
+    <div class="row" style="margin-top:14px">
+      <label class="fld">번역 방향
+        <select id="target">
+          <option value="ko" selected>→ 한국어</option>
+          <option value="en">→ English</option>
+          <option value="ja">→ 日本語</option>
+        </select>
+      </label>
+      <label class="fld">모델
+        <select id="model">
+          <option value="sonnet" selected>Sonnet (가성비)</option>
+          <option value="opus">Opus (정밀)</option>
+        </select>
+      </label>
+      <div style="flex:1"></div>
+      <button class="btn" id="run" disabled>번역하기</button>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <div class="card">
+    <h2>2 · 결과</h2>
+    <div class="grid2">
+      <div>
+        <div class="pane-title">원본</div>
+        <div class="preview" id="preview"><span class="file-chip">파일 없음</span></div>
+      </div>
+      <div>
+        <div class="pane-title">번역 <button class="btn ghost" id="copy" style="float:right;padding:3px 10px;font-size:11px" disabled>복사</button></div>
+        <div class="result empty" id="result">번역 결과가 여기에 표시됩니다.</div>
+        <div class="meta" id="resultMeta"></div>
+      </div>
+    </div>
+    <div class="disclaimer">⚠️ 기계 번역(참고용)입니다. 계약·정산 등 중요 문서는 반드시 원문과 대조하고 필요 시 전문 번역을 확인하세요. 업로드한 파일은 번역을 위해 Anthropic(단일 신뢰 벤더)으로 전송됩니다.</div>
+  </div>
+
+  <div class="footer-tip">MERITTOUR · 사내 전용 · 게이트 통과 필요</div>
+</div>
+
+<script>
+const CFG_KEY = 'mt_translate_cfg';
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) {}
+
+const $ = (id) => document.getElementById(id);
+const cfgUrl = $('cfgUrl'), fileInput = $('file'), drop = $('drop'),
+      runBtn = $('run'), statusEl = $('status'), preview = $('preview'),
+      resultEl = $('result'), resultMeta = $('resultMeta'), copyBtn = $('copy');
+
+cfgUrl.value = cfg.url || '';
+cfgUrl.addEventListener('change', () => {
+  cfg.url = cfgUrl.value.trim();
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+});
+
+let current = null; // { data, mediaType, name }
+
+function setStatus(msg, kind) {
+  statusEl.textContent = msg || '';
+  statusEl.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('파일 읽기 실패'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function loadFile(file) {
+  if (!file) return;
+  const ok = ['image/png','image/jpeg','image/webp','image/gif','application/pdf'];
+  if (!ok.includes(file.type)) { setStatus('지원하지 않는 형식: ' + (file.type||'알수없음'), 'err'); return; }
+  const MB = file.size / (1024*1024);
+  if (MB > 28) { setStatus('파일이 너무 큽니다 (' + MB.toFixed(1) + 'MB). 28MB 이하만 가능합니다.', 'err'); return; }
+
+  setStatus('파일 읽는 중…', 'busy');
+  try {
+    const data = await fileToBase64(file);
+    current = { data, mediaType: file.type, name: file.name };
+    // 미리보기
+    if (file.type === 'application/pdf') {
+      preview.innerHTML = '<span class="file-chip">📄 ' + file.name + '</span>';
+    } else {
+      preview.innerHTML = '<img alt="원본" src="data:' + file.type + ';base64,' + data + '">';
+    }
+    runBtn.disabled = false;
+    setStatus(file.name + ' (' + MB.toFixed(2) + 'MB) 준비됨', 'ok');
+  } catch (e) {
+    setStatus(e.message, 'err');
+  }
+}
+
+drop.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+runBtn.addEventListener('click', async () => {
+  if (!current) return;
+  const url = (cfg.url || cfgUrl.value || '').trim();
+  if (!url) { setStatus('먼저 [연동 설정]에서 Edge Function URL을 입력하세요.', 'err'); return; }
+
+  runBtn.disabled = true; copyBtn.disabled = true;
+  resultEl.className = 'result empty'; resultEl.textContent = '번역 중… (스캔 문서는 30초~1분 걸릴 수 있습니다)';
+  resultMeta.textContent = '';
+  setStatus('Claude로 번역 요청 중…', 'busy');
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: current.data,
+        mediaType: current.mediaType,
+        target: $('target').value,
+        model: $('model').value,
+      }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.error) {
+      resultEl.className = 'result empty';
+      resultEl.textContent = '번역 결과가 여기에 표시됩니다.';
+      setStatus('오류: ' + (j.error || ('HTTP ' + res.status)), 'err');
+      return;
+    }
+    resultEl.className = 'result';
+    resultEl.textContent = j.text || '(빈 결과)';
+    copyBtn.disabled = false;
+    setStatus('완료', 'ok');
+    if (j.usage) {
+      const u = j.usage;
+      resultMeta.textContent = (j.model || '') + ' · 입력 ' + (u.input_tokens||0) + ' · 출력 ' + (u.output_tokens||0) + ' 토큰';
+    }
+  } catch (e) {
+    setStatus('네트워크 오류: ' + (e.message || e), 'err');
+  } finally {
+    runBtn.disabled = false;
+  }
+});
+
+copyBtn.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(resultEl.textContent); copyBtn.textContent = '복사됨'; setTimeout(()=>copyBtn.textContent='복사', 1200); }
+  catch(e) { setStatus('복사 실패', 'err'); }
+});
+</script>
+</body>
+</html>
