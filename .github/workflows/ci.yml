@@ -1,0 +1,16 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 인라인/모듈 스크립트 문법 검사
+        run: node scripts/check-syntax.mjs
+      - name: 단위 테스트
+        run: node --test "tests/**/*.test.mjs"
