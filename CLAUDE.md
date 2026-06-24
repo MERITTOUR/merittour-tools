@@ -32,6 +32,9 @@
 2. **실제 데이터 스모크 테스트**: jsdom-stub(가짜 DOM) 환경에서 실제 엑셀(예약리스트·일행별예약)을 읽어 `analyze()`를 돌리고 결과를 검증. SheetJS(xlsx)로 파싱.
    - ctx에 MutationObserver/IntersectionObserver/ResizeObserver/atob/btoa/scrollTo 등을 반드시 포함해야 스텁이 끝까지 돈다.
 3. 수정 후 바로 끝내지 말고 위 1·2를 거친 뒤 결과를 보고할 것.
+4. **CI 자동화**: push/PR마다 `.github/workflows/ci.yml`이 `node scripts/check-syntax.mjs`(인라인 `<script>`+`.js` 문법 검사)와 `node --test tests/**/*.test.mjs`(단위 테스트)를 실행. 로컬 검증은 `npm run verify`.
+   - 공통 순수 함수의 단일 진실원은 `shared/util.js`(MT 네임스페이스, UMD — 브라우저 전역+Node require). 새 공통 로직은 여기에 모으고 `tests/util.test.mjs`에 테스트 추가.
+   - `package.json`에 `"type":"module"`을 넣지 말 것(.js=CJS·.mjs=ESM 유지).
 
 ## 출력·파일 규칙
 - 다운로드 파일명은 **반드시 영문** (한글 파일명은 다운로드 실패). 파일 내부 내용은 한글 유지.

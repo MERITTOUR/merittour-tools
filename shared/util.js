@@ -129,4 +129,11 @@
     }, ms || 2200);
   };
 
-})(window);
+})(typeof window !== 'undefined' ? window
+   : typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* Node(단위 테스트)에서 require 가능하도록 — 브라우저 동작에는 영향 없음 */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = (typeof globalThis !== 'undefined' ? globalThis : this).MT;
+}
+
