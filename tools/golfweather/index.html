@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MERITTOUR · 골프 날씨</title>
+<meta name="description" content="골프장·날짜별 라운딩 적합도를 한눈에 — 티타임 구간 날씨 종합 판정" />
+
+<!-- 폰트 (CDN) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Serif+JP:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+
+<style>
+:root{
+  --navy:#1a2332; --navy-soft:#243149;
+  --ink:#1a2332; --muted:#5a6472; --line:#e3e6eb;
+  --bg:#f4f6f8; --card:#ffffff;
+  --v-best:#1b7a3d; --v-good:#3aa856; --v-fair:#e0a100; --v-poor:#e2620c; --v-bad:#c0392b;
+  --serif:'Noto Serif KR','Noto Serif JP',serif;
+  --sans:'Pretendard','Noto Sans JP',sans-serif;
+  --radius:14px; --shadow:0 2px 10px rgba(26,35,50,.06);
+  --shadow-lg:0 8px 26px rgba(26,35,50,.14);
+}
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ min-height:100%; }
+body{
+  font-family:var(--sans); color:var(--ink); background:var(--bg);
+  font-size:17px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  position:relative; overflow-x:hidden;
+}
+h1,h2,h3{ font-family:var(--serif); font-weight:700; }
+a{ color:inherit; }
+button{ font-family:inherit; cursor:pointer; }
+
+/* ══ 하늘 레이어 (§10) ══ */
+.sky{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.sky-gradient{
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, var(--sky-top,#bfe3ff) 0%, var(--sky-bot,#eaf6ff) 100%);
+  transition:background 1.2s ease;
+}
+.celestial{
+  position:absolute; width:74px; height:74px; border-radius:50%;
+  left:var(--cx,50%); top:var(--cy,20%);
+  transform:translate(-50%,-50%); transition:left 3s linear, top 3s linear, opacity 1.2s ease;
+}
+.celestial.sun{
+  background:radial-gradient(circle at 50% 50%, #fff8dc 0%, #ffe08a 40%, rgba(255,214,102,.55) 62%, rgba(255,214,102,0) 72%);
+  box-shadow:0 0 60px 24px rgba(255,220,120,.45);
+}
+.celestial.moon{
+  background:radial-gradient(circle at 38% 38%, #ffffff 0%, #eef2fb 45%, rgba(220,228,245,.5) 66%, rgba(220,228,245,0) 74%);
+  box-shadow:0 0 40px 12px rgba(210,224,255,.35); width:58px; height:58px;
+}
+.stars{ position:absolute; inset:0; opacity:0; transition:opacity 1.2s ease; }
+.stars .star{
+  position:absolute; width:2px; height:2px; border-radius:50%; background:#fff;
+  animation:twinkle var(--tw,3.5s) ease-in-out infinite alternate;
+}
+@keyframes twinkle{ from{opacity:.2} to{opacity:.95} }
+.clouds{ position:absolute; inset:0; }
+.cloud{
+  position:absolute; background:#fff; border-radius:100px; opacity:.85;
+  filter:blur(1px); animation:drift linear infinite;
+}
+.cloud::before,.cloud::after{ content:''; position:absolute; background:#fff; border-radius:100px; }
+@keyframes drift{ from{ transform:translateX(-30vw); } to{ transform:translateX(130vw); } }
+.precip{ position:absolute; inset:0; }
+.drop{
+  position:absolute; top:-12%; width:2px; height:16px; border-radius:2px;
+  background:linear-gradient(to bottom, rgba(140,170,210,0), rgba(120,150,200,.7));
+  animation:fall linear infinite;
+}
+@keyframes fall{ to{ transform:translateY(120vh); } }
+.flake{
+  position:absolute; top:-6%; border-radius:50%; background:#fff; opacity:.9;
+  animation:snow linear infinite;
+}
+@keyframes snow{ to{ transform:translateY(120vh) translateX(var(--sx,0)); } }
+.flash{
+  position:absolute; inset:0; background:#fff; opacity:0; mix-blend-mode:screen;
+}
+.flash.on{ animation:flash 1.1s ease-out; }
+@keyframes flash{ 0%{opacity:0} 6%{opacity:.75} 12%{opacity:.1} 18%{opacity:.55} 30%{opacity:0} 100%{opacity:0} }
+.haze{
+  position:absolute; inset:0; background:rgba(226,230,236,.42);
+  backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); opacity:0; transition:opacity 1.2s ease;
+}
+
+/* ══ 레이아웃 ══ */
+.wrap{ position:relative; z-index:1; }
+header.top{
+  background:var(--navy); color:#fff; box-shadow:var(--shadow);
+  position:sticky; top:0; z-index:20;
+}
+.top-in{
+  max-width:860px; margin:0 auto; padding:14px 18px calc(14px + env(safe-area-inset-bottom,0));
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.brand{ display:flex; flex-direction:column; line-height:1.15; }
+.brand .kicker{
+  font-size:11px; letter-spacing:.22em; color:#9fb0cc; font-weight:700;
+  font-family:var(--sans);
+}
+.brand .ttl{ font-family:var(--serif); font-size:21px; font-weight:700; }
+.langtog{ display:inline-flex; background:var(--navy-soft); border-radius:999px; padding:3px; }
+.langtog button{
+  border:0; background:transparent; color:#b9c6de; font-weight:700; font-size:13px;
+  padding:6px 13px; border-radius:999px; transition:.15s;
+}
+.langtog button.on{ background:#fff; color:var(--navy); }
+
+main{ max-width:860px; margin:0 auto; padding:18px 18px 40px; }
+
+/* 장소 선택 */
+.places{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.preset{
+  border:1px solid var(--line); background:var(--card); color:var(--ink);
+  font-weight:700; font-size:15px; padding:10px 16px; border-radius:999px;
+  box-shadow:var(--shadow); transition:.15s;
+}
+.preset.on{ background:var(--navy); color:#fff; border-color:var(--navy); }
+.searchbox{ position:relative; margin-bottom:16px; }
+.searchbox input{
+  width:100%; font-family:inherit; font-size:16px; padding:13px 16px;
+  border:1px solid var(--line); border-radius:var(--radius); background:var(--card);
+  color:var(--ink); box-shadow:var(--shadow);
+}
+.searchbox input:focus{ outline:2px solid var(--navy-soft); outline-offset:1px; }
+.results{
+  position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:30;
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow-lg); overflow:hidden; display:none;
+}
+.results.open{ display:block; }
+.results button{
+  display:block; width:100%; text-align:left; border:0; background:transparent;
+  padding:12px 15px; font-size:15px; border-bottom:1px solid var(--line);
+}
+.results button:last-child{ border-bottom:0; }
+.results button:hover,.results button:focus{ background:#eef3f9; outline:none; }
+.results .r-sub{ font-size:12px; color:var(--muted); }
+
+/* 카드 공통 */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:18px; margin-bottom:16px;
+}
+.place-head{ margin:2px 0 14px; }
+.place-head .pn{ font-family:var(--serif); font-size:24px; font-weight:700; }
+.place-head .pr{ font-size:14px; color:var(--muted); }
+
+/* ① 현재 날씨 */
+.cur{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.cur-main{ display:flex; align-items:center; gap:14px; min-width:220px; }
+.cur-emoji{ font-size:56px; line-height:1; }
+.cur-temp{ font-size:44px; font-weight:700; font-family:var(--serif); }
+.cur-state{ font-size:15px; color:var(--muted); }
+.cur-feel{ font-size:14px; color:var(--muted); }
+.metrics{
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 16px;
+  flex:1; min-width:240px;
+}
+.metric .ml{ font-size:12px; color:var(--muted); font-weight:600; }
+.metric .mv{ font-size:16px; font-weight:700; }
+
+/* ② 라운딩 적합도 히어로 */
+.hero{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+.gauge{ flex:0 0 auto; }
+.hero-body{ flex:1; min-width:200px; }
+.hero-date{ font-size:14px; color:var(--muted); font-weight:700; margin-bottom:2px; }
+.hero-verdict{
+  display:flex; align-items:center; gap:10px; font-family:var(--serif);
+  font-size:26px; font-weight:700; margin-bottom:6px;
+}
+.hero-flag{ font-size:24px; line-height:1; }
+.hero-reason{ font-size:16px; color:var(--ink); }
+.scale{ display:flex; margin-top:16px; border-radius:999px; overflow:hidden; border:1px solid var(--line); }
+.scale span{ flex:1; height:14px; }
+.scale-legend{ display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:5px; }
+
+/* ③ 시간대별 */
+.sec-title{ font-family:var(--serif); font-size:18px; font-weight:700; margin:6px 2px 10px; }
+.hours{ display:flex; gap:8px; overflow-x:auto; padding:4px 2px 10px; -webkit-overflow-scrolling:touch; }
+.hcell{
+  flex:0 0 auto; width:66px; background:#fff; border:1px solid var(--line);
+  border-radius:12px; padding:10px 6px 8px; text-align:center;
+}
+.hcell.tee{ background:#eef6ff; border-color:#cfe3fb; }
+.hcell .ht{ font-size:12px; color:var(--muted); font-weight:700; }
+.hcell .he{ font-size:24px; line-height:1.2; }
+.hcell .htemp{ font-size:15px; font-weight:700; }
+.hcell .hpop{ font-size:11px; color:#2b6fb3; font-weight:700; min-height:14px; }
+.hcell .hwind{ font-size:11px; color:var(--muted); }
+.hbar{ height:6px; border-radius:6px; margin-top:6px; background:var(--line); overflow:hidden; }
+.hbar i{ display:block; height:100%; border-radius:6px; }
+.legend{ font-size:12px; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:7px; }
+.legend .sw{ width:16px; height:10px; border-radius:3px; background:#eef6ff; border:1px solid #cfe3fb; display:inline-block; }
+
+/* ④ 7일 예보 */
+.days{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:10px; }
+.dcard{
+  background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 10px;
+  text-align:center; transition:.15s; position:relative;
+}
+.dcard:hover{ box-shadow:var(--shadow); }
+.dcard.on{ border-color:var(--navy); box-shadow:0 0 0 2px var(--navy) inset; }
+.dcard .dw{ font-size:13px; font-weight:700; }
+.dcard .dd{ font-size:11px; color:var(--muted); margin-bottom:4px; }
+.dcard .de{ font-size:26px; line-height:1.25; }
+.dcard .dpill{
+  display:inline-block; color:#fff; font-weight:700; font-size:12px;
+  padding:2px 9px; border-radius:999px; margin:4px 0;
+}
+.dcard .dtemp{ font-size:13px; font-weight:700; }
+.dcard .dtemp .lo{ color:var(--muted); font-weight:500; }
+.dcard .dmeta{ font-size:11px; color:var(--muted); margin-top:3px; }
+.dcard .dtag{
+  position:absolute; top:6px; left:6px; font-size:10px; font-weight:700;
+  color:var(--navy); background:#eef3f9; border-radius:6px; padding:1px 5px;
+}
+
+/* 푸터 */
+footer.bot{ background:var(--navy); color:#c6d2e6; }
+.bot-in{
+  max-width:860px; margin:0 auto; padding:16px 18px calc(20px + env(safe-area-inset-bottom,0));
+  font-size:13px; display:flex; flex-wrap:wrap; gap:6px 18px; justify-content:center; text-align:center;
+}
+.bot-in a{ color:#9fb8dd; }
+
+/* 상태 */
+.state-msg{ text-align:center; padding:40px 16px; color:var(--muted); }
+.spinner{
+  width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--navy);
+  border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* 반응형 (§11) */
+@media (max-width:520px){
+  body{ font-size:16px; }
+  .metrics{ grid-template-columns:repeat(2,1fr); }
+  .cur-emoji{ font-size:48px; } .cur-temp{ font-size:38px; }
+  .hero-verdict{ font-size:22px; }
+  .brand .ttl{ font-size:19px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .celestial{ transition:none; }
+  .stars .star,.cloud,.drop,.flake,.flash.on{ animation:none !important; }
+  .sky-gradient{ transition:none; }
+}
+.anim-paused .stars .star,
+.anim-paused .cloud,
+.anim-paused .drop,
+.anim-paused .flake{ animation-play-state:paused !important; }
+:focus-visible{ outline:2px solid #7cc4f2; outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<!-- 하늘 레이어 -->
+<div class="sky" id="sky" aria-hidden="true">
+  <div class="sky-gradient" id="skyGrad"></div>
+  <div class="stars" id="stars"></div>
+  <div class="celestial sun" id="sun" style="opacity:0"></div>
+  <div class="celestial moon" id="moon" style="opacity:0"></div>
+  <div class="clouds" id="clouds"></div>
+  <div class="haze" id="haze"></div>
+  <div class="precip" id="precip"></div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">
+        <span class="kicker">MERITTOUR</span>
+        <span class="ttl" id="appTitle">골프 날씨</span>
+      </div>
+      <div class="langtog" role="group" aria-label="언어 선택">
+        <button type="button" data-lang="ko" class="on">한국어</button>
+        <button type="button" data-lang="ja">日本語</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="places" id="presets"></div>
+    <div class="searchbox">
+      <input type="text" id="search" autocomplete="off" spellcheck="false" />
+      <div class="results" id="results" role="listbox"></div>
+    </div>
+
+    <div id="content"></div>
+    <div id="stateMsg" class="state-msg" style="display:none"></div>
+  </main>
+
+  <footer class="bot">
+    <div class="bot-in" id="footer"></div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ════════════ §12 튜닝 상수 ════════════ */
+const ROUND_START = 7;     // 티타임 시작 시(포함)
+const ROUND_END   = 15;    // 티타임 종료 시(미포함) → 07~14시
+const SHOW_START  = 5, SHOW_END = 19;
+const SKY_ENABLED     = true;
+const PRECIP_MAX_RAIN = 60;
+const PRECIP_MAX_SNOW = 40;
+const ANIM_INTENSITY  = 'soft';   // 'soft' | 'vivid'
+
+/* ════════════ §4 프리셋 골프장 ════════════ */
+const COURSES = [
+  { id:'yamanami', ko:'야마나미', ja:'やまなみ', regionKo:'구마모토·아소', regionJa:'熊本・阿蘇', lat:33.03, lon:131.19, elevation:743 },
+  { id:'fourteen', ko:'포틴힐즈', ja:'フォーティーンヒルズ', regionKo:'기후·에나', regionJa:'岐阜・恵那', lat:35.38, lon:137.42, elevation:800 },
+  { id:'beppu',    ko:'벳푸',     ja:'別府',     regionKo:'오이타·벳푸', regionJa:'大分・別府', lat:33.28, lon:131.42, elevation:20 },
+];
+const DEFAULT_COURSE = 'yamanami';
+
+/* ════════════ §7 다국어 ════════════ */
+const I18N = {
+  ko:{
+    title:'골프 날씨', searchPh:'도시·골프장 검색 …',
+    curTitle:'현재 날씨', feels:'체감', wind:'바람', gust:'돌풍', humid:'습도', uv:'자외선', vis:'시정',
+    fitTitle:'라운딩 적합도', hourly:'시간대별 예보', teeLegend:'라운딩 시간대(07–15시) 강조',
+    week:'7일 예보', today:'오늘', tomorrow:'내일',
+    sunrise:'일출', sunset:'일몰', source:'자료: Open-Meteo', updated:'갱신',
+    loading:'날씨를 불러오는 중…', errLoad:'날씨를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    noResult:'검색 결과가 없습니다.',
+    dirs:['북','북동','동','남동','남','남서','서','북서'],
+    wdays:['일','월','화','수','목','금','토'],
+    reasonNone:'특이사항 없음',
+    reason:{ storm:'뇌우 예보', rain:'강수 가능성', wind:'강풍', heat:'더위', cold:'추위', uv:'강한 자외선', vis:'시야 불량' },
+    verdicts:['라운딩 최적','라운딩 좋음','라운딩 보통·주의','라운딩 주의','라운딩 비추천'],
+    uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
+    poplabel:'강수확률', maxwind:'최대풍속',
+  },
+  ja:{
+    title:'ゴルフ天気', searchPh:'都市・ゴルフ場を検索 …',
+    curTitle:'現在の天気', feels:'体感', wind:'風', gust:'突風', humid:'湿度', uv:'紫外線', vis:'視程',
+    fitTitle:'ラウンド適性', hourly:'時間別予報', teeLegend:'ラウンド時間帯(07–15時)を強調',
+    week:'7日間予報', today:'今日', tomorrow:'明日',
+    sunrise:'日の出', sunset:'日の入', source:'データ: Open-Meteo', updated:'更新',
+    loading:'天気を読み込み中…', errLoad:'天気を取得できませんでした。しばらくして再度お試しください。',
+    noResult:'検索結果がありません。',
+    dirs:['北','北東','東','南東','南','南西','西','北西'],
+    wdays:['日','月','火','水','木','金','土'],
+    reasonNone:'良好',
+    reason:{ storm:'雷雨予報', rain:'降水の可能性', wind:'強風', heat:'暑さ', cold:'寒さ', uv:'強い紫外線', vis:'視界不良' },
+    verdicts:['ラウンド最適','ラウンド良好','まずまず・注意','注意','非推奨'],
+    uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
+    poplabel:'降水確率', maxwind:'最大風速',
+  }
+};
+
+/* ════════════ §8 WMO 코드 ════════════ */
+const WMO = {
+  0:['☀️','맑음','快晴'], 1:['🌤️','대체로 맑음','晴れ'], 2:['⛅','구름 조금','薄曇り'], 3:['☁️','흐림','曇り'],
+  45:['🌫️','안개','霧'], 48:['🌫️','짙은 안개','霧氷'],
+  51:['🌦️','약한 이슬비','弱い霧雨'], 53:['🌦️','이슬비','霧雨'], 55:['🌧️','강한 이슬비','強い霧雨'],
+  56:['🌧️','언 이슬비','着氷性の霧雨'], 57:['🌧️','언 이슬비','着氷性の霧雨'],
+  61:['🌦️','약한 비','弱い雨'], 63:['🌧️','비','雨'], 65:['🌧️','강한 비','強い雨'],
+  66:['🌧️','언 비','着氷性の雨'], 67:['🌧️','언 비','着氷性の雨'],
+  71:['🌨️','약한 눈','弱い雪'], 73:['🌨️','눈','雪'], 75:['❄️','강한 눈','大雪'], 77:['🌨️','싸락눈','霧雪'],
+  80:['🌦️','소나기','にわか雨'], 81:['🌧️','소나기','にわか雨'], 82:['⛈️','강한 소나기','激しいにわか雨'],
+  85:['🌨️','소낙눈','にわか雪'], 86:['❄️','강한 소낙눈','強いにわか雪'],
+  95:['⛈️','뇌우','雷雨'], 96:['⛈️','우박 뇌우','雹を伴う雷雨'], 99:['⛈️','우박 뇌우','雹を伴う雷雨'],
+};
+const wmo = (code, lang) => {
+  const e = WMO[code];
+  if(!e) return { emoji:'❓', text:'—' };
+  return { emoji:e[0], text:(lang==='ja'? e[2] : e[1]) };
+};
+const isThunder = code => code===95 || code===96 || code===99;
+
+/* ════════════ §6.3 판정 밴드 ════════════ */
+const VERDICT_COLORS = ['#1b7a3d','#3aa856','#e0a100','#e2620c','#c0392b'];
+function verdictIndex(score){
+  if(score>=85) return 0;
+  if(score>=70) return 1;
+  if(score>=50) return 2;
+  if(score>=30) return 3;
+  return 4;
+}
+const verdictColor = score => VERDICT_COLORS[verdictIndex(score)];
+const verdictText  = (score, lang) => I18N[lang].verdicts[verdictIndex(score)];
+
+/* ════════════ §6.1 시간별 점수 ════════════ */
+function scoreHour(h){
+  // h: { code, pop, precip, wind, gust, temp, uv, vis }
+  let s = 100;
+  const pen = {};   // 카테고리별 감점 누적
+  const add = (cat, v) => { if(v>0){ pen[cat] = (pen[cat]||0) + v; s -= v; } };
+
+  if(isThunder(h.code)) add('storm', 60);
+
+  const pop = h.pop ?? 0;
+  if(pop>=70) add('rain',45); else if(pop>=50) add('rain',28); else if(pop>=30) add('rain',14); else if(pop>=15) add('rain',5);
+
+  const pr = h.precip ?? 0;
+  if(pr>=4) add('rain',40); else if(pr>=1) add('rain',20); else if(pr>=0.2) add('rain',8);
+
+  const w = h.wind ?? 0;
+  if(w>=10) add('wind',35); else if(w>=7) add('wind',20); else if(w>=5) add('wind',10); else if(w>=4) add('wind',4);
+
+  const g = h.gust ?? 0;
+  if(g>=13) add('wind',10);
+
+  const t = h.temp;
+  if(t!=null){
+    if(t>=35) add('heat',30); else if(t>=33) add('heat',18); else if(t>=30) add('heat',8);
+    if(t<=0) add('cold',28); else if(t<=3) add('cold',16); else if(t<=6) add('cold',7);
+  }
+
+  const uv = h.uv ?? 0;
+  if(uv>=8) add('uv',8); else if(uv>=6) add('uv',4);
+
+  const v = h.vis;
+  if(v!=null){
+    if(v<1000) add('vis',15); else if(v<3000) add('vis',6);
+  }
+
+  return { score: Math.max(0, Math.min(100, s)), pen };
+}
+
+/* ════════════ §6.2 / §6.4 하루 종합 ════════════ */
+function scoreDay(hoursOfDay, lang){
+  // hoursOfDay: 24개(또는 가용) 시간 객체 배열 (index = 시). 라운딩 구간만 사용.
+  const win = [];
+  for(let hr=ROUND_START; hr<ROUND_END; hr++){
+    if(hoursOfDay[hr]) win.push(hoursOfDay[hr]);
+  }
+  if(!win.length) return { score:0, color:verdictColor(0), verdict:verdictText(0,lang), reason:I18N[lang].reasonNone };
+
+  const penTotal = {};
+  let sum = 0, hasStorm = false;
+  let maxPop = 0, maxWind = 0, maxTemp = -999, minTemp = 999;
+
+  win.forEach(h => {
+    const r = scoreHour(h);
+    sum += r.score;
+    for(const k in r.pen) penTotal[k] = (penTotal[k]||0) + r.pen[k];
+    if(isThunder(h.code)) hasStorm = true;
+    maxPop = Math.max(maxPop, h.pop ?? 0);
+    maxWind = Math.max(maxWind, h.wind ?? 0);
+    if(h.temp!=null){ maxTemp = Math.max(maxTemp, h.temp); minTemp = Math.min(minTemp, h.temp); }
+  });
+
+  let score = Math.round(sum / win.length);
+  if(hasStorm) score = Math.min(score, 22);   // 안전 우선 캡
+
+  // 대표 사유: 누적 감점 최대 카테고리
+  let topCat = null, topVal = 0;
+  for(const k in penTotal){ if(penTotal[k] > topVal){ topVal = penTotal[k]; topCat = k; } }
+
+  const t = I18N[lang];
+  let reason;
+  if(!topCat){
+    reason = t.reasonNone;
+  } else {
+    reason = t.reason[topCat] || '';
+    if(topCat==='rain' || topCat==='storm') reason += ` (${t.poplabel} ${maxPop}${t.uProb})`;
+    else if(topCat==='wind') reason += ` (${t.maxwind} ${Math.round(maxWind)}${t.uWind})`;
+    else if(topCat==='heat') reason += ` (${Math.round(maxTemp)}${t.uTemp})`;
+    else if(topCat==='cold') reason += ` (${Math.round(minTemp)}${t.uTemp})`;
+  }
+
+  return { score, color:verdictColor(score), verdict:verdictText(score,lang), reason };
+}
+
+/* ════════════ 상태 ════════════ */
+let LANG = 'ko';
+let SEL_DAY = 0;              // 선택 일자 인덱스(0=오늘)
+let CUR_PLACE = null;         // { name, region, lat, lon, elevation, id? }
+let DATA = null;              // Open-Meteo 응답
+let searchTimer = null;
+let lastSkyKey = '';          // phase|code 변경 감지
+
+/* ════════════ 유틸 ════════════ */
+const $ = id => document.getElementById(id);
+const clampN = (v,a,b) => Math.max(a, Math.min(b, v));
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dirOf(deg){ const d = I18N[LANG].dirs; return d[Math.round((deg||0)/45)%8]; }
+// 로컬 ISO "YYYY-MM-DDTHH:MM" → 자정 기준 분
+function hmMin(iso){ if(!iso) return 0; const t = iso.slice(11,16).split(':'); return (+t[0])*60 + (+t[1]); }
+function hourOf(iso){ return +iso.slice(11,13); }
+function dateKey(iso){ return iso.slice(0,10); }
+
+/* ════════════ API (§3) ════════════ */
+async function loadForecast(place){
+  showState(I18N[LANG].loading, true);
+  const p = new URLSearchParams({
+    latitude:place.lat, longitude:place.lon, timezone:'auto', forecast_days:'7', wind_speed_unit:'ms',
+    current:'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
+    hourly:'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,relative_humidity_2m',
+    daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,uv_index_max,sunrise,sunset',
+  });
+  if(place.elevation!=null) p.set('elevation', place.elevation);
+  try{
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?'+p.toString());
+    if(!res.ok) throw new Error('http '+res.status);
+    DATA = await res.json();
+    CUR_PLACE = place;
+    SEL_DAY = 0;
+    hideState();
+    renderAll();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }catch(e){
+    showState(I18N[LANG].errLoad, false);
+  }
+}
+
+async function geoSearch(q){
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${LANG}&format=json`;
+  try{
+    const res = await fetch(url);
+    const j = await res.json();
+    return j.results || [];
+  }catch(e){ return []; }
+}
+
+/* ════════════ hourly → 일자별 시간표 ════════════ */
+function hoursForDay(dayIdx){
+  // DATA.hourly.time 에서 해당 날짜의 시간들을 시(hour) 인덱스로 매핑
+  const H = DATA.hourly, out = {};
+  const targetDate = DATA.daily.time[dayIdx];
+  for(let i=0;i<H.time.length;i++){
+    if(dateKey(H.time[i]) !== targetDate) continue;
+    const hr = hourOf(H.time[i]);
+    out[hr] = {
+      iso:H.time[i], code:H.weather_code[i],
+      temp:H.temperature_2m[i], feel:H.apparent_temperature[i],
+      pop:H.precipitation_probability[i] ?? 0, precip:H.precipitation[i] ?? 0,
+      wind:H.wind_speed_10m[i] ?? 0, gust:H.wind_gusts_10m[i] ?? 0, wdir:H.wind_direction_10m[i] ?? 0,
+      vis:H.visibility[i], uv:H.uv_index[i] ?? 0, humid:H.relative_humidity_2m[i] ?? 0,
+    };
+  }
+  return out;
+}
+// 현재 시각 hourly 인덱스(자외선·시정 보완용)
+function currentHourExtra(){
+  const H = DATA.hourly, key = (DATA.current.time||'').slice(0,13);
+  for(let i=0;i<H.time.length;i++){
+    if(H.time[i].slice(0,13)===key) return { uv:H.uv_index[i] ?? 0, vis:H.visibility[i] };
+  }
+  return { uv:0, vis:null };
+}
+
+/* ════════════ 렌더 ════════════ */
+function renderAll(){
+  if(!DATA) return;
+  const t = I18N[LANG];
+  const c = document.getElementById('content');
+  const place = CUR_PLACE;
+
+  const cur = DATA.current;
+  const extra = currentHourExtra();
+  const cw = wmo(cur.weather_code, LANG);
+
+  const dayHours = hoursForDay(SEL_DAY);
+  const dayEval = scoreDay(dayHours, LANG);
+
+  const visTxt = v => v==null ? '—' : (v/1000).toFixed(v<10000?1:0)+' '+t.uVis;
+
+  // 날짜 라벨
+  const dLabel = idx => {
+    if(idx===0) return t.today;
+    if(idx===1) return t.tomorrow;
+    const iso = DATA.daily.time[idx];
+    const wd = t.wdays[ new Date(iso+'T00:00').getDay() ];
+    return `${iso.slice(5).replace('-','/')} (${wd})`;
+  };
+
+  let html = '';
+
+  // 장소 헤드
+  html += `<div class="place-head">
+    <div class="pn">${esc(place.name)}</div>
+    <div class="pr">${esc(place.region||'')}</div>
+  </div>`;
+
+  // ① 현재 날씨
+  html += `<div class="card"><div class="sec-title">${t.curTitle}</div>
+    <div class="cur">
+      <div class="cur-main">
+        <div class="cur-emoji">${cw.emoji}</div>
+        <div>
+          <div class="cur-temp">${Math.round(cur.temperature_2m)}°</div>
+          <div class="cur-state">${cw.text}</div>
+          <div class="cur-feel">${t.feels} ${Math.round(cur.apparent_temperature)}°</div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="ml">${t.wind}</div><div class="mv">${dirOf(cur.wind_direction_10m)} ${cur.wind_speed_10m.toFixed(1)} ${t.uWind}</div></div>
+        <div class="metric"><div class="ml">${t.gust}</div><div class="mv">${(cur.wind_gusts_10m??0).toFixed(1)} ${t.uWind}</div></div>
+        <div class="metric"><div class="ml">${t.humid}</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
+        <div class="metric"><div class="ml">${t.uv}</div><div class="mv">${Math.round(extra.uv)}</div></div>
+        <div class="metric"><div class="ml">${t.vis}</div><div class="mv">${visTxt(extra.vis)}</div></div>
+      </div>
+    </div></div>`;
+
+  // ② 라운딩 적합도 히어로
+  html += `<div class="card"><div class="sec-title">${t.fitTitle}</div>
+    <div class="hero">
+      <div class="gauge">${gaugeSVG(dayEval.score, dayEval.color)}</div>
+      <div class="hero-body">
+        <div class="hero-date">${dLabel(SEL_DAY)}</div>
+        <div class="hero-verdict" style="color:${dayEval.color}">
+          <span class="hero-flag">${flagSVG(dayEval.color)}</span>${dayEval.verdict}
+        </div>
+        <div class="hero-reason">${esc(dayEval.reason)}</div>
+        <div class="scale">${VERDICT_COLORS.map(col=>`<span style="background:${col}"></span>`).join('')}</div>
+        <div class="scale-legend"><span>${t.verdicts[4]}</span><span>${t.verdicts[0]}</span></div>
+      </div>
+    </div></div>`;
+
+  // ③ 시간대별
+  let cells = '';
+  for(let hr=SHOW_START; hr<=SHOW_END; hr++){
+    const h = dayHours[hr];
+    if(!h) continue;
+    const hw = wmo(h.code, LANG);
+    const r = scoreHour(h);
+    const tee = (hr>=ROUND_START && hr<ROUND_END) ? ' tee' : '';
+    const pop = h.pop>=10 ? `${h.pop}%` : '';
+    cells += `<div class="hcell${tee}">
+      <div class="ht">${String(hr).padStart(2,'0')}</div>
+      <div class="he">${hw.emoji}</div>
+      <div class="htemp">${Math.round(h.temp)}°</div>
+      <div class="hpop">${pop}</div>
+      <div class="hwind">${h.wind.toFixed(1)}</div>
+      <div class="hbar"><i style="width:${r.score}%;background:${verdictColor(r.score)}"></i></div>
+    </div>`;
+  }
+  html += `<div class="card"><div class="sec-title">${t.hourly}</div>
+    <div class="hours">${cells}</div>
+    <div class="legend"><span class="sw"></span>${t.teeLegend}</div></div>`;
+
+  // ④ 7일
+  let dcards = '';
+  const D = DATA.daily;
+  for(let i=0;i<D.time.length;i++){
+    const dh = hoursForDay(i);
+    const ev = scoreDay(dh, LANG);
+    const dw = wmo(D.weather_code[i], LANG);
+    const iso = D.time[i];
+    const wd = t.wdays[ new Date(iso+'T00:00').getDay() ];
+    const tag = i===0 ? t.today : (i===1 ? t.tomorrow : '');
+    dcards += `<button type="button" class="dcard${i===SEL_DAY?' on':''}" data-day="${i}">
+      ${tag?`<span class="dtag">${tag}</span>`:''}
+      <div class="dw">${wd}</div>
+      <div class="dd">${iso.slice(5).replace('-','/')}</div>
+      <div class="de">${dw.emoji}</div>
+      <div><span class="dpill" style="background:${ev.color}">${ev.score}</span></div>
+      <div class="dtemp">${Math.round(D.temperature_2m_max[i])}° <span class="lo">${Math.round(D.temperature_2m_min[i])}°</span></div>
+      <div class="dmeta">💧${D.precipitation_probability_max[i] ?? 0}% · 💨${(D.wind_speed_10m_max[i]??0).toFixed(0)}</div>
+    </button>`;
+  }
+  html += `<div class="card"><div class="sec-title">${t.week}</div><div class="days">${dcards}</div></div>`;
+
+  c.innerHTML = html;
+
+  // 7일 카드 클릭 → SEL_DAY 갱신
+  c.querySelectorAll('.dcard').forEach(btn => {
+    btn.addEventListener('click', () => {
+      SEL_DAY = +btn.dataset.day;
+      renderAll();
+      window.scrollTo({ top:0, behavior:'smooth' });
+    });
+  });
+
+  renderFooter();
+  updateSky();
+}
+
+function renderFooter(){
+  const t = I18N[LANG], D = DATA.daily;
+  const sr = (D.sunrise[SEL_DAY]||'').slice(11,16);
+  const ss = (D.sunset[SEL_DAY]||'').slice(11,16);
+  const upd = (DATA.current.time||'').slice(11,16);
+  $('footer').innerHTML =
+    `<span>🌅 ${t.sunrise} ${sr}　🌇 ${t.sunset} ${ss}</span>` +
+    `<span><a href="https://open-meteo.com/" target="_blank" rel="noopener">${t.source}</a></span>` +
+    `<span>${t.updated} ${upd}</span>`;
+}
+
+/* 원형 게이지 SVG (§5.2) */
+function gaugeSVG(score, color){
+  const R = 46, C = 2*Math.PI*R, off = C*(1 - score/100);
+  return `<svg width="118" height="118" viewBox="0 0 118 118" role="img" aria-label="${score}점">
+    <circle cx="59" cy="59" r="${R}" fill="none" stroke="#eef1f5" stroke-width="11"/>
+    <circle cx="59" cy="59" r="${R}" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round"
+      stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 59 59)"/>
+    <text x="59" y="58" text-anchor="middle" font-size="34" font-weight="700" fill="${color}" font-family="'Noto Serif KR',serif">${score}</text>
+    <text x="59" y="78" text-anchor="middle" font-size="12" fill="#5a6472">/ 100</text>
+  </svg>`;
+}
+/* 골프 깃대 아이콘 */
+function flagSVG(color){
+  return `<svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true">
+    <path d="M5 22 L5 2" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M5 3 L17 6 L5 10 Z" fill="${color}"/>
+    <circle cx="5" cy="22" r="2" fill="${color}"/>
+  </svg>`;
+}
+
+/* ════════════ 상태 표시 ════════════ */
+function showState(msg, spin){
+  $('content').innerHTML = '';
+  const el = $('stateMsg');
+  el.style.display = 'block';
+  el.innerHTML = (spin?'<div class="spinner"></div>':'') + esc(msg);
+}
+function hideState(){ $('stateMsg').style.display = 'none'; }
+
+/* ════════════ §10 하늘 애니메이션 ════════════ */
+function skyPhase(nowMin, srMin, ssMin){
+  const dawnStart = srMin - 30, dawnEnd = srMin + 60;
+  const goldenStart = ssMin - 75, goldenEnd = ssMin + 45;
+  if(nowMin < dawnStart)      return 'night';
+  if(nowMin < dawnEnd)        return 'dawn';
+  if(nowMin < 720)            return 'morning';
+  if(nowMin < goldenStart)    return 'midday';
+  if(nowMin < goldenEnd)      return 'golden';
+  return 'night';
+}
+const SKY_GRAD = {
+  dawn:['#f7c9c9','#ffe3c2'], morning:['#bfe3ff','#eaf6ff'], midday:['#7cc4f2','#cfeaff'],
+  golden:['#ff9e6d','#ffd29e'], night:['#1a2340','#2b3a63'],
+};
+function updateSky(){
+  if(!SKY_ENABLED || !DATA) return;
+  const cur = DATA.current;
+  const srMin = hmMin(DATA.daily.sunrise[0]);
+  const ssMin = hmMin(DATA.daily.sunset[0]);
+  const nowMin = hmMin(cur.time);
+  const phase = skyPhase(nowMin, srMin, ssMin);
+  const code = cur.weather_code;
+
+  const key = phase + '|' + code;
+  if(key === lastSkyKey){ positionCelestial(phase, nowMin, srMin, ssMin); return; }
+  lastSkyKey = key;
+
+  // 그라데이션
+  const g = SKY_GRAD[phase];
+  document.documentElement.style.setProperty('--sky-top', g[0]);
+  document.documentElement.style.setProperty('--sky-bot', g[1]);
+
+  // 별
+  const isNight = phase==='night';
+  $('stars').style.opacity = isNight ? '1' : '0';
+  if(isNight && !$('stars').dataset.built){ buildStars(); $('stars').dataset.built = '1'; }
+
+  positionCelestial(phase, nowMin, srMin, ssMin);
+  buildWeatherOverlay(code, phase);
+}
+function positionCelestial(phase, nowMin, srMin, ssMin){
+  const sun = $('sun'), moon = $('moon');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isNight = phase==='night';
+  if(isNight){
+    sun.style.opacity = '0';
+    // 달 아크
+    let denom = (srMin + 1440) - ssMin;
+    let p = nowMin >= ssMin ? (nowMin - ssMin)/denom : (nowMin + 1440 - ssMin)/denom;
+    p = clampN(p, 0, 1);
+    moon.style.opacity = '1';
+    moon.style.setProperty('--cx', (8 + p*84) + '%');
+    moon.style.setProperty('--cy', reduce ? '18%' : (78 - Math.sin(p*Math.PI)*62) + '%');
+  } else {
+    moon.style.opacity = '0';
+    let p = clampN((nowMin - srMin)/Math.max(1,(ssMin - srMin)), 0, 1);
+    sun.style.opacity = '1';
+    sun.style.setProperty('--cx', (8 + p*84) + '%');
+    sun.style.setProperty('--cy', reduce ? '16%' : (80 - Math.sin(p*Math.PI)*66) + '%');
+  }
+}
+function buildStars(){
+  const box = $('stars');
+  let h = '';
+  // 결정적 배치(Math.random 지양은 아니나 1회 생성이라 무해) — 고정 시드 느낌으로 분산
+  for(let i=0;i<60;i++){
+    const x = (i*37 % 100), y = (i*53 % 70), tw = 2.4 + (i%5)*0.6, d = (i%7)*0.4;
+    h += `<span class="star" style="left:${x}%;top:${y}%;--tw:${tw}s;animation-delay:${d}s"></span>`;
+  }
+  box.innerHTML = h;
+}
+function buildWeatherOverlay(code, phase){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clouds = $('clouds'), precip = $('precip'), haze = $('haze'), flash = $('flash');
+  clouds.innerHTML = ''; precip.innerHTML = ''; haze.style.opacity = '0';
+  stopFlash();
+  if(reduce) return;
+
+  const vivid = ANIM_INTENSITY==='vivid';
+
+  // 구름
+  let nClouds = 0;
+  if(code===2) nClouds = 2; else if(code===3) nClouds = 4;
+  else if((code>=45&&code<=48)) nClouds = 2;
+  else if((code>=51&&code<=67)||(code>=80&&code<=82)||isThunder(code)) nClouds = 3;
+  else if(code>=71&&code<=86) nClouds = 3;
+  for(let i=0;i<nClouds;i++) clouds.appendChild(makeCloud(i, phase));
+
+  // 안개
+  if(code===45||code===48) haze.style.opacity = '1';
+
+  // 강수
+  const rainCodes = ((code>=51&&code<=67)||(code>=80&&code<=82)||isThunder(code));
+  const snowCodes = (code>=71&&code<=77)||code===85||code===86;
+  if(rainCodes){
+    let n = 30;
+    if(code===55||code===65||code===82||code===67) n = PRECIP_MAX_RAIN;
+    else if(code===63||code===81||isThunder(code)) n = Math.round(PRECIP_MAX_RAIN*0.8);
+    else if(code===53||code===61||code===80) n = Math.round(PRECIP_MAX_RAIN*0.5);
+    else n = Math.round(PRECIP_MAX_RAIN*0.35);
+    if(vivid) n = Math.min(PRECIP_MAX_RAIN, Math.round(n*1.3));
+    for(let i=0;i<n;i++) precip.appendChild(makeDrop(i));
+  } else if(snowCodes){
+    let n = (code===75||code===86) ? PRECIP_MAX_SNOW : Math.round(PRECIP_MAX_SNOW*0.6);
+    for(let i=0;i<n;i++) precip.appendChild(makeFlake(i));
+  }
+
+  // 뇌우 번개
+  if(isThunder(code)) startFlash();
+}
+function makeCloud(i, phase){
+  const el = document.createElement('div');
+  el.className = 'cloud';
+  const w = 90 + (i*40 % 120), h = w*0.32;
+  const top = 6 + (i*17 % 30), dur = 60 + (i*13 % 50), delay = -(i*11 % 40);
+  el.style.width = w+'px'; el.style.height = h+'px';
+  el.style.top = top+'%'; el.style.left = '0';
+  el.style.animationDuration = dur+'s'; el.style.animationDelay = delay+'s';
+  if(phase==='night'){ el.style.background='#4a5578'; el.style.opacity='.5'; }
+  el.innerHTML = `<style></style>`; el.innerHTML='';
+  el.style.setProperty('box-shadow', `${w*0.28}px ${h*0.35}px 0 ${w*0.02}px #fff, ${w*0.55}px ${h*0.12}px 0 ${-w*0.04}px #fff`);
+  return el;
+}
+function makeDrop(i){
+  const el = document.createElement('div');
+  el.className = 'drop';
+  el.style.left = (i*100/PRECIP_MAX_RAIN + (i%3))%100 + '%';
+  el.style.animationDuration = (0.5 + (i%5)*0.12) + 's';
+  el.style.animationDelay = -((i%9)*0.2) + 's';
+  el.style.opacity = 0.4 + (i%4)*0.15;
+  return el;
+}
+function makeFlake(i){
+  const el = document.createElement('div');
+  el.className = 'flake';
+  const sz = 4 + (i%4)*2;
+  el.style.width = sz+'px'; el.style.height = sz+'px';
+  el.style.left = (i*100/PRECIP_MAX_SNOW + (i%5))%100 + '%';
+  el.style.animationDuration = (5 + (i%6)) + 's';
+  el.style.animationDelay = -((i%8)*0.7) + 's';
+  el.style.setProperty('--sx', ((i%2?1:-1)*(10 + i%14)) + 'px');
+  return el;
+}
+let flashTimer = null;
+function startFlash(){
+  stopFlash();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+  const tick = () => {
+    const f = $('flash');
+    f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');
+    flashTimer = setTimeout(tick, 4000 + (Date.now()%3000));
+  };
+  flashTimer = setTimeout(tick, 2500);
+}
+function stopFlash(){ if(flashTimer){ clearTimeout(flashTimer); flashTimer = null; } $('flash').classList.remove('on'); }
+
+/* 탭 비활성 시 애니메이션 일시정지 */
+document.addEventListener('visibilitychange', () => {
+  document.body.classList.toggle('anim-paused', document.hidden);
+  if(document.hidden) stopFlash();
+  else if(DATA && isThunder(DATA.current.weather_code)) startFlash();
+});
+
+/* ════════════ 언어 · 프리셋 · 검색 ════════════ */
+function courseName(c){ return LANG==='ja'? c.ja : c.ko; }
+function courseRegion(c){ return LANG==='ja'? c.regionJa : c.regionKo; }
+
+function renderPresets(){
+  const box = $('presets');
+  box.innerHTML = '';
+  COURSES.forEach(c => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'preset';
+    b.textContent = courseName(c);
+    if(CUR_PLACE && CUR_PLACE.id===c.id) b.classList.add('on');
+    b.addEventListener('click', () => {
+      loadForecast({ id:c.id, name:courseName(c), region:courseRegion(c), lat:c.lat, lon:c.lon, elevation:c.elevation });
+      renderPresets();
+    });
+    box.appendChild(b);
+  });
+}
+
+function applyLang(){
+  const t = I18N[LANG];
+  document.documentElement.lang = LANG;
+  $('appTitle').textContent = t.title;
+  $('search').placeholder = t.searchPh;
+  document.querySelectorAll('.langtog button').forEach(b => b.classList.toggle('on', b.dataset.lang===LANG));
+  renderPresets();
+  if(DATA) renderAll();
+}
+
+function initEvents(){
+  document.querySelectorAll('.langtog button').forEach(b => {
+    b.addEventListener('click', () => { LANG = b.dataset.lang; lastSkyKey=''; applyLang(); });
+  });
+
+  const input = $('search'), results = $('results');
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearTimeout(searchTimer);
+    if(q.length < 2){ results.classList.remove('open'); results.innerHTML=''; return; }
+    searchTimer = setTimeout(async () => {
+      const list = await geoSearch(q);
+      if(!list.length){
+        results.innerHTML = `<button type="button" disabled style="color:var(--muted)">${I18N[LANG].noResult}</button>`;
+        results.classList.add('open'); return;
+      }
+      results.innerHTML = list.map((r,i) =>
+        `<button type="button" role="option" data-i="${i}">
+          <div>${esc(r.name)}</div>
+          <div class="r-sub">${esc([r.admin1, r.country].filter(Boolean).join(', '))}</div>
+        </button>`).join('');
+      results.classList.add('open');
+      results.querySelectorAll('button[data-i]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const r = list[+btn.dataset.i];
+          results.classList.remove('open'); input.value = r.name;
+          loadForecast({ name:r.name, region:[r.admin1, r.country].filter(Boolean).join(', '),
+                         lat:r.latitude, lon:r.longitude, elevation:r.elevation });
+          renderPresets();
+        });
+      });
+    }, 300);
+  });
+  // 바깥 클릭 시 닫힘
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.searchbox')) results.classList.remove('open');
+  });
+}
+
+/* ════════════ 부팅 ════════════ */
+function boot(){
+  initEvents();
+  applyLang();
+  const c = COURSES.find(x => x.id===DEFAULT_COURSE) || COURSES[0];
+  loadForecast({ id:c.id, name:courseName(c), region:courseRegion(c), lat:c.lat, lon:c.lon, elevation:c.elevation });
+  renderPresets();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+/* 테스트 훅(스모크용) — 브라우저 동작엔 영향 없음 */
+if(typeof module!=='undefined' && module.exports){
+  module.exports = { scoreHour, scoreDay, verdictIndex, skyPhase, isThunder };
+}
+</script>
+</body>
+</html>
