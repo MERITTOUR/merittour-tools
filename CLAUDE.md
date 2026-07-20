@@ -18,7 +18,7 @@
   - tools/library/archive (3단계): `<script src="../../../shared/gate.js"></script>`
   - 루트 index.html: 게이트 없음(즉시 sales로 리다이렉트되므로).
 - 비밀번호 **9800** (gate.js에 SHA-256 해시로 보관, 원문 비노출). 이름(2글자 이상) + 비번 입력.
-- 통과 기록은 sessionStorage(탭 닫으면 재입력), 이름은 localStorage(유지).
+- 통과 기록은 localStorage + 30일 슬라이딩 만료(탭/창 닫아도 유지, 접속 시마다 30일 연장, 30일 미접속 시에만 재입력). 이름도 localStorage(유지). 비번 변경 시 해시 불일치로 기존 기록 자동 무효화.
 - 새 도구·페이지를 추가하면 반드시 게이트 로드 줄을 깊이에 맞게 넣을 것.
 
 ## 핵심 작업 원칙
