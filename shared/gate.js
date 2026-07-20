@@ -2,7 +2,9 @@
    MERITTOUR 사내 도구함 — 접근 게이트 + 사용자 이름  (shared/gate.js)
 
    - 페이지 진입 시 비밀번호 + 이름을 받는 가벼운 가림막.
-   - 비밀번호 통과 기록은 sessionStorage(탭 닫으면 재입력).
+   - 비밀번호 통과 기록은 localStorage + 30일 슬라이딩 만료.
+     (탭/창을 닫거나 새 탭을 열어도 유지. 접속 시마다 만료 30일 자동 연장.
+      30일간 완전 미접속 시에만 재입력.)
    - 이름은 localStorage(계속 유지). 헤더에서 언제든 변경 가능.
    - 비밀번호 원문은 코드에 두지 않고 SHA-256 해시만 보관.
 
@@ -28,8 +30,30 @@
   // 접근 비밀번호의 SHA-256 해시 (원문 비노출)
   var PASS_HASH = '5d1b67c4f5ebfbc63dd15285fa79e490cbc37c4c479a44f8e6646e0f7d65b5da';
 
-  var SESSION_KEY = 'mt-gate-ok';
+  var GATE_KEY = 'mt-gate-ok';
   var NAME_KEY = 'mt-user-name';
+  var GATE_TTL_MS = 30 * 24 * 60 * 60 * 1000;   // 30일
+
+  /* ── 게이트 통과 기록 (localStorage + 슬라이딩 만료) ── */
+  function gatePassed() {
+    try {
+      var raw = localStorage.getItem(GATE_KEY);
+      if (!raw) return false;
+      var rec = JSON.parse(raw);
+      // 해시 일치 + 미만료면 통과. 접속 시마다 만료를 30일 뒤로 연장(슬라이딩).
+      if (rec && rec.h === PASS_HASH && rec.exp && Date.now() < rec.exp) {
+        markGatePassed();
+        return true;
+      }
+      localStorage.removeItem(GATE_KEY);   // 만료·해시 불일치면 정리
+    } catch (e) { /* 차단 환경이면 매번 묻습니다 */ }
+    return false;
+  }
+  function markGatePassed() {
+    try {
+      localStorage.setItem(GATE_KEY, JSON.stringify({ h: PASS_HASH, exp: Date.now() + GATE_TTL_MS }));
+    } catch (e) {}
+  }
 
   /* ── 이름 저장소 (localStorage, 계속 유지) ── */
   function getName() {
@@ -150,13 +174,11 @@
     else document.addEventListener('DOMContentLoaded', fn);
   }
 
-  // 이번 세션에서 이미 통과했으면 게이트는 건너뛰되 헤더만 갱신
-  try {
-    if (sessionStorage.getItem(SESSION_KEY) === PASS_HASH) {
-      whenReady(refreshHeader);
-      return;
-    }
-  } catch (e) { /* sessionStorage 차단 환경이면 매번 묻습니다 */ }
+  // 이미 통과한 기기(미만료)면 게이트는 건너뛰되 헤더만 갱신
+  if (gatePassed()) {
+    whenReady(refreshHeader);
+    return;
+  }
 
   // ── SHA-256 (SubtleCrypto, https/localhost 에서 동작) ──
   async function sha256(text) {
@@ -257,7 +279,7 @@
       }
       if (ok) {
         setName(nameVal);
-        try { sessionStorage.setItem(SESSION_KEY, PASS_HASH); } catch (e) {}
+        markGatePassed();
         overlay.remove();
         lockScroll(false);
         refreshHeader();
