@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>2027 아소 야마나미 리조트 객실 배정 안내</title>
+<style>
+  :root{
+    --paper:#F5F6F0; --surface:#FFFFFF; --surface-warm:#FBFAF3;
+    --ink:#23281C; --ink-soft:#545B47; --muted:#8A9079;
+    --line:#E2E4D9; --line-soft:#ECEEE4;
+    --olive:#647548; --olive-deep:#4F5E38;
+    --gold:#94701F; --gold-soft:#B08A3C; --member-bg:#FBF5E7; --member-line:#E7D6AC;
+    --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Pretendard',system-ui,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype','Palatino',Georgia,serif;
+    --maxw:720px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#151912; --surface:#1D2318; --surface-warm:#212718;
+      --ink:#EAEDE1; --ink-soft:#B6BCA8; --muted:#899077;
+      --line:#31382594; --line-soft:#2A311F;
+      --olive:#9DB076; --olive-deep:#B4C58C;
+      --gold:#CBA85E; --gold-soft:#DCC087; --member-bg:#221C11; --member-line:#4A3E20;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F5F6F0; --surface:#FFFFFF; --surface-warm:#FBFAF3;
+    --ink:#23281C; --ink-soft:#545B47; --muted:#8A9079;
+    --line:#E2E4D9; --line-soft:#ECEEE4;
+    --olive:#647548; --olive-deep:#4F5E38;
+    --gold:#94701F; --gold-soft:#B08A3C; --member-bg:#FBF5E7; --member-line:#E7D6AC;
+  }
+  :root[data-theme="dark"]{
+    --paper:#151912; --surface:#1D2318; --surface-warm:#212718;
+    --ink:#EAEDE1; --ink-soft:#B6BCA8; --muted:#899077;
+    --line:#31382594; --line-soft:#2A311F;
+    --olive:#9DB076; --olive-deep:#B4C58C;
+    --gold:#CBA85E; --gold-soft:#DCC087; --member-bg:#221C11; --member-line:#4A3E20;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);line-height:1.75;font-size:17px;word-break:keep-all;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  .brand{display:flex;align-items:center;gap:10px;padding:22px 0 0;
+    font-size:13px;letter-spacing:.02em;color:var(--ink-soft);font-weight:700}
+  .brand .mark{width:26px;height:26px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 34% 30%,var(--olive),var(--olive-deep));
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--olive) 14%,transparent)}
+  .brand b{color:var(--ink)}
+  .brand .jp{color:var(--muted);font-weight:600}
+
+  .hero{padding:52px 0 40px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--serif);font-style:italic;font-size:15px;
+    letter-spacing:.04em;color:var(--gold);margin:0 0 18px}
+  .year{font-family:var(--serif);font-size:clamp(60px,17vw,120px);line-height:.9;
+    font-weight:600;letter-spacing:-.01em;color:var(--olive-deep);margin:0}
+  .hero h1{font-size:clamp(22px,4.4vw,30px);font-weight:800;letter-spacing:-.02em;
+    line-height:1.4;text-wrap:balance;margin:20px 0 0;max-width:22ch}
+  .hero p.lead{font-size:16.5px;color:var(--ink-soft);margin:16px 0 0;max-width:54ch}
+
+  section{padding:38px 0;border-bottom:1px solid var(--line)}
+  .kicker{display:flex;align-items:baseline;gap:12px;margin:0 0 20px}
+  .kicker .no{font-family:var(--serif);font-size:15px;color:var(--gold);
+    font-variant-numeric:tabular-nums}
+  .kicker h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0}
+  p{margin:0 0 14px;color:var(--ink)}
+  p:last-child{margin-bottom:0}
+  .soft{color:var(--ink-soft)}
+
+  /* 회원 우선 패널 */
+  .member{background:var(--member-bg);border:1px solid var(--member-line);
+    border-radius:16px;padding:30px 28px;margin:0}
+  .member .tag{display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 14px}
+  .member .tag::before{content:"";width:20px;height:1.5px;background:var(--gold-soft)}
+  .member h2{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;line-height:1.35}
+  .member h2 em{font-style:normal;color:var(--gold)}
+  .member > p{color:var(--ink-soft);font-size:15.5px;margin:0}
+
+  /* 시즌 2단 카드 */
+  .seasons{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0 0}
+  .season{border-radius:14px;padding:20px 20px 18px;border:1px solid var(--line)}
+  .season.peak{background:color-mix(in srgb,var(--gold) 9%,var(--surface));
+    border-color:color-mix(in srgb,var(--gold) 30%,var(--line))}
+  .season.off{background:color-mix(in srgb,var(--olive) 8%,var(--surface));
+    border-color:color-mix(in srgb,var(--olive) 26%,var(--line))}
+  .season .s-tag{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+  .season.peak .s-tag{color:var(--gold)}
+  .season.off .s-tag{color:var(--olive-deep)}
+  .season .s-when{font-size:15px;font-weight:800;color:var(--ink);margin:0 0 8px}
+  .season p{font-size:14.5px;color:var(--ink-soft);margin:0}
+  .season p b{color:var(--ink)}
+
+  /* 이유 카드 */
+  .why{display:flex;flex-direction:column;gap:14px;margin:4px 0 0}
+  .why .row{display:flex;gap:16px;align-items:flex-start;
+    background:var(--surface-warm);border:1px solid var(--line-soft);
+    border-radius:12px;padding:16px 18px}
+  .why .row .lead-w{font-family:var(--serif);font-size:22px;color:var(--olive);
+    line-height:1;flex:none;width:24px;text-align:center;padding-top:2px}
+  .why .row h3{font-size:15.5px;font-weight:800;margin:0 0 3px}
+  .why .row p{font-size:14.5px;color:var(--ink-soft);margin:0}
+
+  /* 수요 vs 공급 시각 막대 */
+  .supply{background:var(--surface-warm);border:1px solid var(--line-soft);
+    border-radius:12px;padding:20px;margin:18px 0 0}
+  .supply .row{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+  .supply .row:last-child{margin-bottom:0}
+  .supply .lbl{flex:none;width:112px;font-size:13.5px;font-weight:700;color:var(--ink-soft)}
+  .supply .track{flex:1;height:22px;background:color-mix(in srgb,var(--muted) 16%,transparent);
+    border-radius:6px;overflow:hidden}
+  .supply .fill{height:100%;border-radius:6px;display:flex;align-items:center;
+    justify-content:flex-end;padding-right:9px;font-size:12.5px;font-weight:800;color:#fff}
+  .supply .fill.cap{background:var(--olive)}
+  .supply .fill.peak{background:var(--gold-soft)}
+  .supply small{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}
+
+  ul.notes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+  ul.notes li{position:relative;padding-left:22px;color:var(--ink-soft);font-size:15px}
+  ul.notes li::before{content:"";position:absolute;left:3px;top:11px;
+    width:6px;height:6px;border-radius:50%;background:var(--olive)}
+  ul.notes li b{color:var(--ink);font-weight:700}
+
+  .assure{margin:0;background:color-mix(in srgb,var(--olive) 8%,var(--surface));
+    border:1px solid color-mix(in srgb,var(--olive) 24%,var(--line));
+    border-radius:14px;padding:20px 22px}
+  .assure .a-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--olive-deep);margin:0 0 8px}
+  .assure .a-tag::before{content:"";width:18px;height:1.5px;background:var(--olive)}
+  .assure p{font-size:15.5px;color:var(--ink-soft);margin:0}
+  .assure p b{color:var(--ink);font-weight:800}
+
+  .contact{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:20px 24px;display:flex;flex-wrap:wrap;gap:14px 30px;align-items:center;margin-top:4px}
+  .contact .citem{display:inline-flex;align-items:baseline;gap:10px}
+  .contact .lbl{font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+  .contact .val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .contact a{color:var(--olive-deep);text-decoration:none;font-weight:800}
+  footer{padding:34px 0 60px;text-align:center;color:var(--muted);font-size:13px}
+  footer .sig{font-weight:800;color:var(--ink-soft);letter-spacing:.01em}
+  footer .sig .jp{color:var(--muted);font-weight:600}
+
+  @media (max-width:560px){
+    body{font-size:16px}
+    .seasons{grid-template-columns:1fr}
+    .member{padding:24px 20px}
+    .supply .lbl{width:84px;font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <span><b>아소 야마나미 리조트</b> <span class="jp">阿蘇やまなみリゾート</span></span>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">Room Assignment · 객실 배정 안내</p>
+    <p class="year">2027</p>
+    <h1>2027 시즌 객실 배정 기준 안내</h1>
+    <p class="lead">회원님께 2027년 객실 배정 기준을 미리, 그리고 있는 그대로 안내드립니다.
+      배정 원칙과 함께 성수기에 유의하실 점을 담았습니다.</p>
+  </header>
+
+  <section>
+    <div class="member">
+      <p class="tag">Members First</p>
+      <h2>객실은 <em>회원님을 우선</em>으로 배정합니다.</h2>
+      <p>모든 객실 배정에서 회원님을 일반 고객님보다 먼저 배정하며, 상위 등급 객실(디럭스)부터 회원님께 배정해 드립니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="no">01</span><h2>시즌에 따라 배정이 달라집니다</h2></div>
+    <p class="lead soft">디럭스 객실 수는 한정되어 있어, 예약이 몰리는 성수기에는 회원님도 스탠다드 트윈으로 배정될 수 있습니다.
+      반대로 비수기에는 회원님 디럭스 배정이 사실상 보장됩니다.</p>
+    <div class="seasons">
+      <div class="season peak">
+        <p class="s-tag">성수기</p>
+        <p class="s-when">4월 ~ 8월 · 특히 5월·골든위크</p>
+        <p>디럭스 수요가 객실 수를 크게 넘어, <b>회원님도 스탠다드 트윈으로 배정될 수 있습니다.</b>
+          예약을 서두르셔도 인기 주간이면 디럭스가 보장되지 않습니다.</p>
+      </div>
+      <div class="season off">
+        <p class="s-tag">비수기</p>
+        <p class="s-when">10월 ~ 12월</p>
+        <p>수요가 디럭스 객실 수 안에 들어와, <b>회원님 디럭스 배정이 사실상 보장</b>됩니다.
+          디럭스를 원하시면 이 기간을 권해 드립니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="no">02</span><h2>왜 성수기엔 디럭스가 어려운가요</h2></div>
+    <p class="lead soft">예약이 늦어서가 아니라, <b>같은 인기 주간에 예약이 겹치기 때문</b>입니다.
+      디럭스 객실보다 그 주간을 원하시는 분이 훨씬 많습니다.</p>
+    <div class="supply">
+      <div class="row">
+        <span class="lbl">디럭스 객실</span>
+        <div class="track"><div class="fill cap" style="width:56%">38실</div></div>
+      </div>
+      <div class="row">
+        <span class="lbl">골든위크 수요</span>
+        <div class="track"><div class="fill peak" style="width:100%">약 68실</div></div>
+      </div>
+      <small>성수기 최대 수요가 디럭스 객실의 약 1.8배 — 우선예약 첫날에 예약해도 인기 주간이면 디럭스 안에 다 들어가지 못합니다.</small>
+    </div>
+    <div class="why" style="margin-top:16px">
+      <div class="row">
+        <span class="lead-w">“</span>
+        <div>
+          <h3>선착순보다 ‘날짜’가 관건입니다</h3>
+          <p>비인기 날짜는 늦게 예약하셔도 디럭스가 여유롭고, 골든위크·5월 주말은 첫날 예약도 디럭스가 조기 마감됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="no">03</span><h2>안심하셔도 되는 점</h2></div>
+    <div class="assure">
+      <p class="a-tag">회원 배정 보장</p>
+      <p><b>회원님이 컴팩트 트윈으로 배정되는 일은 없습니다.</b> 디럭스가 부족한 성수기에도 회원님은 스탠다드 트윈까지에서 배정이 마무리되며,
+        그 아래(컴팩트)로 밀리지 않도록 회원 우선 원칙을 지킵니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker"><span class="no">04</span><h2>디럭스를 원하신다면</h2></div>
+    <ul class="notes">
+      <li><b>10월 ~ 12월(비수기)</b> 출발을 권해 드립니다 — 회원님 디럭스 배정이 사실상 보장됩니다.</li>
+      <li>성수기라면 <b>골든위크·5월 주말을 피한 날짜</b>가 디럭스 여유가 큽니다.</li>
+      <li>디럭스는 <b>회원 우선 → 예약 순서</b>로 배정되며, 같은 조건에서는 먼저 예약하신 순서대로 배정됩니다.</li>
+    </ul>
+  </section>
+
+  <section style="border-bottom:none">
+    <div class="kicker"><span class="no">05</span><h2>문의</h2></div>
+    <div class="contact">
+      <span class="citem"><span class="lbl">문의</span><span class="val">메리트투어</span></span>
+      <span class="citem"><span class="lbl">전화</span><span class="val"><a href="tel:0223659800">02-365-9800</a></span></span>
+      <span class="citem"><span class="lbl">카카오톡</span><span class="val">메리트투어</span></span>
+    </div>
+  </section>
+
+  <footer>
+    <p class="sig">株式会社 SaiZen · 아소 야마나미 리조트 <span class="jp">阿蘇やまなみリゾート</span></p>
+    <p>변함없는 성원에 깊이 감사드립니다.</p>
+  </footer>
+
+</div>
+</body>
+</html>
