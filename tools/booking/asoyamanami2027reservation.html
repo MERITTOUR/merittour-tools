@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>2027 아소 야마나미 리조트 예약 안내</title>
+<style>
+  :root{
+    --paper:#F5F6F0; --surface:#FFFFFF; --surface-warm:#FBFAF3;
+    --ink:#23281C; --ink-soft:#545B47; --muted:#8A9079;
+    --line:#E2E4D9; --line-soft:#ECEEE4;
+    --olive:#647548; --olive-deep:#4F5E38;
+    --gold:#94701F; --gold-soft:#B08A3C; --member-bg:#FBF5E7; --member-line:#E7D6AC;
+    --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Pretendard',system-ui,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype','Palatino',Georgia,serif;
+    --maxw:720px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#151912; --surface:#1D2318; --surface-warm:#212718;
+      --ink:#EAEDE1; --ink-soft:#B6BCA8; --muted:#899077;
+      --line:#31382594; --line-soft:#2A311F;
+      --olive:#9DB076; --olive-deep:#B4C58C;
+      --gold:#CBA85E; --gold-soft:#DCC087; --member-bg:#221C11; --member-line:#4A3E20;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F5F6F0; --surface:#FFFFFF; --surface-warm:#FBFAF3;
+    --ink:#23281C; --ink-soft:#545B47; --muted:#8A9079;
+    --line:#E2E4D9; --line-soft:#ECEEE4;
+    --olive:#647548; --olive-deep:#4F5E38;
+    --gold:#94701F; --gold-soft:#B08A3C; --member-bg:#FBF5E7; --member-line:#E7D6AC;
+  }
+  :root[data-theme="dark"]{
+    --paper:#151912; --surface:#1D2318; --surface-warm:#212718;
+    --ink:#EAEDE1; --ink-soft:#B6BCA8; --muted:#899077;
+    --line:#31382594; --line-soft:#2A311F;
+    --olive:#9DB076; --olive-deep:#B4C58C;
+    --gold:#CBA85E; --gold-soft:#DCC087; --member-bg:#221C11; --member-line:#4A3E20;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);line-height:1.75;font-size:17px;word-break:keep-all;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ── 상단 브랜드 바 ── */
+  .brand{display:flex;align-items:center;gap:10px;padding:22px 0 0;
+    font-size:13px;letter-spacing:.02em;color:var(--ink-soft);font-weight:700}
+  .brand .mark{width:26px;height:26px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 34% 30%,var(--olive),var(--olive-deep));
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--olive) 14%,transparent)}
+  .brand b{color:var(--ink)}
+  .brand .jp{color:var(--muted);font-weight:600}
+
+  /* ── 히어로 ── */
+  .hero{padding:52px 0 40px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--serif);font-style:italic;font-size:15px;
+    letter-spacing:.04em;color:var(--gold);margin:0 0 18px}
+  .year{font-family:var(--serif);font-size:clamp(60px,17vw,120px);line-height:.9;
+    font-weight:600;letter-spacing:-.01em;color:var(--olive-deep);margin:0}
+  .hero h1{font-size:clamp(22px,4.4vw,30px);font-weight:800;letter-spacing:-.02em;
+    line-height:1.4;text-wrap:balance;margin:20px 0 0;max-width:20ch}
+  .hero p.lead{font-size:16.5px;color:var(--ink-soft);margin:16px 0 0;max-width:52ch}
+
+  /* ── 기본 포함 콜아웃 ── */
+  .included{margin:24px 0 0;background:color-mix(in srgb,var(--olive) 8%,var(--surface));
+    border:1px solid color-mix(in srgb,var(--olive) 24%,var(--line));
+    border-radius:14px;padding:18px 22px}
+  .included .inc-tag{display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--olive-deep);margin:0 0 7px}
+  .included .inc-tag::before{content:"";width:18px;height:1.5px;background:var(--olive)}
+  .included p{font-size:15.5px;color:var(--ink-soft);margin:0;line-height:1.65}
+  .included p b{color:var(--ink);font-weight:800}
+
+  /* ── 섹션 공통 ── */
+  section{padding:38px 0;border-bottom:1px solid var(--line)}
+  .kicker{display:flex;align-items:baseline;gap:12px;margin:0 0 20px}
+  .kicker .no{font-family:var(--serif);font-size:15px;color:var(--gold);
+    font-variant-numeric:tabular-nums}
+  .kicker h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0}
+  p{margin:0 0 14px;color:var(--ink)}
+  p:last-child{margin-bottom:0}
+  .soft{color:var(--ink-soft)}
+
+  /* ── 일정 정의목록 ── */
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:2px 22px;margin:0}
+  .facts dt{font-size:13.5px;font-weight:700;color:var(--muted);
+    letter-spacing:.02em;padding:11px 0;border-top:1px solid var(--line-soft);white-space:nowrap}
+  .facts dd{margin:0;padding:11px 0;border-top:1px solid var(--line-soft);
+    font-weight:600;color:var(--ink)}
+  .facts dt:first-of-type,.facts dd:first-of-type{border-top:none}
+
+  /* ── 미정값(확정 후 채움) ── */
+  .tbd{display:inline;color:var(--gold);font-weight:700;
+    background:color-mix(in srgb,var(--gold) 12%,transparent);
+    padding:1px 7px;border-radius:5px;
+    box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--gold) 45%,transparent)}
+
+  /* ── 회원 우선 강조 패널(주제) ── */
+  .member{background:var(--member-bg);border:1px solid var(--member-line);
+    border-radius:16px;padding:30px 28px;margin:0}
+  .member .tag{display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 14px}
+  .member .tag::before{content:"";width:20px;height:1.5px;background:var(--gold-soft)}
+  .member h2{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;line-height:1.35}
+  .member h2 em{font-style:normal;color:var(--gold)}
+  .member > p{color:var(--ink-soft);font-size:15.5px;margin:0}
+
+  .principles{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+  .principles li{padding:18px 0;border-top:1px solid var(--member-line)}
+  .principles h3{font-size:16px;font-weight:800;margin:0 0 4px;color:var(--ink);
+    display:flex;align-items:center;gap:9px}
+  .principles h3 .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:none}
+  .principles p{font-size:15px;color:var(--ink-soft);margin:0;padding-left:16px}
+  .principles p b{color:var(--ink);font-weight:700}
+
+  /* ── 취지 카드 ── */
+  .why{display:flex;flex-direction:column;gap:14px;margin:4px 0 0}
+  .why .row{display:flex;gap:16px;align-items:flex-start;
+    background:var(--surface-warm);border:1px solid var(--line-soft);
+    border-radius:12px;padding:16px 18px}
+  .why .row .lead-w{font-family:var(--serif);font-size:22px;color:var(--olive);
+    line-height:1;flex:none;width:24px;text-align:center;padding-top:2px}
+  .why .row div p{margin:0}
+  .why .row h3{font-size:15.5px;font-weight:800;margin:0 0 3px}
+  .why .row p{font-size:14.5px;color:var(--ink-soft)}
+
+  /* ── 예약 이후 진행 절차(타임라인) ── */
+  .timeline{list-style:none;margin:6px 0 0;padding:0;position:relative}
+  .timeline::before{content:"";position:absolute;left:7px;top:9px;bottom:9px;width:2px;
+    background:linear-gradient(var(--olive),var(--member-line));border-radius:2px}
+  .timeline li{position:relative;padding:0 0 26px 34px}
+  .timeline li:last-child{padding-bottom:0}
+  .timeline .node{position:absolute;left:0;top:3px;width:16px;height:16px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--olive)}
+  .timeline li.key .node{background:var(--gold);border-color:var(--gold);
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 18%,transparent)}
+  .timeline .when{font-family:var(--serif);font-style:italic;font-size:14px;
+    color:var(--gold);margin:0 0 3px}
+  .timeline h3{font-size:16.5px;font-weight:800;margin:0 0 5px;
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .timeline h3 .req{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:#fff;background:var(--gold);border-radius:5px;padding:2px 8px}
+  .timeline p{font-size:15px;color:var(--ink-soft);margin:0}
+  .timeline .amt{color:var(--ink);font-weight:800}
+  .tl-why{margin-top:22px;padding:15px 18px;background:var(--surface-warm);
+    border-left:3px solid var(--olive);border-radius:0 10px 10px 0;
+    font-size:14.5px;color:var(--ink-soft)}
+  .tl-why b{color:var(--ink)}
+
+  /* ── 숙소 & 체류 일정 ── */
+  .subh{font-size:14px;font-weight:800;color:var(--gold);letter-spacing:.02em;
+    margin:0 0 13px;text-transform:none}
+  .lodging{list-style:none;margin:0 0 4px;padding:0;
+    display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .lodging li{background:var(--surface-warm);border:1px solid var(--line-soft);
+    border-radius:12px;padding:14px 16px}
+  .lg-name{font-size:16.5px;font-weight:800;color:var(--ink);
+    display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .lg-jp{font-size:13px;font-weight:600;color:var(--gold)}
+  .lg-desc{font-size:13.5px;color:var(--ink-soft);margin-top:5px;line-height:1.5}
+  .lg-old{color:var(--muted);font-size:12px}
+  .lg-old::before{content:"· 기존 "}
+  .patterns{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 0}
+  .pat{display:inline-flex;align-items:baseline;gap:11px;background:var(--surface);
+    border:1px solid var(--line);border-radius:11px;padding:11px 18px}
+  .pat b{font-size:16px;font-weight:800;color:var(--olive-deep);
+    font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .pat span{font-size:13px;font-weight:700;color:var(--gold)}
+  .apply-to{margin:16px 0 0;font-size:14px;color:var(--ink-soft)}
+  .apply-to b{color:var(--ink)}
+  .stay-grp + .stay-grp{margin-top:18px}
+  .stay-lbl{font-size:13.5px;font-weight:800;color:var(--ink);margin:0 0 9px;
+    display:flex;align-items:center;gap:8px}
+  .stay-lbl::before{content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--olive);flex:none}
+
+  /* ── 유의사항 ── */
+  ul.notes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+  ul.notes li{position:relative;padding-left:22px;color:var(--ink-soft);font-size:15px}
+  ul.notes li::before{content:"";position:absolute;left:3px;top:11px;
+    width:6px;height:6px;border-radius:50%;background:var(--olive)}
+  ul.notes li b{color:var(--ink);font-weight:700}
+
+  /* ── 문의 / 푸터 ── */
+  .contact{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:20px 24px;display:flex;flex-wrap:wrap;gap:14px 30px;align-items:center;margin-top:4px}
+  .contact .citem{display:inline-flex;align-items:baseline;gap:10px}
+  .contact .lbl{font-size:11.5px;font-weight:800;letter-spacing:.08em;
+    color:var(--muted);white-space:nowrap}
+  .contact .val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .contact a{color:var(--olive-deep);text-decoration:none;font-weight:800}
+  .contact a:hover{text-decoration:underline}
+  footer{padding:34px 0 60px;text-align:center;color:var(--muted);font-size:13px}
+  footer .sig{font-weight:800;color:var(--ink-soft);letter-spacing:.01em}
+  footer .sig .jp{color:var(--muted);font-weight:600}
+
+  @media (max-width:560px){
+    body{font-size:16px}
+    .facts{grid-template-columns:1fr;gap:0}
+    .facts dt{padding-bottom:0;border-top:1px solid var(--line-soft)}
+    .facts dd{padding-top:2px;border-top:none}
+    .member{padding:24px 20px}
+    .lodging{grid-template-columns:1fr}
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+    .hero{animation-delay:.02s}
+    section:nth-of-type(1){animation-delay:.06s}
+    @keyframes rise{to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand reveal">
+    <span class="mark" aria-hidden="true"></span>
+    <span><b>아소 야마나미 리조트</b> <span class="jp">阿蘇やまなみリゾート</span></span>
+  </div>
+
+  <header class="hero reveal">
+    <p class="eyebrow">Reservation Guide · 예약 안내</p>
+    <p class="year">2027</p>
+    <h1>2027 시즌 골프 패키지 예약 안내</h1>
+    <p class="lead">아소 야마나미 리조트를 아껴 주시는 회원님과 고객님께 감사드립니다.
+      2027년 시즌 예약 개시에 앞서 예약 방법과 객실 배정 기준을 안내드립니다.</p>
+    <div class="included">
+      <p class="inc-tag">All-Inclusive · 기본 포함</p>
+      <p><b>왕복 항공권</b> · <b>리조트–공항 송영</b> · <b>여행자보험 가입</b> · <b>숙박</b> · <b>식사</b> · <b>라운딩</b>까지 —
+        골프 여행에 필요한 모든 것을 하나의 패키지에 담아 드립니다.</p>
+    </div>
+  </header>
+
+  <section class="reveal">
+    <div class="kicker"><span class="no">01</span><h2>예약 오픈 일정</h2></div>
+    <dl class="facts">
+      <dt>오픈 일시</dt><dd>2026년 10월 <span class="tbd">○일 ○시 (확정 예정)</span></dd>
+      <dt>접수 방법</dt><dd>메리트투어 예약 홈페이지 <a href="https://www.merittour.co.kr" style="color:var(--olive-deep);font-weight:800;text-decoration:none">www.merittour.co.kr</a></dd>
+      <dt>이용 대상 기간</dt><dd>2027년 <span class="tbd">○월 ~ ○월 (확정 예정)</span></dd>
+    </dl>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker"><span class="no">02</span><h2>숙소 &amp; 체류 일정</h2></div>
+
+    <h3 class="subh">리조트 내 별장</h3>
+    <ul class="lodging">
+      <li>
+        <div class="lg-name">YAMANAMI PRESTIGE HOUSE <span class="lg-jp">4 Suites · 프레스티지</span></div>
+        <div class="lg-desc">8인 대형 별장 <span class="lg-old">아소별장</span></div>
+      </li>
+      <li>
+        <div class="lg-name">YAMANAMI HINOKI VILLAS – Cabin <span class="lg-jp">캐빈</span></div>
+        <div class="lg-desc">편백으로 지은 2인 별장 <span class="lg-old">소보별장 · 통나무집</span></div>
+      </li>
+      <li>
+        <div class="lg-name">YAMANAMI HINOKI VILLAS – Family Villa <span class="lg-jp">패밀리</span></div>
+        <div class="lg-desc">편백으로 지은 4인 독채 별장 <span style="color:var(--olive-deep);font-weight:800;font-size:12px;letter-spacing:.03em">NEW · 신규</span></div>
+      </li>
+      <li>
+        <div class="lg-name">YAMANAMI PRIVATE RESIDENCE <span class="lg-jp">프리미엄 레지던스</span></div>
+        <div class="lg-desc"><b style="color:var(--gold);font-weight:800">장기 체류 프라이빗 레지던스</b> · 2인 1동 독채 <span class="lg-old">쿠주힐즈</span></div>
+      </li>
+    </ul>
+
+    <h3 class="subh" style="margin-top:28px">체류 일정</h3>
+    <p class="soft" style="margin:0 0 16px">숙소별로 아래 체류 일정(입실요일 → 퇴실요일)으로 예약이 진행됩니다.</p>
+
+    <div class="stay-grp">
+      <p class="stay-lbl">리조트 내 별장 · 간지호텔 · 시즈노야도 료칸</p>
+      <div class="patterns">
+        <div class="pat"><b>목 → 일</b><span>3박</span></div>
+        <div class="pat"><b>일 → 목</b><span>4박</span></div>
+        <div class="pat"><b>일 → 일</b><span>7박</span></div>
+      </div>
+    </div>
+
+    <div class="stay-grp">
+      <p class="stay-lbl">야마나미 호텔</p>
+      <div class="patterns">
+        <div class="pat"><b>목 → 일</b><span>3박</span></div>
+        <div class="pat"><b>일 → 목</b><span>4박</span></div>
+        <div class="pat"><b>수 → 수</b><span>7박</span></div>
+      </div>
+    </div>
+
+    <h3 class="subh" style="margin-top:28px">체재비용 · 송영비</h3>
+    <p class="soft" style="margin:0 0 14px">아래 비용은 모두 <b style="color:var(--ink)">패키지 요금에 포함</b>되어 별도로 청구되지 않습니다. 체재비용에는 <b style="color:var(--ink)">숙박 · 식사 · 라운딩</b>이 포함됩니다.</p>
+    <dl class="facts">
+      <dt>야마나미 호텔</dt><dd>1박 15,000엔 <span class="soft">· 싱글룸 요청 시 1박·1인당 2,200엔 추가</span></dd>
+      <dt>간지호텔 · 시즈노야도 료칸</dt><dd>1박 17,000엔</dd>
+      <dt>PRESTIGE HOUSE · HINOKI VILLAS Family Villa</dt><dd>1박 18,000엔 <span class="soft">· 객실 내 미니바(일본 전통 사케 또는 소주 1병 · 간단한 안주) 제공</span></dd>
+      <dt>HINOKI VILLAS Cabin · PRIVATE RESIDENCE</dt><dd>1박 15,000엔</dd>
+      <dt>공항 송영 (왕복)</dt><dd>1인 6,000엔</dd>
+    </dl>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker"><span class="no">03</span><h2>예약·배정 원칙</h2></div>
+    <div class="member">
+      <p class="tag">Members First</p>
+      <h2>모든 객실은 <em>회원님을 우선</em>으로 배정합니다.</h2>
+      <p>오랜 기간 리조트를 함께해 주신 회원님을 가장 먼저 예우하는 것을 배정의 기본으로 삼습니다.</p>
+
+      <ul class="principles">
+        <li>
+          <h3><span class="dot" aria-hidden="true"></span>회원 우선 배정</h3>
+          <p>객실 배정 시 회원님을 일반 고객님보다 먼저 배정합니다. 예약이 다소 늦으시더라도 회원님이면 일반 예약보다 우선합니다.</p>
+        </li>
+        <li>
+          <h3><span class="dot" aria-hidden="true"></span>스탠다드 트윈 우선 배정</h3>
+          <p>스탠다드 트윈은 회원님께 먼저 배정됩니다. 다만 수량이 한정되어 있어, <b>예약 순번에 따라 회원님도 컴팩트 트윈으로 배정될 수 있습니다.</b> 일반 고객님은 예약하신 객실 종류(스탠다드 트윈·컴팩트 트윈) 기준으로 배정됩니다.</p>
+        </li>
+        <li>
+          <h3><span class="dot" aria-hidden="true"></span>동일 조건 내 선착순</h3>
+          <p>회원 우선이라는 원칙 안에서, 같은 조건일 경우에는 먼저 예약하신 순서대로 배정됩니다. 명확하고 공정한 기준으로 안내드립니다.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker"><span class="no">04</span><h2>예약 이후 진행 절차</h2></div>
+    <ol class="timeline">
+      <li>
+        <span class="node" aria-hidden="true"></span>
+        <p class="when">예약 후 1주일 이내</p>
+        <h3>예약금 입금</h3>
+        <p><span class="amt">1인당 30만 원</span> — 예약금 입금으로 예약이 확정됩니다. <span class="soft">(예: 4인 예약 시 <b>120만 원</b>)</span></p>
+      </li>
+      <li>
+        <span class="node" aria-hidden="true"></span>
+        <p class="when">준비되시는 대로</p>
+        <h3>참가자 명단 전달</h3>
+        <p>참가자 명단은 준비되시는 대로 전달해 주시면 됩니다. 최종 확정 기한 이전이라도 미리 전해 주시면 <b>준비가 한결 원활합니다.</b></p>
+      </li>
+      <li>
+        <span class="node" aria-hidden="true"></span>
+        <p class="when">항공 발권 전</p>
+        <h3>단체항공권 발권 안내</h3>
+        <p>항공권은 <b>단체항공권으로 일괄 발권</b>되며, 일부 일정은 좌석 확보를 위해 <b>우선 발권</b>이 진행됩니다. 발권 전 저희가 진행 여부를 한 번 더 확인해 드립니다.</p>
+      </li>
+      <li class="key">
+        <span class="node" aria-hidden="true"></span>
+        <p class="when">출발 2개월 전까지</p>
+        <h3>명단·진행 최종 확정 <span class="req">필수</span></h3>
+        <p>출발 2개월 전까지 예약 확정과 참가자 명단을 받고 있습니다. 이 기한까지 확정이 어려운 경우, 예약금은 환불해 드리고 예약대기로 전환되어 <b>후순위로 배정</b>됩니다.</p>
+      </li>
+    </ol>
+    <p class="tl-why"><b>출발 2개월 전까지 예약 확정과 명단을 받고 있습니다.</b> 이 기한까지 확정이 어려운 경우 예약금은 전액 환불해 드리고, 해당 자리에는 새로운 예약을 받습니다. 미확정 예약은 예약대기로 전환되어 이후 후순위로 배정됩니다. 오래 함께해 주신 회원님께 합리적이고 편안한 여행을 제공해 드리고, 출발이 임박한 취소로 실제 여행을 원하신 회원님이 불편을 겪지 않도록 하기 위함입니다.</p>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker"><span class="no">05</span><h2>예약 시 유의사항</h2></div>
+    <ul class="notes">
+      <li>객실 배정은 <b>회원 우선, 그다음 예약하신 순서</b>를 기준으로 합니다. 명단·항공 정보의 확정 시점이 배정 순서를 바꾸지는 않으나, 원활한 준비를 위해 미리 전달 부탁드립니다.</li>
+      <li><b>회원 우선으로 확보된 예약이 회원 없이 일반 고객만의 투어로 진행되는 경우</b>, <b>1인당 10만 원의 추가 요금(업차지)</b>이 적용됩니다.</li>
+      <li>객실 종류와 시설은 예약 상황에 따라 조정될 수 있습니다.</li>
+      <li><b>항공권 발권 이후</b> 명단 변경 또는 취소 시에는 항공사 규정에 따라 <b>취소·변경 수수료</b>가 발생합니다.</li>
+      <li>예약 변경·취소 규정은 <span class="tbd">별도 안내 (확정 예정)</span>를 따릅니다.</li>
+    </ul>
+  </section>
+
+  <section class="reveal" style="border-bottom:none">
+    <div class="kicker"><span class="no">06</span><h2>문의</h2></div>
+    <div class="contact">
+      <span class="citem"><span class="lbl">문의</span><span class="val">메리트투어</span></span>
+      <span class="citem"><span class="lbl">전화</span><span class="val"><a href="tel:0223659800">02-365-9800</a></span></span>
+      <span class="citem"><span class="lbl">카카오톡</span><span class="val">메리트투어</span></span>
+    </div>
+  </section>
+
+  <footer>
+    <p class="sig">株式会社 SaiZen · 아소 야마나미 리조트 <span class="jp">阿蘇やまなみリゾート</span></p>
+    <p>변함없는 성원에 깊이 감사드립니다.</p>
+  </footer>
+
+</div>
+</body>
+</html>
