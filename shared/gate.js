@@ -192,7 +192,7 @@
       '#mt-gate label:first-of-type{margin-top:0;}',
       '#mt-gate input{width:100%;font-size:17px;padding:12px 14px;border:1px solid #CDD1D8;',
       'border-radius:8px;background:#fff;color:#2A2F39;transition:border-color .15s;}',
-      '#mt-gate input#mt-gate-pw{text-align:center;letter-spacing:.3em;}',
+      '#mt-gate input#mt-gate-pw{text-align:left;letter-spacing:.3em;}',
       '#mt-gate input#mt-gate-name{text-align:left;}',
       '#mt-gate input:focus{outline:none;border-color:#353C48;}',
       '#mt-gate input.err{border-color:#DC2626;background:#FEE2E2;}',
