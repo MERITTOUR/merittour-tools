@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR 통합 업무 허브</title>
 <script src="../../shared/gate.js"></script>
+<!-- 단계적 인증(기본 비활성 no-op). shared/access.js 의 ENABLED=true 로 전환 시 Supabase Auth 가드 동작 -->
+<script src="../../shared/access.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -656,7 +658,7 @@ td.af-cost-cell{background:rgba(124,58,237,.05)}
 th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 </style>
 </head>
-<body>
+<body data-area="dashboard">
 
 <!-- HEADER -->
 <div class="header">
