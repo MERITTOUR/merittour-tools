@@ -171,6 +171,23 @@
     color:var(--olive-deep);text-decoration:none}
   .flaglink:hover{text-decoration:underline}
 
+  /* ── 홍보 갤러리(사진·영상) ── */
+  .gallery{margin:0 0 22px}
+  .media{border-radius:14px;overflow:hidden;width:100%;display:block;background:#000}
+  .ph{background:var(--surface-warm);
+    border:1.5px dashed color-mix(in srgb,var(--olive) 42%,var(--line));border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    color:var(--muted);font-weight:800;font-size:14px;text-align:center;padding:12px;
+    background-image:repeating-linear-gradient(45deg,transparent,transparent 12px,
+      color-mix(in srgb,var(--olive) 5%,transparent) 12px,color-mix(in srgb,var(--olive) 5%,transparent) 24px)}
+  .ph small{font-weight:600;font-size:11.5px;color:var(--muted);opacity:.8}
+  .ph-hero{aspect-ratio:16/9;margin-bottom:10px;font-size:15px}
+  .ph-video{aspect-ratio:16/9;margin-top:10px}
+  .ph-video::before{content:"▶";font-size:26px;color:color-mix(in srgb,var(--olive) 60%,var(--muted))}
+  .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .thumbs .ph{aspect-ratio:1/1;font-size:12px;gap:2px}
+  @media (max-width:560px){ .thumbs{grid-template-columns:repeat(2,1fr)} }
+
   .contact{background:var(--surface);border:1px solid var(--line);border-radius:14px;
     padding:20px 24px;display:flex;flex-wrap:wrap;gap:14px 30px;align-items:center;margin-top:4px}
   .contact .citem{display:inline-flex;align-items:baseline;gap:10px}
@@ -336,6 +353,16 @@
     <!-- 아소 야마나미 -->
     <div class="tabpanel active" id="tab-yamanami" role="tabpanel">
       <div class="panel-head"><span class="panel-name">아소 야마나미 리조트</span><span class="panel-sub">구마모토 · 야마나미CC / 구주고원CC</span></div>
+      <div class="gallery">
+        <div class="ph ph-hero">대표 사진<small>탭 상단 · 와이드 (16:9)</small></div>
+        <div class="thumbs">
+          <div class="ph">사진 1</div>
+          <div class="ph">사진 2</div>
+          <div class="ph">사진 3</div>
+          <div class="ph">사진 4</div>
+        </div>
+        <div class="ph ph-video">홍보 영상<small>유튜브 임베드 (16:9)</small></div>
+      </div>
       <dl class="facts">
         <dt>골프장</dt><dd>야마나미 컨트리클럽 (27홀) · 간지호텔/구주고원 CC (18홀)</dd>
         <dt>도착 공항</dt><dd>구마모토 공항(KMJ) · 리조트까지 약 1시간</dd>
