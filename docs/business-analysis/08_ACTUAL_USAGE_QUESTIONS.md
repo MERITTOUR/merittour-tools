@@ -8,7 +8,7 @@
 3. **confirm-docs(확정서 링크·알림톡)를 실제로 쓰나?** — 버킷·Edge Function·템플릿 설정 여부. 안 쓰면 "향후 기능".
 4. **confirm-docs 버킷은 실제 public인가 private인가?** — 저장소에 상충 SQL 2개(`storage.sql`=private, `storage_policy.sql`=public). 실제 운영 버킷 설정 확인 필요.
 5. **`send-alimtalk` Edge Function을 실제 호출하나?** — `aligoEndpoint` 미입력 시 알리고 엑셀 폴백. 실제 발송 경로가 어느 쪽인지.
-6. **`resort_master` 테이블(서버)** 은 앞으로 쓸 계획인지? — 현재 클라 호출 0건(정의만). 마스터 서버 정본화 예정?
+6. **`resort_master` 테이블(서버)** — 현재 클라이언트 호출 0건(정의만 존재). 실제 사용 중인지, 아니면 미사용 인프라인지?
 
 ## B. 문서 vs 코드 불일치
 7. **inquiry(예약가능일자) 도구** — CLAUDE.md는 "폐지", 코드는 v1.2 현역 + admin 카드 노출. 실제로 쓰나, 폐지인가?
