@@ -110,7 +110,6 @@
   .principles p{font-size:15px;color:var(--ink-soft);margin:0;padding-left:16px}
   .principles p b{color:var(--ink);font-weight:700}
 
-  /* 회원 등급 표 */
   .grades{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .grades li{background:var(--surface-warm);border:1px solid var(--line-soft);
     border-radius:12px;padding:13px 16px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
@@ -146,32 +145,26 @@
     margin:22px 0 11px;text-transform:none}
   .subh:first-child{margin-top:0}
 
-  /* ── 권역 아코디언 ── */
-  .dest{background:var(--surface);border:1px solid var(--line);border-radius:16px;
-    margin:0 0 14px;overflow:hidden;transition:border-color .2s}
-  .dest[open]{border-color:color-mix(in srgb,var(--olive) 36%,var(--line))}
-  .dest-sum{list-style:none;cursor:pointer;padding:20px 22px;display:flex;align-items:center;gap:14px;
-    user-select:none}
-  .dest-sum::-webkit-details-marker{display:none}
-  .dest-sum:hover{background:var(--surface-warm)}
-  .dest-idx{font-family:var(--serif);font-size:20px;color:var(--gold);flex:none;width:26px;
-    font-variant-numeric:tabular-nums;text-align:center}
-  .dest-h{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .dest-name{font-size:18.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em}
-  .dest-sub{font-size:13px;color:var(--muted);font-weight:600}
-  .dest-chev{margin-left:auto;flex:none;width:22px;height:22px;color:var(--olive);
-    transition:transform .25s}
-  .dest[open] .dest-chev{transform:rotate(180deg)}
-  .dest-body{padding:4px 22px 26px;border-top:1px solid var(--line-soft)}
-  .dest-body .subh:first-child{margin-top:18px}
-  .menu{display:grid;grid-template-columns:auto 1fr;gap:1px 16px;margin:0;
-    font-size:14.5px}
+  /* ── 권역 탭 ── */
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .tab{font-family:var(--sans);font-size:14px;font-weight:800;color:var(--ink-soft);
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:10px 15px;cursor:pointer;transition:background-color .15s,border-color .15s,color .15s;
+    letter-spacing:-.01em;line-height:1.2}
+  .tab:hover{border-color:color-mix(in srgb,var(--olive) 40%,var(--line));color:var(--ink)}
+  .tab.active{background:var(--olive-deep);border-color:var(--olive-deep);color:#fff}
+  @media (prefers-color-scheme:dark){ .tab.active{color:#151912} }
+  :root[data-theme="light"] .tab.active{color:#fff}
+  :root[data-theme="dark"] .tab.active{color:#151912}
+  .tabpanel{display:none}
+  .tabpanel.active{display:block;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .panel-head{display:flex;align-items:baseline;gap:12px;margin:0 0 6px;flex-wrap:wrap}
+  .panel-name{font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .panel-sub{font-size:13.5px;color:var(--muted);font-weight:600}
+  .menu{display:grid;grid-template-columns:auto 1fr;gap:1px 16px;margin:0;font-size:14.5px}
   .menu dt{color:var(--gold);font-weight:800;padding:4px 0;white-space:nowrap}
   .menu dd{margin:0;padding:4px 0;color:var(--ink-soft)}
-  .pill{display:inline-flex;align-items:baseline;gap:9px;background:var(--surface-warm);
-    border:1px solid var(--line);border-radius:11px;padding:9px 15px;margin:0 8px 8px 0}
-  .pill b{font-size:15px;font-weight:800;color:var(--olive-deep)}
-  .pill span{font-size:12.5px;font-weight:700;color:var(--gold)}
   .costline{font-size:15px;color:var(--ink)}
   .costline b{color:var(--ink);font-weight:800}
   .flaglink{display:inline-block;margin-top:6px;font-size:14px;font-weight:800;
@@ -196,7 +189,6 @@
     .facts dd{padding-top:2px;border-top:none}
     .grades{grid-template-columns:1fr}
     .member{padding:22px 18px}
-    .dest-body{padding:4px 16px 22px}
   }
 </style>
 </head>
@@ -225,9 +217,16 @@
   <section>
     <div class="kicker"><span class="no">01</span><h2>예약 오픈 일정</h2></div>
     <dl class="facts">
-      <dt>오픈 일시</dt><dd>2026년 <span class="tbd">○월 ○일 ○시 (확정 예정)</span></dd>
+      <dt>오픈 일시</dt><dd>2026년 10월 12일(월)</dd>
       <dt>접수 방법</dt><dd>메리트투어 예약 홈페이지 <a href="https://www.merittour.co.kr" style="color:var(--olive-deep);font-weight:800;text-decoration:none">www.merittour.co.kr</a></dd>
       <dt>이용 대상 기간</dt><dd>2027년 <span class="tbd">○월 ~ ○월 (확정 예정)</span></dd>
+    </dl>
+    <h3 class="subh" style="margin-top:20px">예약 회차</h3>
+    <dl class="facts">
+      <dt>월 ~ 화</dt><dd>1회 예약 가능</dd>
+      <dt>화 ~ 수</dt><dd>2회 예약 가능</dd>
+      <dt>수 ~ 목</dt><dd>2회 예약 가능</dd>
+      <dt>합계</dt><dd><b>총 5회 예약 가능</b></dd>
     </dl>
     <p class="soft" style="margin-top:14px;font-size:14px">※ 같은 기간에 함께 가시려면 회원님 각자 로그인하신 뒤 동일 기간을 설정하여 예약해 주세요.</p>
   </section>
@@ -320,180 +319,152 @@
     <p class="soft" style="margin-top:14px;font-size:14px">※ 아래 상품별 체재비는 <b style="color:var(--ink)">1인 · 1박 기준</b>이며, 상세 일정·포함 사항은 상품별 일정표를 참고해 주세요.</p>
   </section>
 
-  <!-- 06 권역별 상품 안내 -->
+  <!-- 06 권역별 상품 안내 (탭) -->
   <section>
     <div class="kicker"><span class="no">06</span><h2>상품별 안내</h2></div>
-    <p class="soft" style="margin:0 0 18px">권역을 눌러 상세 안내를 펼쳐 보실 수 있습니다.</p>
+    <p class="soft" style="margin:0 0 18px">권역 탭을 선택하시면 해당 상품 안내가 표시됩니다.</p>
 
-    <!-- ① 아소 야마나미 -->
-    <details class="dest" open>
-      <summary class="dest-sum">
-        <span class="dest-idx">1</span>
-        <span class="dest-h"><span class="dest-name">아소 야마나미 리조트</span><span class="dest-sub">구마모토 · 야마나미CC / 구주고원CC</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>야마나미 컨트리클럽 (27홀) · 간지호텔/구주고원 CC (18홀)</dd>
-          <dt>도착 공항</dt><dd>구마모토 공항(KMJ) · 리조트까지 약 1시간</dd>
-          <dt>출발지</dt><dd>인천(티웨이) · 부산(에어부산) · 대구(티웨이)</dd>
-          <dt>상품 패턴</dt><dd>목→일 3박 · 일→목 4박 · 수→수 7박</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">주중 야마나미 CC 중심으로 라운딩하며, 주말·일본 공휴일에는 18홀로 운영됩니다. 간지호텔·키라라 이용 시 월·화요일은 구주고원 CC로 안내됩니다. 페어웨이 카트 진입이 가능합니다.</p>
-        <h3 class="subh">숙소</h3>
-        <p class="soft">야마나미 호텔(트윈·소형트윈·트리플) · 리조트 인근 별장(아소별장·소보별장·돔하우스) · 간지호텔 · 시즈노야도 료칸. 별장·료칸 상세는 아래 전용 안내문을 참고해 주세요.</p>
-        <a class="flaglink" href="../asoyamanami2027reservation.html">아소 야마나미 상세 안내문 보기 →</a>
-        <h3 class="subh">식사 · 석식 메뉴</h3>
-        <dl class="menu">
-          <dt>월</dt><dd>해물전골</dd><dt>화</dt><dd>불고기 코스</dd>
-          <dt>수</dt><dd>흑돼지 샤브샤브</dd><dt>목</dt><dd>감자탕 코스</dd>
-          <dt>금</dt><dd>닭한마리 코스</dd><dt>토</dt><dd>카이세키 요리</dd>
-          <dt>일</dt><dd>흑돼지 삼겹살</dd>
-        </dl>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 조식·중식은 호텔 뷔페식으로 제공됩니다.</p>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">체재비 <b>회원가 1박 12,000엔</b> / 회원동반가 16,500엔 <span class="tbd">확정 필요</span></p>
-        <p class="costline" style="margin-top:4px">왕복 송영비 <b>구마모토 4,000엔</b> (동반가 8,000엔) · 후쿠오카 8,000엔 (동반가 11,000엔)</p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 싱글룸 이용 시 야마나미 호텔 1박·1인당 2,200엔 추가. 별장·료칸 등 싱글룸이 없는 숙소는 홀수 단독 사용 시 1박·1인당 4,400엔 추가.</p>
-      </div>
-    </details>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="tab-yamanami">아소 야마나미</button>
+      <button class="tab" data-tab="tab-nagoya">나고야 포틴힐즈</button>
+      <button class="tab" data-tab="tab-beppu">벳푸</button>
+      <button class="tab" data-tab="tab-ibaraki">이바라키 시로사토</button>
+      <button class="tab" data-tab="tab-miyazaki">미야자키</button>
+      <button class="tab" data-tab="tab-nagano">나가노 스가다이라</button>
+    </div>
 
-    <!-- ② 나고야 포틴힐즈 -->
-    <details class="dest">
-      <summary class="dest-sum">
-        <span class="dest-idx">2</span>
-        <span class="dest-h"><span class="dest-name">나고야 포틴힐즈</span><span class="dest-sub">나고야 · 포틴힐즈 CC & 윈저호텔</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>포틴힐즈 컨트리클럽 (18홀)</dd>
-          <dt>도착 공항</dt><dd>나고야 중부국제공항(NGO) · 골프장까지 약 1시간 40분</dd>
-          <dt>출발지</dt><dd>인천(아시아나·대한항공) · 부산(대한항공)</dd>
-          <dt>상품 패턴</dt><dd>금→월 3박 · 월→금 4박 · 월→월 7박</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">전 일정 18홀 + 9홀 서비스 라운드를 제공합니다. (9홀 서비스는 현지 사정에 따라 제한될 수 있습니다.) 리모컨 조작 방식으로 페어웨이 진입은 불가합니다.</p>
-        <h3 class="subh">숙소 · 객실</h3>
-        <p class="soft">호텔 윈저 — 트윈(2인실) · 패밀리룸(4인실) · 카라반(2인실). 우천으로 라운딩이 어려운 경우 인근 쇼핑몰(에나역 부근)로 차량 안내해 드립니다.</p>
-        <h3 class="subh">식사 · 석식 메뉴</h3>
-        <dl class="menu">
-          <dt>월</dt><dd>해물전골 코스</dd><dt>화</dt><dd>불고기 코스</dd>
-          <dt>수</dt><dd>돼지 샤브샤브</dd><dt>목</dt><dd>일본식 닭곰탕</dd>
-          <dt>금</dt><dd>감자탕 코스</dd><dt>토</dt><dd>포틴힐즈 정식</dd>
-          <dt>일</dt><dd>삼겹살 코스</dd>
-        </dl>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 조식·중식은 호텔 뷔페식. 저녁 메뉴 업그레이드·외부 식사는 사전 신청이 필요합니다.</p>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">체재비 <b>회원가 1박 12,000엔</b> / 회원동반가 16,500엔 <span class="tbd">확정 필요</span></p>
-        <p class="costline" style="margin-top:4px">왕복 송영비 <b>9,000엔</b> (동반가 11,000엔)</p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 2인이 4인실 이용 시 1인·1박당 2,200엔 추가.</p>
-      </div>
-    </details>
+    <!-- 아소 야마나미 -->
+    <div class="tabpanel active" id="tab-yamanami" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">아소 야마나미 리조트</span><span class="panel-sub">구마모토 · 야마나미CC / 구주고원CC</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>야마나미 컨트리클럽 (27홀) · 간지호텔/구주고원 CC (18홀)</dd>
+        <dt>도착 공항</dt><dd>구마모토 공항(KMJ) · 리조트까지 약 1시간</dd>
+        <dt>출발지</dt><dd>인천 · 부산 · 대구</dd>
+        <dt>상품 패턴</dt><dd>목→일 3박 · 일→목 4박 · 수→수 7박</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">주중 야마나미 CC 중심으로 라운딩하며, 주말·일본 공휴일에는 18홀로 운영됩니다. 간지호텔·키라라 이용 시 월·화요일은 구주고원 CC로 안내됩니다. 페어웨이 카트 진입이 가능합니다.</p>
+      <h3 class="subh">숙소</h3>
+      <p class="soft">야마나미 호텔(트윈·소형트윈·트리플) · 리조트 인근 별장(아소별장·소보별장·돔하우스) · 간지호텔 · 시즈노야도 료칸. 별장·료칸 상세는 아래 전용 안내문을 참고해 주세요.</p>
+      <a class="flaglink" href="../asoyamanami2027reservation.html">아소 야마나미 상세 안내문 보기 →</a>
+      <h3 class="subh">식사 · 석식 메뉴</h3>
+      <dl class="menu">
+        <dt>월</dt><dd>해물전골</dd><dt>화</dt><dd>불고기 코스</dd>
+        <dt>수</dt><dd>흑돼지 샤브샤브</dd><dt>목</dt><dd>감자탕 코스</dd>
+        <dt>금</dt><dd>닭한마리 코스</dd><dt>토</dt><dd>카이세키 요리</dd>
+        <dt>일</dt><dd>흑돼지 삼겹살</dd>
+      </dl>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 조식·중식은 호텔 뷔페식으로 제공됩니다.</p>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">체재비 <b>숙소별 1박 15,000 ~ 18,000엔</b> · 왕복 송영비 1인 6,000엔</p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 야마나미 호텔 15,000엔 · 간지호텔/시즈노야도 료칸 17,000엔 · 별장(프레스티지·패밀리) 18,000엔 · 캐빈/프라이빗 레지던스 15,000엔. 싱글룸 요청 시 1박·1인당 2,200엔, 싱글룸이 없는 숙소의 홀수 단독 사용 시 1박·1인당 4,400엔 추가. (상세는 위 안내문 참고)</p>
+    </div>
 
-    <!-- ③ 벳푸 -->
-    <details class="dest">
-      <summary class="dest-sum">
-        <span class="dest-idx">3</span>
-        <span class="dest-h"><span class="dest-name">벳푸 골프투어</span><span class="dest-sub">오이타 · 아키바 리조트 / 무츠키 료칸 · 벳푸 CC</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>벳푸 CC (오기야마·유후·츠루미 코스)</dd>
-          <dt>도착 공항</dt><dd>후쿠오카 공항(FUK) · 아키바 호텔까지 약 2시간</dd>
-          <dt>출발지</dt><dd>인천(티웨이) · 부산(에어부산) · 대구(티웨이)</dd>
-          <dt>상품 패턴</dt><dd>일→금 5박 (금→월 3박 · 월→금 4박은 <span class="tbd">확정 필요</span>)</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">3박 4일은 2색 골프(오기야마+유후, 투어비 1,500엔 추가), 4박 5일은 3색 골프(츠루미+오기야마+유후, 3,000엔 추가)로 진행됩니다. 일정 중 일본 공휴일(평일)이 포함되면 1박당 체재비 5,000엔이 추가됩니다. 벳푸 CC 츠루미 코스는 페어웨이 진입이 가능합니다.</p>
-        <h3 class="subh">숙소 · 식사</h3>
-        <p class="soft">아키바 리조트 2인 1실. 입국일 석식은 도시락, 조·석식은 한식당(오이소), 중식은 클럽하우스 단품으로 제공됩니다. 투숙객 전용 온천탕을 무료로 이용하실 수 있습니다.</p>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">체재비 <b>1박 12,000엔</b> · 왕복 송영비 <b>8,000엔</b></p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 체재비·송영비 현지 지불은 불가하며, 추가 비용(2인 플레이·싱글룸)은 메리트투어 송금만 가능합니다. 싱글룸 이용 시 1인·1박당 22,000원(출발 2주 전 객실 상황 확인 후 안내).</p>
-      </div>
-    </details>
+    <!-- 나고야 포틴힐즈 -->
+    <div class="tabpanel" id="tab-nagoya" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">나고야 포틴힐즈</span><span class="panel-sub">나고야 · 포틴힐즈 CC & 윈저호텔</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>포틴힐즈 컨트리클럽 (18홀)</dd>
+        <dt>도착 공항</dt><dd>나고야 중부국제공항(NGO) · 골프장까지 약 1시간 40분</dd>
+        <dt>출발지</dt><dd>인천 · 부산</dd>
+        <dt>상품 패턴</dt><dd>금→월 3박 · 월→금 4박 · 월→월 7박</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">전 일정 18홀 + 9홀 서비스 라운드를 제공합니다. (9홀 서비스는 현지 사정에 따라 제한될 수 있습니다.) 리모컨 조작 방식으로 페어웨이 진입은 불가합니다.</p>
+      <h3 class="subh">숙소 · 객실</h3>
+      <p class="soft">호텔 윈저 — 트윈(2인실) · 패밀리룸(4인실) · 카라반(2인실). 우천으로 라운딩이 어려운 경우 인근 쇼핑몰(에나역 부근)로 차량 안내해 드립니다.</p>
+      <h3 class="subh">식사 · 석식 메뉴</h3>
+      <dl class="menu">
+        <dt>월</dt><dd>해물전골 코스</dd><dt>화</dt><dd>불고기 코스</dd>
+        <dt>수</dt><dd>돼지 샤브샤브</dd><dt>목</dt><dd>일본식 닭곰탕</dd>
+        <dt>금</dt><dd>감자탕 코스</dd><dt>토</dt><dd>포틴힐즈 정식</dd>
+        <dt>일</dt><dd>삼겹살 코스</dd>
+      </dl>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 조식·중식은 호텔 뷔페식. 저녁 메뉴 업그레이드·외부 식사는 사전 신청이 필요합니다.</p>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">체재비 <b>회원가 1박 12,000엔</b> / 회원동반가 16,500엔 <span class="tbd">확정 필요</span></p>
+      <p class="costline" style="margin-top:4px">왕복 송영비 <b>9,000엔</b> (동반가 11,000엔)</p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 2인이 4인실 이용 시 1인·1박당 2,200엔 추가.</p>
+    </div>
 
-    <!-- ④ 이바라키 시로사토 -->
-    <details class="dest">
-      <summary class="dest-sum">
-        <span class="dest-idx">4</span>
-        <span class="dest-h"><span class="dest-name">이바라키 시로사토</span><span class="dest-sub">이바라키 · 시로사토 CC</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>시로사토 컨트리클럽 (18홀)</dd>
-          <dt>도착 공항</dt><dd>나리타 공항(NRT) · 골프장까지 약 1시간 30분</dd>
-          <dt>출발지</dt><dd>인천(티웨이) · 부산(에어부산)</dd>
-          <dt>상품 패턴</dt><dd>일→토 6박</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">주중 18홀 + 9홀 서비스, 주말·일본 공휴일 18홀로 운영됩니다. 도착일은 라운딩이 없습니다(일몰이 규슈보다 이른 편). 리모컨 조작 방식으로 페어웨이 진입은 불가합니다.</p>
-        <h3 class="subh">숙소 · 식사</h3>
-        <p class="soft">내부 숙소 2인 1실. 조식 뷔페 · 중식 메인+뷔페 · 석식 세트메뉴로 제공됩니다.</p>
-        <dl class="menu">
-          <dt>월</dt><dd>닭한마리</dd><dt>화</dt><dd>일식(사시미·튀김)</dd>
-          <dt>수</dt><dd>야끼니꾸</dd><dt>목</dt><dd>돼지 샤브샤브</dd>
-          <dt>금</dt><dd>일식(사시미·가마솥밥)</dd><dt>토</dt><dd>삼겹살</dd>
-          <dt>일</dt><dd>해물탕</dd>
-        </dl>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">체재비 <b>1박 16,000엔</b> · 왕복 송영비 <b>12,000엔</b></p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 기본 2인 1실 구성으로 싱글룸이 없습니다. 부득이하게 싱글룸 이용 시 1박당 2,200엔 추가. 2인 플레이 시 2BAG 차지(현지 지불)가 발생합니다.</p>
-      </div>
-    </details>
+    <!-- 벳푸 -->
+    <div class="tabpanel" id="tab-beppu" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">벳푸 골프투어</span><span class="panel-sub">오이타 · 아키바 리조트 / 무츠키 료칸 · 벳푸 CC</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>벳푸 CC (오기야마·유후·츠루미 코스)</dd>
+        <dt>도착 공항</dt><dd>후쿠오카 공항(FUK) · 아키바 호텔까지 약 2시간</dd>
+        <dt>출발지</dt><dd>인천 · 부산 · 대구</dd>
+        <dt>상품 패턴</dt><dd>일→금 5박 6일</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">3박 4일은 2색 골프(오기야마+유후, 투어비 1,500엔 추가), 4박 5일은 3색 골프(츠루미+오기야마+유후, 3,000엔 추가)로 진행됩니다. 일정 중 일본 공휴일(평일)이 포함되면 1박당 체재비 5,000엔이 추가됩니다. 벳푸 CC 츠루미 코스는 페어웨이 진입이 가능합니다.</p>
+      <h3 class="subh">숙소 · 식사</h3>
+      <p class="soft">아키바 리조트 2인 1실. 입국일 석식은 도시락, 조·석식은 한식당(오이소), 중식은 클럽하우스 단품으로 제공됩니다. 투숙객 전용 온천탕을 무료로 이용하실 수 있습니다.</p>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">체재비 <b>1박 12,000엔</b> · 왕복 송영비 <b>8,000엔</b></p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 체재비·송영비 현지 지불은 불가하며, 추가 비용(2인 플레이·싱글룸)은 메리트투어 송금만 가능합니다. 싱글룸 이용 시 1인·1박당 22,000원(출발 2주 전 객실 상황 확인 후 안내).</p>
+    </div>
 
-    <!-- ⑤ 미야자키 -->
-    <details class="dest">
-      <summary class="dest-sum">
-        <span class="dest-idx">5</span>
-        <span class="dest-h"><span class="dest-name">미야자키 골프투어</span><span class="dest-sub">미야자키 · 국제공항 CC</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>미야자키 국제공항 컨트리클럽 (18홀)</dd>
-          <dt>도착 공항</dt><dd>미야자키 공항(KMI) · 골프장까지 약 30분</dd>
-          <dt>출발지</dt><dd>인천(아시아나) · 인천 출발만 가능</dd>
-          <dt>상품 패턴</dt><dd>목→월 4박 · 일→금 5박 · 수→수 7박</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">평일 18홀 + 9홀 서비스, 주말 18홀로 운영됩니다. 페어웨이 진입이 가능합니다.</p>
-        <h3 class="subh">숙소 · 식사</h3>
-        <p class="soft">국제공항 CC 숙소 2인 1실 배정. 조·석식은 클럽식, 중식은 클럽하우스에서 개별 지불로 이용합니다.</p>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">일정마다 투어비가 상이하여 <b>총 투어비로 안내</b>드립니다. <span class="tbd">확정 필요</span></p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 2BAG 이용 시(주말·일본 공휴일) 1인·1박당 20,000원, 싱글룸 이용 시 1인·1박당 25,000원 추가. 항공 별도(AIR 별도) 진행 시 총 투어비에서 차감됩니다.</p>
-      </div>
-    </details>
+    <!-- 이바라키 시로사토 -->
+    <div class="tabpanel" id="tab-ibaraki" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">이바라키 시로사토</span><span class="panel-sub">이바라키 · 시로사토 CC</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>시로사토 컨트리클럽 (18홀)</dd>
+        <dt>도착 공항</dt><dd>나리타 공항(NRT) · 골프장까지 약 1시간 30분</dd>
+        <dt>출발지</dt><dd>인천 · 부산</dd>
+        <dt>상품 패턴</dt><dd>일→토 6박</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">주중 18홀 + 9홀 서비스, 주말·일본 공휴일 18홀로 운영됩니다. 도착일은 라운딩이 없습니다(일몰이 규슈보다 이른 편). 리모컨 조작 방식으로 페어웨이 진입은 불가합니다.</p>
+      <h3 class="subh">숙소 · 식사</h3>
+      <p class="soft">내부 숙소 2인 1실. 조식 뷔페 · 중식 메인+뷔페 · 석식 세트메뉴로 제공됩니다.</p>
+      <dl class="menu">
+        <dt>월</dt><dd>닭한마리</dd><dt>화</dt><dd>일식(사시미·튀김)</dd>
+        <dt>수</dt><dd>야끼니꾸</dd><dt>목</dt><dd>돼지 샤브샤브</dd>
+        <dt>금</dt><dd>일식(사시미·가마솥밥)</dd><dt>토</dt><dd>삼겹살</dd>
+        <dt>일</dt><dd>해물탕</dd>
+      </dl>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">체재비 <b>1박 16,000엔</b> · 왕복 송영비 <b>12,000엔</b></p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 기본 2인 1실 구성으로 싱글룸이 없습니다. 부득이하게 싱글룸 이용 시 1박당 2,200엔 추가. 2인 플레이 시 2BAG 차지(현지 지불)가 발생합니다.</p>
+    </div>
 
-    <!-- ⑥ 나가노 스가다이라 -->
-    <details class="dest">
-      <summary class="dest-sum">
-        <span class="dest-idx">6</span>
-        <span class="dest-h"><span class="dest-name">나가노 스가다이라</span><span class="dest-sub">나가노 · 스가다이라 그린 CC</span></span>
-        <svg class="dest-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-      </summary>
-      <div class="dest-body">
-        <dl class="facts">
-          <dt>골프장</dt><dd>스가다이라 그린 컨트리클럽 (18홀)</dd>
-          <dt>도착 공항</dt><dd>니가타 공항(KIJ) · 골프장까지 약 3시간 30분~4시간</dd>
-          <dt>출발지</dt><dd>인천(대한항공) · 인천 출발만 가능</dd>
-          <dt>상품 패턴</dt><dd>목→목 7박 (화→화 7박 등 기간별 운영은 <span class="tbd">확정 필요</span>)</dd>
-        </dl>
-        <h3 class="subh">골프 플레이</h3>
-        <p class="soft">전 일정 18홀 + 9홀 서비스로 운영됩니다. (입국일 라운딩이 어려워 주말·일본 공휴일에도 27홀 제공) 전동카트 페어웨이 진입은 불가합니다.</p>
-        <h3 class="subh">숙소 · 식사</h3>
-        <p class="soft">스가다이라 고원 온천호텔(골프장에서 약 15분). 도착일 중식은 기내식으로 대체됩니다. 호텔 온천 24시간 운영(성수기 여탕 시간 제한). 조·중·석식은 클럽하우스에서 제공됩니다.</p>
-        <h3 class="subh">체재비 · 송영비</h3>
-        <p class="costline">체재비 <b>회원가 1박 12,000엔</b> / 회원동반가 16,500엔 <span class="tbd">확정 필요</span></p>
-        <p class="costline" style="margin-top:4px">왕복 송영비 <b>16,000엔</b></p>
-        <p class="soft" style="margin-top:8px;font-size:14px">※ 체재비·송영비 현지 지불은 불가합니다. 싱글룸 이용 시 평일 2,500엔 / 주말 3,500엔 추가.</p>
-      </div>
-    </details>
+    <!-- 미야자키 -->
+    <div class="tabpanel" id="tab-miyazaki" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">미야자키 골프투어</span><span class="panel-sub">미야자키 · 국제공항 CC</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>미야자키 국제공항 컨트리클럽 (18홀)</dd>
+        <dt>도착 공항</dt><dd>미야자키 공항(KMI) · 골프장까지 약 30분</dd>
+        <dt>출발지</dt><dd>인천 (인천 출발만 가능)</dd>
+        <dt>상품 패턴</dt><dd>목→월 4박 · 일→금 5박 · 수→수 7박</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">평일 18홀 + 9홀 서비스, 주말 18홀로 운영됩니다. 페어웨이 진입이 가능합니다.</p>
+      <h3 class="subh">숙소 · 식사</h3>
+      <p class="soft">국제공항 CC 숙소 2인 1실 배정. 조·석식은 클럽식, 중식은 클럽하우스에서 개별 지불로 이용합니다.</p>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">일정마다 투어비가 상이하여 <b>총 투어비로 안내</b>드립니다. <span class="tbd">확정 필요</span></p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 2BAG 이용 시(주말·일본 공휴일) 1인·1박당 20,000원, 싱글룸 이용 시 1인·1박당 25,000원 추가. 항공 별도(AIR 별도) 진행 시 총 투어비에서 차감됩니다.</p>
+    </div>
+
+    <!-- 나가노 스가다이라 -->
+    <div class="tabpanel" id="tab-nagano" role="tabpanel">
+      <div class="panel-head"><span class="panel-name">나가노 스가다이라</span><span class="panel-sub">나가노 · 스가다이라 그린 CC</span></div>
+      <dl class="facts">
+        <dt>골프장</dt><dd>스가다이라 그린 컨트리클럽 (18홀)</dd>
+        <dt>도착 공항</dt><dd>니가타 공항(KIJ) · 골프장까지 약 3시간 30분~4시간</dd>
+        <dt>출발지</dt><dd>인천 (인천 출발만 가능)</dd>
+        <dt>상품 패턴</dt><dd>목→목 7박 8일</dd>
+      </dl>
+      <h3 class="subh">골프 플레이</h3>
+      <p class="soft">전 일정 18홀 + 9홀 서비스로 운영됩니다. (입국일 라운딩이 어려워 주말·일본 공휴일에도 27홀 제공) 전동카트 페어웨이 진입은 불가합니다.</p>
+      <h3 class="subh">숙소 · 식사</h3>
+      <p class="soft">스가다이라 고원 온천호텔(골프장에서 약 15분). 도착일 중식은 기내식으로 대체됩니다. 호텔 온천 24시간 운영(성수기 여탕 시간 제한). 조·중·석식은 클럽하우스에서 제공됩니다.</p>
+      <h3 class="subh">체재비 · 송영비</h3>
+      <p class="costline">체재비 <b>회원가 1박 12,000엔</b> / 회원동반가 16,500엔 <span class="tbd">확정 필요</span></p>
+      <p class="costline" style="margin-top:4px">왕복 송영비 <b>16,000엔</b></p>
+      <p class="soft" style="margin-top:8px;font-size:14px">※ 체재비·송영비 현지 지불은 불가합니다. 싱글룸 이용 시 평일 2,500엔 / 주말 3,500엔 추가.</p>
+    </div>
 
   </section>
 
@@ -526,5 +497,19 @@
   </footer>
 
 </div>
+
+<script>
+  (function(){
+    var tabs = document.querySelectorAll('.tab');
+    var panels = document.querySelectorAll('.tabpanel');
+    tabs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-tab');
+        tabs.forEach(function(b){ b.classList.toggle('active', b === btn); });
+        panels.forEach(function(p){ p.classList.toggle('active', p.id === id); });
+      });
+    });
+  })();
+</script>
 </body>
 </html>
