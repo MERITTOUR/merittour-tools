@@ -420,19 +420,25 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx .cell-cap{display:block;font-size:9px;font-weight:500;color:var(--text3);opacity:.75;border-top:1px dotted currentColor;margin-top:1px;padding-top:1px}
 .blk-mtx td.b-g .cell-cap,.blk-mtx td.b-a .cell-cap,.blk-mtx td.b-r .cell-cap{color:inherit;opacity:.6}
 .blk-mtx tr.blk-sumrow .cell-cap{color:#c9d4e8!important;opacity:.85}
-.rm-exc-wrap{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2)}
-.rm-exc-label{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.02em;margin-bottom:5px}
-.rm-exc-item{display:flex;align-items:center;gap:6px;font-size:11px;padding:3px 6px;border-radius:5px;background:var(--accent-dim);margin-bottom:3px;flex-wrap:wrap}
-.rm-exc-item.bad{background:var(--amber-dim)}
-.rm-exc-item .x-room{font-weight:700;color:var(--accent2);min-width:52px}
-.rm-exc-item .x-span{font-family:var(--mono);font-size:10px;color:var(--text2)}
-.rm-exc-item .x-qty{font-weight:800;color:var(--navy)}
+.rm-exc-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.rm-exc-item{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:6px;background:var(--accent-dim);border:1px solid transparent}
+.rm-exc-item.bad{background:var(--amber-dim);border-color:var(--amber)}
+.rm-exc-item .x-room{font-weight:700;color:var(--accent2);min-width:56px;flex:none}
+.rm-exc-item .x-span{font-family:var(--mono);font-size:11px;color:var(--text2);min-width:180px;flex:none}
+.rm-exc-item .x-qty{font-weight:800;color:var(--navy);min-width:48px;text-align:right;flex:none}
+.rm-exc-item .x-warn{color:var(--amber2);font-weight:700;flex:none}
 .rm-exc-item .x-memo{color:var(--text3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rm-exc-item .x-del{border:none;background:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0 3px}
+.rm-exc-item .x-del{border:none;background:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 4px;line-height:1;flex:none}
 .rm-exc-item .x-del:hover{color:var(--red)}
-.rm-exc-warn{font-size:10px;color:var(--amber2);margin:3px 0}
-.rm-exc-form{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:5px}
-.rm-exc-form input,.rm-exc-form select{padding:3px 6px;border:1px solid var(--border2);border-radius:5px;font-size:11px;font-family:var(--sans);background:var(--surface);color:var(--text)}
+.rm-exc-warn{font-size:11px;color:var(--amber2);margin:4px 0 8px}
+.rm-exc-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.rm-exc-form .rmx-l{font-size:11px;color:var(--text2);font-weight:600;margin-left:4px}
+.rm-exc-form .rmx-l:first-child{margin-left:0}
+.rm-exc-form .rmx-u{font-size:11px;color:var(--text3)}
+.rm-exc-form input,.rm-exc-form select{padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-family:var(--sans);background:var(--surface);color:var(--text)}
+.rm-exc-form input:focus,.rm-exc-form select:focus{outline:none;border-color:var(--accent)}
+.rm-exc-form .rmx-oneday{padding:4px 10px;font-size:11px}
+.rm-exc-form .rmx-add{padding:5px 12px;margin-left:4px;border-color:var(--accent);color:var(--accent);font-weight:700}
 .blk-mtx .cell-cap.cap-exc{font-weight:800;opacity:1;text-decoration:underline;text-decoration-style:double;text-underline-offset:1px}
 .blk-mtx .total-col{background:var(--surface3);font-weight:700;color:var(--navy)}
 .blk-mtx .total-row td{background:var(--surface4)!important;font-weight:700;color:var(--navy);border-top:2px solid var(--border2)}
@@ -4227,7 +4233,6 @@ function rmRoomsRows(r){
     <input class="rm-input text" id="rm-newroom-${r.key}" placeholder="룸타입(트윈)" style="width:90px">
     <input class="rm-input" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="보유" style="width:60px">
     <button class="btn-sm" style="padding:3px 9px" onclick="rmAddRoom('${r.key}')">+ 룸</button></div>`;
-  html += rmRoomExcRows(r);
   return html;
 }
 
@@ -4238,38 +4243,43 @@ function rmRoomExcRows(r){
   const rooms=Object.keys(r.rooms||{});
   const exc=(r.roomExceptions||[]);
   const bad=new Set(MT.roomExcConflicts(exc));
-  let html='<div class="rm-exc-wrap"><div class="rm-exc-label">기간 예외 <span style="font-weight:400;color:var(--text3)">— 이 기간만 다른 보유 (겹치면 짧은 기간 우선)</span></div>';
+  let html='<div class="rm-exc-wrap"><div class="rm-group-label">기간 예외 <span style="font-weight:400;color:var(--text3)">— 특정 날짜·기간만 보유가 다를 때. 하루만 지정하려면 시작일을 고르고 「하루」를 누르세요. 겹치면 짧은 기간이 우선.</span></div>';
   if(!rooms.length){
-    html+='<div class="muted" style="font-size:10px">룸타입을 먼저 등록하면 기간 예외를 넣을 수 있습니다.</div></div>';
+    html+='<div class="muted" style="font-size:11px">위 「호텔 블록」에서 룸타입을 먼저 등록하면 기간 예외를 넣을 수 있습니다.</div></div>';
     return html;
   }
   if(exc.length){
     // 룸타입 → 시작일 순으로 보기 좋게 정렬 (저장 순서는 건드리지 않음)
     const sorted=exc.slice().sort((a,b)=> String(a.room).localeCompare(String(b.room),'ko') || String(a.from).localeCompare(String(b.from)));
-    html+=sorted.map(e=>{
+    html+='<div class="rm-exc-list">'+sorted.map(e=>{
       const one=e.from===e.to;
-      const span=one?e.from:`${e.from} ~ ${(e.to||'').slice(0,4)===(e.from||'').slice(0,4)?e.to.slice(5):e.to}`;
+      const span=one?`${e.from} <b>하루</b>`:`${e.from} ~ ${(e.to||'').slice(0,4)===(e.from||'').slice(0,4)?e.to.slice(5):e.to}`;
       const warn=bad.has(e.id)?' bad':'';
       return `<div class="rm-exc-item${warn}" ${warn?'title="같은 길이의 기간이 겹칩니다 — 나중에 등록한 쪽이 적용됩니다"':''}>
         <span class="x-room">${e.room}</span>
-        <span class="x-span">${span}${one?' (하루)':''}</span>
+        <span class="x-span">${span}</span>
         <span class="x-qty">${Number(e.qty).toLocaleString()}실</span>
-        ${warn?'<span style="color:var(--amber2)">⚠ 겹침</span>':''}
+        ${warn?'<span class="x-warn">⚠ 겹침</span>':''}
         <span class="x-memo">${(e.memo||'').replace(/</g,'&lt;')}</span>
-        <button class="x-del" title="삭제" onclick="rmDelRoomExc('${r.key}','${e.id}')">✕</button>
+        <button class="x-del" title="이 예외 삭제" onclick="rmDelRoomExc('${r.key}','${e.id}')">✕</button>
       </div>`;
-    }).join('');
+    }).join('')+'</div>';
     if(bad.size) html+='<div class="rm-exc-warn">⚠ 길이가 같은 기간이 겹쳐 있습니다. 어느 쪽이 적용될지 헷갈리니 한쪽을 줄이거나 지워주세요.</div>';
   }
   const k=r.key;
   html+=`<div class="rm-exc-form">
+    <span class="rmx-l">룸타입</span>
     <select id="rmx-room-${k}">${sortRoomTypes(rooms).map(rt=>`<option value="${rt.replace(/"/g,'&quot;')}">${rt}</option>`).join('')}</select>
-    <input type="date" id="rmx-from-${k}" onchange="rmxSyncTo('${k}')" title="시작일">
-    <input type="date" id="rmx-to-${k}" title="종료일">
-    <button class="btn-sm" style="padding:2px 7px;font-size:10px" onclick="rmxOneDay('${k}')" title="종료일을 시작일과 같게 (하루만 지정)">하루</button>
-    <input type="text" inputmode="numeric" id="rmx-qty-${k}" placeholder="보유" style="width:56px">
-    <input type="text" id="rmx-memo-${k}" placeholder="메모(선택)" style="width:110px">
-    <button class="btn-sm" style="padding:3px 9px" onclick="rmAddRoomExc('${k}')">+ 예외 추가</button>
+    <span class="rmx-l">시작일</span>
+    <input type="date" id="rmx-from-${k}" onchange="rmxSyncTo('${k}')">
+    <span class="rmx-l">종료일</span>
+    <input type="date" id="rmx-to-${k}">
+    <button class="btn-sm rmx-oneday" onclick="rmxOneDay('${k}')" title="종료일을 시작일과 같게 — 하루만 지정">하루만</button>
+    <span class="rmx-l">보유</span>
+    <input type="text" inputmode="numeric" id="rmx-qty-${k}" placeholder="0" style="width:52px;text-align:right">
+    <span class="rmx-u">객실</span>
+    <input type="text" id="rmx-memo-${k}" placeholder="메모 (예: 객실 보수)" style="width:150px">
+    <button class="btn-sm rmx-add" onclick="rmAddRoomExc('${k}')">+ 예외 추가</button>
   </div></div>`;
   return html;
 }
@@ -4428,6 +4438,9 @@ function renderResortMaster(){
               <span class="muted" style="font-size:10px">엠클릭 표에 이 이름으로 찍혀도 이 숙소로 인식</span>
             </div>
           </div>
+        </div>
+        <div class="rm-group" style="margin-top:12px">
+          ${rmRoomExcRows(r)}
         </div>
         <div class="rm-group" style="margin-top:12px">
           <div class="rm-group-label">비고</div>
