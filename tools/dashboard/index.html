@@ -420,6 +420,14 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx .cell-cap{display:block;font-size:9px;font-weight:500;color:var(--text3);opacity:.75;border-top:1px dotted currentColor;margin-top:1px;padding-top:1px}
 .blk-mtx td.b-g .cell-cap,.blk-mtx td.b-a .cell-cap,.blk-mtx td.b-r .cell-cap{color:inherit;opacity:.6}
 .blk-mtx tr.blk-sumrow .cell-cap{color:#c9d4e8!important;opacity:.85}
+.rm-room-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.rm-room-row .rmr-name{flex:1;min-width:0;text-align:left}
+.rm-room-row .rmr-qty{width:66px;text-align:right;flex:none}
+.rm-room-row .rm-unit{flex:none;min-width:26px}
+.rm-room-row .rmr-exc{flex:none;font-size:10px;font-weight:700;color:var(--amber2);background:var(--amber-dim);padding:2px 6px;border-radius:4px}
+.rm-room-row .rmr-del{flex:none;border:none;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}
+.rm-room-row .rmr-del:hover{color:var(--red);background:var(--red-dim,rgba(192,57,43,.08))}
+.rm-room-row.rmr-add{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2)}
 .rm-exc-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .rm-exc-item{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:6px;background:var(--accent-dim);border:1px solid transparent}
 .rm-exc-item.bad{background:var(--amber-dim);border-color:var(--amber)}
@@ -4222,18 +4230,73 @@ function rmNumRow(label, rkey, field, val, unit){
 function rmRoomsRows(r){
   const rooms=r.rooms||{};
   const keys=sortRoomTypes(Object.keys(rooms));
+  const nExcOf = rt => (r.roomExceptions||[]).filter(e=>e.room===rt&&MT.roomExcValid(e)).length;
   let html = keys.length
-    ? keys.map(rt=>`<div class="rm-row"><label>${rt}</label><div style="display:flex;align-items:center">
-        <input class="rm-input" type="text" inputmode="numeric" value="${rooms[rt]?Number(rooms[rt]).toLocaleString():''}" placeholder="0"
-          onchange="updateResort('${r.key}','room:${rt.replace(/'/g,"\\'")}',this.value,this)">
-        <span class="rm-unit">객실</span></div></div>`).join('')
+    ? keys.map((rt,i)=>`<div class="rm-room-row">
+        <input class="rm-input text rmr-name" type="text" value="${rt.replace(/"/g,'&quot;')}" placeholder="룸타입"
+          onchange="rmRenameRoom('${r.key}',${i},this.value)"
+          title="룸타입 이름 — 고치면 이 룸타입의 기간 예외도 함께 따라갑니다">
+        <input class="rm-input rmr-qty" type="text" inputmode="numeric" value="${rooms[rt]?Number(rooms[rt]).toLocaleString():''}" placeholder="0"
+          onchange="rmSetRoomQty('${r.key}',${i},this.value,this)" title="기본 보유 객실 수">
+        <span class="rm-unit">객실</span>
+        ${nExcOf(rt)?`<span class="rmr-exc" title="이 룸타입의 기간 예외 ${nExcOf(rt)}건">예외 ${nExcOf(rt)}</span>`:''}
+        <button class="rmr-del" title="이 룸타입 삭제" onclick="rmDelRoom('${r.key}',${i})">✕</button>
+      </div>`).join('')
     : '<div class="muted" style="font-size:11px;padding:2px 0">등록된 룸타입 없음</div>';
   // 새 룸타입 추가
-  html += `<div class="rm-row" style="margin-top:4px;gap:5px">
-    <input class="rm-input text" id="rm-newroom-${r.key}" placeholder="룸타입(트윈)" style="width:90px">
-    <input class="rm-input" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="보유" style="width:60px">
-    <button class="btn-sm" style="padding:3px 9px" onclick="rmAddRoom('${r.key}')">+ 룸</button></div>`;
+  html += `<div class="rm-room-row rmr-add">
+    <input class="rm-input text rmr-name" id="rm-newroom-${r.key}" placeholder="새 룸타입 (예: 트윈)"
+      onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')">
+    <input class="rm-input rmr-qty" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="0"
+      onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')">
+    <span class="rm-unit">객실</span>
+    <button class="btn-sm" style="padding:3px 10px" onclick="rmAddRoom('${r.key}')">+ 추가</button></div>`;
   return html;
+}
+
+/* 룸타입 이름 변경 — 보유 수량과 기간 예외를 함께 옮긴다 (입력 순서 유지) */
+function rmRenameRoom(key, idx, raw){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const keys=sortRoomTypes(Object.keys(r.rooms||{}));
+  const oldName=keys[idx]; if(oldName==null) return;
+  const name=String(raw==null?'':raw).trim();
+  if(!name){ alert('룸타입 이름은 비울 수 없습니다.\n없애려면 ✕ 버튼을 눌러 삭제하세요.'); renderResortMaster(); return; }
+  if(name===oldName) return;
+  if(Object.prototype.hasOwnProperty.call(r.rooms||{}, name)){
+    alert(`이미 「${name}」 룸타입이 있습니다. 다른 이름을 쓰거나, 합치려면 한쪽을 삭제하세요.`);
+    renderResortMaster(); return;
+  }
+  const next={};
+  Object.keys(r.rooms).forEach(k2=>{ next[k2===oldName?name:k2]=r.rooms[k2]; });  // 순서 유지
+  r.rooms=next;
+  let moved=0;
+  (r.roomExceptions||[]).forEach(e=>{ if(e.room===oldName){ e.room=name; moved++; } });
+  logChange(r.name, '룸타입 이름', oldName, name+(moved?` (기간 예외 ${moved}건 함께 이동)`:''));
+  saveResortMaster();
+  blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
+}
+
+/* 룸타입 보유 수량 변경 — 0 이하는 삭제로 보지 않고 되돌린다(삭제는 ✕ 버튼으로만) */
+function rmSetRoomQty(key, idx, val, el){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const rt=sortRoomTypes(Object.keys(r.rooms||{}))[idx]; if(rt==null) return;
+  const n=num(val);
+  if(!(n>0)){
+    alert('보유 객실 수는 1 이상이어야 합니다.\n이 룸타입을 없애려면 ✕ 버튼으로 삭제하세요.\n특정 기간만 0으로 두려면 「기간 예외」에 0을 넣으세요.');
+    renderResortMaster(); return;
+  }
+  updateResort(key, 'room:'+rt, n, el);
+}
+
+/* 룸타입 삭제 — 보유와 그 룸타입의 기간 예외를 함께 지운다 */
+function rmDelRoom(key, idx){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const rt=sortRoomTypes(Object.keys(r.rooms||{}))[idx]; if(rt==null) return;
+  const nExc=(r.roomExceptions||[]).filter(e=>e.room===rt).length;
+  if(!confirm(`「${rt}」 룸타입을 삭제할까요?\n\n· 기본 보유 ${Number(r.rooms[rt]||0).toLocaleString()}실`
+    +(nExc?`\n· 이 룸타입의 기간 예외 ${nExc}건도 함께 삭제됩니다.`:'')
+    +`\n\n블록 현황에서 이 룸타입은 「보유미등록」으로 표시됩니다.`)) return;
+  updateResort(key, 'room:'+rt, 0, null);   // 기존 삭제 경로 재사용(이력 기록·예외 정리 포함)
 }
 
 /* ── 기간 예외 (이 기간만 다른 보유) ────────────────────────────────
@@ -4326,9 +4389,14 @@ function rmDelRoomExc(key, id){
   blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
 }
 function rmAddRoom(key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
   const rt=document.getElementById('rm-newroom-'+key).value.trim();
   const n=num(document.getElementById('rm-newroomn-'+key).value);
-  if(!rt||!n){ alert('룸타입과 보유 수를 입력해주세요.'); return; }
+  if(!rt){ alert('룸타입 이름을 입력해주세요. (예: 트윈)'); return; }
+  if(!(n>0)){ alert('보유 객실 수를 1 이상으로 입력해주세요.'); return; }
+  if(Object.prototype.hasOwnProperty.call(r.rooms||{}, rt)){
+    alert(`이미 「${rt}」 룸타입이 있습니다. 위 목록에서 수량을 고치세요.`); return;
+  }
   updateResort(key,'room:'+rt,n,null);
 }
 
