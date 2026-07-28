@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR 통합 업무 허브</title>
 <script src="../../shared/gate.js"></script>
+<script src="../../shared/util.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -413,6 +414,32 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.b-zero{color:var(--text3);opacity:.4}
 .blk-mtx td.clickable{cursor:pointer}
 .blk-mtx td.clickable:hover{box-shadow:inset 0 0 0 2px var(--accent)}
+/* 2줄 셀: 위=잔여(신호색), 아래=보유(회색 작게). 날짜별 보유 변동을 표에서 바로 확인 */
+.blk-mtx td.b-2l{padding:2px 5px;line-height:1.15}
+.blk-mtx .cell-rem{display:block;font-weight:700}
+.blk-mtx .cell-cap{display:block;font-size:9px;font-weight:500;color:var(--text3);opacity:.75;border-top:1px dotted currentColor;margin-top:1px;padding-top:1px}
+.blk-mtx td.b-g .cell-cap,.blk-mtx td.b-a .cell-cap,.blk-mtx td.b-r .cell-cap{color:inherit;opacity:.6}
+.blk-mtx tr.blk-sumrow .cell-cap{color:#c9d4e8!important;opacity:.85}
+.rm-exc-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.rm-exc-item{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:6px;background:var(--accent-dim);border:1px solid transparent}
+.rm-exc-item.bad{background:var(--amber-dim);border-color:var(--amber)}
+.rm-exc-item .x-room{font-weight:700;color:var(--accent2);min-width:56px;flex:none}
+.rm-exc-item .x-span{font-family:var(--mono);font-size:11px;color:var(--text2);min-width:180px;flex:none}
+.rm-exc-item .x-qty{font-weight:800;color:var(--navy);min-width:48px;text-align:right;flex:none}
+.rm-exc-item .x-warn{color:var(--amber2);font-weight:700;flex:none}
+.rm-exc-item .x-memo{color:var(--text3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm-exc-item .x-del{border:none;background:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 4px;line-height:1;flex:none}
+.rm-exc-item .x-del:hover{color:var(--red)}
+.rm-exc-warn{font-size:11px;color:var(--amber2);margin:4px 0 8px}
+.rm-exc-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.rm-exc-form .rmx-l{font-size:11px;color:var(--text2);font-weight:600;margin-left:4px}
+.rm-exc-form .rmx-l:first-child{margin-left:0}
+.rm-exc-form .rmx-u{font-size:11px;color:var(--text3)}
+.rm-exc-form input,.rm-exc-form select{padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-family:var(--sans);background:var(--surface);color:var(--text)}
+.rm-exc-form input:focus,.rm-exc-form select:focus{outline:none;border-color:var(--accent)}
+.rm-exc-form .rmx-oneday{padding:4px 10px;font-size:11px}
+.rm-exc-form .rmx-add{padding:5px 12px;margin-left:4px;border-color:var(--accent);color:var(--accent);font-weight:700}
+.blk-mtx .cell-cap.cap-exc{font-weight:800;opacity:1;text-decoration:underline;text-decoration-style:double;text-underline-offset:1px}
 .blk-mtx .total-col{background:var(--surface3);font-weight:700;color:var(--navy)}
 .blk-mtx .total-row td{background:var(--surface4)!important;font-weight:700;color:var(--navy);border-top:2px solid var(--border2)}
 /* 그룹 매핑 / 마스터 편집 */
@@ -1042,6 +1069,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--amber-dim);border:1px solid var(--amber);vertical-align:middle"></span> 임박(1~3)</span>
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--red-dim);border:1px solid var(--red);vertical-align:middle"></span> 마감/초과(0이하)</span>
         <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="blk-show-sellstop" onchange="blkShowSellStop=this.checked; blkRenderStatus();"> 판매중지 숙소 포함</label>
+        <span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;border:1px solid var(--border2);border-radius:3px;padding:1px 5px;line-height:1.1;text-align:center;background:var(--green-dim)"><b style="font-size:10px;color:var(--green2)">12</b><br><span style="font-size:8px;color:var(--green2);opacity:.6;border-top:1px dotted currentColor">20</span></span> 위=잔여 · 아래=보유 (사용 = 보유 − 잔여)</span>
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
       <div class="tbl-wrap" style="max-height:600px"><table class="blk-mtx" id="blk-mtx"></table></div>
@@ -1089,7 +1117,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="blk-view" id="blkv-sim">
     <div class="card">
       <div class="note">
-        <b>판매 가능 수량 시뮬레이션</b> · 웹 오픈 수량은 기본적으로 실 보유 블록 전체입니다. 백오피스(전화·카톡) 예약으로 사용이 늘면 웹잔여(=보유−사용)가 자동으로 줄어듭니다. 특정 날짜만 보유 초과로 더 팔 때(오버부킹) 그 칸의 수량을 보유보다 크게 올리세요. 상단 막대 = 사용/보유, 빨강 마커 = 보유 100% 지점.
+        <b>판매 가능 수량 시뮬레이션</b> · 웹 오픈 수량은 기본적으로 실 보유 블록 전체입니다. 백오피스(전화·카톡) 예약으로 사용이 늘면 웹잔여(=보유−사용)가 자동으로 줄어듭니다. 특정 날짜만 보유 초과로 더 팔 때(오버부킹) 그 칸의 수량을 보유보다 크게 올리세요. 여기서 말하는 「보유」는 <b>그날의 마스터 보유</b>(리조트 마스터의 기간 예외까지 반영한 값)입니다. 상단 막대 = 사용/보유, 빨강 마커 = 보유 100% 지점.
       </div>
       <div class="blk-toolbar">
         <label>날짜</label>
@@ -1128,6 +1156,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <div class="blk-cfg-title" style="font-size:12px">리조트 마스터에서 설정하는 항목</div>
         <ul style="font-size:12px;color:var(--text2);line-height:1.9;padding-left:18px;margin:0">
           <li><b>룸타입별 보유 블록</b> — 예: 아소 야마나미 골프텔 트윈 55 / 소형트윈 50</li>
+          <li><b>기간별 보유 예외</b> — 특정 기간만 보유가 다를 때(성수기 증실·객실 보수 등). 하루짜리도 가능. 겹치면 짧은 기간이 우선. 마스터 내보내기에 함께 실려 전 직원에게 배포됩니다</li>
           <li><b>엠클릭 표기 별칭</b> — 예: 14hills → 포틴힐즈CC 골프텔, 소테츠/다이와 → 구마모토 시내 호텔</li>
           <li><b>임의배정 여부</b> — 블록을 미리 안 까는 숙소(구마모토 시내). 잔여 계산 대신 사용수만 표시</li>
           <li><b>출발 일정·출발/도착 공항</b> — 출발 일정 조회에 사용</li>
@@ -1136,6 +1165,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
     <div class="blk-cfg-card">
       <div class="blk-cfg-title">🔄 오버부킹 보정 초기화 <span class="card-sub" style="font-weight:400">— 판매 시뮬레이션에서 입력한 오버부킹 조정값을 모두 지웁니다</span></div>
+      <div class="muted" style="font-size:11px;margin-bottom:8px;line-height:1.7">오버부킹 보정은 <b>내 PC에서만</b> 쓰는 임시 시뮬레이션입니다(마스터 내보내기에 포함되지 않음). 실제로 확보한 객실 수가 기간에 따라 다르다면 리조트 마스터의 <b>기간별 보유 예외</b>에 넣어야 전 직원이 같은 값을 봅니다.</div>
       <button class="btn-sm" onclick="blkResetOver()" style="color:var(--red);border-color:var(--red)">오버부킹 보정값 초기화</button>
     </div>
   </div>
@@ -3352,20 +3382,22 @@ function vcalAvail(resortName, startDate, nights){
   const pool=blkPools.find(p=>p.name===resortName);
   if(!pool || pool.exclude) return null;
   if(pool.assign) return {assign:true};
-  const cap=blkPoolCap(pool); if(cap==null) return null;
+  const cap=blkPoolCapBase(pool); if(cap==null) return null;   // 정원 등록 여부는 기본 정원으로 판정
   const [y0,m0,d0]=startDate.split('-').map(Number);
-  let mn=Infinity;
+  let mn=Infinity, capVaries=false;
   let cur=new Date(y0, m0-1, d0);
   for(let k=0;k<nights;k++){
     const ym=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
     const dd=String(cur.getDate()).padStart(2,'0');
     const used=vcalUsedByDay(pool, ym);
     if(used===null) return {spill:true, spillYm:ym};   // 그 달 데이터 미등록 → 판단 보류
-    mn=Math.min(mn, cap-(used[dd]||0));
+    const dcap=blkPoolCapOn(pool, `${ym}-${dd}`);      // 그날 정원(기간 예외 반영)
+    if(dcap!==cap) capVaries=true;
+    mn=Math.min(mn, dcap-(used[dd]||0));
     cur.setDate(cur.getDate()+1);
   }
   const status = mn<=0?'full':(mn<VCAL_REM_OK?'tight':'ok');
-  return {assign:false, cap, rem:mn, status};
+  return {assign:false, cap, capVaries, rem:mn, status};
 }
 function vcalAvailBadge(av){
   if(!av) return '';
@@ -3379,9 +3411,10 @@ function vcalAvailLine(av){
   if(!av) return '';
   if(av.assign) return '<div class="vcal-avline vcal-avline-assign">🟦 임의배정형 — 그때그때 객실을 까는 방식이라 블록 잔여 계산 대상이 아닙니다. 현황 탭에서 사용수를 확인하세요.</div>';
   if(av.spill)  return `<div class="vcal-avline vcal-avline-spill">⬜ 연박 구간이 ${av.spillYm}로 이어지는데 그 달 블록이 등록되지 않았습니다. 호텔 블록 탭에서 ${av.spillYm} 표를 붙여넣고 「요금달력에 이 달 등록」하면 계산됩니다.</div>`;
-  if(av.status==='full') return `<div class="vcal-avline vcal-avline-full">🔴 마감 — 연박 구간 최소 잔여 ${av.rem}실 (정원 ${av.cap})</div>`;
-  if(av.status==='tight')return `<div class="vcal-avline vcal-avline-tight">🟠 임박 — 연박 구간 최소 잔여 ${av.rem}실 (정원 ${av.cap})</div>`;
-  return `<div class="vcal-avline vcal-avline-ok">🟢 예약 가능 — 연박 구간 최소 잔여 ${av.rem}실 (정원 ${av.cap})</div>`;
+  const capT = `정원 ${av.cap}${av.capVaries?' · 기간 예외로 날짜별 정원 다름':''}`;
+  if(av.status==='full') return `<div class="vcal-avline vcal-avline-full">🔴 마감 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
+  if(av.status==='tight')return `<div class="vcal-avline vcal-avline-tight">🟠 임박 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
+  return `<div class="vcal-avline vcal-avline-ok">🟢 예약 가능 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
 }
 /* ── 요금달력 등록월 누적 관리 ── */
 function vcalRegisterMonth(){
@@ -4027,6 +4060,12 @@ function deriveBlkMaster(){
   resortMaster.forEach(r=>{ const rooms=r.rooms||{}; Object.keys(rooms).forEach(rt=>{ m[r.name+'|'+rt]=rooms[rt]; }); });
   return m;
 }
+/* 기간 예외: 숙소명 → 예외 배열. 기본 보유(blkMaster)와 짝을 이룬다. */
+function deriveBlkExc(){
+  const e={};
+  resortMaster.forEach(r=>{ if((r.roomExceptions||[]).length) e[r.name]=r.roomExceptions; });
+  return e;
+}
 /* 별칭: 표기 → 실제 숙소명 */
 function deriveBlkAlias(){
   const a={};
@@ -4044,7 +4083,10 @@ function loadResortMaster(){
     // 기본값과 병합 (새 항목 추가 시에도 안전)
     resortMaster = RESORT_DEFAULTS.map(def=>{
       const s = saved && saved.find(x=>x.key===def.key);
-      return s ? {...def, ...s} : {...def};
+      const r = s ? {...def, ...s} : {...def};
+      // 기간 예외: 없던 저장본은 빈 배열 = 기존 동작 그대로 (별도 마이그레이션 불필요)
+      if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
+      return r;
     });
     // 1회성 마이그레이션: 과거 mgmt 기본값(0) 시절 저장본 → 50,000원으로 끌어올림
     // (회원관리비를 의도적으로 0으로 비운 숙소는 mgmtMigrated 플래그 이후 그대로 유지됨)
@@ -4053,7 +4095,7 @@ function loadResortMaster(){
       try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
       saveResortMaster();
     }
-  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d})); }
+  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[]})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
   // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
@@ -4073,7 +4115,7 @@ function saveResortMaster(){
 }
 function resetResortMaster(){
   if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·항공요금·보유블록 정보가 사라집니다)')) return;
-  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])]}));
+  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])], roomExceptions:[]}));
   commonMaster={...COMMON_DEFAULTS};
   saveResortMaster();
   if(typeof blkSyncFromResort==='function') blkSyncFromResort();
@@ -4133,7 +4175,9 @@ function importMaster(input){
     // 적용: 기본값과 병합(누락 필드 보호)
     resortMaster = RESORT_DEFAULTS.map(def=>{
       const s = data.resortMaster.find(x=>x.key===def.key);
-      return s ? {...def, ...s} : {...def};
+      const r = s ? {...def, ...s} : {...def};
+      if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];   // 구버전 마스터 파일 호환
+      return r;
     });
     commonMaster = {...COMMON_DEFAULTS, ...data.commonMaster};
     // 변경이력 병합(불러온 이력 + 현재 이력, 최신순, 100건)
@@ -4191,6 +4235,96 @@ function rmRoomsRows(r){
     <button class="btn-sm" style="padding:3px 9px" onclick="rmAddRoom('${r.key}')">+ 룸</button></div>`;
   return html;
 }
+
+/* ── 기간 예외 (이 기간만 다른 보유) ────────────────────────────────
+   기본 보유(rooms)는 그대로 두고 특정 기간만 다른 수량을 적용한다.
+   겹치면 기간이 짧은 쪽이 이긴다(MT.pickRoomException). 하루짜리는 시작=종료. */
+function rmRoomExcRows(r){
+  const rooms=Object.keys(r.rooms||{});
+  const exc=(r.roomExceptions||[]);
+  const bad=new Set(MT.roomExcConflicts(exc));
+  let html='<div class="rm-exc-wrap"><div class="rm-group-label">기간 예외 <span style="font-weight:400;color:var(--text3)">— 특정 날짜·기간만 보유가 다를 때. 하루만 지정하려면 시작일을 고르고 「하루」를 누르세요. 겹치면 짧은 기간이 우선.</span></div>';
+  if(!rooms.length){
+    html+='<div class="muted" style="font-size:11px">위 「호텔 블록」에서 룸타입을 먼저 등록하면 기간 예외를 넣을 수 있습니다.</div></div>';
+    return html;
+  }
+  if(exc.length){
+    // 룸타입 → 시작일 순으로 보기 좋게 정렬 (저장 순서는 건드리지 않음)
+    const sorted=exc.slice().sort((a,b)=> String(a.room).localeCompare(String(b.room),'ko') || String(a.from).localeCompare(String(b.from)));
+    html+='<div class="rm-exc-list">'+sorted.map(e=>{
+      const one=e.from===e.to;
+      const span=one?`${e.from} <b>하루</b>`:`${e.from} ~ ${(e.to||'').slice(0,4)===(e.from||'').slice(0,4)?e.to.slice(5):e.to}`;
+      const warn=bad.has(e.id)?' bad':'';
+      return `<div class="rm-exc-item${warn}" ${warn?'title="같은 길이의 기간이 겹칩니다 — 나중에 등록한 쪽이 적용됩니다"':''}>
+        <span class="x-room">${e.room}</span>
+        <span class="x-span">${span}</span>
+        <span class="x-qty">${Number(e.qty).toLocaleString()}실</span>
+        ${warn?'<span class="x-warn">⚠ 겹침</span>':''}
+        <span class="x-memo">${(e.memo||'').replace(/</g,'&lt;')}</span>
+        <button class="x-del" title="이 예외 삭제" onclick="rmDelRoomExc('${r.key}','${e.id}')">✕</button>
+      </div>`;
+    }).join('')+'</div>';
+    if(bad.size) html+='<div class="rm-exc-warn">⚠ 길이가 같은 기간이 겹쳐 있습니다. 어느 쪽이 적용될지 헷갈리니 한쪽을 줄이거나 지워주세요.</div>';
+  }
+  const k=r.key;
+  html+=`<div class="rm-exc-form">
+    <span class="rmx-l">룸타입</span>
+    <select id="rmx-room-${k}">${sortRoomTypes(rooms).map(rt=>`<option value="${rt.replace(/"/g,'&quot;')}">${rt}</option>`).join('')}</select>
+    <span class="rmx-l">시작일</span>
+    <input type="date" id="rmx-from-${k}" onchange="rmxSyncTo('${k}')">
+    <span class="rmx-l">종료일</span>
+    <input type="date" id="rmx-to-${k}">
+    <button class="btn-sm rmx-oneday" onclick="rmxOneDay('${k}')" title="종료일을 시작일과 같게 — 하루만 지정">하루만</button>
+    <span class="rmx-l">보유</span>
+    <input type="text" inputmode="numeric" id="rmx-qty-${k}" placeholder="0" style="width:52px;text-align:right">
+    <span class="rmx-u">객실</span>
+    <input type="text" id="rmx-memo-${k}" placeholder="메모 (예: 객실 보수)" style="width:150px">
+    <button class="btn-sm rmx-add" onclick="rmAddRoomExc('${k}')">+ 예외 추가</button>
+  </div></div>`;
+  return html;
+}
+/* 시작일을 고르면 종료일이 비어 있거나 시작보다 이르면 시작일로 맞춰준다(하루짜리 기본) */
+function rmxSyncTo(key){
+  const f=document.getElementById('rmx-from-'+key), t=document.getElementById('rmx-to-'+key);
+  if(!f||!t) return;
+  if(!t.value || t.value<f.value) t.value=f.value;
+}
+function rmxOneDay(key){
+  const f=document.getElementById('rmx-from-'+key), t=document.getElementById('rmx-to-'+key);
+  if(!f||!t) return;
+  if(!f.value){ alert('시작일을 먼저 선택해주세요.'); return; }
+  t.value=f.value;
+}
+let rmxSeq=0;
+function rmxNewId(){ return 'x'+Date.now().toString(36)+(rmxSeq++).toString(36); }
+function rmAddRoomExc(key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const room=(document.getElementById('rmx-room-'+key)||{}).value||'';
+  const from=(document.getElementById('rmx-from-'+key)||{}).value||'';
+  const to=(document.getElementById('rmx-to-'+key)||{}).value||'';
+  const qtyRaw=((document.getElementById('rmx-qty-'+key)||{}).value||'').trim();
+  const memo=((document.getElementById('rmx-memo-'+key)||{}).value||'').trim();
+  if(!room){ alert('룸타입을 선택해주세요.'); return; }
+  if(!from||!to){ alert('시작일과 종료일을 선택해주세요. 하루만 지정하려면 「하루」 버튼을 누르세요.'); return; }
+  if(to<from){ alert('종료일이 시작일보다 빠릅니다.'); return; }
+  if(qtyRaw===''){ alert('보유 수량을 입력해주세요. (0 = 그 기간 판매 불가)'); return; }
+  const qty=num(qtyRaw);
+  if(!(qty>=0)){ alert('보유 수량은 0 이상이어야 합니다.'); return; }
+  const e={id:rmxNewId(), room, from, to, qty, memo};
+  r.roomExceptions=(r.roomExceptions||[]).concat([e]);
+  logChange(r.name, `기간예외(${room})`, '', `${from}~${to} · ${qty}실${memo?' · '+memo:''}`);
+  saveResortMaster();
+  blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
+}
+function rmDelRoomExc(key, id){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const e=(r.roomExceptions||[]).find(x=>x.id===id); if(!e) return;
+  if(!confirm(`기간 예외를 삭제할까요?\n\n${e.room} · ${e.from}~${e.to} · ${e.qty}실${e.memo?'\n'+e.memo:''}`)) return;
+  r.roomExceptions=r.roomExceptions.filter(x=>x.id!==id);
+  logChange(r.name, `기간예외(${e.room})`, `${e.from}~${e.to} · ${e.qty}실`, '');
+  saveResortMaster();
+  blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
+}
 function rmAddRoom(key){
   const rt=document.getElementById('rm-newroom-'+key).value.trim();
   const n=num(document.getElementById('rm-newroomn-'+key).value);
@@ -4233,7 +4367,8 @@ function renderRmCompletenessSummary(){
 function renderResortMaster(){
   if(!resortMaster.length) loadResortMaster();
   document.getElementById('resort-cards').innerHTML=resortMaster.map((r,i)=>{
-    const cap=blkPoolCapByName(r.name); // 정원(보유 합산) 표시
+    const cap=blkPoolCapByName(r.name); // 정원(기본 보유 합산) 표시
+    const nExc=(r.roomExceptions||[]).filter(MT.roomExcValid).length;
     const open=blkRmOpen.has(r.key);
     return `
     <div class="rm-card rm-accordion ${open?'open':''}"${r.sellStop?' style="opacity:.6"':''}>
@@ -4247,7 +4382,8 @@ function renderResortMaster(){
         <div class="rm-acc-meta">
           ${rmCompleteBadge(r)}
           <button class="btn-sm rm-sell-toggle" onclick="event.stopPropagation();toggleSellStop('${r.key}')" title="판매 상태 전환">${r.sellStop?'▶ 판매재개':'⏸ 판매중지'}</button>
-          ${cap!=null?`<span class="rm-cap-badge">정원 ${cap}</span>`:''}
+          ${cap!=null?`<span class="rm-cap-badge" title="기본 보유 합계 · 기간 예외가 있는 날은 그날 값이 따로 적용됩니다">정원 ${cap}</span>`:''}
+          ${nExc?`<span class="rm-cap-badge" style="background:var(--amber-dim);color:var(--amber2)" title="기간별 보유 예외 ${nExc}건">예외 ${nExc}</span>`:''}
           ${r.depart?`<span class="rm-dep-badge">${r.depart}</span>`:''}
           <span class="rm-saved" id="saved-${r.key}">✓ 저장됨</span>
         </div>
@@ -4290,6 +4426,7 @@ function renderResortMaster(){
           </div>
           <div class="rm-group">
             <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
+            <div class="rm-hint" style="margin-bottom:6px">아래 값이 <b>기본 보유</b>(예외가 없는 모든 날)입니다. 특정 기간만 다르면 「기간 예외」로 넣으세요. 호텔 블록 탭의 <b>오버부킹 보정</b>은 내 PC에서만 쓰는 임시 시뮬레이션이라 마스터 배포에 포함되지 않습니다.</div>
             ${rmRoomsRows(r)}
             <div class="rm-row" style="margin-top:6px"><label><input type="checkbox" ${r.assign?'checked':''} onchange="updateResort('${r.key}','assign',this.checked,this)"> 임의배정(블록 안 깜·잔여계산 제외)</label></div>
           </div>
@@ -4301,6 +4438,9 @@ function renderResortMaster(){
               <span class="muted" style="font-size:10px">엠클릭 표에 이 이름으로 찍혀도 이 숙소로 인식</span>
             </div>
           </div>
+        </div>
+        <div class="rm-group" style="margin-top:12px">
+          ${rmRoomExcRows(r)}
         </div>
         <div class="rm-group" style="margin-top:12px">
           <div class="rm-group-label">비고</div>
@@ -4568,7 +4708,16 @@ function updateResort(key, field, val, el){
     const rt=field.slice(5);
     r.rooms=r.rooms||{};
     const n=num(val);
-    if(n>0) r.rooms[rt]=n; else delete r.rooms[rt];
+    if(n>0) r.rooms[rt]=n;
+    else {
+      delete r.rooms[rt];
+      // 룸타입을 지우면 그 룸타입의 기간 예외도 같이 정리 (적용되지 않는 고아 예외 방지)
+      const drop=(r.roomExceptions||[]).filter(e=>e.room===rt);
+      if(drop.length){
+        r.roomExceptions=r.roomExceptions.filter(e=>e.room!==rt);
+        logChange(r.name, `기간예외(${rt})`, `${drop.length}건`, '(룸타입 삭제로 함께 정리)');
+      }
+    }
     if(el) el.value = n? n.toLocaleString():'';
     syncBlk=true;
     logChange(r.name, label, before, (n>0?n:''));
@@ -4705,7 +4854,7 @@ const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'
 const BLK_CART=['야마나미 전기카트'];
 const BLK_WDMAP={'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
 
-let blkMaster={}, blkPools=[], blkAlias={}, blkOver={};
+let blkMaster={}, blkPools=[], blkAlias={}, blkOver={}, blkExc={};
 let blkParsed=null;        // {rows, days, month}
 let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
@@ -4715,6 +4864,7 @@ let blkDepInited=false;      // 출발조회 칩 최초 기본 전체 적용 여
 /* 리조트 마스터에서 호텔 블록 데이터 재생성 — 보유/별칭/임의배정/풀 단일 출처 */
 function blkSyncFromResort(){
   blkMaster=deriveBlkMaster();
+  blkExc=deriveBlkExc();
   blkAlias=deriveBlkAlias();
   // 풀 = 각 숙소를 1:1 (name=숙소명, hotels=[숙소명], rooms=[] 전체). 임의배정/제외는 리조트 마스터 기준.
   blkPools = resortMaster.map(r=>({
@@ -4743,10 +4893,27 @@ function blkPoolMatch(pool,hotel,room){
   if(pool.rooms&&pool.rooms.length && !pool.rooms.includes(room)) return false;
   return true;
 }
-/* 풀 정원 = 매칭되는 마스터 보유 합산 */
+/* 풀 정원 = 매칭되는 마스터 보유 합산 (기간 예외 무시 = 기본 정원).
+   "이 풀이 잔여 계산 대상인가" 판정과 정원 배지 표시에 쓴다. */
 function blkPoolCap(pool){
   let sum=0,has=false;
   Object.keys(blkMaster).forEach(k=>{const [h,rm]=k.split('|'); if(blkPoolMatch(pool,h,rm)){sum+=blkMaster[k];has=true;}});
+  return has?sum:null;
+}
+/* 정원 등록 여부 판정 전용 — 기간 예외로 그날만 0이 된 경우와 "정원 미등록"을 구분하기 위해
+   기본 보유 기준으로만 본다. */
+function blkPoolCapBase(pool){ return blkPoolCap(pool); }
+/* 풀의 그날 정원 = 매칭되는 룸타입별로 기간 예외를 해소해 합산.
+   ymd 없으면 기본 정원. 매칭 룸타입이 하나도 없으면 null. */
+function blkPoolCapOn(pool, ymd){
+  if(!ymd) return blkPoolCap(pool);
+  let sum=0,has=false;
+  Object.keys(blkMaster).forEach(k=>{
+    const [h,rm]=k.split('|');
+    if(!blkPoolMatch(pool,h,rm)) return;
+    const info=blkBlockOnInfo(h,rm,ymd);
+    if(info){ sum+=info.qty; has=true; }
+  });
   return has?sum:null;
 }
 /* 풀 일자별 사용 합산 (붙여넣기 rows 기준) */
@@ -4851,6 +5018,25 @@ function blkBlockOf(hotel,room){
   const name=blkAlias[hotel]||hotel;
   const v=blkMaster[name+'|'+room];
   return (v!=null)?v:null;
+}
+/* 그날의 마스터 보유 (기본 보유 → 기간 예외 해소). ymd 없으면 기본 보유.
+   반환 {qty, exc} — exc가 있으면 기간 예외에서 나온 값. 조회 불가면 null. */
+function blkBlockOnInfo(hotel,room,ymd){
+  const name=blkAlias[hotel]||hotel;
+  const base=blkMaster[name+'|'+room];
+  if(base==null) return null;   // 룸타입 미등록 → 남아 있는 기간 예외도 무시(정원 산정 일관성)
+  if(!ymd) return {qty:base, exc:null};
+  return MT.roomCapOn({[room]:base}, blkExc[name]||[], room, ymd);
+}
+/* 그날의 마스터 보유 숫자만. 조회 불가면 null. */
+function blkBlockOn(hotel,room,ymd){
+  const r=blkBlockOnInfo(hotel,room,ymd);
+  return r?r.qty:null;
+}
+/* blkParsed 기준 일(DD) → YYYY-MM-DD. 붙여넣기 전이면 null. */
+function blkYmd(day){
+  if(!blkParsed||!blkParsed.month||!day) return null;
+  return blkParsed.month+'-'+String(day).padStart(2,'0');
 }
 
 /* ── 붙여넣기 파서 ── */
@@ -5080,7 +5266,7 @@ function blkRenderStatus(){
   // 정렬: 블록형 먼저, 임의배정형 뒤
   units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
 
-  document.getElementById('blk-status-sub').textContent=`${month} · 잔여 = 보유 − 사용 · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
+  document.getElementById('blk-status-sub').textContent=`${month} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
 
   // 요약 박스: 블록형 기준 마감/임박 날·칸 수
   let cellMaegam=0, cellImbak=0, cellOk=0, assignCells=0;
@@ -5093,8 +5279,9 @@ function blkRenderStatus(){
         if(blkIsAssignUnit(u)){ assignCells++; return; }
         const blk=blkBlockForUnit(u,rm);
         if(blk==null) return;
+        const dayBlk=blkBlockOn(u,rm,blkYmd(d.day));
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
-        const rem=(blk+over)-used;
+        const rem=(dayBlk+over)-used;
         if(rem<=0) cellMaegam++; else if(rem<=3) cellImbak++; else cellOk++;
       });
     });
@@ -5113,13 +5300,21 @@ function blkRenderStatus(){
   // 선택 합계 행: 호텔 2개 이상 선택 시 맨 위에 합산(룸타입 무시, 객실 단위)
   if(blkHotelFilter.size>=2){
     let capSum=0, capHas=false, hasAssign=false, hasUnmapped=false;
-    const useByDay={}; let selTot=0;
+    const useByDay={}, capByDay={}; let selTot=0;
     units.forEach(u=>{
       const rooms=usage[u]||{};
       const assign=blkIsAssignUnit(u);
       if(assign) hasAssign=true;
       Object.keys(rooms).forEach(rm=>{
-        if(!assign){ const blk=blkBlockForUnit(u,rm); if(blk==null) hasUnmapped=true; else { capSum+=blk; capHas=true; } }
+        if(!assign){
+          const blk=blkBlockForUnit(u,rm);
+          if(blk==null) hasUnmapped=true;
+          else {
+            capSum+=blk; capHas=true;
+            // 날짜별 보유 합 = 그날 마스터 보유(기간 예외 반영) + 그날 오버부킹분
+            days.forEach(d=>{ capByDay[d.day]=(capByDay[d.day]||0)+blkBlockOn(u,rm,blkYmd(d.day))+(blkOver[`${u}|${rm}|${d.day}`]||0); });
+          }
+        }
         days.forEach(d=>{ const used=rooms[rm][d.day]||0; if(used){ useByDay[d.day]=(useByDay[d.day]||0)+used; selTot+=used; } });
       });
     });
@@ -5130,8 +5325,10 @@ function blkRenderStatus(){
       if(hasAssign || !capHas){ // 잔여 계산 불가 → 사용 합만
         body+= used? `<td class="b-use" title="사용 합 ${used}">${used}</td>` : `<td class="b-zero">·</td>`;
       } else {
-        const rem=capSum-used;
-        body+= `<td class="${blkClsRemain(rem)}" title="보유 합 ${capSum} / 사용 합 ${used} / 잔여 ${rem}"><b>${rem}</b></td>`;
+        const cap=capByDay[d.day]!=null?capByDay[d.day]:capSum;
+        const rem=cap-used;
+        const top = used===0 ? '·' : rem;
+        body+= `<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 합 ${cap} / 사용 합 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap">${cap}</span></td>`;
       }
     });
     // 끝 열: 선택 합계의 최소 잔여 (임의배정 포함 시 계산 불가 → '—')
@@ -5139,7 +5336,7 @@ function blkRenderStatus(){
       body+=`<td class="total-col" title="임의배정 포함—잔여 계산 불가">—</td></tr>`;
     } else {
       let minRem=Infinity;
-      days.forEach(d=>{ minRem=Math.min(minRem, capSum-(useByDay[d.day]||0)); });
+      days.forEach(d=>{ minRem=Math.min(minRem, (capByDay[d.day]!=null?capByDay[d.day]:capSum)-(useByDay[d.day]||0)); });
       body+=`<td class="total-col ${blkClsRemain(minRem)}"><b>${minRem===Infinity?'—':minRem}</b></td></tr>`;
     }
   }
@@ -5149,18 +5346,29 @@ function blkRenderStatus(){
     const stopTag=blkSellStopUnit(u)?'<span class="blk-tag-type blk-tag-stop">판매중지</span>':'';
     sortRoomTypes(Object.keys(rooms)).forEach((rm,ri)=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
-      const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block">보유 ${blk}</span>`);
+      const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':(()=>{
+        const nx=((blkExc[blkAlias[u]||u]||[]).filter(e=>e.room===rm&&MT.roomExcValid(e))).length;
+        return `<span class="blk-tag-type blk-tag-block" title="리조트 마스터의 기본 보유 · 날짜별 실제 보유는 각 칸 아래 숫자">보유 ${blk}${nx?` · 예외 ${nx}건`:''}</span>`;
+      })());
       let rowTot=0, minRem=Infinity, hasUse=false;
       body+=`<tr${blkSellStopUnit(u)?' style="opacity:.5"':''}><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}${ri===0?stopTag:''}</td>`;
       days.forEach(d=>{
         const used=rooms[rm][d.day]||0;
         rowTot+=used; if(used>0) hasUse=true;
-        if(used===0){ body+=`<td class="b-zero">·</td>`; if(!(assign||blk==null)) minRem=Math.min(minRem, (blk+(blkOver[`${u}|${rm}|${d.day}`]||0))); return; }
-        if(assign||blk==null){ body+=`<td class="b-use">${used}</td>`; return; }
+        if(assign||blk==null){ // 보유를 모르는 행: 종전대로 사용수만
+          body+= used===0 ? `<td class="b-zero">·</td>` : `<td class="b-use">${used}</td>`;
+          return;
+        }
+        // 보유형: 사용 유무와 무관하게 그날 보유를 아래 줄에 병기 (날짜별 보유 변동 확인용)
+        const info=blkBlockOnInfo(u,rm,blkYmd(d.day));
+        const dayBlk=info?info.qty:blk;
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
-        const rem=(blk+over)-used;
+        const cap=dayBlk+over;
+        const rem=cap-used;
         minRem=Math.min(minRem, rem);
-        body+=`<td class="${blkClsRemain(rem)}" title="보유 ${blk}${over?'+'+over:''} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+        const top = used===0 ? '·' : rem;
+        const excT = (info&&info.exc) ? ` · 기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' ('+info.exc.memo+')':''}` : '';
+        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${over?`${dayBlk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap}${excT} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap${info&&info.exc?' cap-exc':''}">${cap}</span></td>`;
       });
       // 끝 열: 최소 잔여 (임의배정·보유미등록은 계산 불가 → 사용 최대값 표시)
       if(assign||blk==null){
@@ -5192,10 +5400,13 @@ function blkStatusMatrix(){
       const blk=assign?null:blkBlockForUnit(u,rm);
       const cells=days.map(d=>{
         const used=rooms[rm][d.day]||0;
-        if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null};
+        if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null, cap:null};
+        const info=blkBlockOnInfo(u,rm,blkYmd(d.day));
+        const dayBlk=info?info.qty:blk;
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
-        const rem=(blk+over)-used;
-        return {kind:'rem', used, rem, txt:used===0?'':rem};
+        const cap=dayBlk+over;
+        const rem=cap-used;
+        return {kind:'rem', used, rem, cap, exc:!!(info&&info.exc), txt:used===0?'':rem};
       });
       rows.push({hotel:u, room:rm, blk, assign, cells});
     });
@@ -5221,10 +5432,15 @@ function blkExportExcel(){
       else row.push(c.rem);
     });
     aoa.push(row);
+    // 보유형은 바로 아래에 날짜별 보유 행을 붙여 잔여와 나란히 계산할 수 있게 한다
+    if(!r.assign && r.blk!=null){
+      aoa.push([`${r.hotel} · ${r.room} (보유)`, r.blk].concat(r.cells.map(c=>c.cap!=null?c.cap:'')));
+    }
   });
   // 안내 행 + 빈 행
   aoa.push([]);
   aoa.push(['※ 숫자=잔여(보유−사용) · "마감"=잔여 0 이하 · "임박"=잔여 1~3 · 공란=사용 없음 · 배정=임의배정형']);
+  aoa.push(['※ "(보유)" 행 = 그날의 보유 객실 수(오버부킹 조정 포함). 사용 = 보유 − 잔여']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[{wch:26},{wch:6}].concat(days.map(()=>({wch:7})));
   const wb=XLSX.utils.book_new();
@@ -5275,10 +5491,10 @@ function blkRenderCart(){
     body+=`<tr><td class="rowhd">${h} <span class="rt-sub">${rm}</span> <span class="blk-tag-type blk-tag-cart">보유 ${cap}</span></td>`;
     days.forEach(d=>{
       const used=map[k][d.day]||0; rowTot+=used;
-      if(used===0){ body+=`<td class="b-zero">·</td>`; return; }
       const rem=cap-used;
-      if(rem<=0) maegam++;
-      body+=`<td class="${blkClsRemain(rem)}" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+      if(used>0&&rem<=0) maegam++;
+      // 객실 표와 동일하게 위=잔여 / 아래=보유 2줄 표기
+      body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${used===0?'·':rem}</span><span class="cell-cap">${cap}</span></td>`;
     });
     totUse+=rowTot;
     body+=`<td class="total-col">${rowTot}</td></tr>`;
@@ -5312,16 +5528,18 @@ function blkRenderSim(){
     sortRoomTypes(Object.keys(rooms)).forEach(rm=>{
       const blk=blkBlockForUnit(u,rm);
       if(blk==null) return;
+      const info=blkBlockOnInfo(u,rm,blkYmd(day));
+      const dayBlk=info?info.qty:blk;               // 그날 마스터 보유(기간 예외 반영)
       const used=rooms[rm][day]||0;
       const over=blkOver[`${u}|${rm}|${day}`]||0;
-      const cap=blk+over;
+      const cap=dayBlk+over;
       const rem=cap-used;
       const pct=Math.min(100,Math.round(used/Math.max(cap,1)*100));
-      const overFlag=used>blk;
-      const blkPct=cap>blk?Math.round(blk/cap*100):100;
+      const overFlag=used>dayBlk;
+      const blkPct=cap>dayBlk?Math.round(dayBlk/cap*100):100;
       html+=`<div class="blk-sim-card">
         <h4>${u} · ${rm}</h4>
-        <div class="sim-sub">${parseInt(day)}일 · 보유 ${blk}${over?` (+오버 ${over})`:''} · 사용 ${used} · 잔여 <b style="color:${rem<=0?'var(--red)':rem<=3?'var(--amber2)':'var(--green2)'}">${rem}</b></div>
+        <div class="sim-sub">${parseInt(day)}일 · 보유 ${dayBlk}${info&&info.exc?` <span style="color:var(--accent2)" title="기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' · '+info.exc.memo:''} (기본 ${blk})">(기간예외)</span>`:''}${over?` (+오버 ${over})`:''} · 사용 ${used} · 잔여 <b style="color:${rem<=0?'var(--red)':rem<=3?'var(--amber2)':'var(--green2)'}">${rem}</b></div>
         <div class="blk-bar-row">
           <div class="blk-bar-label"><span>사용률</span><span>${pct}%${overFlag?' ⚠ 오버부킹':''}</span></div>
           <div class="blk-bar-track">
@@ -5331,8 +5549,8 @@ function blkRenderSim(){
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2)">
           <label>웹오픈 수량</label>
-          <input class="blk-over-input" type="text" inputmode="numeric" value="${cap}" onchange="blkSetOver('${u.replace(/'/g,"\\'")}','${rm.replace(/'/g,"\\'")}','${day}',this.value,${blk})">
-          <span class="muted">(보유 ${blk})</span>
+          <input class="blk-over-input" type="text" inputmode="numeric" value="${cap}" onchange="blkSetOver('${u.replace(/'/g,"\\'")}','${rm.replace(/'/g,"\\'")}','${day}',this.value,${dayBlk})">
+          <span class="muted">(보유 ${dayBlk})</span>
         </div>
       </div>`;
     });
@@ -5391,7 +5609,8 @@ function blkRenderDepart(){
   const WK=['일','월','화','수','목','금','토'];
   let html=`<div style="margin-bottom:12px;padding:8px 14px;background:var(--accent-dim);border-radius:8px;font-size:13px;font-weight:700;color:var(--accent2)">📅 ${y}년 ${m}월 블록 기준</div>`;
   blkPools.filter(p=>!p.exclude && !blkSellStopUnit(p.name) && blkDepPoolSel.has(p.name)).forEach(pool=>{
-    const cap=blkPoolCap(pool);
+    const cap=blkPoolCapBase(pool);       // 정원 등록 여부 판정 + 헤더 배지용(기본 정원)
+    const capOn=d=>blkPoolCapOn(pool, `${month}-${String(d).padStart(2,'0')}`);  // 그날 정원(기간 예외 반영)
     const used=blkPoolUsedByDay(pool);
     const dep=resortDepartForPool(pool);  // 리조트 마스터에서 출발 정보 조회
     const pats=blkParseDepart(dep.depart);
@@ -5402,14 +5621,14 @@ function blkRenderDepart(){
     if(cap!=null && !assign){
       if(isFree){
         // 자유: 매일 그날 잔여만
-        for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0); if(rem>=minRem) departs.push({day:dd,dow:WK[new Date(y,m-1,d).getDay()],label:'자유(1박~)',rem}); }
+        for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=capOn(d)-(used[dd]||0); if(rem>=minRem) departs.push({day:dd,dow:WK[new Date(y,m-1,d).getDay()],label:'자유(1박~)',rem}); }
       } else {
         for(let d=1;d<=lastDay;d++){
           const dt=new Date(y,m-1,d); const dow=dt.getDay(); const dd=String(d).padStart(2,'0');
           pats.forEach(p=>{
             if(p.free||p.dow!==dow) return;
             let mn=Infinity,valid=true;
-            for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,cap-(used[String(cd).padStart(2,'0')]||0)); }
+            for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,capOn(cd)-(used[String(cd).padStart(2,'0')]||0)); }
             if(valid&&mn>=minRem) departs.push({day:dd,dow:WK[dow],label:p.label,rem:mn});
           });
         }
@@ -5419,7 +5638,7 @@ function blkRenderDepart(){
     html+=`<div class="card" style="margin-bottom:1rem;padding:1rem 1.25rem">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <b style="color:var(--navy);font-size:13px">${pool.name}</b>
-        ${assign?'<span class="blk-tag-type blk-tag-assign">임의배정(잔여계산 제외)</span>':`<span class="blk-tag-type blk-tag-block">정원 ${cap!=null?cap:'—'}</span>`}
+        ${assign?'<span class="blk-tag-type blk-tag-assign">임의배정(잔여계산 제외)</span>':`<span class="blk-tag-type blk-tag-block" title="리조트 마스터의 기본 정원 · 기간 예외가 있는 날은 아래 일자별 잔여가 그날 정원으로 계산됩니다">정원 ${cap!=null?cap:'—'}</span>`}
         <span class="muted" style="font-size:11px">출발: ${dep.depart||'미설정'}${dep.airOut?' · '+dep.airOut:''}${dep.airIn?' → '+dep.airIn:''}</span>
       </div>`;
     if(assign){
@@ -5440,7 +5659,7 @@ function blkRenderDepart(){
       html+=`<div style="margin-top:10px"><div class="muted" style="font-size:11px;margin-bottom:4px">일자별 잔여 <b style="color:var(--accent2)">(${m}월)</b> (출발편 막혀도 그날 단독 잔여 확인):</div><div class="tbl-wrap"><table class="blk-mtx"><thead><tr>`;
       for(let d=1;d<=lastDay;d++){ const wk=[0,6].includes(new Date(y,m-1,d).getDay()); html+=`<th class="${wk?'wk':''}">${m}/${d}</th>`; }
       html+='</tr></thead><tbody><tr>';
-      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0); const c=rem<=0?'b-r':rem<=3?'b-a':'b-g'; html+=`<td class="${c}">${rem}</td>`; }
+      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const dcap=capOn(d); const rem=dcap-(used[dd]||0); const c=rem<=0?'b-r':rem<=3?'b-a':'b-g'; html+=`<td class="${c}" title="정원 ${dcap} / 사용 ${used[dd]||0} / 잔여 ${rem}">${rem}</td>`; }
       html+='</tr></tbody></table></div></div>';
     }
     html+='</div>';
@@ -5479,15 +5698,17 @@ function blkRenderWait(){
     if(!accom){ verdict='숙소 미확인'; vcolor='var(--text3)'; }
     else if(!pool){ verdict='확인 필요(풀 없음)'; vcolor='var(--amber2)'; poolCell=accom; }
     else {
-      const cap=blkPoolCap(pool);
+      const cap=blkPoolCapBase(pool);
       poolCell=`${pool.name} / ${cap!=null?cap:'—'}`;
       if(blkIsAssignPool(pool)){ verdict='임의배정(수동확인)'; vcolor='var(--amber2)'; }
       else if(cap==null){ verdict='확인 필요(정원없음)'; vcolor='var(--amber2)'; }
       else if(!day || dep.slice(0,7)!==blkParsed.month){ verdict='타월/날짜확인'; vcolor='var(--text3)'; remCell=dep.slice(0,7)!==blkParsed.month?'다른 월':'-'; }
       else {
         const used=blkPoolUsedByDay(pool);
-        const rem=cap-(used[day]||0);
+        const dcap=blkPoolCapOn(pool, dep);   // 출발일 정원(기간 예외 반영)
+        const rem=dcap-(used[day]||0);
         remCell=`${rem}실`;
+        if(dcap!==cap) poolCell=`${pool.name} / ${cap} → ${dcap}(예외)`;
         if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; canConvert=true; }
         else { verdict='✕ 잔여 부족'; vcolor='var(--red)'; }
       }
@@ -5541,14 +5762,15 @@ function noticeDepartList(minRem){
   const out=[];
   blkPools.filter(p=>!p.exclude && !blkSellStopUnit(p.name) && blkDepPoolSel.has(p.name)).forEach(pool=>{
     if(blkIsAssignPool(pool)) return;          // 임의배정형은 고객 공지에서 제외
-    const cap=blkPoolCap(pool); if(cap==null) return;
+    if(blkPoolCapBase(pool)==null) return;
+    const capOn=d=>blkPoolCapOn(pool, `${month}-${String(d).padStart(2,'0')}`);  // 그날 정원(기간 예외 반영)
     const used=blkPoolUsedByDay(pool);
     const dep=resortDepartForPool(pool);
     const pats=blkParseDepart(dep.depart);
     const isFree=pats.some(p=>p.free);
     const departs=[];
     if(isFree){
-      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=cap-(used[dd]||0);
+      for(let d=1;d<=lastDay;d++){ const dd=String(d).padStart(2,'0'); const rem=capOn(d)-(used[dd]||0);
         if(rem>=minRem) departs.push({day:d,dow:WK[new Date(y,m-1,d).getDay()],nights:0,label:'자유(1박~)',rem}); }
     } else {
       for(let d=1;d<=lastDay;d++){
@@ -5556,7 +5778,7 @@ function noticeDepartList(minRem){
         pats.forEach(p=>{
           if(p.free||p.dow!==dow) return;
           let mn=Infinity,valid=true;
-          for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,cap-(used[String(cd).padStart(2,'0')]||0)); }
+          for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,capOn(cd)-(used[String(cd).padStart(2,'0')]||0)); }
           if(valid&&mn>=minRem) departs.push({day:d,dow:WK[dow],nights:p.nights,label:p.label,rem:mn});
         });
       }
