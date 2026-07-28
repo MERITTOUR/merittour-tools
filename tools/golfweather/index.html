@@ -105,6 +105,15 @@ header.top{
   font-family:var(--sans);
 }
 .brand .ttl{ font-family:var(--serif); font-size:21px; font-weight:700; }
+.top-right{ display:flex; align-items:center; gap:8px; }
+.homebtn{
+  display:inline-flex; align-items:center; gap:5px; text-decoration:none;
+  background:var(--navy-soft); color:#dbe4f2; border-radius:999px;
+  padding:6px 12px; font-size:12px; font-weight:600; white-space:nowrap;
+  transition:background .15s ease, color .15s ease;
+}
+.homebtn:hover{ background:#fff; color:var(--navy); }
+.homebtn[hidden]{ display:none; }
 .langtog{ display:inline-flex; background:var(--navy-soft); border-radius:999px; padding:3px; }
 .langtog button{
   border:0; background:transparent; color:#b9c6de; font-weight:700; font-size:13px;
@@ -245,6 +254,8 @@ footer.bot{ background:var(--navy); color:#c6d2e6; }
   .cur-emoji{ font-size:48px; } .cur-temp{ font-size:38px; }
   .hero-verdict{ font-size:22px; }
   .brand .ttl{ font-size:19px; }
+  .homebtn{ padding:6px 9px; }
+  .homebtn span{ display:none; }
 }
 @media (prefers-reduced-motion: reduce){
   .celestial{ transition:none; }
@@ -279,9 +290,18 @@ footer.bot{ background:var(--navy); color:#c6d2e6; }
         <span class="kicker">MERITTOUR</span>
         <span class="ttl" id="appTitle">골프 날씨</span>
       </div>
-      <div class="langtog" role="group" aria-label="언어 선택">
-        <button type="button" data-lang="ko" class="on">한국어</button>
-        <button type="button" data-lang="ja">日本語</button>
+      <div class="top-right">
+        <a class="homebtn" id="homeBtn" href="../../sales/" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/>
+          </svg>
+          <span id="homeBtnLabel">사내 도구함</span>
+        </a>
+        <div class="langtog" role="group" aria-label="언어 선택">
+          <button type="button" data-lang="ko" class="on">한국어</button>
+          <button type="button" data-lang="ja">日本語</button>
+        </div>
       </div>
     </div>
   </header>
@@ -329,7 +349,7 @@ const I18N = {
     curTitle:'현재 날씨', feels:'체감', wind:'바람', gust:'돌풍', humid:'습도', uv:'자외선', vis:'시정',
     fitTitle:'라운딩 적합도', hourly:'시간대별 예보', teeLegend:'라운딩 시간대(07–15시) 강조',
     week:'7일 예보', today:'오늘', tomorrow:'내일',
-    sunrise:'일출', sunset:'일몰', source:'자료: Open-Meteo', updated:'갱신',
+    sunrise:'일출', sunset:'일몰', source:'자료: Open-Meteo', updated:'갱신', home:'사내 도구함',
     loading:'날씨를 불러오는 중…', errLoad:'날씨를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     noResult:'검색 결과가 없습니다.',
     dirs:['북','북동','동','남동','남','남서','서','북서'],
@@ -345,7 +365,7 @@ const I18N = {
     curTitle:'現在の天気', feels:'体感', wind:'風', gust:'突風', humid:'湿度', uv:'紫外線', vis:'視程',
     fitTitle:'ラウンド適性', hourly:'時間別予報', teeLegend:'ラウンド時間帯(07–15時)を強調',
     week:'7日間予報', today:'今日', tomorrow:'明日',
-    sunrise:'日の出', sunset:'日の入', source:'データ: Open-Meteo', updated:'更新',
+    sunrise:'日の出', sunset:'日の入', source:'データ: Open-Meteo', updated:'更新', home:'社内ツール',
     loading:'天気を読み込み中…', errLoad:'天気を取得できませんでした。しばらくして再度お試しください。',
     noResult:'検索結果がありません。',
     dirs:['北','北東','東','南東','南','南西','西','北西'],
@@ -907,6 +927,7 @@ function applyLang(){
   const t = I18N[LANG];
   document.documentElement.lang = LANG;
   $('appTitle').textContent = t.title;
+  $('homeBtnLabel').textContent = t.home;
   $('search').placeholder = t.searchPh;
   document.querySelectorAll('.langtog button').forEach(b => b.classList.toggle('on', b.dataset.lang===LANG));
   renderPresets();
@@ -953,8 +974,25 @@ function initEvents(){
 }
 
 /* ════════════ 부팅 ════════════ */
+/* 홈 버튼 노출 판정 — 사내 유입일 때만.
+   golfweather는 손님 공개용이라 링크를 직접 받은 손님에게는 내부 허브 링크를 보이지 않는다.
+   판정은 리퍼러(같은 오리진) 또는 ?home=1 로만 한다 — 브라우저 스토리지는 쓰지 않는다. */
+function setupHomeBtn(){
+  const btn = $('homeBtn'); if(!btn) return;
+  let internal = false;
+  try{
+    if(new URLSearchParams(location.search).has('home')) internal = true;
+    else if(document.referrer){
+      const ref = new URL(document.referrer);
+      if(ref.origin === location.origin) internal = true;
+    }
+  }catch(e){ internal = false; }
+  if(internal) btn.removeAttribute('hidden');
+}
+
 function boot(){
   initEvents();
+  setupHomeBtn();
   applyLang();
   const c = COURSES.find(x => x.id===DEFAULT_COURSE) || COURSES[0];
   loadForecast({ id:c.id, name:courseName(c), region:courseRegion(c), lat:c.lat, lon:c.lon, elevation:c.elevation });
