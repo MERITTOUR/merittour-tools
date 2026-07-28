@@ -425,6 +425,12 @@ tr:hover td{background:#EEF3FA}
 .rm-room-row .rmr-qty{width:66px;text-align:right;flex:none}
 .rm-room-row .rm-unit{flex:none;min-width:26px}
 .rm-room-row .rmr-exc{flex:none;font-size:10px;font-weight:700;color:var(--amber2);background:var(--amber-dim);padding:2px 6px;border-radius:4px}
+.rm-room-row .rmr-x{flex:none;color:var(--text3);font-size:11px}
+.rm-room-row .rmr-pax{width:46px;text-align:right;flex:none}
+.rm-room-row .rmr-pax.rmr-need{border-color:var(--amber);background:var(--amber-dim)}
+.rm-room-row .rmr-on{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10.5px;color:var(--text2);font-weight:600;white-space:nowrap;cursor:pointer}
+.rm-room-row .rmr-on input{margin:0}
+.rmr-warn{font-size:11px;color:var(--amber2);margin-top:6px;line-height:1.6}
 .rm-room-row .rmr-del{flex:none;border:none;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}
 .rm-room-row .rmr-del:hover{color:var(--red);background:var(--red-dim,rgba(192,57,43,.08))}
 .rm-room-row.rmr-add{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2)}
@@ -4068,6 +4074,43 @@ function deriveBlkMaster(){
   resortMaster.forEach(r=>{ const rooms=r.rooms||{}; Object.keys(rooms).forEach(rt=>{ m[r.name+'|'+rt]=rooms[rt]; }); });
   return m;
 }
+/* 룸타입 이름만으로는 정원을 알 수 없다(트윈·소형트윈·패밀리룸·별장·돔하우스·카라반).
+   기존 저장본에는 정원이 없으므로 흔한 이름만 추정해 초깃값을 채우고, 나머지는 관리자가 입력한다. */
+const ROOM_PAX_GUESS={'싱글':1,'싱글룸':1,'1인실':1,'트윈':2,'소형트윈':2,'더블':2,'2인실':2,'트리플':3,'3인실':3,'패밀리룸':4,'4인실':4};
+function guessRoomPax(rt){
+  const k=String(rt||'').trim();
+  if(ROOM_PAX_GUESS[k]!=null) return ROOM_PAX_GUESS[k];
+  const m=k.match(/(\d+)\s*인/);            // "6인실" 같은 표기
+  if(m && +m[1]>0) return +m[1];
+  return null;                              // 모르면 비워 두고 입력받는다
+}
+/* 룸타입 부가정보: {룸타입:{pax, online}} — pax=1방 정원(명), online=온라인 판매 대상 */
+function normRoomMeta(r){
+  const meta=(r.roomMeta&&typeof r.roomMeta==='object')?r.roomMeta:{};
+  const out={};
+  Object.keys(r.rooms||{}).forEach(rt=>{
+    const m=meta[rt]||{};
+    out[rt]={ pax: (m.pax!=null&&m.pax!=='')?Number(m.pax):guessRoomPax(rt),
+              online: m.online!==false };
+  });
+  return out;
+}
+/* 룸타입 정원(명/방). 미등록이면 null. */
+function roomPaxOf(hotel, room){
+  const name=(typeof blkAlias!=='undefined'&&blkAlias&&blkAlias[hotel])||hotel;
+  const r=resortMaster.find(x=>x.name===name);
+  const m=r&&r.roomMeta&&r.roomMeta[room];
+  return (m&&m.pax>0)?Number(m.pax):null;
+}
+/* 온라인 판매 대상 룸타입 목록 → [{name,pax}] (MT.roomPlans 입력용) */
+function onlineRoomTypes(resortName){
+  const r=resortMaster.find(x=>x.name===resortName); if(!r) return [];
+  const meta=r.roomMeta||{};
+  return Object.keys(r.rooms||{})
+    .filter(rt=>meta[rt] && meta[rt].online!==false && meta[rt].pax>0)
+    .map(rt=>({name:rt, pax:Number(meta[rt].pax)}));
+}
+
 /* 기간 예외: 숙소명 → 예외 배열. 기본 보유(blkMaster)와 짝을 이룬다. */
 function deriveBlkExc(){
   const e={};
@@ -4094,6 +4137,7 @@ function loadResortMaster(){
       const r = s ? {...def, ...s} : {...def};
       // 기간 예외: 없던 저장본은 빈 배열 = 기존 동작 그대로 (별도 마이그레이션 불필요)
       if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
+      r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
       return r;
     });
     // 1회성 마이그레이션: 과거 mgmt 기본값(0) 시절 저장본 → 50,000원으로 끌어올림
@@ -4103,7 +4147,7 @@ function loadResortMaster(){
       try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
       saveResortMaster();
     }
-  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[]})); }
+  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomMeta:normRoomMeta(d)})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
   // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
@@ -4123,7 +4167,7 @@ function saveResortMaster(){
 }
 function resetResortMaster(){
   if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·항공요금·보유블록 정보가 사라집니다)')) return;
-  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])], roomExceptions:[]}));
+  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])], roomExceptions:[], roomMeta:normRoomMeta(d)}));
   commonMaster={...COMMON_DEFAULTS};
   saveResortMaster();
   if(typeof blkSyncFromResort==='function') blkSyncFromResort();
@@ -4185,6 +4229,7 @@ function importMaster(input){
       const s = data.resortMaster.find(x=>x.key===def.key);
       const r = s ? {...def, ...s} : {...def};
       if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];   // 구버전 마스터 파일 호환
+      r.roomMeta = normRoomMeta(r);
       return r;
     });
     commonMaster = {...COMMON_DEFAULTS, ...data.commonMaster};
@@ -4231,6 +4276,7 @@ function rmRoomsRows(r){
   const rooms=r.rooms||{};
   const keys=sortRoomTypes(Object.keys(rooms));
   const nExcOf = rt => (r.roomExceptions||[]).filter(e=>e.room===rt&&MT.roomExcValid(e)).length;
+  const meta = r.roomMeta||{};
   let html = keys.length
     ? keys.map((rt,i)=>`<div class="rm-room-row">
         <input class="rm-input text rmr-name" type="text" value="${rt.replace(/"/g,'&quot;')}" placeholder="룸타입"
@@ -4239,6 +4285,15 @@ function rmRoomsRows(r){
         <input class="rm-input rmr-qty" type="text" inputmode="numeric" value="${rooms[rt]?Number(rooms[rt]).toLocaleString():''}" placeholder="0"
           onchange="rmSetRoomQty('${r.key}',${i},this.value,this)" title="기본 보유 객실 수">
         <span class="rm-unit">객실</span>
+        <span class="rmr-x">×</span>
+        <input class="rm-input rmr-pax${(meta[rt]&&meta[rt].pax>0)?'':' rmr-need'}" type="text" inputmode="numeric"
+          value="${(meta[rt]&&meta[rt].pax>0)?meta[rt].pax:''}" placeholder="?"
+          onchange="rmSetRoomPax('${r.key}',${i},this.value,this)" title="1방에 몇 명이 자는가 (트윈 2 · 4인실 4 · 싱글 1)">
+        <span class="rm-unit">인</span>
+        <label class="rmr-on" title="온라인 예약에 이 룸타입을 노출할지 (홈페이지 연동 대비 · 지금은 대시보드 동작에 영향 없음)">
+          <input type="checkbox" ${(meta[rt]&&meta[rt].online!==false)?'checked':''}
+            onchange="rmToggleRoomOnline('${r.key}',${i},this.checked)"> 온라인
+        </label>
         ${nExcOf(rt)?`<span class="rmr-exc" title="이 룸타입의 기간 예외 ${nExcOf(rt)}건">예외 ${nExcOf(rt)}</span>`:''}
         <button class="rmr-del" title="이 룸타입 삭제" onclick="rmDelRoom('${r.key}',${i})">✕</button>
       </div>`).join('')
@@ -4250,8 +4305,38 @@ function rmRoomsRows(r){
     <input class="rm-input rmr-qty" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="0"
       onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')">
     <span class="rm-unit">객실</span>
+    <span class="rmr-x">×</span>
+    <input class="rm-input rmr-pax" id="rm-newroompax-${r.key}" type="text" inputmode="numeric" placeholder="2"
+      onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')" title="1방 정원(명)">
+    <span class="rm-unit">인</span>
     <button class="btn-sm" style="padding:3px 10px" onclick="rmAddRoom('${r.key}')">+ 추가</button></div>`;
+  const need = Object.keys(rooms).filter(rt=>!(meta[rt]&&meta[rt].pax>0));
+  if(need.length) html += `<div class="rmr-warn">▲ 정원 미입력: <b>${need.join(', ')}</b> — 인원을 객실 수로 환산할 수 없어 대기 전환 점검이 1인 1실로 보수적으로 잡힙니다.</div>`;
+  html += `<div class="rm-hint" style="margin-top:6px">정원 = 1방에 몇 명이 자는가(트윈 2 · 4인실 4). 「온라인」은 홈페이지 예약에 노출할 룸타입 표시용입니다.</div>`;
   return html;
+}
+
+/* 룸타입 정원(1방 인원) */
+function rmSetRoomPax(key, idx, val, el){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const rt=sortRoomTypes(Object.keys(r.rooms||{}))[idx]; if(rt==null) return;
+  const raw=String(val==null?'':val).trim();
+  const n=raw===''?null:num(raw);
+  if(raw!=='' && !(n>0)){ alert('정원은 1 이상이어야 합니다. (1방에 몇 명이 자는지)'); renderResortMaster(); return; }
+  r.roomMeta=r.roomMeta||{}; r.roomMeta[rt]=r.roomMeta[rt]||{online:true};
+  const before=r.roomMeta[rt].pax;
+  r.roomMeta[rt].pax=n;
+  logChange(r.name, `정원(${rt})`, before!=null?before+'인':'', n!=null?n+'인':'');
+  saveResortMaster(); blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
+}
+/* 온라인 예약 노출 여부 */
+function rmToggleRoomOnline(key, idx, on){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const rt=sortRoomTypes(Object.keys(r.rooms||{}))[idx]; if(rt==null) return;
+  r.roomMeta=r.roomMeta||{}; r.roomMeta[rt]=r.roomMeta[rt]||{};
+  r.roomMeta[rt].online=!!on;
+  logChange(r.name, `온라인 판매(${rt})`, on?'제외':'노출', on?'노출':'제외');
+  saveResortMaster(); renderResortMaster();
 }
 
 /* 룸타입 이름 변경 — 보유 수량과 기간 예외를 함께 옮긴다 (입력 순서 유지) */
@@ -4269,6 +4354,7 @@ function rmRenameRoom(key, idx, raw){
   const next={};
   Object.keys(r.rooms).forEach(k2=>{ next[k2===oldName?name:k2]=r.rooms[k2]; });  // 순서 유지
   r.rooms=next;
+  if(r.roomMeta && r.roomMeta[oldName]){ r.roomMeta[name]=r.roomMeta[oldName]; delete r.roomMeta[oldName]; }
   let moved=0;
   (r.roomExceptions||[]).forEach(e=>{ if(e.room===oldName){ e.room=name; moved++; } });
   logChange(r.name, '룸타입 이름', oldName, name+(moved?` (기간 예외 ${moved}건 함께 이동)`:''));
@@ -4397,6 +4483,11 @@ function rmAddRoom(key){
   if(Object.prototype.hasOwnProperty.call(r.rooms||{}, rt)){
     alert(`이미 「${rt}」 룸타입이 있습니다. 위 목록에서 수량을 고치세요.`); return;
   }
+  const paxEl=document.getElementById('rm-newroompax-'+key);
+  const paxRaw=paxEl?String(paxEl.value||'').trim():'';
+  const pax = paxRaw===''?guessRoomPax(rt):num(paxRaw);
+  r.roomMeta=r.roomMeta||{};
+  r.roomMeta[rt]={ pax:(pax>0?pax:null), online:true };
   updateResort(key,'room:'+rt,n,null);
 }
 
@@ -4779,6 +4870,7 @@ function updateResort(key, field, val, el){
     if(n>0) r.rooms[rt]=n;
     else {
       delete r.rooms[rt];
+      if(r.roomMeta) delete r.roomMeta[rt];
       // 룸타입을 지우면 그 룸타입의 기간 예외도 같이 정리 (적용되지 않는 고아 예외 방지)
       const drop=(r.roomExceptions||[]).filter(e=>e.room===rt);
       if(drop.length){
@@ -5753,7 +5845,7 @@ function blkRenderWait(){
     <div class="sum-box"><div class="sum-label">대기 팀</div><div class="sum-val">${waits.length}건</div></div>
     <div class="sum-box"><div class="sum-label">전환 가능</div><div class="sum-val green" id="blk-wait-ok">-</div></div>
   </div>`;
-  html+='<div class="tbl-wrap"><table class="blk-mtx" style="width:100%"><thead><tr><th class="rowhd">대표고객</th><th>숙소</th><th>출발일</th><th>인원</th><th>해당 풀 / 정원</th><th>출발일 잔여</th><th>판정</th><th>안내문</th></tr></thead><tbody>';
+  html+='<div class="tbl-wrap"><table class="blk-mtx" style="width:100%"><thead><tr><th class="rowhd">대표고객</th><th>숙소</th><th>출발일</th><th>인원</th><th>해당 풀 / 정원</th><th>출발일 잔여 / 필요</th><th>판정</th><th>안내문</th></tr></thead><tbody>';
   let okCnt=0;
   waits.forEach(t=>{
     // 팀 숙소(accom) → 풀 매칭
@@ -5775,10 +5867,21 @@ function blkRenderWait(){
         const used=blkPoolUsedByDay(pool);
         const dcap=blkPoolCapOn(pool, dep);   // 출발일 정원(기간 예외 반영)
         const rem=dcap-(used[day]||0);
-        remCell=`${rem}실`;
         if(dcap!==cap) poolCell=`${pool.name} / ${cap} → ${dcap}(예외)`;
-        if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; canConvert=true; }
-        else { verdict='✕ 잔여 부족'; vcolor='var(--red)'; }
+        // 인원을 그대로 객실 수와 비교하면 안 된다. 골프투어는 2인 1실이 기본이라
+        // 4명 팀은 트윈 2실이면 된다. 룸타입 정원으로 필요 객실 수를 환산한다.
+        const per=roomPaxOf(accom, room);
+        const need=MT.roomsNeeded(t.pax, per);
+        if(need==null){
+          // 정원 미등록 → 종전대로 1인 1실로 보수적 판정하고, 그렇다고 표시한다
+          remCell=`${rem}실 <span class="muted" title="이 룸타입의 정원(1방 인원)이 리조트 마스터에 없어 1인 1실로 계산했습니다">/ ${t.pax}실? </span>`;
+          if(rem>=t.pax){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; canConvert=true; }
+          else { verdict='△ 정원 미등록'; vcolor='var(--amber2)'; }
+        } else {
+          remCell=`${rem}실 <span class="muted">/ ${need}실 필요</span>`;
+          if(rem>=need){ verdict='✓ 전환 가능'; vcolor='var(--green2)'; okCnt++; canConvert=true; }
+          else { verdict='✕ 잔여 부족'; vcolor='var(--red)'; }
+        }
       }
     }
     const btn = canConvert

@@ -170,6 +170,81 @@
     return [...bad];
   };
 
+  /* ── 인원 → 객실 배정 ────────────────────────────────────
+     골프투어는 2인 1실이 기본이라 "인원 = 객실 수"가 아니다.
+     룸타입마다 정원(1방에 몇 명)이 다르므로 정원으로 나눠 필요 객실 수를 구한다. */
+
+  // 인원 pax를 정원 per인 방으로 채울 때 필요한 객실 수. 정원이 없으면 null.
+  MT.roomsNeeded = (pax, per) => {
+    const n = Number(pax), c = Number(per);
+    if (!(n > 0) || !(c > 0)) return null;
+    return Math.ceil(n / c);
+  };
+
+  // 그 방에서 실제로 쓰지 못하고 비는 자리 수 (요금 산정에 쓰임).
+  // 예: 4인실에 2명 → 2자리가 빈다.
+  MT.emptyBeds = (pax, per) => {
+    const rooms = MT.roomsNeeded(pax, per);
+    return rooms == null ? null : rooms * Number(per) - Number(pax);
+  };
+
+  /* 인원 pax를 주어진 룸타입들로 채우는 조합을 모두 구한다.
+     types: [{name, pax}] — 온라인 판매 대상만 넘길 것.
+     opts.exact !== false 이면 빈자리 없이 딱 떨어지는 조합만 돌려준다.
+     반환: [{rooms:[{name,pax,count}], total, roomCount, empty}] — 방 개수 적은 순.
+     예) 8명 · [2인실,4인실] → 4인실2 / 4인실1+2인실2 / 2인실4 */
+  MT.roomPlans = (pax, types, opts) => {
+    const n = Number(pax);
+    const list = (types || []).filter(t => t && Number(t.pax) > 0)
+      .map(t => ({ name: t.name, pax: Number(t.pax) }))
+      .sort((a, b) => b.pax - a.pax);                 // 큰 방부터
+    if (!(n > 0) || !list.length) return [];
+    const exact = !(opts && opts.exact === false);
+    const maxRooms = (opts && opts.maxRooms) || 12;   // 폭주 방지
+    const out = [];
+
+    (function walk(i, left, picked, count) {
+      if (count > maxRooms) return;
+      if (left <= 0) {
+        const total = picked.reduce((s, r) => s + r.pax * r.count, 0);
+        if (exact && total !== n) return;             // 빈자리 있는 조합 제외
+        out.push({
+          rooms: picked.map(r => ({ ...r })),
+          total, roomCount: count, empty: total - n,
+        });
+        return;
+      }
+      if (i >= list.length) return;
+      const t = list[i];
+      const max = Math.min(Math.ceil(left / t.pax), maxRooms - count);
+      for (let k = max; k >= 0; k--) {                // 큰 방 많이 쓰는 쪽부터
+        walk(i + 1, left - t.pax * k,
+             k ? picked.concat([{ ...t, count: k }]) : picked, count + k);
+      }
+    })(0, n, [], 0);
+
+    // 방 수 적은 순 → 빈자리 적은 순 → 큰 방 먼저
+    out.sort((a, b) => a.roomCount - b.roomCount || a.empty - b.empty
+      || (b.rooms[0] ? b.rooms[0].pax : 0) - (a.rooms[0] ? a.rooms[0].pax : 0));
+    // 같은 구성 중복 제거
+    const seen = new Set();
+    return out.filter(p => {
+      const k = p.rooms.map(r => r.name + 'x' + r.count).sort().join('|');
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+  };
+
+  // 그 인원을 온라인에서 받을 수 있는가 (딱 떨어지는 조합이 하나라도 있는가)
+  MT.paxBookable = (pax, types) => MT.roomPlans(pax, types).length > 0;
+
+  // 1~max 중 온라인에서 고를 수 있는 인원 목록. 예) [2인실,4인실] → 2,4,6,8…
+  MT.bookablePax = (types, max) => {
+    const out = [];
+    for (let n = 1; n <= (max || 20); n++) if (MT.paxBookable(n, types)) out.push(n);
+    return out;
+  };
+
   /* ── 토스트 (core.css .mt-toast 와 연동) ─────────────────── */
   MT.showToast = (msg, ms) => {
     let host = document.querySelector('.mt-toast-host');
