@@ -413,6 +413,12 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.b-zero{color:var(--text3);opacity:.4}
 .blk-mtx td.clickable{cursor:pointer}
 .blk-mtx td.clickable:hover{box-shadow:inset 0 0 0 2px var(--accent)}
+/* 2줄 셀: 위=잔여(신호색), 아래=보유(회색 작게). 날짜별 보유 변동을 표에서 바로 확인 */
+.blk-mtx td.b-2l{padding:2px 5px;line-height:1.15}
+.blk-mtx .cell-rem{display:block;font-weight:700}
+.blk-mtx .cell-cap{display:block;font-size:9px;font-weight:500;color:var(--text3);opacity:.75;border-top:1px dotted currentColor;margin-top:1px;padding-top:1px}
+.blk-mtx td.b-g .cell-cap,.blk-mtx td.b-a .cell-cap,.blk-mtx td.b-r .cell-cap{color:inherit;opacity:.6}
+.blk-mtx tr.blk-sumrow .cell-cap{color:#c9d4e8!important;opacity:.85}
 .blk-mtx .total-col{background:var(--surface3);font-weight:700;color:var(--navy)}
 .blk-mtx .total-row td{background:var(--surface4)!important;font-weight:700;color:var(--navy);border-top:2px solid var(--border2)}
 /* 그룹 매핑 / 마스터 편집 */
@@ -1042,6 +1048,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--amber-dim);border:1px solid var(--amber);vertical-align:middle"></span> 임박(1~3)</span>
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:var(--red-dim);border:1px solid var(--red);vertical-align:middle"></span> 마감/초과(0이하)</span>
         <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="blk-show-sellstop" onchange="blkShowSellStop=this.checked; blkRenderStatus();"> 판매중지 숙소 포함</label>
+        <span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;border:1px solid var(--border2);border-radius:3px;padding:1px 5px;line-height:1.1;text-align:center;background:var(--green-dim)"><b style="font-size:10px;color:var(--green2)">12</b><br><span style="font-size:8px;color:var(--green2);opacity:.6;border-top:1px dotted currentColor">20</span></span> 위=잔여 · 아래=보유 (사용 = 보유 − 잔여)</span>
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
       <div class="tbl-wrap" style="max-height:600px"><table class="blk-mtx" id="blk-mtx"></table></div>
@@ -5080,7 +5087,7 @@ function blkRenderStatus(){
   // 정렬: 블록형 먼저, 임의배정형 뒤
   units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
 
-  document.getElementById('blk-status-sub').textContent=`${month} · 잔여 = 보유 − 사용 · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
+  document.getElementById('blk-status-sub').textContent=`${month} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
 
   // 요약 박스: 블록형 기준 마감/임박 날·칸 수
   let cellMaegam=0, cellImbak=0, cellOk=0, assignCells=0;
@@ -5113,13 +5120,21 @@ function blkRenderStatus(){
   // 선택 합계 행: 호텔 2개 이상 선택 시 맨 위에 합산(룸타입 무시, 객실 단위)
   if(blkHotelFilter.size>=2){
     let capSum=0, capHas=false, hasAssign=false, hasUnmapped=false;
-    const useByDay={}; let selTot=0;
+    const useByDay={}, capByDay={}; let selTot=0;
     units.forEach(u=>{
       const rooms=usage[u]||{};
       const assign=blkIsAssignUnit(u);
       if(assign) hasAssign=true;
       Object.keys(rooms).forEach(rm=>{
-        if(!assign){ const blk=blkBlockForUnit(u,rm); if(blk==null) hasUnmapped=true; else { capSum+=blk; capHas=true; } }
+        if(!assign){
+          const blk=blkBlockForUnit(u,rm);
+          if(blk==null) hasUnmapped=true;
+          else {
+            capSum+=blk; capHas=true;
+            // 날짜별 보유 합 = 기본 보유 + 그날 오버부킹분 (일자별 보유 변동 반영)
+            days.forEach(d=>{ capByDay[d.day]=(capByDay[d.day]||0)+blk+(blkOver[`${u}|${rm}|${d.day}`]||0); });
+          }
+        }
         days.forEach(d=>{ const used=rooms[rm][d.day]||0; if(used){ useByDay[d.day]=(useByDay[d.day]||0)+used; selTot+=used; } });
       });
     });
@@ -5130,8 +5145,10 @@ function blkRenderStatus(){
       if(hasAssign || !capHas){ // 잔여 계산 불가 → 사용 합만
         body+= used? `<td class="b-use" title="사용 합 ${used}">${used}</td>` : `<td class="b-zero">·</td>`;
       } else {
-        const rem=capSum-used;
-        body+= `<td class="${blkClsRemain(rem)}" title="보유 합 ${capSum} / 사용 합 ${used} / 잔여 ${rem}"><b>${rem}</b></td>`;
+        const cap=capByDay[d.day]!=null?capByDay[d.day]:capSum;
+        const rem=cap-used;
+        const top = used===0 ? '·' : rem;
+        body+= `<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 합 ${cap} / 사용 합 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap">${cap}</span></td>`;
       }
     });
     // 끝 열: 선택 합계의 최소 잔여 (임의배정 포함 시 계산 불가 → '—')
@@ -5139,7 +5156,7 @@ function blkRenderStatus(){
       body+=`<td class="total-col" title="임의배정 포함—잔여 계산 불가">—</td></tr>`;
     } else {
       let minRem=Infinity;
-      days.forEach(d=>{ minRem=Math.min(minRem, capSum-(useByDay[d.day]||0)); });
+      days.forEach(d=>{ minRem=Math.min(minRem, (capByDay[d.day]!=null?capByDay[d.day]:capSum)-(useByDay[d.day]||0)); });
       body+=`<td class="total-col ${blkClsRemain(minRem)}"><b>${minRem===Infinity?'—':minRem}</b></td></tr>`;
     }
   }
@@ -5149,18 +5166,23 @@ function blkRenderStatus(){
     const stopTag=blkSellStopUnit(u)?'<span class="blk-tag-type blk-tag-stop">판매중지</span>':'';
     sortRoomTypes(Object.keys(rooms)).forEach((rm,ri)=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
-      const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block">보유 ${blk}</span>`);
+      const typeTag=assign?'<span class="blk-tag-type blk-tag-assign">임의배정</span>':(blk==null?'<span class="blk-tag-type blk-tag-unmapped">보유미등록</span>':`<span class="blk-tag-type blk-tag-block" title="리조트 마스터의 기본 보유 · 날짜별 실제 보유는 각 칸 아래 숫자">보유 ${blk}</span>`);
       let rowTot=0, minRem=Infinity, hasUse=false;
       body+=`<tr${blkSellStopUnit(u)?' style="opacity:.5"':''}><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}${ri===0?stopTag:''}</td>`;
       days.forEach(d=>{
         const used=rooms[rm][d.day]||0;
         rowTot+=used; if(used>0) hasUse=true;
-        if(used===0){ body+=`<td class="b-zero">·</td>`; if(!(assign||blk==null)) minRem=Math.min(minRem, (blk+(blkOver[`${u}|${rm}|${d.day}`]||0))); return; }
-        if(assign||blk==null){ body+=`<td class="b-use">${used}</td>`; return; }
+        if(assign||blk==null){ // 보유를 모르는 행: 종전대로 사용수만
+          body+= used===0 ? `<td class="b-zero">·</td>` : `<td class="b-use">${used}</td>`;
+          return;
+        }
+        // 보유형: 사용 유무와 무관하게 그날 보유를 아래 줄에 병기 (날짜별 보유 변동 확인용)
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
-        const rem=(blk+over)-used;
+        const cap=blk+over;
+        const rem=cap-used;
         minRem=Math.min(minRem, rem);
-        body+=`<td class="${blkClsRemain(rem)}" title="보유 ${blk}${over?'+'+over:''} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+        const top = used===0 ? '·' : rem;
+        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${over?`${blk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap">${cap}</span></td>`;
       });
       // 끝 열: 최소 잔여 (임의배정·보유미등록은 계산 불가 → 사용 최대값 표시)
       if(assign||blk==null){
@@ -5192,10 +5214,11 @@ function blkStatusMatrix(){
       const blk=assign?null:blkBlockForUnit(u,rm);
       const cells=days.map(d=>{
         const used=rooms[rm][d.day]||0;
-        if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null};
+        if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null, cap:null};
         const over=blkOver[`${u}|${rm}|${d.day}`]||0;
-        const rem=(blk+over)-used;
-        return {kind:'rem', used, rem, txt:used===0?'':rem};
+        const cap=blk+over;
+        const rem=cap-used;
+        return {kind:'rem', used, rem, cap, txt:used===0?'':rem};
       });
       rows.push({hotel:u, room:rm, blk, assign, cells});
     });
@@ -5221,10 +5244,15 @@ function blkExportExcel(){
       else row.push(c.rem);
     });
     aoa.push(row);
+    // 보유형은 바로 아래에 날짜별 보유 행을 붙여 잔여와 나란히 계산할 수 있게 한다
+    if(!r.assign && r.blk!=null){
+      aoa.push([`${r.hotel} · ${r.room} (보유)`, r.blk].concat(r.cells.map(c=>c.cap!=null?c.cap:'')));
+    }
   });
   // 안내 행 + 빈 행
   aoa.push([]);
   aoa.push(['※ 숫자=잔여(보유−사용) · "마감"=잔여 0 이하 · "임박"=잔여 1~3 · 공란=사용 없음 · 배정=임의배정형']);
+  aoa.push(['※ "(보유)" 행 = 그날의 보유 객실 수(오버부킹 조정 포함). 사용 = 보유 − 잔여']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[{wch:26},{wch:6}].concat(days.map(()=>({wch:7})));
   const wb=XLSX.utils.book_new();
@@ -5275,10 +5303,10 @@ function blkRenderCart(){
     body+=`<tr><td class="rowhd">${h} <span class="rt-sub">${rm}</span> <span class="blk-tag-type blk-tag-cart">보유 ${cap}</span></td>`;
     days.forEach(d=>{
       const used=map[k][d.day]||0; rowTot+=used;
-      if(used===0){ body+=`<td class="b-zero">·</td>`; return; }
       const rem=cap-used;
-      if(rem<=0) maegam++;
-      body+=`<td class="${blkClsRemain(rem)}" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}">${rem}</td>`;
+      if(used>0&&rem<=0) maegam++;
+      // 객실 표와 동일하게 위=잔여 / 아래=보유 2줄 표기
+      body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${used===0?'·':rem}</span><span class="cell-cap">${cap}</span></td>`;
     });
     totUse+=rowTot;
     body+=`<td class="total-col">${rowTot}</td></tr>`;
