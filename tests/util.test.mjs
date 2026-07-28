@@ -123,3 +123,63 @@ test('roomExcConflicts — 같은 길이로 겹치면 경고', () => {
   assert.deepEqual(MT.roomExcConflicts([a, c]), []);
   assert.deepEqual(MT.roomExcConflicts([]), []);
 });
+
+/* ── 인원 → 객실 배정 ── */
+const T2 = { name: '2인실', pax: 2 };
+const T4 = { name: '4인실', pax: 4 };
+const TY = [T2, T4];
+const plan = p => p.rooms.map(r => `${r.name}x${r.count}`).join('+');
+
+test('roomsNeeded — 2인 1실이 기본', () => {
+  assert.equal(MT.roomsNeeded(4, 2), 2);
+  assert.equal(MT.roomsNeeded(3, 2), 2);   // 3명이면 2실 (1자리 빔)
+  assert.equal(MT.roomsNeeded(4, 4), 1);
+  assert.equal(MT.roomsNeeded(4, 0), null);
+  assert.equal(MT.roomsNeeded(0, 2), null);
+});
+
+test('emptyBeds — 빈자리 수', () => {
+  assert.equal(MT.emptyBeds(2, 2), 0);
+  assert.equal(MT.emptyBeds(1, 2), 1);     // 2인실에 1명
+  assert.equal(MT.emptyBeds(2, 4), 2);     // 4인실에 2명
+  assert.equal(MT.emptyBeds(3, 4), 1);
+});
+
+test('roomPlans — 2명은 2인실 하나뿐', () => {
+  const p = MT.roomPlans(2, TY);
+  assert.equal(p.length, 1);
+  assert.equal(plan(p[0]), '2인실x1');
+});
+
+test('roomPlans — 4명은 4인실 1개 또는 2인실 2개', () => {
+  const p = MT.roomPlans(4, TY).map(plan);
+  assert.deepEqual(p, ['4인실x1', '2인실x2']);   // 방 적은 순
+});
+
+test('roomPlans — 8명(회원권 8인) 조합', () => {
+  const p = MT.roomPlans(8, TY).map(plan);
+  assert.deepEqual(p, ['4인실x2', '4인실x1+2인실x2', '2인실x4']);
+});
+
+test('roomPlans — 홀수는 딱 떨어지지 않아 조합 없음', () => {
+  assert.deepEqual(MT.roomPlans(3, TY), []);
+  assert.deepEqual(MT.roomPlans(5, TY), []);
+});
+
+test('roomPlans — exact:false면 빈자리 허용', () => {
+  const p = MT.roomPlans(3, TY, { exact: false });
+  assert.ok(p.length > 0);
+  assert.equal(plan(p[0]), '4인실x1');      // 4인실 1개, 1자리 빔
+  assert.equal(p[0].empty, 1);
+});
+
+test('roomPlans — 2인실만 있는 숙소는 짝수만', () => {
+  assert.deepEqual(MT.roomPlans(4, [T2]).map(plan), ['2인실x2']);
+  assert.deepEqual(MT.roomPlans(3, [T2]), []);
+});
+
+test('bookablePax — 온라인에서 고를 수 있는 인원', () => {
+  assert.deepEqual(MT.bookablePax(TY, 10), [2, 4, 6, 8, 10]);
+  assert.deepEqual(MT.bookablePax([T4], 12), [4, 8, 12]);   // 4인실만이면 4의 배수
+  assert.deepEqual(MT.bookablePax([], 10), []);
+});
