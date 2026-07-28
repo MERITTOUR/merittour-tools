@@ -110,6 +110,66 @@
     return n;
   };
 
+  /* ── 호텔 블록 · 기간별 보유 예외 ────────────────────────── */
+
+  // 예외 1건 유효성: 룸타입·시작·종료가 있고 종료 >= 시작, 수량은 0 이상 정수
+  MT.roomExcValid = e => {
+    if (!e || !e.room || !e.from || !e.to) return false;
+    if (String(e.to) < String(e.from)) return false;
+    // qty 미입력(null/undefined/'')은 무효. Number(null)===0 이라 명시적으로 걸러야 한다.
+    if (e.qty === null || e.qty === undefined || String(e.qty).trim() === '') return false;
+    return Number.isFinite(Number(e.qty)) && Number(e.qty) >= 0;
+  };
+
+  // 기간 길이(일). from~to 포함. 잘못된 예외는 Infinity(= 절대 이기지 못함)
+  MT.roomExcSpan = e => {
+    if (!MT.roomExcValid(e)) return Infinity;
+    const a = Date.parse(e.from + 'T00:00:00Z'), b = Date.parse(e.to + 'T00:00:00Z');
+    if (isNaN(a) || isNaN(b)) return Infinity;
+    return Math.round((b - a) / 86400000) + 1;
+  };
+
+  // ymd(YYYY-MM-DD)에 적용될 예외 1건을 고른다.
+  // 우선순위: 기간이 짧은 쪽이 이김. 길이가 같으면 나중에 등록한 쪽(배열 뒤)이 이김.
+  // 적용 대상 없으면 null.
+  MT.pickRoomException = (exceptions, room, ymd) => {
+    if (!Array.isArray(exceptions) || !room || !ymd) return null;
+    let best = null, bestSpan = Infinity;
+    exceptions.forEach(e => {
+      if (!MT.roomExcValid(e)) return;
+      if (e.room !== room) return;
+      if (ymd < String(e.from) || ymd > String(e.to)) return;
+      const span = MT.roomExcSpan(e);
+      if (span <= bestSpan) { best = e; bestSpan = span; }   // 같은 길이면 뒤엣것이 이김
+    });
+    return best;
+  };
+
+  // 그날의 마스터 보유 = 기간 예외가 걸리면 그 수량, 아니면 기본 보유.
+  // 기본 보유가 없으면(룸타입 미등록) null — 예외만 있는 룸타입도 유효하게 취급한다.
+  // 반환: {qty, exc} — exc가 있으면 예외에서 나온 값. 조회 불가면 null.
+  MT.roomCapOn = (baseRooms, exceptions, room, ymd) => {
+    const exc = MT.pickRoomException(exceptions, room, ymd);
+    if (exc) return { qty: Number(exc.qty), exc };
+    const base = baseRooms && baseRooms[room];
+    return (base != null) ? { qty: Number(base), exc: null } : null;
+  };
+
+  // 같은 룸타입에서 길이가 같은 채로 겹치는 예외 쌍이 있으면 그 id 목록을 돌려준다(경고용).
+  MT.roomExcConflicts = exceptions => {
+    if (!Array.isArray(exceptions)) return [];
+    const bad = new Set();
+    const v = exceptions.filter(MT.roomExcValid);
+    for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) {
+      const a = v[i], b = v[j];
+      if (a.room !== b.room) continue;
+      if (String(a.to) < String(b.from) || String(b.to) < String(a.from)) continue;  // 안 겹침
+      if (MT.roomExcSpan(a) !== MT.roomExcSpan(b)) continue;                          // 길이 다르면 승부남
+      bad.add(a.id); bad.add(b.id);
+    }
+    return [...bad];
+  };
+
   /* ── 토스트 (core.css .mt-toast 와 연동) ─────────────────── */
   MT.showToast = (msg, ms) => {
     let host = document.querySelector('.mt-toast-host');

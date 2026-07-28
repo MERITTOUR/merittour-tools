@@ -61,3 +61,65 @@ test('cleanPhone / fmtPhone — 전화번호', () => {
   assert.equal(MT.fmtPhone('01012345678'), '010-1234-5678');
   assert.equal(MT.fmtPhone('0212345678'), '021-234-5678');
 });
+
+/* ── 호텔 블록 · 기간별 보유 예외 ── */
+const EXC = [
+  { id: 'x1', room: '트윈', from: '2026-08-01', to: '2026-08-31', qty: 20 },
+  { id: 'x2', room: '트윈', from: '2026-09-14', to: '2026-09-14', qty: 9 },
+  { id: 'x3', room: '패밀리룸', from: '2026-08-10', to: '2026-08-12', qty: 0 },
+];
+const BASE = { '트윈': 15, '패밀리룸': 19 };
+
+test('roomCapOn — 예외 없는 날은 기본 보유', () => {
+  assert.equal(MT.roomCapOn(BASE, EXC, '트윈', '2026-07-31').qty, 15);
+  assert.equal(MT.roomCapOn(BASE, EXC, '트윈', '2026-07-31').exc, null);
+});
+
+test('roomCapOn — 기간 예외 적용 + 경계일 포함', () => {
+  assert.equal(MT.roomCapOn(BASE, EXC, '트윈', '2026-08-01').qty, 20);  // 시작일
+  assert.equal(MT.roomCapOn(BASE, EXC, '트윈', '2026-08-31').qty, 20);  // 종료일
+  assert.equal(MT.roomCapOn(BASE, EXC, '트윈', '2026-09-01').qty, 15);  // 기간 밖
+});
+
+test('roomCapOn — 겹치면 짧은 기간이 이김', () => {
+  const wide = { id: 'w', room: '트윈', from: '2026-09-01', to: '2026-09-30', qty: 30 };
+  const exc = [wide, ...EXC];
+  assert.equal(MT.roomCapOn(BASE, exc, '트윈', '2026-09-13').qty, 30);  // 넓은 것만 걸림
+  assert.equal(MT.roomCapOn(BASE, exc, '트윈', '2026-09-14').qty, 9);   // 하루짜리가 이김
+  // 등록 순서를 뒤집어도 결과가 같아야 한다
+  assert.equal(MT.roomCapOn(BASE, exc.slice().reverse(), '트윈', '2026-09-14').qty, 9);
+});
+
+test('roomCapOn — 수량 0은 유효(그 기간 판매 불가)', () => {
+  assert.equal(MT.roomCapOn(BASE, EXC, '패밀리룸', '2026-08-11').qty, 0);
+  assert.equal(MT.roomCapOn(BASE, EXC, '패밀리룸', '2026-08-13').qty, 19);
+});
+
+test('roomCapOn — 룸타입 미등록이면 null, 예외만 있으면 그 값', () => {
+  assert.equal(MT.roomCapOn(BASE, EXC, '스위트', '2026-08-01'), null);
+  const only = [{ id: 'o', room: '스위트', from: '2026-08-01', to: '2026-08-05', qty: 3 }];
+  assert.equal(MT.roomCapOn(BASE, only, '스위트', '2026-08-03').qty, 3);
+  assert.equal(MT.roomCapOn(BASE, only, '스위트', '2026-08-06'), null);
+});
+
+test('roomExcValid — 종료<시작·수량 결측은 무효', () => {
+  assert.equal(MT.roomExcValid({ room: '트윈', from: '2026-08-10', to: '2026-08-01', qty: 5 }), false);
+  assert.equal(MT.roomExcValid({ room: '트윈', from: '2026-08-01', to: '2026-08-10', qty: null }), false);
+  assert.equal(MT.roomExcValid({ room: '트윈', from: '2026-08-01', to: '2026-08-10', qty: 0 }), true);
+  // 무효 예외는 조회에서 무시된다
+  assert.equal(MT.roomCapOn(BASE, [{ id: 'z', room: '트윈', from: '2026-08-10', to: '2026-08-01', qty: 99 }], '트윈', '2026-08-05').qty, 15);
+});
+
+test('roomExcSpan — 하루짜리는 1일', () => {
+  assert.equal(MT.roomExcSpan({ room: '트윈', from: '2026-09-14', to: '2026-09-14', qty: 9 }), 1);
+  assert.equal(MT.roomExcSpan({ room: '트윈', from: '2026-08-01', to: '2026-08-31', qty: 20 }), 31);
+});
+
+test('roomExcConflicts — 같은 길이로 겹치면 경고', () => {
+  const a = { id: 'a', room: '트윈', from: '2026-08-01', to: '2026-08-10', qty: 5 };
+  const b = { id: 'b', room: '트윈', from: '2026-08-05', to: '2026-08-14', qty: 7 };  // 같은 10일, 겹침
+  const c = { id: 'c', room: '트윈', from: '2026-08-05', to: '2026-08-06', qty: 7 };  // 짧음 → 승부남
+  assert.deepEqual(MT.roomExcConflicts([a, b]).sort(), ['a', 'b']);
+  assert.deepEqual(MT.roomExcConflicts([a, c]), []);
+  assert.deepEqual(MT.roomExcConflicts([]), []);
+});

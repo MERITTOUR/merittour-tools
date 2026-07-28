@@ -61,6 +61,14 @@
 - 전 탭 공유 필터 `agencySel`(localStorage `mt_agency_filter`, PC별 기억, 기본 일반만, 다중선택).
 - 헬퍼: `agencyOk(t)`, `agencyBadge(t)`. 예약·항공·요금관리·확정서·정산에 칩 필터+배지, 검수는 배지만.
 
+## 호텔 블록 보유
+- 보유의 단일 출처는 리조트 마스터. 룸타입별 **기본 보유**(`rooms`) + **기간 예외**(`roomExceptions`: 룸타입·시작일·종료일·수량·메모).
+- 겹치면 **짧은 기간이 우선**, 길이가 같으면 나중 등록. 동률 겹침은 마스터 카드에 경고 표시. 순수 로직은 `shared/util.js`의 `MT.roomCapOn` 등(테스트 있음).
+- 날짜별 조회는 `blkBlockOn(hotel,room,ymd)` / `blkPoolCapOn(pool,ymd)`. 정원 등록 여부 판정만 `blkPoolCapBase(pool)`. 기존 `blkBlockOf`·`blkPoolCap`은 기본값 조회로 존치.
+- **새 소비처에서 잔여를 계산할 때는 반드시 날짜판을 쓸 것.** 특히 연박 최소 잔여(출발 일정 조회·공지 PNG·요금달력)는 하루라도 빠뜨리면 틀린 값이 손님에게 나간다.
+- 오버부킹 보정(`mt_notify_blkOver`)은 내 PC 전용 임시 시뮬레이션 — 마스터 내보내기에 포함되지 않는다. 실제 보유 변경은 기간 예외로 넣어야 전 직원이 공유한다.
+- 상세: `docs/design_master_block_exceptions.md`
+
 ## 요금·환율
 - 회원관리비: 리조트 마스터 숙소별 입력값이 단일 출처(기본 50,000원/인, 면제 숙소만 0).
 - 환율: 출국 2달 전 월 1일자 하나은행 현찰 살 때 최초 고시. 월별 테이블만 사용(미등록 월은 검증 제외).
