@@ -4062,8 +4062,14 @@ const COMMON_DEFAULTS={
   mgmtKRW:50000,           // 회원관리비 (원화 고정)
   monthlyRates:{},         // 출국월(YYYY-MM) → 적용 환율(100엔당 원, 엔 기준)
   airfares:[],             // [{month, airline, origin, dest, nights, flightOut, flightIn, tripType, fare}] 항공요금 테이블
-  pkgPresets:[]            // [{accom, nights, price}] 패키지가 프리셋 (숙소+박수 → 1인 원화 총액). 검증에서 팀 패키지가 미입력 시 자동 적용
+  pkgPresets:[],           // [{accom, nights, price}] 패키지가 프리셋 (숙소+박수 → 1인 원화 총액). 검증에서 팀 패키지가 미입력 시 자동 적용
+  memberPax:{}             // 회원권구분 → 기본 예약가능인원. 개인별 「예약가능인원」이 있으면 그쪽이 우선
 };
+/* 회원권구분별 기본 예약가능인원 초깃값.
+   실제 상한은 엠클릭 고객관리의 「예약가능인원」(개인별)이 정한다 — 가족 회원권을 한 번호로
+   몰아 12명으로 잡는 식이라 종류만 보고 판단하면 인원을 잘못 거절한다. 이 표는 그 값이
+   없을 때 쓰는 기본값이자 검증 기준이다. */
+const MEMBER_PAX_DEFAULTS={'특별':2,'골드':2,'다이아1':4,'다이아2':4,'EWRC1':4,'EWRC2':4};
 
 let resortMaster=[], commonMaster={};
 
@@ -4150,6 +4156,9 @@ function loadResortMaster(){
   }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomMeta:normRoomMeta(d)})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
+  if(!commonMaster.memberPax || !Object.keys(commonMaster.memberPax).length){
+    commonMaster.memberPax={...MEMBER_PAX_DEFAULTS};
+  }
   // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
   if(!localStorage.getItem('mt_notify_airfareCodeMigrated')){
     (commonMaster.airfares||[]).forEach(a=>{
@@ -4666,6 +4675,16 @@ function renderResortMaster(){
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
+    <div class="cm-box-title">🎫 회원권 예약가능인원 <span class="card-sub" style="font-weight:400">— 회원권구분별 <b>기본</b> 인원. 실제 상한은 엠클릭 고객관리의 개인별 「예약가능인원」이 우선입니다(가족 회원권을 한 번호로 몰아 12명으로 잡는 경우 등)</span></div>
+    <div id="memberpax-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+      <input class="rm-input text" id="mp-type" type="text" placeholder="회원권구분 (예: 다이아1)" style="width:200px">
+      <input class="rm-input" id="mp-pax" type="text" inputmode="numeric" placeholder="인원" style="width:70px">
+      <span class="rm-unit">명</span>
+      <button class="btn-sm" onclick="addMemberPax()">+ 추가</button>
+    </div>
+  </div>
+  <div class="cm-box" style="margin-top:1rem">
     <div class="cm-box-title">🕘 변경 이력 <span class="card-sub" style="font-weight:400">— 리조트 마스터·환율·항공요금의 세부 변경 기록 (최근 ${CHLOG_MAX}건, 최신순)</span>
       <button class="btn-sm" style="margin-left:auto;padding:2px 10px;color:var(--red);border-color:var(--red)" onclick="clearChangeLog()">이력 비우기</button>
     </div>
@@ -4674,6 +4693,7 @@ function renderResortMaster(){
   renderMonthlyRates();
   renderAirfares();
   renderPkgPresets();
+  renderMemberPax();
   renderChangeLog();
   renderRmCompletenessSummary();
 }
@@ -4713,6 +4733,76 @@ function delMonthlyRate(key){
 }
 
 /* 항공요금 테이블 렌더 */
+/* 업로드된 데이터에 실제로 찍힌 회원권구분 값 목록 (표기 확인용) */
+function memberTypesInData(){
+  const set=new Set();
+  (typeof teams!=='undefined'&&Array.isArray(teams)?teams:[]).forEach(t=>{
+    const v=(t.memberType||'').trim();
+    if(v && v!=='-') set.add(v);
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b,'ko'));
+}
+function renderMemberPax(){
+  const box=document.getElementById('memberpax-rows'); if(!box) return;
+  const map=commonMaster.memberPax||{};
+  const keys=Object.keys(map).sort((a,b)=>a.localeCompare(b,'ko'));
+  let html = keys.length
+    ? '<div class="tbl-wrap"><table style="font-size:12px"><thead><tr><th style="width:220px">회원권구분</th><th style="width:110px">기본 인원</th><th></th></tr></thead><tbody>'
+      + keys.map(k=>`<tr><td><b>${k.replace(/</g,'&lt;')}</b></td>
+          <td><input class="rm-input" type="text" inputmode="numeric" style="width:64px;text-align:right" value="${Number(map[k])}"
+            onchange="setMemberPax('${k.replace(/'/g,"\\'")}',this.value)"> <span class="rm-unit">명</span></td>
+          <td style="text-align:right"><button class="btn-sm" style="padding:2px 8px;color:var(--red);border-color:var(--red)"
+            onclick="delMemberPax('${k.replace(/'/g,"\\'")}')">삭제</button></td></tr>`).join('')
+      + '</tbody></table></div>'
+    : '<div class="muted" style="font-size:11px">등록된 회원권구분이 없습니다.</div>';
+  // 업로드 데이터에는 있는데 표에 없는 값 → 표기 불일치를 바로 잡을 수 있게
+  const missing=memberTypesInData().filter(v=>map[v]==null);
+  if(missing.length){
+    html += `<div class="rmr-warn" style="margin-top:8px">▲ 업로드된 데이터에 있지만 표에 없는 회원권구분: `
+      + missing.map(v=>`<button class="btn-sm" style="padding:1px 8px;margin:0 3px 3px 0" title="이 표기로 추가"
+          onclick="quickAddMemberPax('${v.replace(/'/g,"\\'")}')">${v.replace(/</g,'&lt;')} +</button>`).join('')
+      + `<br>엠클릭 표기와 표의 이름이 정확히 같아야 인원이 조회됩니다.</div>`;
+  }
+  box.innerHTML=html;
+}
+function setMemberPax(type, val){
+  const n=num(val);
+  if(!(n>0)){ alert('예약가능인원은 1 이상이어야 합니다.'); renderMemberPax(); return; }
+  commonMaster.memberPax=commonMaster.memberPax||{};
+  const before=commonMaster.memberPax[type];
+  commonMaster.memberPax[type]=n;
+  logChange('공통', `회원권 인원 ${type}`, before?before+'명':'', n+'명');
+  saveResortMaster(); renderMemberPax();
+}
+function addMemberPax(){
+  const t=document.getElementById('mp-type').value.trim();
+  const n=num(document.getElementById('mp-pax').value);
+  if(!t){ alert('회원권구분을 입력해주세요.'); return; }
+  if(!(n>0)){ alert('예약가능인원을 1 이상으로 입력해주세요.'); return; }
+  commonMaster.memberPax=commonMaster.memberPax||{};
+  if(commonMaster.memberPax[t]!=null && !confirm(`「${t}」은 이미 ${commonMaster.memberPax[t]}명으로 등록돼 있습니다. ${n}명으로 바꿀까요?`)) return;
+  setMemberPax(t, n);
+  document.getElementById('mp-type').value=''; document.getElementById('mp-pax').value='';
+}
+function quickAddMemberPax(type){
+  const n=prompt(`「${type}」의 기본 예약가능인원을 입력해주세요. (명)`, '4');
+  if(n===null) return;
+  if(!(num(n)>0)){ alert('1 이상으로 입력해주세요.'); return; }
+  setMemberPax(type, num(n));
+}
+function delMemberPax(type){
+  if(!confirm(`「${type}」을 표에서 지울까요?`)) return;
+  const before=commonMaster.memberPax[type];
+  delete commonMaster.memberPax[type];
+  logChange('공통', `회원권 인원 ${type}`, before?before+'명':'', '');
+  saveResortMaster(); renderMemberPax();
+}
+/* 회원권구분 → 기본 예약가능인원. 미등록이면 null(=상한 모름). */
+function memberPaxOf(type){
+  const v=(commonMaster.memberPax||{})[String(type||'').trim()];
+  return v>0?Number(v):null;
+}
+
 function renderAirfares(){
   const box=document.getElementById('airfare-rows'); if(!box) return;
   const arr=commonMaster.airfares||[];
