@@ -486,6 +486,8 @@ tr:hover td{background:#EEF3FA}
 .blk-tag-assign{background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber)}
 .blk-tag-cart{background:var(--purple-dim);color:var(--purple2);border:1px solid var(--purple2)}
 .blk-tag-unmapped{background:var(--red-dim);color:var(--red2);border:1px solid var(--red)}
+.blk-fix-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 0;border-top:1px solid var(--border)}
+.blk-fix-row:first-of-type{border-top:0}
 .blk-member-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:16px;background:var(--surface3);border:1px solid var(--border2);margin:2px}
 .blk-member-chip button{border:none;background:none;color:var(--red);cursor:pointer;font-size:13px;line-height:1;padding:0}
 /* 시뮬레이션 막대 */
@@ -1107,8 +1109,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
       <div class="note" style="border-left-color:var(--red)">
-        <b>미분류 호텔 발견</b> · 아래 호텔은 ① 리조트 마스터에 등록돼 있지 않습니다. 리조트 마스터에서 해당 숙소의 룸타입 보유를 등록하거나, 표기가 다르면 별칭에 추가하면 잔여가 계산됩니다.
-        <div id="blk-unmapped-list" style="margin-top:6px"></div>
+        <b>마스터와 맞지 않는 항목</b> · 아래는 <b>엠클릭 표에 실제 사용이 잡혀 있는데</b> ① 리조트 마스터에 없는 것입니다.
+        예약이 들어와 있으므로 표에서 임의로 숨기지 않습니다 — 아래에서 마스터와 맞춰주세요.
+        <div id="blk-unmapped-list" style="margin-top:8px"></div>
       </div>
     </div>
   </div>
@@ -5506,21 +5509,84 @@ function blkLoadMonth(ym){
   // 현황 표로 스크롤 위치 유지(상단 고정)
 }
 
-/* 미분류 호텔 경고 */
+/* 마스터 불일치 경고 — 숙소 자체가 없는 경우와 룸타입만 없는 경우를 나눠 보여준다.
+   표의 행은 엠클릭 표(실제 사용)에서 나오므로, 마스터에서 지웠다고 행이 사라지지 않는다.
+   예약이 잡혀 있는 방을 화면에서 숨기면 안 되기 때문 — 대신 여기서 마스터를 맞추게 한다. */
 function blkCheckUnmapped(){
-  if(!blkParsed) return;
-  const seen={};
+  const card=document.getElementById('blk-unmapped-card');
+  if(!blkParsed){ if(card) card.style.display='none'; return; }
+  const seen={}, usedCnt={};
   blkParsed.rows.forEach(r=>{
-    if(blkTypeOf(r.hotel)==='block' && blkBlockOf(r.hotel,r.room)==null){
-      seen[r.hotel+'|'+r.room]=true;
-    }
+    if(blkTypeOf(r.hotel)!=='block') return;
+    if(blkBlockOf(r.hotel,r.room)!=null) return;
+    const k=r.hotel+'|'+r.room;
+    seen[k]=true; usedCnt[k]=Math.max(usedCnt[k]||0, r.used);
   });
   const list=Object.keys(seen);
-  const card=document.getElementById('blk-unmapped-card');
-  if(list.length){
-    card.style.display='block';
-    document.getElementById('blk-unmapped-list').innerHTML=list.map(k=>`<span class="blk-tag-type blk-tag-unmapped">${k.replace('|',' · ')}</span>`).join(' ');
-  } else card.style.display='none';
+  if(!list.length){ card.style.display='none'; return; }
+
+  const noHotel=[], noRoom=[];
+  list.forEach(k=>{
+    const [h,rm]=k.split('|');
+    const name=blkAlias[h]||h;
+    (resortMaster.some(x=>x.name===name) ? noRoom : noHotel).push({key:k, hotel:h, name, room:rm, used:usedCnt[k]});
+  });
+
+  let html='';
+  if(noHotel.length){
+    html+=`<div style="margin-bottom:10px"><b style="font-size:12px">숙소가 마스터에 없음</b>
+      <div style="margin-top:4px">${noHotel.map(x=>`<span class="blk-tag-type blk-tag-unmapped">${x.hotel} · ${x.room}</span>`).join(' ')}</div>
+      <div class="muted" style="font-size:11px;margin-top:4px">① 리조트 마스터에 숙소를 등록하거나, 표기가 다르면 숙소 「엠클릭 표기 별칭」에 추가하세요.</div></div>`;
+  }
+  if(noRoom.length){
+    html+=`<div><b style="font-size:12px">룸타입이 마스터에 없음</b>
+      <div class="muted" style="font-size:11px;margin:3px 0 6px">숙소는 등록돼 있는데 이 룸타입이 없습니다. 마스터에 <b>추가</b>하거나, 이름만 다른 것이면 기존 룸타입에 <b>별칭</b>으로 연결하세요.</div>`;
+    html+=noRoom.map((x,i)=>{
+      const r=resortMaster.find(y=>y.name===x.name);
+      const types=sortRoomTypes(Object.keys((r&&r.rooms)||{}));
+      const sel=types.length
+        ? `<select class="rm-input" id="blkfix-to-${i}" style="width:130px;text-align:left;font-family:var(--sans);padding:3px 6px;font-size:11px">
+             ${types.map(t=>`<option value="${t.replace(/"/g,'&quot;')}">→ ${t}</option>`).join('')}</select>
+           <button class="btn-sm" style="padding:3px 8px;font-size:11px" onclick="blkFixAlias('${x.name.replace(/'/g,"\\'")}','${x.room.replace(/'/g,"\\'")}',${i})">별칭 연결</button>`
+        : '<span class="muted" style="font-size:11px">연결할 룸타입이 없습니다</span>';
+      return `<div class="blk-fix-row">
+        <span class="blk-tag-type blk-tag-unmapped">${x.name} · ${x.room}</span>
+        <span class="muted" style="font-size:11px">일 최대 사용 ${x.used}실</span>
+        <button class="btn-sm" style="padding:3px 8px;font-size:11px" onclick="blkFixAddRoom('${x.name.replace(/'/g,"\\'")}','${x.room.replace(/'/g,"\\'")}')">마스터에 추가</button>
+        ${sel}
+      </div>`;
+    }).join('');
+    html+='</div>';
+  }
+  card.style.display='block';
+  document.getElementById('blk-unmapped-list').innerHTML=html;
+}
+/* 미등록 룸타입을 마스터에 바로 추가 */
+function blkFixAddRoom(resortName, room){
+  const r=resortMaster.find(x=>x.name===resortName);
+  if(!r){ alert('리조트 마스터에서 숙소를 찾지 못했습니다.'); return; }
+  const q=prompt(`「${resortName}」에 룸타입 「${room}」을 추가합니다.\n\n기본 보유 객실 수를 입력해주세요.`, '');
+  if(q===null) return;
+  const n=num(q);
+  if(!(n>0)){ alert('보유 객실 수를 1 이상으로 입력해주세요.'); return; }
+  const pax=guessRoomPax(room);
+  r.roomMeta=r.roomMeta||{};
+  r.roomMeta[room]={ pax:(pax>0?pax:null), online:true };
+  updateResort(r.key, 'room:'+room, n, null);
+  if(!(pax>0)) alert(`추가했습니다.\n\n「${room}」의 1방 정원은 이름으로 알 수 없어 비어 있습니다.\n① 리조트 마스터에서 채워주세요.`);
+}
+/* 미등록 룸타입을 기존 룸타입에 별칭으로 연결 */
+function blkFixAlias(resortName, room, i){
+  const r=resortMaster.find(x=>x.name===resortName);
+  if(!r){ alert('리조트 마스터에서 숙소를 찾지 못했습니다.'); return; }
+  const el=document.getElementById('blkfix-to-'+i);
+  const to=el?el.value:'';
+  if(!to){ alert('연결할 룸타입을 선택해주세요.'); return; }
+  if(!confirm(`엠클릭 표기 「${room}」을 마스터의 「${to}」로 연결할까요?\n\n이후 「${room}」으로 찍힌 사용은 「${to}」 보유에서 차감됩니다.`)) return;
+  r.roomAlias=r.roomAlias||{};
+  r.roomAlias[room]=to;
+  logChange(r.name, '룸타입 별칭', '', `${room} → ${to}`);
+  saveResortMaster(); blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
 }
 
 /* 호텔 필터 칩 */
