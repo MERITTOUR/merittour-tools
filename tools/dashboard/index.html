@@ -420,20 +420,31 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx .cell-cap{display:block;font-size:9px;font-weight:500;color:var(--text3);opacity:.75;border-top:1px dotted currentColor;margin-top:1px;padding-top:1px}
 .blk-mtx td.b-g .cell-cap,.blk-mtx td.b-a .cell-cap,.blk-mtx td.b-r .cell-cap{color:inherit;opacity:.6}
 .blk-mtx tr.blk-sumrow .cell-cap{color:#c9d4e8!important;opacity:.85}
-.rm-room-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-.rm-room-row .rmr-name{flex:1;min-width:0;text-align:left}
-.rm-room-row .rmr-qty{width:66px;text-align:right;flex:none}
-.rm-room-row .rm-unit{flex:none;min-width:26px}
-.rm-room-row .rmr-exc{flex:none;font-size:10px;font-weight:700;color:var(--amber2);background:var(--amber-dim);padding:2px 6px;border-radius:4px}
-.rm-room-row .rmr-x{flex:none;color:var(--text3);font-size:11px}
-.rm-room-row .rmr-pax{width:46px;text-align:right;flex:none}
+/* 룸타입 행 — 배지 유무와 무관하게 칸이 어긋나지 않도록 그리드로 고정 */
+.rm-room-grid{display:grid;
+  grid-template-columns:minmax(140px,300px) 62px 28px 12px 46px 20px 58px 52px 24px;
+  gap:6px;align-items:center;justify-content:start}
+.rm-room-hdr{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.03em;margin-bottom:5px}
+.rm-room-hdr .h-name{grid-column:1}
+.rm-room-hdr .h-qty{grid-column:2/4;text-align:center}
+.rm-room-hdr .h-pax{grid-column:5/7;text-align:center}
+.rm-room-hdr .h-on{grid-column:7;text-align:center}
+.rm-room-row{margin-bottom:5px}
+.rm-room-row .rm-unit{min-width:0;text-align:left;font-size:11px}
+.rm-room-row .rmr-x{text-align:center}
+.rm-room-row .rmr-name{width:100%;text-align:left}
+.rm-room-row .rmr-qty{width:100%;text-align:right}
+.rm-room-row .rmr-exc{font-size:10px;text-align:center;font-weight:700;color:var(--amber2);background:var(--amber-dim);padding:2px 6px;border-radius:4px}
+.rm-room-row .rmr-x{color:var(--text3);font-size:11px}
+.rm-room-row .rmr-pax{width:100%;text-align:right}
 .rm-room-row .rmr-pax.rmr-need{border-color:var(--amber);background:var(--amber-dim)}
-.rm-room-row .rmr-on{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10.5px;color:var(--text2);font-weight:600;white-space:nowrap;cursor:pointer}
+.rm-room-row .rmr-on{display:inline-flex;justify-content:center;align-items:center;gap:3px;font-size:10.5px;color:var(--text2);font-weight:600;white-space:nowrap;cursor:pointer}
 .rm-room-row .rmr-on input{margin:0}
 .rmr-warn{font-size:11px;color:var(--amber2);margin-top:6px;line-height:1.6}
-.rm-room-row .rmr-del{flex:none;border:none;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}
+.rm-room-row .rmr-del{border:none;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}
 .rm-room-row .rmr-del:hover{color:var(--red);background:var(--red-dim,rgba(192,57,43,.08))}
-.rm-room-row.rmr-add{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2)}
+.rm-room-row.rmr-add{margin-top:8px;padding-top:10px;border-top:1px dashed var(--border2)}
+.rm-room-row.rmr-add .btn-sm{grid-column:7/10}
 .rm-exc-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .rm-exc-item{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;border-radius:6px;background:var(--accent-dim);border:1px solid transparent}
 .rm-exc-item.bad{background:var(--amber-dim);border-color:var(--amber)}
@@ -4287,7 +4298,7 @@ function rmRoomsRows(r){
   const nExcOf = rt => (r.roomExceptions||[]).filter(e=>e.room===rt&&MT.roomExcValid(e)).length;
   const meta = r.roomMeta||{};
   let html = keys.length
-    ? keys.map((rt,i)=>`<div class="rm-room-row">
+    ? keys.map((rt,i)=>`<div class="rm-room-row rm-room-grid">
         <input class="rm-input text rmr-name" type="text" value="${rt.replace(/"/g,'&quot;')}" placeholder="룸타입"
           onchange="rmRenameRoom('${r.key}',${i},this.value)"
           title="룸타입 이름 — 고치면 이 룸타입의 기간 예외도 함께 따라갑니다">
@@ -4303,12 +4314,12 @@ function rmRoomsRows(r){
           <input type="checkbox" ${(meta[rt]&&meta[rt].online!==false)?'checked':''}
             onchange="rmToggleRoomOnline('${r.key}',${i},this.checked)"> 온라인
         </label>
-        ${nExcOf(rt)?`<span class="rmr-exc" title="이 룸타입의 기간 예외 ${nExcOf(rt)}건">예외 ${nExcOf(rt)}</span>`:''}
+        ${nExcOf(rt)?`<span class="rmr-exc" title="이 룸타입의 기간 예외 ${nExcOf(rt)}건">예외 ${nExcOf(rt)}</span>`:'<span></span>'}
         <button class="rmr-del" title="이 룸타입 삭제" onclick="rmDelRoom('${r.key}',${i})">✕</button>
       </div>`).join('')
     : '<div class="muted" style="font-size:11px;padding:2px 0">등록된 룸타입 없음</div>';
   // 새 룸타입 추가
-  html += `<div class="rm-room-row rmr-add">
+  html += `<div class="rm-room-row rm-room-grid rmr-add">
     <input class="rm-input text rmr-name" id="rm-newroom-${r.key}" placeholder="새 룸타입 (예: 트윈)"
       onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')">
     <input class="rm-input rmr-qty" id="rm-newroomn-${r.key}" type="text" inputmode="numeric" placeholder="0"
@@ -4318,7 +4329,7 @@ function rmRoomsRows(r){
     <input class="rm-input rmr-pax" id="rm-newroompax-${r.key}" type="text" inputmode="numeric" placeholder="2"
       onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')" title="1방 정원(명)">
     <span class="rm-unit">인</span>
-    <button class="btn-sm" style="padding:3px 10px" onclick="rmAddRoom('${r.key}')">+ 추가</button></div>`;
+    <button class="btn-sm" style="padding:4px 10px" onclick="rmAddRoom('${r.key}')">+ 추가</button></div>`;
   const need = Object.keys(rooms).filter(rt=>!(meta[rt]&&meta[rt].pax>0));
   if(need.length) html += `<div class="rmr-warn">▲ 정원 미입력: <b>${need.join(', ')}</b> — 인원을 객실 수로 환산할 수 없어 대기 전환 점검이 1인 1실로 보수적으로 잡힙니다.</div>`;
   html += `<div class="rm-hint" style="margin-top:6px">정원 = 1방에 몇 명이 자는가(트윈 2 · 4인실 4). 「온라인」은 홈페이지 예약에 노출할 룸타입 표시용입니다.</div>`;
@@ -4593,12 +4604,6 @@ function renderResortMaster(){
             <div class="rm-hint">도착 공항을 고르면 한글 표기와 요금 도착코드(IATA)가 함께 저장됩니다. 벳푸=후쿠오카(FUK), 이바라키=나리타(NRT), 나가노=니가타(KIJ)처럼 지역과 공항이 다른 상품은 실제 이용 공항을 선택하세요.</div>
           </div>
           <div class="rm-group">
-            <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
-            <div class="rm-hint" style="margin-bottom:6px">아래 값이 <b>기본 보유</b>(예외가 없는 모든 날)입니다. 특정 기간만 다르면 「기간 예외」로 넣으세요. 호텔 블록 탭의 <b>오버부킹 보정</b>은 내 PC에서만 쓰는 임시 시뮬레이션이라 마스터 배포에 포함되지 않습니다.</div>
-            ${rmRoomsRows(r)}
-            <div class="rm-row" style="margin-top:6px"><label><input type="checkbox" ${r.assign?'checked':''} onchange="updateResort('${r.key}','assign',this.checked,this)"> 임의배정(블록 안 깜·잔여계산 제외)</label></div>
-          </div>
-          <div class="rm-group">
             <div class="rm-group-label">엠클릭 표기 별칭</div>
             <div class="rm-row" style="flex-direction:column;align-items:stretch;gap:4px">
               <input class="rm-input wide" type="text" value="${(r.aliases||[]).join(', ').replace(/"/g,'&quot;')}" placeholder="예: 14hills (쉼표로 여러 개)"
@@ -4608,6 +4613,11 @@ function renderResortMaster(){
           </div>
         </div>
         <div class="rm-group" style="margin-top:12px">
+          <div class="rm-group-label">호텔 블록 (1일 보유 객실)</div>
+          <div class="rm-hint" style="margin-bottom:8px">아래 값이 <b>기본 보유</b>(예외가 없는 모든 날)입니다. 특정 기간만 다르면 아래 「기간 예외」로 넣으세요. 호텔 블록 탭의 <b>오버부킹 보정</b>은 내 PC에서만 쓰는 임시 시뮬레이션이라 마스터 배포에 포함되지 않습니다.</div>
+          <div class="rm-room-hdr rm-room-grid"><span class="h-name">룸타입</span><span class="h-qty">기본 보유</span><span class="h-pax">1방 정원</span><span class="h-on">온라인</span></div>
+          ${rmRoomsRows(r)}
+          <div class="rm-row" style="margin-top:8px"><label><input type="checkbox" ${r.assign?'checked':''} onchange="updateResort('${r.key}','assign',this.checked,this)"> 임의배정(블록 안 깜·잔여계산 제외)</label></div>
           ${rmRoomExcRows(r)}
         </div>
         <div class="rm-group" style="margin-top:12px">
