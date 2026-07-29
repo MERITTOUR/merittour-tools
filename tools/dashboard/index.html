@@ -440,6 +440,12 @@ tr:hover td{background:#EEF3FA}
 .rm-room-row .rmr-pax.rmr-need{border-color:var(--amber);background:var(--amber-dim)}
 .rm-room-row .rmr-on{display:inline-flex;justify-content:center;align-items:center;gap:3px;font-size:10.5px;color:var(--text2);font-weight:600;white-space:nowrap;cursor:pointer}
 .rm-room-row .rmr-on input{margin:0}
+.rmr-alias-box{margin-top:8px;padding:8px 10px;background:var(--bg2,rgba(46,90,136,.04));border-radius:8px}
+.rmr-alias-hd{font-size:10.5px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.rmr-alias-row{font-size:11.5px;margin-bottom:3px;color:var(--text2)}
+.rmr-alias-chip{display:inline-flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:1px 4px 1px 7px;margin-right:4px;font-size:11px}
+.rmr-alias-chip button{border:none;background:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0 2px;line-height:1}
+.rmr-alias-chip button:hover{color:var(--red)}
 .rmr-warn{font-size:11px;color:var(--amber2);margin-top:6px;line-height:1.6}
 .rm-room-row .rmr-del{border:none;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:4px}
 .rm-room-row .rmr-del:hover{color:var(--red);background:var(--red-dim,rgba(192,57,43,.08))}
@@ -4101,6 +4107,20 @@ function guessRoomPax(rt){
   if(m && +m[1]>0) return +m[1];
   return null;                              // 모르면 비워 두고 입력받는다
 }
+/* 룸타입 별칭: {엠클릭 표기 → 마스터 룸타입}.
+   룸타입 이름은 마스터와 엠클릭 표에서 각각 정해지고 매칭 키가 이름 문자열이라,
+   마스터에서 이름만 바꾸면 붙여넣은 표가 「보유미등록」이 된다. 숙소명의 aliases와 같은 역할. */
+function normRoomAlias(r){
+  const a=(r.roomAlias&&typeof r.roomAlias==='object')?r.roomAlias:{};
+  const out={};
+  Object.keys(a).forEach(k=>{ const v=String(a[k]||'').trim(); if(k&&v&&v!==k) out[k]=v; });
+  return out;
+}
+/* 엠클릭 표기 → 마스터 룸타입 해소. 별칭이 없으면 그대로. */
+function resolveRoomType(resort, room){
+  const al=resort&&resort.roomAlias;
+  return (al&&al[room])?al[room]:room;
+}
 /* 룸타입 부가정보: {룸타입:{pax, online}} — pax=1방 정원(명), online=온라인 판매 대상 */
 function normRoomMeta(r){
   const meta=(r.roomMeta&&typeof r.roomMeta==='object')?r.roomMeta:{};
@@ -4116,7 +4136,7 @@ function normRoomMeta(r){
 function roomPaxOf(hotel, room){
   const name=(typeof blkAlias!=='undefined'&&blkAlias&&blkAlias[hotel])||hotel;
   const r=resortMaster.find(x=>x.name===name);
-  const m=r&&r.roomMeta&&r.roomMeta[room];
+  const m=r&&r.roomMeta&&r.roomMeta[resolveRoomType(r, room)];
   return (m&&m.pax>0)?Number(m.pax):null;
 }
 /* 온라인 판매 대상 룸타입 목록 → [{name,pax}] (MT.roomPlans 입력용) */
@@ -4128,6 +4148,12 @@ function onlineRoomTypes(resortName){
     .map(rt=>({name:rt, pax:Number(meta[rt].pax)}));
 }
 
+/* 룸타입 별칭: 숙소명 → {엠클릭 표기: 마스터 룸타입} */
+function deriveBlkRoomAlias(){
+  const m={};
+  resortMaster.forEach(r=>{ if(r.roomAlias && Object.keys(r.roomAlias).length) m[r.name]=r.roomAlias; });
+  return m;
+}
 /* 기간 예외: 숙소명 → 예외 배열. 기본 보유(blkMaster)와 짝을 이룬다. */
 function deriveBlkExc(){
   const e={};
@@ -4154,6 +4180,7 @@ function loadResortMaster(){
       const r = s ? {...def, ...s} : {...def};
       // 기간 예외: 없던 저장본은 빈 배열 = 기존 동작 그대로 (별도 마이그레이션 불필요)
       if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
+      r.roomAlias = normRoomAlias(r);        // 룸타입 표기 별칭 (엠클릭 표기 → 마스터 이름)
       r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
       return r;
     });
@@ -4164,7 +4191,7 @@ function loadResortMaster(){
       try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
       saveResortMaster();
     }
-  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomMeta:normRoomMeta(d)})); }
+  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomAlias:{}, roomMeta:normRoomMeta(d)})); }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
   if(!commonMaster.memberPax || !Object.keys(commonMaster.memberPax).length){
@@ -4187,7 +4214,7 @@ function saveResortMaster(){
 }
 function resetResortMaster(){
   if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·항공요금·보유블록 정보가 사라집니다)')) return;
-  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])], roomExceptions:[], roomMeta:normRoomMeta(d)}));
+  resortMaster=RESORT_DEFAULTS.map(d=>({...d, rooms:{...(d.rooms||{})}, aliases:[...(d.aliases||[])], roomExceptions:[], roomAlias:{}, roomMeta:normRoomMeta(d)}));
   commonMaster={...COMMON_DEFAULTS};
   saveResortMaster();
   if(typeof blkSyncFromResort==='function') blkSyncFromResort();
@@ -4249,6 +4276,7 @@ function importMaster(input){
       const s = data.resortMaster.find(x=>x.key===def.key);
       const r = s ? {...def, ...s} : {...def};
       if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];   // 구버전 마스터 파일 호환
+      r.roomAlias = normRoomAlias(r);
       r.roomMeta = normRoomMeta(r);
       return r;
     });
@@ -4330,10 +4358,55 @@ function rmRoomsRows(r){
       onkeydown="if(event.key==='Enter')rmAddRoom('${r.key}')" title="1방 정원(명)">
     <span class="rm-unit">인</span>
     <button class="btn-sm" style="padding:4px 10px" onclick="rmAddRoom('${r.key}')">+ 추가</button></div>`;
+  // 이 룸타입을 가리키는 엠클릭 표기 별칭
+  const alias=r.roomAlias||{};
+  const aliasOf=rt=>Object.keys(alias).filter(k=>alias[k]===rt);
+  const anyAlias=Object.keys(alias).length;
+  if(anyAlias){
+    html += `<div class="rmr-alias-box"><div class="rmr-alias-hd">엠클릭 룸타입 표기 별칭 <span style="font-weight:400;color:var(--text3)">— 엠클릭 표에 이 이름으로 찍혀도 해당 룸타입으로 인식합니다</span></div>`
+      + sortRoomTypes(Object.keys(rooms)).filter(rt=>aliasOf(rt).length).map(rt=>
+          `<div class="rmr-alias-row"><b>${rt}</b> ←　`
+          + aliasOf(rt).map(k=>`<span class="rmr-alias-chip">${k.replace(/</g,'&lt;')}<button title="이 별칭 삭제" onclick="rmDelRoomAlias('${r.key}','${k.replace(/'/g,"\\'")}')">✕</button></span>`).join('')
+          + `</div>`).join('')
+      + `</div>`;
+  }
+  html += `<div class="rm-room-row rm-room-grid rmr-add" style="margin-top:6px;border-top:0;padding-top:0">
+    <input class="rm-input text" id="rm-newalias-${r.key}" placeholder="엠클릭 표기 (예: 패밀리룸)" style="width:100%;text-align:left">
+    <select class="rm-input" id="rm-newaliasto-${r.key}" style="grid-column:2/7;width:100%;text-align:left;font-family:var(--sans)">
+      ${sortRoomTypes(Object.keys(rooms)).map(rt=>`<option value="${rt.replace(/"/g,'&quot;')}">→ ${rt}</option>`).join('')}
+    </select>
+    <button class="btn-sm" style="grid-column:7/10;padding:4px 8px;font-size:11px" onclick="rmAddRoomAlias('${r.key}')">+ 별칭</button></div>`;
   const need = Object.keys(rooms).filter(rt=>!(meta[rt]&&meta[rt].pax>0));
   if(need.length) html += `<div class="rmr-warn">▲ 정원 미입력: <b>${need.join(', ')}</b> — 인원을 객실 수로 환산할 수 없어 대기 전환 점검이 1인 1실로 보수적으로 잡힙니다.</div>`;
   html += `<div class="rm-hint" style="margin-top:6px">정원 = 1방에 몇 명이 자는가(트윈 2 · 4인실 4). 「온라인」은 홈페이지 예약에 노출할 룸타입 표시용입니다.</div>`;
   return html;
+}
+
+/* 룸타입 표기 별칭 추가·삭제 */
+function rmAddRoomAlias(key){
+  const r=resortMaster.find(x=>x.key===key); if(!r) return;
+  const from=(document.getElementById('rm-newalias-'+key)||{}).value||'';
+  const to=(document.getElementById('rm-newaliasto-'+key)||{}).value||'';
+  const f=String(from).trim();
+  if(!f){ alert('엠클릭에 찍히는 표기를 입력해주세요.'); return; }
+  if(!to){ alert('연결할 룸타입을 선택해주세요.'); return; }
+  if(f===to){ alert('같은 이름은 별칭이 될 수 없습니다.'); return; }
+  if(Object.prototype.hasOwnProperty.call(r.rooms||{}, f)){
+    alert(`「${f}」는 이미 등록된 룸타입입니다. 별칭이 아니라 룸타입 자체를 정리하세요.`); return;
+  }
+  r.roomAlias=r.roomAlias||{};
+  const before=r.roomAlias[f];
+  r.roomAlias[f]=to;
+  logChange(r.name, '룸타입 별칭', before?`${f} → ${before}`:'', `${f} → ${to}`);
+  saveResortMaster(); blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
+}
+function rmDelRoomAlias(key, from){
+  const r=resortMaster.find(x=>x.key===key); if(!r||!r.roomAlias) return;
+  const to=r.roomAlias[from];
+  if(!confirm(`별칭 「${from} → ${to}」을 지울까요?\n\n엠클릭 표에 「${from}」으로 찍히면 보유미등록이 됩니다.`)) return;
+  delete r.roomAlias[from];
+  logChange(r.name, '룸타입 별칭', `${from} → ${to}`, '');
+  saveResortMaster(); blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
 }
 
 /* 룸타입 정원(1방 인원) */
@@ -4375,9 +4448,15 @@ function rmRenameRoom(key, idx, raw){
   Object.keys(r.rooms).forEach(k2=>{ next[k2===oldName?name:k2]=r.rooms[k2]; });  // 순서 유지
   r.rooms=next;
   if(r.roomMeta && r.roomMeta[oldName]){ r.roomMeta[name]=r.roomMeta[oldName]; delete r.roomMeta[oldName]; }
+  // 엠클릭 표에는 옛 이름이 그대로 찍히므로, 옛 표기를 별칭으로 남겨 매칭이 끊기지 않게 한다
+  r.roomAlias=r.roomAlias||{};
+  Object.keys(r.roomAlias).forEach(k=>{ if(r.roomAlias[k]===oldName) r.roomAlias[k]=name; });
+  delete r.roomAlias[name];
+  if(!Object.prototype.hasOwnProperty.call(r.rooms, oldName)) r.roomAlias[oldName]=name;
   let moved=0;
   (r.roomExceptions||[]).forEach(e=>{ if(e.room===oldName){ e.room=name; moved++; } });
-  logChange(r.name, '룸타입 이름', oldName, name+(moved?` (기간 예외 ${moved}건 함께 이동)`:''));
+  const addedAlias=r.roomAlias[oldName]===name;
+  logChange(r.name, '룸타입 이름', oldName, name+(moved?` (기간 예외 ${moved}건 함께 이동)`:'')+(addedAlias?` · 「${oldName}」 별칭 자동 등록`:''));
   saveResortMaster();
   blkSyncFromResort(); renderResortMaster(); if(blkParsed) blkRender();
 }
@@ -4971,6 +5050,7 @@ function updateResort(key, field, val, el){
     else {
       delete r.rooms[rt];
       if(r.roomMeta) delete r.roomMeta[rt];
+      if(r.roomAlias) Object.keys(r.roomAlias).forEach(k=>{ if(r.roomAlias[k]===rt) delete r.roomAlias[k]; });
       // 룸타입을 지우면 그 룸타입의 기간 예외도 같이 정리 (적용되지 않는 고아 예외 방지)
       const drop=(r.roomExceptions||[]).filter(e=>e.room===rt);
       if(drop.length){
@@ -5114,7 +5194,7 @@ const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'
 const BLK_CART=['야마나미 전기카트'];
 const BLK_WDMAP={'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
 
-let blkMaster={}, blkPools=[], blkAlias={}, blkOver={}, blkExc={};
+let blkMaster={}, blkPools=[], blkAlias={}, blkOver={}, blkExc={}, blkRoomAlias={};
 let blkParsed=null;        // {rows, days, month}
 let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
@@ -5125,6 +5205,7 @@ let blkDepInited=false;      // 출발조회 칩 최초 기본 전체 적용 여
 function blkSyncFromResort(){
   blkMaster=deriveBlkMaster();
   blkExc=deriveBlkExc();
+  blkRoomAlias=deriveBlkRoomAlias();
   blkAlias=deriveBlkAlias();
   // 풀 = 각 숙소를 1:1 (name=숙소명, hotels=[숙소명], rooms=[] 전체). 임의배정/제외는 리조트 마스터 기준.
   blkPools = resortMaster.map(r=>({
@@ -5148,6 +5229,7 @@ function blkSave(){
 /* 풀 매칭 (hotel은 별칭일 수 있으므로 실제 숙소명으로 해소 후 비교) */
 function blkPoolMatch(pool,hotel,room){
   const name=(blkAlias&&blkAlias[hotel])||hotel;
+  room=(blkRoomAlias&&blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
   let hm = pool.keyword ? name.includes(pool.keyword) : (pool.hotels||[]).includes(name);
   if(!hm) return false;
   if(pool.rooms&&pool.rooms.length && !pool.rooms.includes(room)) return false;
@@ -5276,6 +5358,7 @@ function blkGroupOf(hotel){
 }
 function blkBlockOf(hotel,room){
   const name=blkAlias[hotel]||hotel;
+  room=(blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
   const v=blkMaster[name+'|'+room];
   return (v!=null)?v:null;
 }
@@ -5283,6 +5366,7 @@ function blkBlockOf(hotel,room){
    반환 {qty, exc} — exc가 있으면 기간 예외에서 나온 값. 조회 불가면 null. */
 function blkBlockOnInfo(hotel,room,ymd){
   const name=blkAlias[hotel]||hotel;
+  room=(blkRoomAlias[name]&&blkRoomAlias[name][room])||room;   // 엠클릭 표기 → 마스터 룸타입
   const base=blkMaster[name+'|'+room];
   if(base==null) return null;   // 룸타입 미등록 → 남아 있는 기간 예외도 무시(정원 산정 일관성)
   if(!ymd) return {qty:base, exc:null};
