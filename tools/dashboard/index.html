@@ -486,6 +486,7 @@ tr:hover td{background:#EEF3FA}
 .blk-tag-assign{background:var(--amber-dim);color:var(--amber2);border:1px solid var(--amber)}
 .blk-tag-cart{background:var(--purple-dim);color:var(--purple2);border:1px solid var(--purple2)}
 .blk-tag-unmapped{background:var(--red-dim);color:var(--red2);border:1px solid var(--red)}
+.blk-mtx th.mbreak,.blk-mtx td.mbreak{border-left:3px solid var(--accent)!important}
 .blk-fix-inline{display:inline-flex;align-items:center;gap:4px;vertical-align:middle}
 .blk-fix-sel{font-family:var(--sans);font-size:10px;padding:1px 3px;border:1px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);max-width:96px}
 .blk-fix-go{font-family:var(--sans);font-size:10px;font-weight:700;padding:2px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--surface);color:var(--accent);cursor:pointer;white-space:nowrap}
@@ -3396,7 +3397,7 @@ function vcalSpec(resortName, nights, origin, ym){
    판정: 0실=마감, 1실=임박, 2실 이상=여유.
    여러 달을 등록(vcalBlocks)해두면 월말 출발 연박 구간도 끊김 없이 계산. */
 const VCAL_REM_OK=2;          // 여유 기준(실)
-let vcalBlocks={};            // { 'YYYY-MM': rows[] } 누적(휘발성)
+let vcalBlocks={};            // { 'YYYY-MM': rows[] } 누적 — localStorage에 보관(BLK_MONTH_KEEP개월)
 /* 블록 데이터 존재: 누적 등록분 또는 현재 붙여넣기 어느 쪽이든 */
 function vcalHasBlock(){
   if(Object.keys(vcalBlocks).length) return true;
@@ -3458,7 +3459,7 @@ function vcalAvailLine(av){
 }
 /* ── 요금달력 등록월 누적 관리 ── */
 function vcalRegisterMonth(){
-  if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows || !blkParsed.rows.length){
+  if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows){
     alert('먼저 호텔 블록 표를 붙여넣어 주세요.'); return;
   }
   // 월별호텔수배현황 표는 날짜에 월 표시가 없어 셀렉터가 틀려도 모를 수 있음 → 등록 시 월을 한 번 더 확정
@@ -3469,12 +3470,14 @@ function vcalRegisterMonth(){
   if(!/^\d{4}-\d{2}$/.test(ym)){ alert('YYYY-MM 형식으로 입력해주세요. (예: 2026-07)'); return; }
   const dup=!!vcalBlocks[ym];
   vcalBlocks[ym]=blkParsed.rows.slice();          // 스냅샷 복사
+  vcalSaveMonths();
   renderVcalRegBar();
   if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
-  alert(`${ym} 블록을 요금 달력에 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n월말~월초 연박 가능여부를 보려면 인접한 달도 등록해주세요.\n새로고침 시 초기화됩니다.`);
+  alert(`${ym} 블록을 요금 달력에 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n월말~월초 연박 가능여부를 보려면 인접한 달도 등록해주세요.\n보관 기간 ${BLK_MONTH_KEEP}개월.`);
 }
 function vcalUnregisterMonth(ym){
   delete vcalBlocks[ym];
+  vcalSaveMonths();
   renderVcalRegBar();
   if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
 }
@@ -5196,7 +5199,8 @@ loadResortMaster();
 /* ════════════════════════════════════════════════════════════
    ② 호텔 블록 — 엠클릭 붙여넣기 기반 즉석 분석
 ════════════════════════════════════════════════════════════ */
-const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'mt_notify_blkAlias',over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth'};
+const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'mt_notify_blkAlias',over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths'};
+const BLK_MONTH_KEEP=3;   // 등록월 보관 개월 수(지난 달 자동 정리)
 
 /* 기본 보유 마스터 (블록 대시보드 실데이터에서 추출) — 호텔|룸타입 → 보유 */
 /* 카트(숙소 아님) — 매트릭스에서 분리해 별도 전기카트 섹션 */
@@ -5209,6 +5213,7 @@ let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
 let blkDepPoolSel=new Set(); // 출발조회 선택 풀
 let blkDepInited=false;      // 출발조회 칩 최초 기본 전체 적용 여부 (이후 사용자 선택 존중)
+let blkSpan=1;               // 1=이 달만, 2=다음 달까지 이어보기(인접 2개월)
 
 /* 리조트 마스터에서 호텔 블록 데이터 재생성 — 보유/별칭/임의배정/풀 단일 출처 */
 function blkSyncFromResort(){
@@ -5229,6 +5234,32 @@ function blkLoad(){
   if(!resortMaster.length) loadResortMaster();
   blkSyncFromResort();
   try{ blkOver=JSON.parse(localStorage.getItem(BLK_STORE.over)||'{}'); }catch(e){ blkOver={}; }
+  // 구 형식(호텔|룸|DD) → 날짜 형식(호텔|룸|YYYY-MM-DD).
+  // 이어보기에서 7/15와 8/15가 같은 칸으로 취급되던 것을 막는다.
+  // 월을 알 수 없는 값은 버린다 — 개인 임시 시뮬레이션이라 손실이 크지 않다.
+  const savedM=(localStorage.getItem(BLK_STORE.month)||'').trim();
+  const migrated={};
+  Object.keys(blkOver).forEach(k=>{
+    const p=k.split('|');
+    if(p.length===3 && /^\d{2}$/.test(p[2])){
+      if(/^\d{4}-\d{2}$/.test(savedM)) migrated[`${p[0]}|${p[1]}|${savedM}-${p[2]}`]=blkOver[k];
+    } else migrated[k]=blkOver[k];
+  });
+  blkOver=migrated;
+  vcalLoadMonths();
+}
+/* ── 등록월 영속화 (예전엔 휘발성이라 새로고침하면 월 경계 계산이 매번 끊겼다) ── */
+function vcalSaveMonths(){
+  try{ localStorage.setItem(BLK_STORE.months, JSON.stringify(vcalBlocks)); }catch(e){}
+}
+function vcalLoadMonths(){
+  try{
+    const o=JSON.parse(localStorage.getItem(BLK_STORE.months)||'{}');
+    const n=new Date(), c=new Date(n.getFullYear(), n.getMonth()-BLK_MONTH_KEEP, 1);
+    const cut=`${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,'0')}`;
+    Object.keys(o).forEach(ym=>{ if(ym<cut) delete o[ym]; });   // 오래된 달 정리
+    vcalBlocks=o;
+  }catch(e){ vcalBlocks={}; }
 }
 function blkSave(){
   try{ localStorage.setItem(BLK_STORE.over,JSON.stringify(blkOver)); }catch(e){}
@@ -5391,10 +5422,35 @@ function blkBlockOn(hotel,room,ymd){
   const r=blkBlockOnInfo(hotel,room,ymd);
   return r?r.qty:null;
 }
-/* blkParsed 기준 일(DD) → YYYY-MM-DD. 붙여넣기 전이면 null. */
-function blkYmd(day){
-  if(!blkParsed||!blkParsed.month||!day) return null;
-  return blkParsed.month+'-'+String(day).padStart(2,'0');
+/* 그날 그 풀의 사용 객실 수. 그 달이 등록돼 있지 않으면 null(= 판단 보류).
+   달을 넘는 연박도 이 함수로 하루씩 조회하면 경계가 사라진다. */
+function blkUsedOn(pool, ymd){
+  const ym=ymd.slice(0,7), dd=ymd.slice(8,10);
+  const rows=(blkParsed && blkParsed.month===ym) ? blkParsed.rows : vcalRowsForMonth(ym);
+  if(!rows) return null;
+  let sum=0;
+  rows.forEach(r=>{ if(r.day===dd && blkPoolMatch(pool, r.hotel, r.room)) sum+=r.used; });
+  return sum;
+}
+/* Date → YYYY-MM-DD (로컬 기준) */
+function blkFmtYmd(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+/* 출발일 d(일)에서 nights박 구간의 최소 잔여.
+   반환 {rem} | {spill:'YYYY-MM'} — spill이면 그 달 블록이 등록되지 않아 판단 보류.
+   예전에는 달을 넘으면 그 출발편을 통째로 버려서, 월말 출발편이 조용히 사라졌다. */
+function blkSpanRemain(pool, y, m, d, nights){
+  let cur=new Date(y, m-1, d), mn=Infinity;
+  for(let k=0;k<nights;k++){
+    const ymd=blkFmtYmd(cur);
+    const used=blkUsedOn(pool, ymd);
+    if(used===null) return {spill:ymd.slice(0,7)};
+    const cap=blkPoolCapOn(pool, ymd);
+    if(cap==null) return {spill:ymd.slice(0,7)};
+    mn=Math.min(mn, cap-used);
+    cur.setDate(cur.getDate()+1);
+  }
+  return {rem:mn};
 }
 
 /* ── 붙여넣기 파서 ── */
@@ -5434,9 +5490,39 @@ function blkDays(month, rows){
   for(let d=1;d<=last;d++){
     const dt=new Date(y,m-1,d);
     const dow=dt.getDay();
-    days.push({day:String(d).padStart(2,'0'), dow:BLK_WEEKDAY[dow], wk:(dow===0||dow===6)});
+    const dd=String(d).padStart(2,'0');
+    days.push({day:dd, ym:month, ymd:month+'-'+dd, dow:BLK_WEEKDAY[dow], wk:(dow===0||dow===6)});
   }
   return days;
+}
+/* YYYY-MM 다음 달 */
+function nextYm(ym){
+  const [y,m]=String(ym).split('-').map(Number);
+  const d=new Date(y, m, 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+/* 화면에 표시할 월 목록. 이어보기라도 다음 달이 등록돼 있지 않으면 이 달만. */
+function blkViewMonths(){
+  if(!blkParsed) return [];
+  const m=blkParsed.month;
+  if(blkSpan!==2) return [m];
+  const nx=nextYm(m);
+  return vcalRowsForMonth(nx) ? [m, nx] : [m];
+}
+/* 표시 대상 rows — 각 행에 ym을 붙인다 (달마다 day가 01부터 다시 시작하므로) */
+function blkViewRows(){
+  const out=[];
+  blkViewMonths().forEach(ym=>{
+    const rows=(blkParsed && ym===blkParsed.month) ? blkParsed.rows : (vcalRowsForMonth(ym)||[]);
+    rows.forEach(r=>out.push({...r, ym}));
+  });
+  return out;
+}
+/* 표시 대상 날짜 열 */
+function blkViewDays(){
+  const ms=blkViewMonths(), out=[];
+  ms.forEach((ym,i)=>blkDays(ym).forEach((d,j)=>out.push({...d, monthIdx:i, mfirst:(i>0&&j===0)})));
+  return out;
 }
 
 /* 붙여넣기 이벤트 */
@@ -5460,7 +5546,7 @@ function blkRender(){
   const text=document.getElementById('blk-paste').value;
   const month=document.getElementById('blk-month').value||'2026-05';
   const rows=blkParse(text);
-  if(!rows||!rows.length){
+  if(!rows){                    // 표 형식을 못 알아봄 (사용 0인 달은 빈 배열로 정상 처리)
     blkParsed=null;
     document.getElementById('blk-status-result').style.display='none';
     document.getElementById('blk-unmapped-card').style.display='none';
@@ -5476,7 +5562,9 @@ function blkRenderAll(){
   if(!blkParsed) return;
   const rows=blkParsed.rows;
   const hotels=[...new Set(rows.map(r=>r.hotel))];
-  document.getElementById('blk-paste-meta').textContent=`✓ ${hotels.length}개 호텔 · ${rows.length}개 셀 인식`;
+  document.getElementById('blk-paste-meta').textContent = rows.length
+    ? `✓ ${hotels.length}개 호텔 · ${rows.length}개 셀 인식`
+    : '✓ 표 인식 — 이 달은 사용된 객실이 없습니다 (등록해두면 월 경계 연박이 계산됩니다)';
   document.getElementById('blk-status-result').style.display='block';
   blkRenderMonthNav();
   blkRenderHotelChips();
@@ -5496,7 +5584,7 @@ function blkRenderMonthNav(){
   const nav=document.getElementById('blk-monthnav'); if(!nav) return;
   const ms=(typeof vcalBlocks!=='undefined')?Object.keys(vcalBlocks).sort():[];
   // 등록월이 2개 미만이면 전환 의미 없음 → 숨김
-  if(ms.length<2){ nav.style.display='none'; return; }
+  if(ms.length<2){ nav.style.display='none'; blkSpan=1; return; }
   nav.style.display='flex';
   const cur=blkParsed?blkParsed.month:'';
   const idx=ms.indexOf(cur);
@@ -5507,12 +5595,28 @@ function blkRenderMonthNav(){
     <button class="btn-sm" onclick="blkLoadMonth('${prev}')" ${prev?'':'disabled'} style="${prev?'':'opacity:.4;cursor:not-allowed'}">‹</button>`;
   html+=ms.map(ym=>`<button class="btn-sm" onclick="blkLoadMonth('${ym}')" style="${ym===cur?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${mlabel(ym)}</button>`).join('');
   html+=`<button class="btn-sm" onclick="blkLoadMonth('${next}')" ${next?'':'disabled'} style="${next?'':'opacity:.4;cursor:not-allowed'}">›</button>`;
+  // 이어보기 — 다음 달이 등록돼 있을 때만
+  const nx=cur?nextYm(cur):'';
+  const canSpan=!!(nx && vcalBlocks[nx]);
+  const nl=ym=>parseInt(String(ym).split('-')[1]);
+  html+=`<span style="width:1px;height:18px;background:var(--border2);margin:0 4px"></span>
+    <span style="font-size:12px;font-weight:700;color:var(--accent2)">표시 기간</span>
+    <button class="btn-sm" onclick="blkSetSpan(1)" style="${blkSpan===1?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${cur?nl(cur)+'월':'이 달'}만</button>
+    <button class="btn-sm" onclick="blkSetSpan(2)" ${canSpan?'':'disabled'}
+      style="${!canSpan?'opacity:.4;cursor:not-allowed':(blkSpan===2?'background:var(--accent);color:#fff;border-color:var(--accent)':'')}"
+      title="${canSpan?'다음 달까지 이어서 봅니다':'다음 달('+(nx||'')+')이 등록되지 않았습니다'}">${cur&&nx?`${nl(cur)}~${nl(nx)}월`:'이어보기'} 이어보기</button>`;
   if(idx<0) html+=`<span class="muted" style="font-size:11px;margin-left:6px">※ 지금 보는 ${cur||'표'}는 미등록 상태입니다(붙여넣기 원본)</span>`;
   nav.innerHTML=html;
+}
+/* 표시 기간 전환 (1=이 달만, 2=다음 달까지 인접 2개월) */
+function blkSetSpan(n){
+  blkSpan=(n===2)?2:1;
+  if(blkParsed) blkRenderAll();
 }
 /* 등록해둔 달을 현재 현황 표로 로드 (그 달 기준으로 합계·필터·출발조회까지 전환) */
 function blkLoadMonth(ym){
   if(!ym || typeof vcalBlocks==='undefined' || !vcalBlocks[ym]) return;
+  if(blkSpan===2 && !vcalBlocks[nextYm(ym)]) blkSpan=1;   // 다음 달이 없으면 이어보기 해제
   blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
   // 출발년월 셀렉터도 동기화(엑셀·PNG 파일명 등에서 사용)
   const msel=document.getElementById('blk-month'); if(msel) msel.value=ym;
@@ -5641,8 +5745,8 @@ function blkSetMode(m){
 
 /* 사용수 집계: 표시단위|룸타입|day → used */
 function blkUsageMap(){
-  const map={}; // unit -> room -> day -> used
-  blkParsed.rows.forEach(r=>{
+  const map={}; // unit -> room -> YYYY-MM-DD -> used
+  blkViewRows().forEach(r=>{
     if(blkTypeOf(r.hotel)==='cart') return;
     let unit;
     if(blkMode==='integrated'){ const g=blkGroupOf(r.hotel); unit=g||r.hotel; }
@@ -5650,9 +5754,10 @@ function blkUsageMap(){
     // 룸타입 별칭이 걸려 있으면 그 룸타입 행에 합산한다.
     // 합치지 않으면 옛 표기 행이 따로 남아 같은 보유가 두 행에 붙어 이중 계산된다.
     const room=blkResolveRoom(r.hotel, r.room);
+    const ymd=r.ym+'-'+r.day;
     map[unit]=map[unit]||{};
     map[unit][room]=map[unit][room]||{};
-    map[unit][room][r.day]=(map[unit][room][r.day]||0)+r.used;
+    map[unit][room][ymd]=(map[unit][room][ymd]||0)+r.used;
   });
   return map;
 }
@@ -5686,7 +5791,8 @@ function blkSellStopUnit(unit){
 
 function blkRenderStatus(){
   if(!blkParsed) return;
-  const {days,month}=blkParsed;
+  const {month}=blkParsed;
+  const days=blkViewDays();
   const usage=blkUsageMap();
   let units=blkDisplayUnits();
   if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
@@ -5694,7 +5800,9 @@ function blkRenderStatus(){
   // 정렬: 블록형 먼저, 임의배정형 뒤
   units.sort((a,b)=>{ const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0; return aa-bb || a.localeCompare(b,'ko'); });
 
-  document.getElementById('blk-status-sub').textContent=`${month} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
+  const vms=blkViewMonths();
+  const spanLabel=vms.length>1?`${vms[0]} ~ ${vms[vms.length-1]} 이어보기`:month;
+  document.getElementById('blk-status-sub').textContent=`${spanLabel} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
 
   // 요약 박스: 블록형 기준 마감/임박 날·칸 수
   let cellMaegam=0, cellImbak=0, cellOk=0, assignCells=0;
@@ -5702,13 +5810,13 @@ function blkRenderStatus(){
     const rooms=usage[u]||{};
     Object.keys(rooms).forEach(rm=>{
       days.forEach(d=>{
-        const used=rooms[rm][d.day]||0;
+        const used=rooms[rm][d.ymd]||0;
         if(used===0) return;
         if(blkIsAssignUnit(u)){ assignCells++; return; }
         const blk=blkBlockForUnit(u,rm);
         if(blk==null) return;
-        const dayBlk=blkBlockOn(u,rm,blkYmd(d.day));
-        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const dayBlk=blkBlockOn(u,rm,d.ymd);
+        const over=blkOver[`${u}|${rm}|${d.ymd}`]||0;
         const rem=(dayBlk+over)-used;
         if(rem<=0) cellMaegam++; else if(rem<=3) cellImbak++; else cellOk++;
       });
@@ -5722,7 +5830,7 @@ function blkRenderStatus(){
 
   // 매트릭스
   let head='<thead><tr><th class="rowhd">호텔 · 룸타입</th>';
-  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
+  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}${d.mfirst?' mbreak':''}">${d.mfirst?`<b style="color:var(--accent2)">${parseInt(d.ym.split('-')[1])}/${parseInt(d.day)}</b>`:parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
   head+='<th class="total-col" title="기간 중 가장 빡빡한 날의 잔여 (잔여 = 보유 − 사용)">최소잔여</th></tr></thead>';
   let body='<tbody>';
   // 선택 합계 행: 호텔 2개 이상 선택 시 맨 위에 합산(룸타입 무시, 객실 단위)
@@ -5740,23 +5848,23 @@ function blkRenderStatus(){
           else {
             capSum+=blk; capHas=true;
             // 날짜별 보유 합 = 그날 마스터 보유(기간 예외 반영) + 그날 오버부킹분
-            days.forEach(d=>{ capByDay[d.day]=(capByDay[d.day]||0)+blkBlockOn(u,rm,blkYmd(d.day))+(blkOver[`${u}|${rm}|${d.day}`]||0); });
+            days.forEach(d=>{ capByDay[d.ymd]=(capByDay[d.ymd]||0)+blkBlockOn(u,rm,d.ymd)+(blkOver[`${u}|${rm}|${d.ymd}`]||0); });
           }
         }
-        days.forEach(d=>{ const used=rooms[rm][d.day]||0; if(used){ useByDay[d.day]=(useByDay[d.day]||0)+used; selTot+=used; } });
+        days.forEach(d=>{ const used=rooms[rm][d.ymd]||0; if(used){ useByDay[d.ymd]=(useByDay[d.ymd]||0)+used; selTot+=used; } });
       });
     });
     const capLabel = hasAssign ? `<span class="blk-tag-type blk-tag-assign" title="임의배정형이 포함되어 보유·잔여는 참고용">임의배정 포함</span>` : (capHas?`<span class="blk-tag-type blk-tag-block">보유 합 ${capSum}</span>`:'');
     body+=`<tr class="blk-sumrow"><td class="rowhd"><b>📊 선택 합계</b> <span class="rt-sub">${blkHotelFilter.size}개 · 객실합산</span> ${capLabel}</td>`;
     days.forEach(d=>{
-      const used=useByDay[d.day]||0;
+      const used=useByDay[d.ymd]||0;
       if(hasAssign || !capHas){ // 잔여 계산 불가 → 사용 합만
-        body+= used? `<td class="b-use" title="사용 합 ${used}">${used}</td>` : `<td class="b-zero">·</td>`;
+        body+= used? `<td class="b-use${d.mfirst?' mbreak':''}" title="사용 합 ${used}">${used}</td>` : `<td class="b-zero${d.mfirst?' mbreak':''}">·</td>`;
       } else {
-        const cap=capByDay[d.day]!=null?capByDay[d.day]:capSum;
+        const cap=capByDay[d.ymd]!=null?capByDay[d.ymd]:capSum;
         const rem=cap-used;
         const top = used===0 ? '·' : rem;
-        body+= `<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 합 ${cap} / 사용 합 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap">${cap}</span></td>`;
+        body+= `<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l${d.mfirst?' mbreak':''}" title="${d.ym} ${parseInt(d.day)}일 · 보유 합 ${cap} / 사용 합 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap">${cap}</span></td>`;
       }
     });
     // 끝 열: 선택 합계의 최소 잔여 (임의배정 포함 시 계산 불가 → '—')
@@ -5764,7 +5872,7 @@ function blkRenderStatus(){
       body+=`<td class="total-col" title="임의배정 포함—잔여 계산 불가">—</td></tr>`;
     } else {
       let minRem=Infinity;
-      days.forEach(d=>{ minRem=Math.min(minRem, (capByDay[d.day]!=null?capByDay[d.day]:capSum)-(useByDay[d.day]||0)); });
+      days.forEach(d=>{ minRem=Math.min(minRem, (capByDay[d.ymd]!=null?capByDay[d.ymd]:capSum)-(useByDay[d.ymd]||0)); });
       body+=`<td class="total-col ${blkClsRemain(minRem)}"><b>${minRem===Infinity?'—':minRem}</b></td></tr>`;
     }
   }
@@ -5781,26 +5889,26 @@ function blkRenderStatus(){
       let rowTot=0, minRem=Infinity, hasUse=false;
       body+=`<tr${blkSellStopUnit(u)?' style="opacity:.5"':''}><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}${ri===0?stopTag:''}</td>`;
       days.forEach(d=>{
-        const used=rooms[rm][d.day]||0;
+        const used=rooms[rm][d.ymd]||0;
         rowTot+=used; if(used>0) hasUse=true;
         if(assign||blk==null){ // 보유를 모르는 행: 종전대로 사용수만
-          body+= used===0 ? `<td class="b-zero">·</td>` : `<td class="b-use">${used}</td>`;
+          body+= used===0 ? `<td class="b-zero${d.mfirst?' mbreak':''}">·</td>` : `<td class="b-use${d.mfirst?' mbreak':''}">${used}</td>`;
           return;
         }
         // 보유형: 사용 유무와 무관하게 그날 보유를 아래 줄에 병기 (날짜별 보유 변동 확인용)
-        const info=blkBlockOnInfo(u,rm,blkYmd(d.day));
+        const info=blkBlockOnInfo(u,rm,d.ymd);
         const dayBlk=info?info.qty:blk;
-        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const over=blkOver[`${u}|${rm}|${d.ymd}`]||0;
         const cap=dayBlk+over;
         const rem=cap-used;
         minRem=Math.min(minRem, rem);
         const top = used===0 ? '·' : rem;
         const excT = (info&&info.exc) ? ` · 기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' ('+info.exc.memo+')':''}` : '';
-        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${over?`${dayBlk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap}${excT} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap${info&&info.exc?' cap-exc':''}">${cap}</span></td>`;
+        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l${d.mfirst?' mbreak':''}" title="${d.ym} ${parseInt(d.day)}일 · 보유 ${over?`${dayBlk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap}${excT} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap${info&&info.exc?' cap-exc':''}">${cap}</span></td>`;
       });
       // 끝 열: 최소 잔여 (임의배정·보유미등록은 계산 불가 → 사용 최대값 표시)
       if(assign||blk==null){
-        let maxUse=0; days.forEach(d=>{ maxUse=Math.max(maxUse, rooms[rm][d.day]||0); });
+        let maxUse=0; days.forEach(d=>{ maxUse=Math.max(maxUse, rooms[rm][d.ymd]||0); });
         body+=`<td class="total-col" title="${assign?'임의배정—잔여 계산 안 함':'보유 미등록'} / 일 최대 사용 ${maxUse}">${assign?'배정':'—'}</td></tr>`;
       } else {
         body+=`<td class="total-col ${blkClsRemain(minRem)}" title="기간 중 최소 잔여">${minRem===Infinity?'—':minRem}</td></tr>`;
@@ -5815,7 +5923,8 @@ function blkRenderStatus(){
 /* 현황 매트릭스 데이터 산출 (엑셀·PNG 공용): 행=호텔·룸타입, 열=1~말일, 값=잔여/사용 */
 function blkStatusMatrix(){
   if(!blkParsed) return null;
-  const {days,month}=blkParsed;
+  const {month}=blkParsed;
+  const days=blkViewDays();
   const usage=blkUsageMap();
   let units=blkDisplayUnits();
   if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
@@ -5827,11 +5936,11 @@ function blkStatusMatrix(){
     sortRoomTypes(Object.keys(rooms)).forEach(rm=>{
       const blk=assign?null:blkBlockForUnit(u,rm);
       const cells=days.map(d=>{
-        const used=rooms[rm][d.day]||0;
+        const used=rooms[rm][d.ymd]||0;
         if(assign||blk==null) return {kind:assign?'use':'unmapped', used, txt:used||'', rem:null, cap:null};
-        const info=blkBlockOnInfo(u,rm,blkYmd(d.day));
+        const info=blkBlockOnInfo(u,rm,d.ymd);
         const dayBlk=info?info.qty:blk;
-        const over=blkOver[`${u}|${rm}|${d.day}`]||0;
+        const over=blkOver[`${u}|${rm}|${d.ymd}`]||0;
         const cap=dayBlk+over;
         const rem=cap-used;
         return {kind:'rem', used, rem, cap, exc:!!(info&&info.exc), txt:used===0?'':rem};
@@ -5846,7 +5955,7 @@ function blkExportExcel(){
   const mtx=blkStatusMatrix(); if(!mtx||!mtx.rows.length){ alert('표시할 데이터가 없습니다.'); return; }
   const {month,days,rows}=mtx;
   // AOA 구성: 헤더 2행(날짜/요일) + 데이터. 셀값은 잔여 숫자, 마감/임박은 상태 텍스트 병기.
-  const header1=['호텔 · 룸타입','보유'].concat(days.map(d=>parseInt(d.day)));
+  const header1=['호텔 · 룸타입','보유'].concat(days.map(d=>`${parseInt(d.ym.split('-')[1])}/${parseInt(d.day)}`));
   const header2=['',''].concat(days.map(d=>d.dow));
   const aoa=[header1, header2];
   rows.forEach(r=>{
@@ -5897,18 +6006,18 @@ function blkExportPng(){
 }
 function blkRenderCart(){
   if(!blkParsed) return;
-  const {days}=blkParsed;
-  const cartRows=blkParsed.rows.filter(r=>blkTypeOf(r.hotel)==='cart');
+  const days=blkViewDays();
+  const cartRows=blkViewRows().filter(r=>blkTypeOf(r.hotel)==='cart');
   if(!cartRows.length){
     document.getElementById('blk-cart-summary').innerHTML='<div class="sum-box"><div class="sum-label">전기카트</div><div class="sum-val muted">데이터 없음</div></div>';
     document.getElementById('blk-cart-mtx').innerHTML='';
     return;
   }
   const map={}; // hotel|room -> day -> used
-  cartRows.forEach(r=>{ const k=r.hotel+'|'+r.room; map[k]=map[k]||{}; map[k][r.day]=(map[k][r.day]||0)+r.used; });
+  cartRows.forEach(r=>{ const k=r.hotel+'|'+r.room; const ymd=r.ym+'-'+r.day; map[k]=map[k]||{}; map[k][ymd]=(map[k][ymd]||0)+r.used; });
   let totUse=0; let maegam=0;
   let head='<thead><tr><th class="rowhd">카트</th>';
-  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}">${parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
+  days.forEach(d=>{ head+=`<th class="${d.wk?'wk':''}${d.mfirst?' mbreak':''}">${d.mfirst?`<b style="color:var(--accent2)">${parseInt(d.ym.split('-')[1])}/${parseInt(d.day)}</b>`:parseInt(d.day)}<br><span style="font-size:9px">${d.dow}</span></th>`; });
   head+='<th class="total-col">사용계</th></tr></thead>';
   let body='<tbody>';
   Object.keys(map).forEach(k=>{
@@ -5918,11 +6027,11 @@ function blkRenderCart(){
     let rowTot=0;
     body+=`<tr><td class="rowhd">${h} <span class="rt-sub">${rm}</span> <span class="blk-tag-type blk-tag-cart">보유 ${cap}</span></td>`;
     days.forEach(d=>{
-      const used=map[k][d.day]||0; rowTot+=used;
+      const used=map[k][d.ymd]||0; rowTot+=used;
       const rem=cap-used;
       if(used>0&&rem<=0) maegam++;
       // 객실 표와 동일하게 위=잔여 / 아래=보유 2줄 표기
-      body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${used===0?'·':rem}</span><span class="cell-cap">${cap}</span></td>`;
+      body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l${d.mfirst?' mbreak':''}" title="보유 ${cap} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${used===0?'·':rem}</span><span class="cell-cap">${cap}</span></td>`;
     });
     totUse+=rowTot;
     body+=`<td class="total-col">${rowTot}</td></tr>`;
@@ -5938,7 +6047,7 @@ function blkRenderCart(){
 function blkFillSimSelectors(){
   if(!blkParsed) return;
   const daySel=document.getElementById('blk-sim-day');
-  daySel.innerHTML=blkParsed.days.map(d=>`<option value="${d.day}">${parseInt(d.day)}일(${d.dow})</option>`).join('');
+  daySel.innerHTML=blkViewDays().map(d=>`<option value="${d.ymd}">${parseInt(d.ym.split('-')[1])}/${parseInt(d.day)}(${d.dow})</option>`).join('');
   const hotelSel=document.getElementById('blk-sim-hotel');
   const units=blkDisplayUnits().filter(u=>!blkIsAssignUnit(u)); // 블록형만 시뮬레이션
   hotelSel.innerHTML='<option value="">전체</option>'+units.map(u=>`<option value="${u}">${u}</option>`).join('');
@@ -5956,7 +6065,7 @@ function blkRenderSim(){
     sortRoomTypes(Object.keys(rooms)).forEach(rm=>{
       const blk=blkBlockForUnit(u,rm);
       if(blk==null) return;
-      const info=blkBlockOnInfo(u,rm,blkYmd(day));
+      const info=blkBlockOnInfo(u,rm,day);
       const dayBlk=info?info.qty:blk;               // 그날 마스터 보유(기간 예외 반영)
       const used=rooms[rm][day]||0;
       const over=blkOver[`${u}|${rm}|${day}`]||0;
@@ -5967,7 +6076,7 @@ function blkRenderSim(){
       const blkPct=cap>dayBlk?Math.round(dayBlk/cap*100):100;
       html+=`<div class="blk-sim-card">
         <h4>${u} · ${rm}</h4>
-        <div class="sim-sub">${parseInt(day)}일 · 보유 ${dayBlk}${info&&info.exc?` <span style="color:var(--accent2)" title="기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' · '+info.exc.memo:''} (기본 ${blk})">(기간예외)</span>`:''}${over?` (+오버 ${over})`:''} · 사용 ${used} · 잔여 <b style="color:${rem<=0?'var(--red)':rem<=3?'var(--amber2)':'var(--green2)'}">${rem}</b></div>
+        <div class="sim-sub">${day.slice(5).replace('-','/')} · 보유 ${dayBlk}${info&&info.exc?` <span style="color:var(--accent2)" title="기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' · '+info.exc.memo:''} (기본 ${blk})">(기간예외)</span>`:''}${over?` (+오버 ${over})`:''} · 사용 ${used} · 잔여 <b style="color:${rem<=0?'var(--red)':rem<=3?'var(--amber2)':'var(--green2)'}">${rem}</b></div>
         <div class="blk-bar-row">
           <div class="blk-bar-label"><span>사용률</span><span>${pct}%${overFlag?' ⚠ 오버부킹':''}</span></div>
           <div class="blk-bar-track">
@@ -6040,6 +6149,7 @@ function blkRenderDepart(){
     const cap=blkPoolCapBase(pool);       // 정원 등록 여부 판정 + 헤더 배지용(기본 정원)
     const capOn=d=>blkPoolCapOn(pool, `${month}-${String(d).padStart(2,'0')}`);  // 그날 정원(기간 예외 반영)
     const used=blkPoolUsedByDay(pool);
+    const spills=[];                      // 다음 달 미등록으로 판단 보류된 출발편
     const dep=resortDepartForPool(pool);  // 리조트 마스터에서 출발 정보 조회
     const pats=blkParseDepart(dep.depart);
     const assign=blkIsAssignPool(pool);
@@ -6055,9 +6165,9 @@ function blkRenderDepart(){
           const dt=new Date(y,m-1,d); const dow=dt.getDay(); const dd=String(d).padStart(2,'0');
           pats.forEach(p=>{
             if(p.free||p.dow!==dow) return;
-            let mn=Infinity,valid=true;
-            for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,capOn(cd)-(used[String(cd).padStart(2,'0')]||0)); }
-            if(valid&&mn>=minRem) departs.push({day:dd,dow:WK[dow],label:p.label,rem:mn});
+            const sp=blkSpanRemain(pool, y, m, d, p.nights);
+            if(sp.spill){ spills.push({day:d, dow:WK[dow], label:p.label, ym:sp.spill}); return; }
+            if(sp.rem>=minRem) departs.push({day:dd,dow:WK[dow],label:p.label,rem:sp.rem});
           });
         }
       }
@@ -6073,7 +6183,7 @@ function blkRenderDepart(){
       html+='<div class="muted" style="font-size:12px">임의배정형 — 그때그때 객실을 까는 방식이라 잔여 계산 대신 일자별 사용수만 아래 현황에서 확인하세요.</div>';
     } else if(cap==null){
       html+='<div class="muted" style="font-size:12px">보유 마스터에 정원이 없어 계산할 수 없습니다.</div>';
-    } else if(!departs.length){
+    } else if(!departs.length && !spills.length){
       html+=`<div class="muted" style="font-size:12px">${minRem}실 이상 출발 가능한 일정이 없습니다.</div>`;
     } else {
       html+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+departs.map(x=>{
@@ -6081,6 +6191,15 @@ function blkRenderDepart(){
         const color=x.rem<=2?'var(--amber2)':'var(--green2)';
         return `<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:${x.rem<=2?'var(--amber-dim)':'var(--green-dim)'};color:${color};font-weight:600;border:1px solid ${x.rem<=2?'var(--amber)':'var(--green)'}">${m}/${parseInt(x.day)}(${x.dow}) ${x.label} · ${x.rem}실</span>`;
       }).join('')+'</div>';
+    }
+    // 달을 넘어가는데 그 달 블록이 없어 판단을 못 한 출발편 — 조용히 빼지 않고 드러낸다
+    if(spills.length){
+      const ms=[...new Set(spills.map(x=>x.ym))].sort().join('·');
+      html+=`<div style="margin-top:8px;font-size:11.5px;color:var(--amber2)">
+        ⚠ 아래 출발편은 숙박이 <b>${ms}</b>로 이어지는데 그 달 블록이 등록되지 않아 판단을 보류했습니다 —
+        그 달 표를 붙여넣고 「요금 달력에 이 달 등록」하면 계산됩니다.
+        <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:5px">${spills.map(x=>
+          `<span style="padding:3px 9px;border-radius:6px;background:var(--amber-dim);border:1px solid var(--amber);font-weight:600">${m}/${x.day}(${x.dow}) ${x.label}</span>`).join('')}</div></div>`;
     }
     // 일자별 잔여 (막힌 출발편도 그날 잔여 확인용)
     if(!assign && cap!=null){
@@ -6130,11 +6249,13 @@ function blkRenderWait(){
       poolCell=`${pool.name} / ${cap!=null?cap:'—'}`;
       if(blkIsAssignPool(pool)){ verdict='임의배정(수동확인)'; vcolor='var(--amber2)'; }
       else if(cap==null){ verdict='확인 필요(정원없음)'; vcolor='var(--amber2)'; }
-      else if(!day || dep.slice(0,7)!==blkParsed.month){ verdict='타월/날짜확인'; vcolor='var(--text3)'; remCell=dep.slice(0,7)!==blkParsed.month?'다른 월':'-'; }
+      else if(!day || blkUsedOn(pool, dep)===null){
+        // 그 달 블록이 없으면 판정 불가. 등록해두면 다른 달 팀도 판정된다.
+        verdict='확인 필요(그 달 미등록)'; vcolor='var(--text3)'; remCell=dep?dep.slice(0,7)+' 미등록':'-';
+      }
       else {
-        const used=blkPoolUsedByDay(pool);
         const dcap=blkPoolCapOn(pool, dep);   // 출발일 정원(기간 예외 반영)
-        const rem=dcap-(used[day]||0);
+        const rem=dcap-blkUsedOn(pool, dep);
         if(dcap!==cap) poolCell=`${pool.name} / ${cap} → ${dcap}(예외)`;
         // 인원을 그대로 객실 수와 비교하면 안 된다. 골프투어는 2인 1실이 기본이라
         // 4명 팀은 트윈 2실이면 된다. 룸타입 정원으로 필요 객실 수를 환산한다.
@@ -6216,9 +6337,11 @@ function noticeDepartList(minRem){
         const dow=new Date(y,m-1,d).getDay();
         pats.forEach(p=>{
           if(p.free||p.dow!==dow) return;
-          let mn=Infinity,valid=true;
-          for(let k=0;k<p.nights;k++){ const cd=d+k; if(cd>lastDay){valid=false;break;} mn=Math.min(mn,capOn(cd)-(used[String(cd).padStart(2,'0')]||0)); }
-          if(valid&&mn>=minRem) departs.push({day:d,dow:WK[dow],nights:p.nights,label:p.label,rem:mn});
+          // 다음 달이 미등록이면 손님 공지에는 넣지 않는다(확인되지 않은 일정을 안내하지 않기 위함).
+          // 직원 화면(출발 일정 조회)에는 「판단 보류」로 표시된다.
+          const sp=blkSpanRemain(pool, y, m, d, p.nights);
+          if(sp.spill) return;
+          if(sp.rem>=minRem) departs.push({day:d,dow:WK[dow],nights:p.nights,label:p.label,rem:sp.rem});
         });
       }
     }
