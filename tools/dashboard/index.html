@@ -5232,7 +5232,7 @@ function blkSave(){
 /* 풀 매칭 (hotel은 별칭일 수 있으므로 실제 숙소명으로 해소 후 비교) */
 function blkPoolMatch(pool,hotel,room){
   const name=(blkAlias&&blkAlias[hotel])||hotel;
-  room=(blkRoomAlias&&blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
+  room=blkResolveRoom(hotel,room);
   let hm = pool.keyword ? name.includes(pool.keyword) : (pool.hotels||[]).includes(name);
   if(!hm) return false;
   if(pool.rooms&&pool.rooms.length && !pool.rooms.includes(room)) return false;
@@ -5359,9 +5359,14 @@ function blkGroupOf(hotel){
   const r=resortMaster.find(x=>x.name===name);
   return (r&&r.assign)?r.name:null;
 }
+/* 엠클릭 표기 → 마스터 룸타입. 숙소 별칭까지 해소한 뒤 룸타입 별칭을 본다. */
+function blkResolveRoom(hotel, room){
+  const name=(typeof blkAlias!=='undefined'&&blkAlias&&blkAlias[hotel])||hotel;
+  return (typeof blkRoomAlias!=='undefined'&&blkRoomAlias&&blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
+}
 function blkBlockOf(hotel,room){
   const name=blkAlias[hotel]||hotel;
-  room=(blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
+  room=blkResolveRoom(hotel,room);
   const v=blkMaster[name+'|'+room];
   return (v!=null)?v:null;
 }
@@ -5369,7 +5374,7 @@ function blkBlockOf(hotel,room){
    반환 {qty, exc} — exc가 있으면 기간 예외에서 나온 값. 조회 불가면 null. */
 function blkBlockOnInfo(hotel,room,ymd){
   const name=blkAlias[hotel]||hotel;
-  room=(blkRoomAlias[name]&&blkRoomAlias[name][room])||room;   // 엠클릭 표기 → 마스터 룸타입
+  room=blkResolveRoom(hotel,room);            // 엠클릭 표기 → 마스터 룸타입
   const base=blkMaster[name+'|'+room];
   if(base==null) return null;   // 룸타입 미등록 → 남아 있는 기간 예외도 무시(정원 산정 일관성)
   if(!ymd) return {qty:base, exc:null};
@@ -5582,7 +5587,7 @@ function blkFixAlias(resortName, room, i){
   const el=document.getElementById('blkfix-to-'+i);
   const to=el?el.value:'';
   if(!to){ alert('연결할 룸타입을 선택해주세요.'); return; }
-  if(!confirm(`엠클릭 표기 「${room}」을 마스터의 「${to}」로 연결할까요?\n\n이후 「${room}」으로 찍힌 사용은 「${to}」 보유에서 차감됩니다.`)) return;
+  if(!confirm(`엠클릭 표기 「${room}」을 마스터의 「${to}」로 연결할까요?\n\n· 블록 현황에서 「${room}」 행이 사라지고 「${to}」 행에 사용이 합산됩니다.\n· 이후 「${room}」으로 찍혀도 「${to}」 보유에서 차감됩니다.`)) return;
   r.roomAlias=r.roomAlias||{};
   r.roomAlias[room]=to;
   logChange(r.name, '룸타입 별칭', '', `${room} → ${to}`);
@@ -5632,9 +5637,12 @@ function blkUsageMap(){
     let unit;
     if(blkMode==='integrated'){ const g=blkGroupOf(r.hotel); unit=g||r.hotel; }
     else unit=r.hotel;
+    // 룸타입 별칭이 걸려 있으면 그 룸타입 행에 합산한다.
+    // 합치지 않으면 옛 표기 행이 따로 남아 같은 보유가 두 행에 붙어 이중 계산된다.
+    const room=blkResolveRoom(r.hotel, r.room);
     map[unit]=map[unit]||{};
-    map[unit][r.room]=map[unit][r.room]||{};
-    map[unit][r.room][r.day]=(map[unit][r.room][r.day]||0)+r.used;
+    map[unit][room]=map[unit][room]||{};
+    map[unit][room][r.day]=(map[unit][room][r.day]||0)+r.used;
   });
   return map;
 }
