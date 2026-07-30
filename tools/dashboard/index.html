@@ -430,6 +430,11 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.has-wait::after{content:"";position:absolute;top:2px;right:2px;
   width:5px;height:5px;border-radius:50%;background:#A855F7;box-shadow:0 0 0 1px #fff}
 .blk-tag-wait{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+.blk-team-note{margin-top:10px;font-size:12px;color:var(--text2);
+  background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--amber);
+  border-radius:0 8px 8px 0;padding:9px 12px;line-height:1.6}
+.blk-team-note b{color:var(--ink)}
+.blk-team-note.info{border-left-color:var(--accent)}
 .blk-cellpick{margin-top:12px;border:1px solid var(--border);border-radius:10px;
   background:var(--surface2);padding:12px 14px}
 .blk-cellpick .cp-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
@@ -1136,6 +1141,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
       <div class="tbl-wrap blk-mtx-wrap"><table class="blk-mtx" id="blk-mtx"></table></div>
+      <div id="blk-team-note"></div>
       <div id="blk-cellpick"></div>
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
@@ -6103,7 +6109,40 @@ function blkRenderStatus(){
   body+='</tbody>';
   document.getElementById('blk-mtx').innerHTML=head+body;
   blkFixHeadSync(true);
-  blkRenderPick();          // 다시 그릴 때 열려 있던 선택 패널도 갱신
+  blkTeamNote(usage, tidx);  // 예약 데이터가 표와 안 붙으면 이유를 드러낸다
+  blkRenderPick();           // 다시 그릴 때 열려 있던 선택 패널도 갱신
+}
+
+/* 예약 데이터(teams)가 표의 행과 연결됐는지 알린다.
+   연결이 안 되면 칸이 클릭되지 않고 대기 배지도 안 뜨는데, 아무 말이 없으면
+   「기능이 고장났다」로 읽힌다. 조용히 실패하지 않게 이유를 적는다. */
+function blkTeamNote(usage, tidx){
+  const box=document.getElementById('blk-team-note');
+  if(!box) return;
+  if(typeof teams==='undefined' || !teams || !teams.length){
+    box.className='blk-team-note info';
+    box.innerHTML='⑤ 예약 관리에서 <b>[통합 분석 실행]</b>을 누르면 대기 건수와 날짜 칸 클릭 시 예약 목록이 표시됩니다. (엠클릭 표만 붙여넣은 상태에는 구분값이 없습니다)';
+    return;
+  }
+  // 표에 실제로 있는 (표시단위|룸타입) 조합
+  const rows=new Set();
+  Object.keys(usage).forEach(u=>Object.keys(usage[u]).forEach(rm=>rows.add(u+'|'+rm)));
+  const miss={};
+  let placed=0;
+  Object.keys(tidx).forEach(u=>Object.keys(tidx[u]).forEach(rm=>{
+    const seqs=new Set();
+    Object.keys(tidx[u][rm]).forEach(ymd=>tidx[u][rm][ymd].forEach(t=>seqs.add(t.eventSeq||t.eventNo||t.repName)));
+    if(rows.has(u+'|'+rm)) placed+=seqs.size;
+    else miss[`${u} · ${rm||'(룸타입 없음)'}`]=(miss[`${u} · ${rm||'(룸타입 없음)'}`]||0)+seqs.size;
+  }));
+  const missKeys=Object.keys(miss);
+  if(!missKeys.length){ box.className=''; box.innerHTML=''; return; }
+  box.className='blk-team-note';
+  box.innerHTML=`예약 데이터가 표의 행과 연결되지 않은 건이 있습니다 — 그 숙소·룸타입은 <b>날짜 칸을 눌러도 목록이 나오지 않고 대기 배지도 뜨지 않습니다.</b><br>`
+    +`연결됨 <b>${placed}건</b> · 연결 안 됨 <b>${missKeys.reduce((a,k)=>a+miss[k],0)}건</b> — `
+    +missKeys.slice(0,6).map(k=>`${k} <b>${miss[k]}</b>`).join(' / ')
+    +(missKeys.length>6?` 외 ${missKeys.length-6}종`:'')
+    +`<br><span class="muted">표에 그 숙소·룸타입 행이 없거나(그 달 사용 0) 표기가 달라서입니다. 표기가 다르면 해당 행의 「연결」로 맞추시면 됩니다.</span>`;
 }
 
 /* 날짜 칸을 눌렀을 때 아래에 뜨는 예약 목록 */
