@@ -4078,10 +4078,10 @@ const RESORT_DEFAULTS=[
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
@@ -4234,6 +4234,13 @@ const ROOMS_BEFORE_RENAME={
   yamanami_bessou:{'트윈':15}, yamanami_dome:{'트윈':4},
   sugadaira_onsen:{'트윈':35}, sugadaira_mansion:{}
 };
+/* 기본값이 잘못돼 고친 스칼라 항목의 「고치기 전 기본값」.
+   저장본이 이 값 그대로면(= 손대지 않았으면) 새 기본값으로 올린다.
+   직접 바꾼 값은 건드리지 않는다. airOut 등은 UI에서 수정할 수 있어 통째로 덮으면 안 된다. */
+const FIELD_BEFORE_FIX={
+  fourteen_golf:{airOut:'김해'},      // 포틴힐즈는 인천·김해 둘 다 출발 가능
+  fourteen_caravan:{airOut:'김해'}
+};
 function sameRooms(a,b){
   const k=o=>Object.keys(o||{}).sort().map(x=>x+':'+o[x]).join('|');
   return k(a)===k(b);
@@ -4250,6 +4257,9 @@ function loadResortMaster(){
       MASTER_CODE_OWNED.forEach(k=>{ if(def[k]!==undefined) r[k]=def[k]; });
       // 별칭은 합집합 — 새 표준 별칭을 보장하면서 직접 추가한 별칭도 지킨다
       r.aliases=[...new Set([...(def.aliases||[]), ...(Array.isArray(s&&s.aliases)?s.aliases:[])])];
+      // 기본값을 고친 항목: 저장본이 옛 기본값 그대로일 때만 새 값으로 올린다
+      const fx=s && FIELD_BEFORE_FIX[def.key];
+      if(fx) Object.keys(fx).forEach(k=>{ if(s[k]===fx[k] && def[k]!==undefined) r[k]=def[k]; });
       // 룸타입 구조가 바뀐 숙소: 손대지 않은 옛 기본값이면 새 구조로 올린다
       if(s && ROOMS_BEFORE_RENAME[def.key] && sameRooms(s.rooms, ROOMS_BEFORE_RENAME[def.key])){
         r.rooms={...(def.rooms||{})};
