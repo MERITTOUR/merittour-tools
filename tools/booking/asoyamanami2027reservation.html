@@ -180,6 +180,14 @@
   .stay-lbl::before{content:"";width:6px;height:6px;border-radius:50%;
     background:var(--olive);flex:none}
 
+  /* ── 회원 등급별 예약 가능 인원 ── */
+  .grades{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grades li{background:var(--surface-warm);border:1px solid var(--line-soft);
+    border-radius:12px;padding:13px 16px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .grades .g-name{font-size:15.5px;font-weight:800;color:var(--ink)}
+  .grades .g-cap{font-size:14px;font-weight:800;color:var(--olive-deep);white-space:nowrap}
+  .grades .g-cap small{font-weight:700;color:var(--muted);font-size:12px}
+
   /* ── 지역 · 상품별 안내 ── */
   .jump{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
   .jump a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink-soft);
@@ -221,6 +229,7 @@
     .facts dd{padding-top:2px;border-top:none}
     .member{padding:24px 20px}
     .lodging{grid-template-columns:1fr}
+    .grades{grid-template-columns:1fr}
   }
 
   @media (prefers-reduced-motion:no-preference){
@@ -281,6 +290,24 @@
         </li>
       </ul>
     </div>
+
+    <h3 class="subh" style="margin-top:30px">회원 등급별 예약 가능 인원</h3>
+    <p class="soft" style="margin:0 0 14px">각 회원권 <b style="color:var(--ink)">한 구좌 기준</b> 예약 가능 인원입니다. (기명회원 또는 배우자 포함)</p>
+    <ul class="grades">
+      <li><span class="g-name">다이아몬드 1</span><span class="g-cap">4인 <small>/ 구좌</small></span></li>
+      <li><span class="g-name">다이아몬드 2</span><span class="g-cap">4인 <small>/ 구좌</small></span></li>
+      <li><span class="g-name">EWRC 1</span><span class="g-cap">4인 <small>/ 구좌</small></span></li>
+      <li><span class="g-name">EWRC 2</span><span class="g-cap">4인 <small>/ 구좌</small></span></li>
+      <li><span class="g-name">골드</span><span class="g-cap">2인 <small>/ 구좌</small></span></li>
+      <li><span class="g-name">특별회원</span><span class="g-cap">1~2인 <small>/ 구좌</small></span></li>
+    </ul>
+
+    <h3 class="subh" style="margin-top:26px">예약이 자동 취소될 수 있는 경우</h3>
+    <ul class="notes">
+      <li>한 구좌당 <b>예약 가능 인원 수를 초과</b>하여 예약한 경우 — 초과 인원분이 취소됩니다.</li>
+      <li>우선예약 기간에 <b>기명회원 없이 일반 고객만</b>으로 예약하거나, 출발 전 기명회원을 일반 고객으로 변경한 경우.</li>
+      <li>같은 구좌로 <b>겹치는 날짜에 중복 예약</b>한 경우 — 한 건이 취소됩니다.</li>
+    </ul>
   </section>
 
   <section class="reveal">
@@ -290,6 +317,15 @@
       <dt>접수 방법</dt><dd>메리트투어 예약 홈페이지 <a href="https://www.merittour.co.kr" style="color:var(--olive-deep);font-weight:800;text-decoration:none">www.merittour.co.kr</a></dd>
       <dt>이용 대상 기간</dt><dd>2027년 <span class="tbd">○월 ~ ○월 (확정 예정)</span></dd>
     </dl>
+
+    <h3 class="subh" style="margin-top:26px">예약 회차</h3>
+    <dl class="facts">
+      <dt>월 ~ 화</dt><dd>1회 예약 가능</dd>
+      <dt>화 ~ 수</dt><dd>2회 예약 가능</dd>
+      <dt>수 ~ 목</dt><dd>2회 예약 가능</dd>
+      <dt>합계</dt><dd><b>총 5회 예약 가능</b></dd>
+    </dl>
+    <p class="soft" style="margin:14px 0 0;font-size:14px">※ 같은 기간에 함께 가시려면 회원님 각자 로그인하신 뒤 동일 기간을 설정하여 예약해 주세요.</p>
   </section>
 
   <section class="reveal">

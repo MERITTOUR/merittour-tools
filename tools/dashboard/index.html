@@ -4092,10 +4092,10 @@ const RESORT_DEFAULTS=[
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
-   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:15000, transfer:12000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 화7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
-   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:15000, transfer:12000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 화7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
@@ -4258,8 +4258,8 @@ const ROOMS_BEFORE_RENAME={
 const ALIAS_MOVED={ yamanami_bessou:['아소 야마나미 관내별장','관내별장'] };
 
 const FIELD_BEFORE_FIX={
-  fourteen_golf:{airOut:'김해'},      // 포틴힐즈는 인천·김해 둘 다 출발 가능
-  fourteen_caravan:{airOut:'김해'}
+  fourteen_golf:{airOut:'김해', stay:0, transfer:6000},      // 포틴힐즈는 인천·김해 둘 다 출발 가능
+  fourteen_caravan:{airOut:'김해', stay:0, transfer:6000}    // 체재비 15,000엔 · 송영비 12,000엔
 };
 function sameRooms(a,b){
   const k=o=>Object.keys(o||{}).sort().map(x=>x+':'+o[x]).join('|');
