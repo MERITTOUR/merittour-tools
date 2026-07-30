@@ -1,6 +1,6 @@
 # 엠클릭 데이터 등록소 — Supabase 공유 설계안
 
-> 상태: **설계 · 확인 대기** · 대상: `tools/register/`(신규) · `tools/dashboard/` · `shared/store.js`(신규) · `supabase/`
+> 상태: **결정 완료 · 0단계 착수** · 대상: `tools/register/`(신규) · `tools/dashboard/` · `shared/store.js`(신규) · `supabase/`
 >
 > 목표: 직원 한 명이 엠클릭 파일을 올리면 **전 직원이 같은 데이터를 본다.** 지금은 각자 자기 PC에 올려 각자 분석한다.
 
@@ -16,7 +16,7 @@
 | `special_cases` 테이블 | **스키마 완성** | `supabase/migrations/06_special_cases.sql` |
 | `resort_master` 공유(버전·이력 포함) | **스키마 완성** | `supabase/resort_master_setup.sql` |
 | `reservations` + 알림톡 발송 | **스키마 완성 · 일부 가동** | `supabase/reservations_setup.sql`, `functions/` |
-| **블록표(호텔별 예약현황) 저장소** | **없음** | 스키마·코드 모두 없음 |
+| **블록표(호텔별 예약현황) 저장소** | **스키마 작성됨(미실행)** | `supabase/migrations/07_data_registry_block.sql` |
 | `shared/store.js` 데이터 접근 모듈 | **없음** | `shared/`에 `core.css`·`gate.js`·`util.js`뿐 |
 | 등록 페이지 `tools/register/` | **없음** | |
 | 대시보드 ↔ 등록소 연결 | **없음** | 대시보드는 파일 업로드 → `analyze()` 뿐 |
@@ -30,7 +30,9 @@
 -- 선행: 01_user_access.sql (mt_has_role/mt_is_admin/mt_is_active 헬퍼)
 ```
 
-**그런데 `01_user_access.sql`이 저장소에 없다.** `migrations/`에는 `05`와 `06`만 있고, `mt_has_role`을 정의하는 SQL은 어디에도 없다. 즉 지금 상태로는 **05를 실행할 수 없다**(존재하지 않는 함수를 참조하는 정책이라 생성에서 막힌다).
+**그런데 `01_user_access.sql`이 저장소에 없었다.** `migrations/`에는 `05`와 `06`만 있고 `mt_has_role`을 정의하는 SQL이 어디에도 없어, 05를 실행할 수 없는 상태였다(존재하지 않는 함수를 참조하는 정책이라 생성에서 막힌다).
+
+> **→ 이 커밋에서 `supabase/migrations/01_user_access.sql`을 작성했다.** 아직 실행 전이다.
 
 그리고 `data_registry`의 정책은 전부 `to authenticated` + `mt_has_role(...)`이다.
 
@@ -55,22 +57,24 @@ grant select, insert, update, delete on public.data_registry to authenticated;
 | **블록표(호텔별 예약현황)** | 월 단위로 통째 교체 | 출발월 `YYYY-MM` | ❌ **추가 필요** |
 | **리조트 마스터** | 상시 편집·충돌 가능 | 단일 행 + 버전 | ✅ `resort_master` |
 
-### 2-1. 블록표 저장소 추가 제안
+### 2-1. 블록표 저장소 — `07_data_registry_block.sql`
 
-`data_registry`에 컬럼을 더하는 쪽이 맞다. **같은 달의 세 데이터가 함께 움직여야** 잔여 계산이 맞기 때문이다.
+`data_registry`에 컬럼을 더했다. **같은 달의 세 데이터가 함께 움직여야** 잔여 계산이 맞기 때문이다.
 
 ```sql
 alter table public.data_registry
-  add column if not exists block_rows  jsonb not null default '[]'::jsonb,  -- blkParse() 결과
-  add column if not exists block_month text,                                -- 표의 대상 월(검증용)
-  add column if not exists block_by    text,                                -- 등록자 표시명
-  add column if not exists block_at    timestamptz;                         -- 등록 시각
+  add column if not exists block_rows  jsonb,        -- blkParse() 결과
+  add column if not exists block_raw   text,         -- 붙여넣은 원문(재현용)
+  add column if not exists block_month text,         -- 표가 가리키는 달(검증용)
+  add column if not exists block_by    text,
+  add column if not exists block_at    timestamptz;
 ```
 
-- **파싱 결과를 저장한다**(붙여넣은 원문이 아니라 `blkParse()`가 만든 `[{hotel,room,day,used}]`).
-  원문을 저장하면 파서가 바뀔 때 과거 달이 조용히 달라진다.
-- **원문도 남긴다** — `block_raw text`. 파서 버그를 나중에 재현하려면 원본이 있어야 한다.
+- **파싱 결과를 정본으로 둔다**(원문이 아니라 `blkParse()`가 만든 `[{hotel,room,day,used}]`).
+  원문만 두면 파서가 바뀔 때 과거 달의 잔여가 조용히 달라진다.
+- **원문도 남긴다** — 파싱이 틀렸을 때 재현하려면 원본이 필요하다.
 - `block_month`를 따로 두는 이유: 7월 표를 8월 칸에 잘못 붙여넣는 사고를 서버에서 잡기 위함.
+- **기본값을 빈 배열이 아니라 `null`로 뒀다.** 「아직 안 올림(null)」과 「올렸는데 사용 0(`[]`)」을 구분해야 한다 — 이 구분이 없으면 다음 달 미등록을 사용 0으로 오해해 **월 경계 연박이 잘못 계산된다.**
 
 > **주의** — 블록표는 「그날 실제로 나간 객실 수」다. 예약리스트의 **인원**에서 환산한 추정치로 대체할 수 없다(홀수 인원 단독 사용·임의배정·현장 조정 때문). 잔여는 손님에게 나가는 값이라 추정치로 바꾸면 없는 방을 팔게 된다. **붙여넣기는 계속 정본으로 두고, 서버에 공유만 한다.**
 
@@ -174,7 +178,7 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 
 - 등록소는 그 방식을 쓰면 안 된다. `data_registry`가 `anon` 차단으로 설계된 이유다.
 - **로그인(Supabase Auth) + 역할(admin/sales/air/manage)** 이 전제다.
-- `01_user_access.sql`(`mt_has_role` 등)을 **저장소에 넣어야 한다.** 지금은 어디에도 없어서 05를 실행할 수 없고, 나중에 누가 재현하지도 못한다.
+- `01_user_access.sql`(`mt_has_role` 등)을 **저장소에 넣었다.** 없으면 05를 실행할 수 없고, 나중에 누가 재현하지도 못한다.
 - 확정서 쪽 anon 키 사용도 같이 정리 대상이다(별건, 이 설계 범위 밖으로 두되 기록은 남긴다).
 
 ---
@@ -183,8 +187,8 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 
 - 예약리스트 한 달치 = 수백 팀 × 컬럼 수십 개 → JSONB로 **수 MB 수준**. 13개월 보관해도 수십 MB.
 - Supabase 무료 티어는 DB 500MB. **용량만 보면 무료로도 된다.**
-- 유료가 필요한 지점은 용량이 아니라 **① 일시정지(무료는 1주 미접속 시 프로젝트 정지) ② 백업 ③ 사용자 수**다. 매일 쓰는 사내 도구면 정지가 치명적이라 Pro가 맞다.
-- 이건 **결정 사항**이라 아래 9절에 남긴다.
+- 유료가 필요한 지점은 용량이 아니라 **① 일시정지(무료는 7일 미접속 시 프로젝트 정지) ② 백업 ③ 사용자 수**다.
+- **무료로 결정됨.** 정지 대응은 9-1 참고.
 
 ---
 
@@ -194,26 +198,71 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 
 | # | 할 일 | 끝났다고 볼 기준 |
 |---|---|---|
-| **0** | `01_user_access.sql` 작성·커밋, 05·06 실제 실행 | Supabase에서 `mt_has_role` 호출 성공, 세 테이블 조회 가능 |
+| **0a** | `01_user_access.sql` 작성 ✅ · `07_data_registry_block.sql` 작성 ✅ | 저장소에 있음 (이 커밋) |
+| **0b** | Supabase 재연동 후 01 → 05 → 06 → 07 실행 + 첫 owner 승격 | `mt_has_role` 호출 성공, `app_users`·`data_registry` 조회 가능 |
 | **1** | 로그인 페이지 + `access.js` | 직원 계정으로 로그인 → 역할 확인됨 |
 | **2** | `shared/store.js` | Node 테스트에서 `listPeriods()`·`load()`·`save()` 동작 |
-| **3** | 블록표 컬럼 추가 마이그레이션 | `block_rows` 저장·조회 확인 |
+| **3** | 정지 방지(keep-alive) + 연결 실패 안내 | 7일 무접속 후에도 프로젝트가 살아 있음 |
 | **4** | 등록 페이지 `tools/register/` | 파일 올려 한 달치 등록 → 목록에 뜸 |
 | **5** | 대시보드 「등록소에서 불러오기」 | 등록본으로 `analyze()` → 지금과 같은 결과 |
 | **6** | 마스터 서버 공유 | admin 저장 → 다른 PC에서 새로고침만으로 반영 |
 | **7** | 검증 + 문서화 | 실제 엑셀로 등록→불러오기 왕복, `npm run verify` |
 
-**0단계가 안 되면 그 뒤는 전부 못 한다.**
+**0b가 안 되면 그 뒤는 전부 못 한다.** 지금 막혀 있는 지점이 여기다 — Supabase 프로젝트 재연동.
 
 ---
 
-## 9. 결정이 필요한 것
+## 9. 결정된 것 (2026-07-30)
 
-1. **Supabase 요금제** — 무료(1주 미접속 시 정지) vs Pro. 매일 쓰는 도구면 Pro.
-2. **로그인 계정 발급 방식** — 이메일+비밀번호 관리자 발급 / 매직링크 / 기존 9800 가림막 유지 여부
-3. **역할 배정** — 누가 admin(마스터 저장·삭제), 누가 sales(등록), 누가 air(읽기)
-4. **블록표를 등록소에 넣을지** — 넣으면 붙여넣기를 한 사람만 하면 된다. 안 넣으면 각자 붙여넣는 지금 방식 유지
-5. **`01_user_access.sql`의 현재 상태** — Supabase 콘솔에서 이미 수동 실행했는지, 아니면 아직 없는지 (있다면 그 SQL을 받아 저장소에 넣어야 한다)
+| # | 결정 |
+|---|---|
+| 1 | **요금제 — 무료** |
+| 2 | **로그인 — 이메일 발급** (Supabase Auth 초대 → 비밀번호 설정) |
+| 3 | **역할 5단계** — `owner`(슈퍼 마스터) · `admin`(관리자) · `manage` · `sales` · `air` |
+| 4 | **블록표도 등록소에 담는다** |
+| 5 | `01_user_access.sql` **미실행** — 이 커밋에서 작성함. Supabase 프로젝트가 정지 상태라 재연동 중 |
+
+### 9-1. 무료 티어 — 정지가 반복된다
+
+무료 프로젝트는 **7일간 요청이 없으면 정지**된다. 지금 재연동 중인 것도 그 때문이다. 등록소가 붙으면 **정지 = 전 직원이 데이터를 못 읽는 상태**가 되므로 그냥 두면 안 된다.
+
+대응 두 가지:
+
+1. **깨우기 요청을 자동으로 보낸다** — GitHub Actions에서 하루 한 번 REST 엔드포인트를 친다. 15줄이면 되고 비용이 없다. 다만 Supabase가 이 방식을 막으면 소용없다.
+   ```yaml
+   # .github/workflows/supabase-keepalive.yml (제안)
+   on: { schedule: [{ cron: '0 3 * * *' }] }   # 매일 12시(KST)
+   run: curl -fsS "$SUPABASE_URL/rest/v1/data_registry?select=period&limit=1" \
+          -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY"
+   ```
+   `SUPABASE_URL`·`SUPABASE_ANON_KEY`를 저장소 Secrets에 넣어야 한다.
+2. **정지되면 화면에 그렇게 뜨게 한다** — `shared/store.js`가 연결 실패를 잡아 「등록소에 연결할 수 없습니다 · 파일 직접 업로드로 진행하세요」를 띄운다. 조용히 빈 화면이 되면 안 된다.
+
+**정지가 실제로 업무를 막기 시작하면 Pro로 올리는 게 맞다.** 지금은 무료로 가되 위 두 가지를 함께 넣는다.
+
+### 9-2. 역할 설계
+
+```
+owner   슈퍼 마스터 — 계정 발급·역할 변경·삭제. mt_has_role 이 무엇을 물어도 참
+admin   관리자      — 리조트 마스터 저장, 등록소 삭제, 전 계정 조회
+manage  관리        — 등록소 등록·수정
+sales   영업        — 등록소 등록·수정
+air     항공        — 읽기 전용
+```
+
+- `mt_has_role()`이 **owner를 항상 참으로 처리**한다. 권한을 하나씩 더해 주다 빠뜨리는 사고를 막기 위함이다.
+- 새 계정은 **`air` · 비활성**으로 자동 생성되고 owner가 승인·승급한다. 초대만 받으면 바로 데이터가 보이는 상태를 만들지 않는다.
+- 헬퍼는 전부 `security definer`다. 정책 안에서 `app_users`를 읽는데 호출자 권한으로 읽으면 RLS를 다시 타면서 무한 재귀가 난다.
+
+### 9-3. 첫 owner 만들기
+
+`01_user_access.sql` 맨 아래에 절차를 적어 뒀다. 요약하면 콘솔에서 초대 → 비밀번호 설정 → SQL 한 줄로 승격.
+
+```sql
+update public.app_users
+   set role = 'owner', active = true, name = '최민창'
+ where email = 'cmc338@naver.com';
+```
 
 ---
 
