@@ -423,6 +423,18 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.b-use{color:var(--text2)}
 .blk-mtx td.b-zero{color:var(--text3);opacity:.4}
 .blk-mtx td.clickable{cursor:pointer}
+/* 대기 표시 — 칸의 잔여·보유 숫자는 건드리지 않고 모서리에만 점을 찍는다 */
+.blk-mtx td.has-wait{position:relative}
+.blk-mtx td.has-wait::after{content:"";position:absolute;top:2px;right:2px;
+  width:5px;height:5px;border-radius:50%;background:#A855F7;box-shadow:0 0 0 1px #fff}
+.blk-tag-wait{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+.blk-cellpick{margin-top:12px;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface2);padding:12px 14px}
+.blk-cellpick .cp-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.blk-cellpick .cp-title{font-weight:700;color:var(--navy);font-size:13px}
+.blk-cellpick table{border-collapse:collapse;font-size:12px;width:100%}
+.blk-cellpick th,.blk-cellpick td{border-bottom:1px solid var(--border);padding:5px 8px;text-align:left;white-space:nowrap}
+.blk-cellpick th{background:var(--surface3);color:var(--text2);font-weight:600;font-size:11px}
 .blk-mtx td.clickable:hover{box-shadow:inset 0 0 0 2px var(--accent)}
 /* 2줄 셀: 위=잔여(신호색), 아래=보유(회색 작게). 날짜별 보유 변동을 표에서 바로 확인 */
 .blk-mtx td.b-2l{padding:2px 5px;line-height:1.15}
@@ -1122,6 +1134,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
       <div class="tbl-wrap blk-mtx-wrap"><table class="blk-mtx" id="blk-mtx"></table></div>
+      <div id="blk-cellpick"></div>
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
       <div class="note" style="border-left-color:var(--red)">
@@ -5862,6 +5875,39 @@ function blkSetMode(m){
   blkRenderHotelChips(); blkRenderStatus();
 }
 
+/* 팀의 숙박 박수 — 상품명 파싱값이 없으면 기간("3박")에서 뽑는다 */
+function blkTeamNights(t){
+  const n=Number(t&&t.nights);
+  if(n>0) return n;
+  const m=String((t&&t.period)||'').match(/(\d+)\s*박/);
+  return m?Number(m[1]):1;
+}
+/* 날짜별 예약 목록 인덱스: 표시단위 → 룸타입 → YYYY-MM-DD → [팀]
+   엠클릭 붙여넣기 표에는 구분값이 없다. 구분은 ⑤예약 관리의 통합 분석(teams)에서만 온다.
+   취소는 방을 쓰지 않으므로 제외한다. */
+function blkTeamIndex(){
+  const idx={};
+  if(typeof teams==='undefined' || !teams || !teams.length) return idx;
+  teams.forEach(t=>{
+    if(!t.dep || !t.accom || t.status==='취소') return;
+    const hotel=blkCanonHotel(t.accom);
+    let unit=hotel;
+    if(blkMode==='integrated'){ const g=blkGroupOf(hotel); unit=g||hotel; }
+    const room=blkResolveRoom(hotel, t.roomType||'');
+    const [y,m,d]=String(t.dep).split('-').map(Number);
+    if(!y||!m||!d) return;
+    const n=blkTeamNights(t);
+    for(let k=0;k<n;k++){
+      const dt=new Date(y, m-1, d+k);
+      const ymd=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      idx[unit]=idx[unit]||{};
+      idx[unit][room]=idx[unit][room]||{};
+      (idx[unit][room][ymd]=idx[unit][room][ymd]||[]).push(t);
+    }
+  });
+  return idx;
+}
+
 /* 사용수 집계: 표시단위|룸타입|day → used */
 function blkUsageMap(){
   const map={}; // unit -> room -> YYYY-MM-DD -> used
@@ -5925,6 +5971,7 @@ function blkRenderStatus(){
   const {month}=blkParsed;
   const days=blkViewDays();
   const usage=blkUsageMap();
+  const tidx=blkTeamIndex();
   let units=blkDisplayUnits();
   if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
   if(!blkShowSellStop) units=units.filter(u=>!blkSellStopUnit(u)); // 판매중지 숙소 기본 숨김
@@ -5937,7 +5984,7 @@ function blkRenderStatus(){
 
   const vms=blkViewMonths();
   const spanLabel=vms.length>1?`${vms[0]} ~ ${vms[vms.length-1]} 이어보기`:month;
-  document.getElementById('blk-status-sub').textContent=`${spanLabel} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 호텔을 클릭하면 선택 합계가 맨 위에 표시됩니다`;
+  document.getElementById('blk-status-sub').textContent=`${spanLabel} · 각 칸 위=잔여, 아래=그날 보유 (잔여 = 보유 − 사용) · 날짜 칸을 누르면 그날 예약 목록이 아래에 나옵니다 (보라 점 = 대기 포함)`;
 
   // 매트릭스
   let head='<thead><tr><th class="rowhd">호텔 · 룸타입</th>';
@@ -6000,12 +6047,29 @@ function blkRenderStatus(){
         return `<span class="blk-tag-type blk-tag-block" title="리조트 마스터의 기본 보유 · 날짜별 실제 보유는 각 칸 아래 숫자">보유 ${blk}${nx?` · 예외 ${nx}건`:''}</span>`;
       })());
       let rowTot=0, hasUse=false;
-      body+=`<tr${blkSellStopUnit(u)?' style="opacity:.5"':''}><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}${ri===0?stopTag:''}</td>`;
+      // 대기 건수 — 여러 날에 걸친 팀이 중복으로 세지 않도록 행사번호로 모은다
+      const waitSeq=new Set();
+      days.forEach(d=>{
+        ((tidx[u]&&tidx[u][rm]&&tidx[u][rm][d.ymd])||[]).forEach(t=>{
+          if(t.status==='대기') waitSeq.add(t.eventSeq||t.eventNo||t.repName);
+        });
+      });
+      const waitTag=waitSeq.size?` <span class="blk-tag-type blk-tag-wait" title="표시 기간 안의 구분=대기 예약 ${waitSeq.size}건 · 날짜 칸을 누르면 목록이 아래에 나옵니다">대기 ${waitSeq.size}</span>`:'';
+      body+=`<tr${blkSellStopUnit(u)?' style="opacity:.5"':''}><td class="rowhd">${ri===0?u:'<span class="muted" style="font-size:10px">└</span>'} <span class="rt-sub">${rm}</span> ${typeTag}${waitTag}${ri===0?stopTag:''}</td>`;
       days.forEach(d=>{
         const used=rooms[rm][d.ymd]||0;
         rowTot+=used; if(used>0) hasUse=true;
+        const dayTeams=(tidx[u]&&tidx[u][rm]&&tidx[u][rm][d.ymd])||[];
+        const hasWait=dayTeams.some(t=>t.status==='대기');
+        // 예약이 있는 칸만 클릭 가능. wcls는 class 안, pick은 class 밖의 별도 속성이다.
+        const wcls=(hasWait?' has-wait':'')+(dayTeams.length?' clickable':'');
+        const pick=dayTeams.length
+          ? ` onclick="blkPickCell('${u.replace(/'/g,"\\'")}','${rm.replace(/'/g,"\\'")}','${d.ymd}')"`
+          : '';
         if(assign||blk==null){ // 보유를 모르는 행: 종전대로 사용수만
-          body+= used===0 ? `<td class="b-zero${d.mfirst?' mbreak':''}">·</td>` : `<td class="b-use${d.mfirst?' mbreak':''}">${used}</td>`;
+          body+= used===0
+            ? `<td class="b-zero${d.mfirst?' mbreak':''}${wcls}"${pick}>·</td>`
+            : `<td class="b-use${d.mfirst?' mbreak':''}${wcls}"${pick}>${used}</td>`;
           return;
         }
         // 보유형: 사용 유무와 무관하게 그날 보유를 아래 줄에 병기 (날짜별 보유 변동 확인용)
@@ -6016,7 +6080,8 @@ function blkRenderStatus(){
         const rem=cap-used;
         const top = used===0 ? '·' : rem;
         const excT = (info&&info.exc) ? ` · 기간 예외 ${info.exc.from}~${info.exc.to}${info.exc.memo?' ('+info.exc.memo+')':''}` : '';
-        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l${d.mfirst?' mbreak':''}" title="${d.ym} ${parseInt(d.day)}일 · 보유 ${over?`${dayBlk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap}${excT} / 사용 ${used} / 잔여 ${rem}"><span class="cell-rem">${top}</span><span class="cell-cap${info&&info.exc?' cap-exc':''}">${cap}</span></td>`;
+        const wt=dayTeams.length?` / 예약 ${dayTeams.length}건${hasWait?' (대기 포함)':''}`:'';
+        body+=`<td class="${used===0?'b-zero':blkClsRemain(rem)} b-2l${d.mfirst?' mbreak':''}${wcls}"${pick} title="${d.ym} ${parseInt(d.day)}일 · 보유 ${over?`${dayBlk}${over>0?'+'+over:'−'+Math.abs(over)}=${cap}`:cap}${excT} / 사용 ${used} / 잔여 ${rem}${wt}"><span class="cell-rem">${top}</span><span class="cell-cap${info&&info.exc?' cap-exc':''}">${cap}</span></td>`;
       });
       body+='</tr>';
     });
@@ -6024,6 +6089,60 @@ function blkRenderStatus(){
   body+='</tbody>';
   document.getElementById('blk-mtx').innerHTML=head+body;
   blkFixHeadSync(true);
+  blkRenderPick();          // 다시 그릴 때 열려 있던 선택 패널도 갱신
+}
+
+/* 날짜 칸을 눌렀을 때 아래에 뜨는 예약 목록 */
+let blkPick=null;           // {unit, room, ymd}
+function blkPickCell(unit, room, ymd){
+  if(blkPick && blkPick.unit===unit && blkPick.room===room && blkPick.ymd===ymd) blkPick=null;
+  else blkPick={unit, room, ymd};
+  blkRenderPick();
+}
+function blkClosePick(){ blkPick=null; blkRenderPick(); }
+function blkRenderPick(){
+  const box=document.getElementById('blk-cellpick');
+  if(!box) return;
+  if(!blkPick){ box.innerHTML=''; return; }
+  const {unit, room, ymd}=blkPick;
+  const idx=blkTeamIndex();
+  const list=((idx[unit]&&idx[unit][room]&&idx[unit][room][ymd])||[]).slice();
+  if(!list.length){ blkPick=null; box.innerHTML=''; return; }
+  // 대기를 먼저, 그다음 출발일 순 — 손이 가야 할 건이 위로 온다
+  const rank=st=>st==='대기'?0:(st==='견적'?1:(st==='확정'?2:3));
+  list.sort((a,b)=>rank(a.status)-rank(b.status) || String(a.dep).localeCompare(String(b.dep)));
+  const [y,m,d]=ymd.split('-').map(Number);
+  const dow=['일','월','화','수','목','금','토'][new Date(y,m-1,d).getDay()];
+  const waitN=list.filter(t=>t.status==='대기').length;
+  const paxN=list.reduce((a,t)=>a+(Number(t.pax)||0),0);
+  box.innerHTML=`<div class="blk-cellpick">
+    <div class="cp-head">
+      <span class="cp-title">${unit} · ${room} · ${m}/${d}(${dow})</span>
+      <span class="muted" style="font-size:11px">예약 ${list.length}건 · 인원 ${paxN}명${waitN?` · <b style="color:#6B21A8">대기 ${waitN}건</b>`:''}</span>
+      <button class="btn-sm" onclick="blkClosePick()" style="margin-left:auto">닫기</button>
+    </div>
+    <table><thead><tr>
+      <th>구분</th><th>행사번호</th><th>대표고객</th><th>회원권</th><th>인원</th><th>객실</th>
+      <th>출발 → 도착</th><th>기간</th><th>명단</th><th>미수금액</th><th>비고</th>
+    </tr></thead><tbody>
+      ${list.map(t=>{
+        const per=roomPaxOf(unit, room);
+        const need=MT.roomsNeeded(Number(t.pax)||0, per);
+        return `<tr>
+        <td><span class="tag tag-status-${t.status||'견적'}">${t.status||'-'}</span></td>
+        <td>${t.eventNo||'-'}</td>
+        <td><b>${t.repName||'-'}</b>${typeof agencyBadge==='function'?agencyBadge(t):''}</td>
+        <td class="muted">${t.memberType||'-'}</td>
+        <td>${t.pax||'-'}명</td>
+        <td>${need!=null?need+'실':'<span class="muted" title="룸타입 정원 미등록">-</span>'}</td>
+        <td>${t.dep||'-'} → ${t.arr||'-'}</td>
+        <td>${t.period||(blkTeamNights(t)+'박')}</td>
+        <td>${t.listY?'<span class="tag tag-status-정산">완료</span>':'<span class="tag tag-status-견적">미확정</span>'}</td>
+        <td style="text-align:right">${Number(t.due)>0?`<b style="color:var(--red)">${Number(t.due).toLocaleString()}</b>`:'-'}</td>
+        <td class="muted" style="white-space:normal;max-width:280px">${(t.remark||'').slice(0,60)||'-'}</td>
+      </tr>`;}).join('')}
+    </tbody></table>
+  </div>`;
 }
 
 /* ── 블록 현황 표: 날짜 헤더 상단 고정 ──
