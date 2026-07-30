@@ -2697,7 +2697,15 @@ function renderTransfer(){
    ⑨ 숙소 정보
 ════════════════════════════════════════════════════════════ */
 const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입','기간','인원','출발일자','도착일자','비고 특이사항'];
-const ACCOM_ORDER=['야마나미 호텔','야마나미 프레스티지','야마나미 히노키빌라 - 캐빈','야마나미 히노키빌라 - 패밀리','야마나미 포레스트 돔','야마나미 프라이빗 레지던스','간지호텔','시즈노야도 료칸','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','구마모토 시내 상품 호텔','닐라이스프링스 리조트'];
+/* 숙소 표시 순서 — 지역별 배치 순서의 단일 출처.
+   블록 현황 표·출발 일정 조회·현황 엑셀이 모두 이 순서를 따른다.
+   여기 없는 숙소는 뒤로 밀리고 이름순으로 붙는다. */
+const ACCOM_ORDER=['야마나미 호텔','야마나미 프레스티지','야마나미 히노키빌라 - 패밀리','야마나미 히노키빌라 - 캐빈','야마나미 포레스트 돔','야마나미 프라이빗 레지던스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
+/* ACCOM_ORDER 순위 — 목록에 없으면 맨 뒤 */
+function accomRank(name){
+  const i=ACCOM_ORDER.indexOf(name);
+  return i<0?9999:i;
+}
 function renderAccom(){
   document.getElementById('accom-thead').innerHTML='<tr>'+ACCOM_HDR.map(h=>`<th>${h}</th>`).join('')+'</tr>';
   const accomTeams=teams.filter(t=>t.accom);
@@ -5439,7 +5447,15 @@ function blkGroupOf(hotel){
 /* 엠클릭 표기 → 마스터 룸타입. 숙소 별칭까지 해소한 뒤 룸타입 별칭을 본다. */
 function blkResolveRoom(hotel, room){
   const name=(typeof blkAlias!=='undefined'&&blkAlias&&blkAlias[hotel])||hotel;
-  return (typeof blkRoomAlias!=='undefined'&&blkRoomAlias&&blkRoomAlias[name]&&blkRoomAlias[name][room])||room;
+  const to=(typeof blkRoomAlias!=='undefined'&&blkRoomAlias&&blkRoomAlias[name]&&blkRoomAlias[name][room])||'';
+  if(!to || to===room) return room;
+  // 별칭이 가리키는 룸타입이 마스터에 없으면 별칭을 쓰지 않는다.
+  // 안 그러면 있는 보유(원래 표기)를 버리고 없는 룸타입으로 옮겨 「보유미등록」이 된다.
+  // (기본값 별칭 트윈→맨션이 그 PC의 마스터에는 트윈만 있을 때 실제로 그랬다)
+  if(typeof blkMaster!=='undefined' && blkMaster){
+    if(blkMaster[name+'|'+to]==null && blkMaster[name+'|'+room]!=null) return room;
+  }
+  return to;
 }
 function blkBlockOf(hotel,room){
   const name=blkAlias[hotel]||hotel;
@@ -5772,7 +5788,12 @@ function blkDisplayUnits(){
     if(blkMode==='integrated'){ const g=blkGroupOf(r.hotel); set.add(g||r.hotel); }
     else set.add(r.hotel);
   });
-  return [...set];
+  // 호텔 필터 칩도 표와 같은 순서로 (지역 → ACCOM_ORDER 배치 순서 → 이름)
+  return [...set].sort((a,b)=>{
+    const ra=blkRegionRank(blkRegionOf(a)), rb=blkRegionRank(blkRegionOf(b));
+    if(ra!==rb) return ra-rb;
+    return accomRank(a)-accomRank(b) || a.localeCompare(b,'ko');
+  });
 }
 
 function blkSetMode(m){
@@ -5849,12 +5870,11 @@ function blkRenderStatus(){
   let units=blkDisplayUnits();
   if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
   if(!blkShowSellStop) units=units.filter(u=>!blkSellStopUnit(u)); // 판매중지 숙소 기본 숨김
-  // 정렬: 지역(마스터 순서) → 블록형 먼저·임의배정형 뒤 → 이름
+  // 정렬: 지역(마스터 순서) → ACCOM_ORDER 배치 순서 → 이름
   units.sort((a,b)=>{
     const ra=blkRegionRank(blkRegionOf(a)), rb=blkRegionRank(blkRegionOf(b));
     if(ra!==rb) return ra-rb;
-    const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0;
-    return aa-bb || a.localeCompare(b,'ko');
+    return accomRank(a)-accomRank(b) || a.localeCompare(b,'ko');
   });
 
   const vms=blkViewMonths();
@@ -5956,12 +5976,11 @@ function blkStatusMatrix(){
   const usage=blkUsageMap();
   let units=blkDisplayUnits();
   if(blkHotelFilter.size) units=units.filter(u=>blkHotelFilter.has(u));
-  // 화면 표와 같은 순서(지역 → 블록형 → 이름)로 정렬해 엑셀·PNG가 화면과 어긋나지 않게 한다
+  // 화면 표와 같은 순서(지역 → ACCOM_ORDER → 이름)로 정렬해 엑셀·PNG가 화면과 어긋나지 않게 한다
   units.sort((a,b)=>{
     const ra=blkRegionRank(blkRegionOf(a)), rb=blkRegionRank(blkRegionOf(b));
     if(ra!==rb) return ra-rb;
-    const aa=blkIsAssignUnit(a)?1:0, bb=blkIsAssignUnit(b)?1:0;
-    return aa-bb || a.localeCompare(b,'ko');
+    return accomRank(a)-accomRank(b) || a.localeCompare(b,'ko');
   });
   const rows=[];
   units.forEach(u=>{
