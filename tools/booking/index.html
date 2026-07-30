@@ -2236,7 +2236,7 @@ const REGIONS = [
 const RESORTS = {
   // ====== 구마모토 — 야마나미 (호텔) ======
   yamanami: {
-    name: '아소 야마나미 (호텔)', icon: '⛳', variant: '',
+    name: '야마나미 호텔', icon: '⛳', variant: '',
     meta: '아소 야마나미CC · 주중 18+9, 주말·공휴일 18', regionId: 'kumamoto',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 15000, soyouJpy: 6000,
@@ -2257,8 +2257,8 @@ const RESORTS = {
 
   // ====== 구마모토 — 별장형 4종 (분리) ======
   aso_villa: {
-    name: '아소별장', icon: '⛺', variant: '',
-    meta: '아소 산자락 · 8인 1동 · 단체 전용', regionId: 'kumamoto',
+    name: '야마나미 프레스티지', icon: '⛺', variant: '',
+    meta: '프레스티지 하우스 · 8인 1동 · 단체 전용', regionId: 'kumamoto',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 17000, soyouJpy: 6000,
     patterns: [
@@ -2267,13 +2267,13 @@ const RESORTS = {
     ],
     airport: '인천 / 김해',
     roomMode: 'single', // 단일 룸타입
-    rooms: [{ id: 'std', name: '아소별장 1동', cap: 8, total: 1 }],
+    rooms: [{ id: 'std', name: '프레스티지 1동', cap: 8, total: 1 }],
     villa: true,
     villaWholeRent: true // v13.14 — 통째 예약 (회원권 인원 제한 미적용 · 별장 cap까지 자유)
   },
   sobo_villa: {
-    name: '소보별장', icon: '⛺', variant: 'v2',
-    meta: '소보별장 (트윈 2동 + 트리플 1동) · 가족·소그룹', regionId: 'kumamoto',
+    name: '야마나미 히노키빌라 - 캐빈', icon: '⛺', variant: 'v2',
+    meta: '편백 2인 별장 (트윈 2동 + 트리플 1동) · 가족·소그룹', regionId: 'kumamoto',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 15000, soyouJpy: 6000,
     patterns: [
@@ -2289,8 +2289,8 @@ const RESORTS = {
     villa: true
   },
   dome_house: {
-    name: '돔하우스', icon: '⛺', variant: 'v3',
-    meta: '돔하우스 4동 · 2인 1동 · 독채형 별장', regionId: 'kumamoto',
+    name: '야마나미 포레스트 돔', icon: '⛺', variant: 'v3',
+    meta: '포레스트 돔 4동 · 2인 1동 · 독채형 별장', regionId: 'kumamoto',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 15000, soyouJpy: 6000,
     patterns: [
@@ -2299,12 +2299,12 @@ const RESORTS = {
     ],
     airport: '인천 / 김해',
     roomMode: 'single',
-    rooms: [{ id: 'std', name: '돔하우스 1동', cap: 2, total: 4 }],
+    rooms: [{ id: 'std', name: '포레스트 돔 1동', cap: 2, total: 4 }],
     villa: true
   },
   sobo5: {
-    name: '소보5동', icon: '⛺', variant: 'v4',
-    meta: '소보5동 · 4인 1동', regionId: 'kumamoto',
+    name: '야마나미 히노키빌라 - 패밀리', icon: '⛺', variant: 'v4',
+    meta: '편백 4인 독채 별장 · 1동', regionId: 'kumamoto',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 17000, soyouJpy: 6000,
     patterns: [
@@ -2313,7 +2313,7 @@ const RESORTS = {
     ],
     airport: '인천 / 김해',
     roomMode: 'single',
-    rooms: [{ id: 'std', name: '소보5동 1동', cap: 4, total: 1 }],
+    rooms: [{ id: 'std', name: '히노키빌라 패밀리 1동', cap: 4, total: 1 }],
     villa: true,
     villaWholeRent: true // v13.14 — 통째 예약 (회원권 인원 제한 미적용)
   },
@@ -2351,7 +2351,7 @@ const RESORTS = {
 
   // ====== 나고야 ======
   fourteen: {
-    name: '포틴힐즈CC', icon: '🏌', variant: 'v2',
+    name: '포틴힐즈CC 호텔', icon: '🏌', variant: 'v2',
     meta: '포틴힐즈CC · 챔피언십 코스', regionId: 'nagoya',
     departures: ['서울', '부산'],
     pricingMode: 'jpy', taizaiJpy: 15000, soyouJpy: 12000,

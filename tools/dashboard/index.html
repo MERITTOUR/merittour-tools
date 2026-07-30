@@ -1515,21 +1515,22 @@ function parseProduct(name){
 
   if(s.indexOf('야마나미')>=0||up.indexOf('14HILLS')>=0||s.indexOf('돔하우스')>=0||s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('소보별장')>=0||s.indexOf('아소별장')>=0){
     region='구마모토'; golf='야마나미CC';
-    if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='야마나미 쿠주힐즈'; roomType='트윈'; }
-    else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('소보별장')>=0||s.indexOf('아소별장')>=0){ accom='아소 야마나미 관내별장'; roomType='별장'; }
-    else if(s.indexOf('돔하우스')>=0){ accom='아소 야마나미 돔하우스'; roomType='돔하우스'; }
-    else { accom='아소 야마나미 골프텔'; roomType=room; }
+    if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='야마나미 프라이빗 레지던스'; roomType='트윈'; }
+    else if(s.indexOf('소보별장')>=0||s.indexOf('통나무')>=0){ accom='야마나미 히노키빌라 - 캐빈'; roomType='별장'; }
+    else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('아소별장')>=0){ accom='야마나미 프레스티지'; roomType='별장'; }
+    else if(s.indexOf('돔하우스')>=0){ accom='야마나미 포레스트 돔'; roomType='돔하우스'; }
+    else { accom='야마나미 호텔'; roomType=room; }
   }
-  else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='야마나미 쿠주힐즈'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
+  else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='야마나미 프라이빗 레지던스'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
   else if(s.indexOf('포틴힐즈')>=0){
     region='나고야'; golf='포틴힐즈CC';
     if(s.indexOf('카라반')>=0){ accom='포틴힐즈CC 카라반'; roomType='트윈'; }
-    else if(s.indexOf('패밀리룸')>=0){ accom='포틴힐즈CC 골프텔'; roomType='패밀리룸'; }
-    else { accom='포틴힐즈CC 골프텔'; roomType='트윈'; }
+    else if(s.indexOf('패밀리룸')>=0){ accom='포틴힐즈CC 호텔'; roomType='패밀리룸'; }
+    else { accom='포틴힐즈CC 호텔'; roomType='트윈'; }
   }
   else if(s.indexOf('아키바')>=0){ accom='아키바 리조트'; roomType='트윈'; region='벳푸'; golf='벳푸 아키바'; }
   else if(s.indexOf('무츠키')>=0){ accom='무츠키 료칸'; roomType='트윈'; region='벳푸'; golf='벳푸'; }
-  else if(s.indexOf('시로사토')>=0){ accom='시로사토CC 골프텔'; roomType='트윈'; region='이바라키'; golf='시로사토CC'; }
+  else if(s.indexOf('시로사토')>=0){ accom='시로사토CC'; roomType='트윈'; region='이바라키'; golf='시로사토CC'; }
   else if(s.indexOf('후쿠로다노타키')>=0){ accom='후쿠로다노타키CC 골프텔'; roomType='트윈'; region='이바라키'; golf='후쿠로다노타키CC'; }
   else if(s.indexOf('간지')>=0){ accom='간지호텔'; roomType='트윈'; region='구마모토'; golf='구주고원CC / 야마나미CC'; }
   else if(s.indexOf('시즈노야도')>=0){ accom='시즈노야도 료칸'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
@@ -1538,8 +1539,8 @@ function parseProduct(name){
     if(s.indexOf('맨션')>=0){ accom='스가다이라 맨션'; roomType='맨션'; }
     else { accom='스가다이라 고원 온천호텔'; roomType='온천호텔'; }
   }
-  else if(s.indexOf('미야자키')>=0){ accom='미야자키 시내 호텔'; roomType='트윈'; region='미야자키'; golf='미야자키'; }
-  else if(s.indexOf('구마모토 시내')>=0){ accom='구마모토 시내 호텔'; roomType='트윈'; region='구마모토'; golf=''; }
+  else if(s.indexOf('미야자키')>=0){ accom='미야자키 상품 호텔'; roomType='트윈'; region='미야자키'; golf='미야자키'; }
+  else if(s.indexOf('구마모토 시내')>=0){ accom='구마모토 시내 상품 호텔'; roomType='트윈'; region='구마모토'; golf=''; }
   else if(s.indexOf('닐라이스프링스')>=0){ accom='닐라이스프링스 리조트'; roomType='트윈'; region='쿠알라룸푸르'; golf='닐라이스프링스GC'; }
   else if(s.indexOf('국제공항')>=0){ accom='국제공항CC 골프텔'; roomType='트윈'; region='미야자키'; golf='국제공항CC'; }
 
@@ -4032,27 +4033,33 @@ function clearChangeLog(){
    rooms: 룸타입별 보유 블록 (호텔 블록 보유 마스터 통합). aliases: 엠클릭 표기 별칭. assign: 임의배정형(블록 안 깜).
    name은 엠클릭 표 숙소명과 일치(블록 현황·출발일정 조회 연결). */
 const RESORT_DEFAULTS=[
-  {key:'yamanami_golf', name:'아소 야마나미 골프텔', region:'구마모토', golf:'야마나미CC', holes:27,
+  {key:'yamanami_golf', name:'야마나미 호텔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':55,'소형트윈':50}, aliases:[], assign:false, memo:''},
-  {key:'yamanami_bessou', name:'아소 야마나미 관내별장', region:'구마모토', golf:'야마나미CC', holes:27,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':55,'소형트윈':50}, aliases:['아소 야마나미 골프텔','야마나미 골프텔'], assign:false, memo:''},
+  {key:'yamanami_bessou', name:'야마나미 프레스티지', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
-  {key:'yamanami_dome', name:'아소 야마나미 돔하우스', region:'구마모토', golf:'야마나미CC', holes:27,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:['아소 야마나미 관내별장','아소별장','관내별장'], assign:false, memo:''},
+  {key:'yamanami_dome', name:'야마나미 포레스트 돔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
-  {key:'kuzu', name:'야마나미 쿠주힐즈', region:'구마모토', golf:'야마나미CC', holes:18,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':4}, aliases:['아소 야마나미 돔하우스','돔하우스'], assign:false, memo:''},
+  {key:'yamanami_hinoki_cabin', name:'야마나미 히노키빌라 - 캐빈', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소보별장','통나무집'], assign:false, memo:'편백 2인 별장 (보유 수량 입력 필요)'},
+  {key:'yamanami_hinoki_family', name:'야마나미 히노키빌라 - 패밀리', region:'구마모토', golf:'야마나미CC', holes:27,
+   stay:18000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소보5동'], assign:false, memo:'편백 4인 독채 (신규 · 보유 수량 입력 필요)'},
+  {key:'kuzu', name:'야마나미 프라이빗 레지던스', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:14000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
+   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':10}, aliases:['야마나미 쿠주힐즈','쿠주힐즈','구주힐즈'], assign:false, memo:''},
   {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
-  {key:'fourteen_golf', name:'포틴힐즈CC 골프텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
+  {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills'], assign:false, memo:''},
+   depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 화7박', airOut:'김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
@@ -4062,9 +4069,9 @@ const RESORT_DEFAULTS=[
   {key:'mutsuki', name:'무츠키 료칸', region:'벳푸', golf:'벳푸', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
-  {key:'shirosato', name:'시로사토CC 골프텔', region:'이바라키', golf:'시로사토CC', holes:18,
+  {key:'shirosato', name:'시로사토CC', region:'이바라키', golf:'시로사토CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일6박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
+   depart:'일6박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:['시로사토CC 골프텔'], assign:false, memo:''},
   {key:'fukuroda', name:'후쿠로다노타키CC 골프텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'월7박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
@@ -4077,12 +4084,12 @@ const RESORT_DEFAULTS=[
   {key:'kokusai', name:'국제공항CC 골프텔', region:'미야자키', golf:'국제공항CC', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
-  {key:'miyazaki', name:'미야자키 시내 호텔', region:'미야자키', golf:'미야자키', holes:18,
+  {key:'miyazaki', name:'미야자키 상품 호텔', region:'미야자키', golf:'미야자키', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:[], assign:false, memo:''},
-  {key:'kumamoto_city', name:'구마모토 시내 호텔', region:'구마모토', golf:'-', holes:0,
+   depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:['미야자키 시내 호텔'], assign:false, memo:''},
+  {key:'kumamoto_city', name:'구마모토 시내 상품 호텔', region:'구마모토', golf:'-', holes:0,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
+   depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토','구마모토 시내 호텔'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
   {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', arrCode:'KUL', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
