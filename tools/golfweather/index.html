@@ -240,6 +240,9 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .metric .ml{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.03em; }
 .metric .mv{ font-size:15px; font-weight:800; letter-spacing:-.01em; margin-top:2px; white-space:nowrap; }
 .metric .mv small{ font-size:.72em; font-weight:700; color:var(--ink-2); margin-left:1px; }
+.metric .mq{ font-size:10px; font-weight:700; margin-top:3px; line-height:1.25; word-break:keep-all; }
+/* 정도 색: 0 문제없음 · 1 보통 · 2 주의 · 3 심함 */
+.q0{ color:#0e9f6e; } .q1{ color:#5b6b80; } .q2{ color:#d98324; } .q3{ color:#dc3b2f; }
 
 /* ══ 시간대별 — 상자 없이 열로 ══ */
 .hours{
@@ -432,7 +435,8 @@ const I18N = {
     dirs:['북','북동','동','남동','남','남서','서','북서'],
     wdays:['일','월','화','수','목','금','토'],
     reasonNone:'특이사항 없음',
-    reason:{ storm:'뇌우 예보', rain:'강수 가능성', wind:'강풍', heat:'더위', cold:'추위', uv:'강한 자외선', vis:'시야 불량' },
+    reason:{ storm:'뇌우 예보', rain:'강수 가능성', wind:'바람', heat:'더위', cold:'추위', uv:'강한 자외선', vis:'시야 불량' },
+    reasonWind:['바람 약간','바람 다소 있음','바람 강함','강풍'],
     verdicts:['라운딩 최적','라운딩 좋음','라운딩 보통·주의','라운딩 주의','라운딩 비추천'],
     uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
     poplabel:'강수확률', maxwind:'최대풍속',
@@ -448,12 +452,78 @@ const I18N = {
     dirs:['北','北東','東','南東','南','南西','西','北西'],
     wdays:['日','月','火','水','木','金','土'],
     reasonNone:'良好',
-    reason:{ storm:'雷雨予報', rain:'降水の可能性', wind:'強風', heat:'暑さ', cold:'寒さ', uv:'強い紫外線', vis:'視界不良' },
+    reason:{ storm:'雷雨予報', rain:'降水の可能性', wind:'風', heat:'暑さ', cold:'寒さ', uv:'強い紫外線', vis:'視界不良' },
+    reasonWind:['風わずか','やや風あり','風強め','強風'],
     verdicts:['ラウンド最適','ラウンド良好','まずまず・注意','注意','非推奨'],
     uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
     poplabel:'降水確率', maxwind:'最大風速',
   }
 };
+
+/* ════════════ 지표 정도 표시 ════════════
+   숫자만으로는 감이 안 오므로 「어느 정도인지」를 2~5자로 덧붙인다.
+   lv: 0=문제없음 1=보통 2=주의 3=심함 (색으로 구분) */
+const GRADE = {
+  // 바람 m/s — 골프 기준(클럽 선택에 영향이 오는 지점을 경계로)
+  wind:[
+    [1.5, ['거의 없음','ほぼ無風'], 0],
+    [3.4, ['미풍','そよ風'], 0],
+    [5.5, ['한 클럽','1クラブ'], 1],
+    [8.0, ['두 클럽','2クラブ'], 2],
+    [11,  ['강풍','強風'], 3],
+    [Infinity, ['매우 강함','非常に強い'], 3],
+  ],
+  // 돌풍 m/s — 순간최대. 스윙이 흔들리는 지점 기준
+  gust:[
+    [5,  ['영향 적음','影響小'], 0],
+    [8,  ['스윙 흔들림','スイングに影響'], 1],
+    [12, ['주의','注意'], 2],
+    [Infinity, ['플레이 지장','プレー困難'], 3],
+  ],
+  humid:[
+    [40, ['건조','乾燥'], 1],
+    [70, ['쾌적','快適'], 0],
+    [85, ['다소 습함','やや湿る'], 1],
+    [Infinity, ['후텁지근','蒸し暑い'], 2],
+  ],
+  // 자외선 — WHO 지수 구간
+  uv:[
+    [3,  ['낮음','弱い'], 0],
+    [6,  ['보통','普通'], 1],
+    [8,  ['높음·차단 필요','強い・対策を'], 2],
+    [11, ['매우 높음','非常に強い'], 3],
+    [Infinity, ['위험','危険'], 3],
+  ],
+  // 시정 m — 볼 추적이 어려워지는 지점 기준
+  vis:[
+    [1000,  ['매우 나쁨','非常に悪い'], 3],
+    [4000,  ['볼 추적 어려움','ボールが見にくい'], 2],
+    [10000, ['보통','普通'], 1],
+    [Infinity, ['맑음','良好'], 0],
+  ],
+  // 체감온도 °C
+  feel:[
+    [0,  ['매우 추움','非常に寒い'], 3],
+    [8,  ['추움','寒い'], 2],
+    [14, ['서늘함','肌寒い'], 1],
+    [25, ['쾌적','快適'], 0],
+    [30, ['더움','暑い'], 1],
+    [33, ['많이 더움','かなり暑い'], 2],
+    [Infinity, ['폭염 주의','熱中症注意'], 3],
+  ],
+};
+/* 값 → {txt, lv}. 값이 없으면 null */
+function grade(kind, v){
+  if(v==null || isNaN(v)) return null;
+  const rows=GRADE[kind]; if(!rows) return null;
+  for(const [max, txt, lv] of rows) if(v < max) return { txt: txt[LANG==='ja'?1:0], lv };
+  return null;
+}
+/* 정도 표시 한 줄 */
+function gradeLine(kind, v, cls){
+  const g=grade(kind, v);
+  return g ? `<div class="${cls||'mq'} q${g.lv}">${g.txt}</div>` : '';
+}
 
 /* ════════════ §8 WMO 코드 ════════════ */
 const WMO = {
@@ -655,7 +725,12 @@ function scoreDay(hoursOfDay, lang){
   } else {
     reason = t.reason[topCat] || '';
     if(topCat==='rain' || topCat==='storm') reason += ` (${t.poplabel} ${maxPop}${t.uProb})`;
-    else if(topCat==='wind') reason += ` (${t.maxwind} ${Math.round(maxWind)}${t.uWind})`;
+    else if(topCat==='wind'){
+      // 세기에 맞는 표현으로 바꾼다 — 지표 타일의 「미풍/한 클럽」과 어긋나지 않게
+      const gw=grade('wind', maxWind);
+      reason = (t.reasonWind && gw) ? t.reasonWind[gw.lv] : reason;
+      reason += ` (${t.maxwind} ${Math.round(maxWind)}${t.uWind})`;
+    }
     else if(topCat==='heat') reason += ` (${Math.round(maxTemp)}${t.uTemp})`;
     else if(topCat==='cold') reason += ` (${Math.round(minTemp)}${t.uTemp})`;
   }
@@ -781,7 +856,7 @@ function renderAll(){
       <div class="hero-temp">${Math.round(cur.temperature_2m)}<sup>°</sup></div>
       <div class="hero-meta">
         <div class="hero-state">${cw.text}</div>
-        <div class="hero-feel">${t.feels} ${Math.round(cur.apparent_temperature)}°</div>
+        <div class="hero-feel">${t.feels} ${Math.round(cur.apparent_temperature)}°${(()=>{const g=grade('feel',cur.apparent_temperature);return g?` <span class="q${g.lv}" style="font-weight:700">${g.txt}</span>`:'';})()}</div>
         <div class="hero-hilo">${Math.round(D.temperature_2m_max[0])}° / <span style="color:var(--muted)">${Math.round(D.temperature_2m_min[0])}°</span></div>
       </div>
     </div>
@@ -800,11 +875,11 @@ function renderAll(){
     </div>
 
     <div class="metrics">
-      <div class="metric"><div class="ml">${t.wind}</div><div class="mv">${cur.wind_speed_10m.toFixed(1)}<small>${t.uWind}</small></div></div>
-      <div class="metric"><div class="ml">${t.gust}</div><div class="mv">${(cur.wind_gusts_10m??0).toFixed(1)}<small>${t.uWind}</small></div></div>
-      <div class="metric"><div class="ml">${t.humid}</div><div class="mv">${cur.relative_humidity_2m}<small>%</small></div></div>
-      <div class="metric"><div class="ml">${t.uv}</div><div class="mv">${Math.round(extra.uv)}</div></div>
-      <div class="metric"><div class="ml">${t.vis}</div><div class="mv">${visTxt(extra.vis)}</div></div>
+      <div class="metric"><div class="ml">${t.wind}</div><div class="mv">${cur.wind_speed_10m.toFixed(1)}<small>${t.uWind}</small></div>${gradeLine('wind',cur.wind_speed_10m)}</div>
+      <div class="metric"><div class="ml">${t.gust}</div><div class="mv">${(cur.wind_gusts_10m??0).toFixed(1)}<small>${t.uWind}</small></div>${gradeLine('gust',cur.wind_gusts_10m??0)}</div>
+      <div class="metric"><div class="ml">${t.humid}</div><div class="mv">${cur.relative_humidity_2m}<small>%</small></div>${gradeLine('humid',cur.relative_humidity_2m)}</div>
+      <div class="metric"><div class="ml">${t.uv}</div><div class="mv">${Math.round(extra.uv)}</div>${gradeLine('uv',extra.uv)}</div>
+      <div class="metric"><div class="ml">${t.vis}</div><div class="mv">${visTxt(extra.vis)}</div>${gradeLine('vis',extra.vis)}</div>
     </div>
   </div>`;
 
