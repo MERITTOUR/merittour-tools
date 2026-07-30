@@ -98,6 +98,10 @@ a{color:inherit}
 
 /* TABLE */
 .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+/* 블록 현황 표: 높이 제한 없이 전체 표시 → 표 안 세로 스크롤바 없음(페이지 스크롤로 이동)
+   날짜는 기존대로 좌우 스크롤. ※overflow-x:auto 가 있으면 y는 auto로 계산되지만
+   높이 제한이 없어 세로 넘침이 생기지 않아 스크롤바가 나타나지 않는다. */
+.blk-mtx-wrap{max-height:none}
 /* 예약관리 검색·필터 바 */
 .bk-filterbar{margin:6px 0 14px;display:flex;flex-direction:column;gap:9px}
 .bk-search-row{position:relative;display:flex;align-items:center}
@@ -1117,7 +1121,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;border:1px solid var(--border2);border-radius:3px;padding:1px 5px;line-height:1.1;text-align:center;background:var(--green-dim)"><b style="font-size:10px;color:var(--green2)">12</b><br><span style="font-size:8px;color:var(--green2);opacity:.6;border-top:1px dotted currentColor">20</span></span> 위=잔여 · 아래=보유 (사용 = 보유 − 잔여)</span>
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
-      <div class="tbl-wrap" style="max-height:600px"><table class="blk-mtx" id="blk-mtx"></table></div>
+      <div class="tbl-wrap blk-mtx-wrap"><table class="blk-mtx" id="blk-mtx"></table></div>
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
       <div class="note" style="border-left-color:var(--red)">
