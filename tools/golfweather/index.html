@@ -38,9 +38,6 @@ body[data-phase="night"], body[data-phase="dawn"], body[data-phase="golden"]{
   --glass-strong:rgba(255,255,255,.94);
   --glass-line:rgba(255,255,255,.55);
 }
-body[data-phase="night"] .fit,
-body[data-phase="dawn"] .fit,
-body[data-phase="golden"] .fit{ background:rgba(255,255,255,.62); border-color:rgba(255,255,255,.8); }
 body[data-phase="night"] .metric,
 body[data-phase="dawn"] .metric,
 body[data-phase="golden"] .metric{ background:rgba(255,255,255,.58); border-color:rgba(255,255,255,.8); }
@@ -215,22 +212,6 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .hero-hilo{ font-size:13px; color:var(--ink-2); font-weight:700; margin-top:3px; }
 
 /* 라운딩 판정 배너 */
-.fit{
-  display:flex; align-items:center; gap:14px; margin-top:16px;
-  padding:14px 16px; border-radius:var(--r-sm);
-  background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.7);
-}
-.fit-ring{ flex:none; }
-.fit-body{ flex:1; min-width:0; }
-.fit-when{ font-size:11.5px; font-weight:800; letter-spacing:.05em; color:var(--muted); text-transform:uppercase; }
-.fit-verdict{ display:flex; align-items:center; gap:7px; font-size:21px; font-weight:800; letter-spacing:-.02em; margin:1px 0 2px; }
-.fit-flag{ display:inline-flex; }
-.fit-reason{ font-size:13.5px; color:var(--ink-2); font-weight:600; }
-.scale{ display:flex; gap:3px; margin-top:12px; }
-.scale span{ flex:1; height:5px; border-radius:99px; opacity:.35; transition:opacity .2s; }
-.scale span.on{ opacity:1; height:7px; margin-top:-1px; }
-.scale-legend{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:5px; font-weight:600; }
-
 /* 지표 타일 */
 .metrics{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
 .metric{
@@ -268,8 +249,6 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .hcell .htemp{ font-size:15px; font-weight:800; letter-spacing:-.02em; }
 .hcell .hpop{ font-size:10.5px; color:#2f7fc4; font-weight:800; min-height:14px; }
 .hcell .hwind{ font-size:10.5px; color:var(--muted); font-weight:600; }
-.hbar{ height:4px; border-radius:99px; margin:6px 7px 0; background:rgba(15,27,45,.10); overflow:hidden; }
-.hbar i{ display:block; height:100%; border-radius:99px; }
 .legend{ font-size:11.5px; color:var(--muted); margin-top:6px; display:flex; align-items:center; gap:7px; font-weight:600; }
 .legend .sw{ width:16px; height:10px; border-radius:4px; background:rgba(255,255,255,.75); border:1px solid rgba(255,255,255,.9); display:inline-block; }
 
@@ -293,10 +272,6 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .rlo{ color:var(--muted); text-align:right; }
 .range{ flex:1; height:5px; border-radius:99px; background:rgba(15,27,45,.11); position:relative; min-width:40px; }
 .range i{ position:absolute; top:0; height:100%; border-radius:99px; }
-.dpill{
-  display:inline-block; color:#fff; font-weight:800; font-size:11.5px;
-  padding:3px 9px; border-radius:99px; min-width:38px; text-align:center;
-}
 .dtag{
   display:inline-block; font-size:9.5px; font-weight:800; color:var(--navy);
   background:rgba(255,255,255,.85); border-radius:5px; padding:1px 5px; margin-left:5px; vertical-align:1px;
@@ -330,7 +305,6 @@ footer.bot{
   .hero-temp{ font-size:62px; }
   .hero-ico{ width:78px; height:78px; }
   .hero-state{ font-size:15px; }
-  .fit-verdict{ font-size:19px; }
   .metrics{ grid-template-columns:repeat(3,1fr); }
   .drow{ grid-template-columns:56px 30px 38px 1fr; gap:7px; padding:9px 6px; }
   .rlo,.rhi{ width:28px; font-size:13px; }
@@ -432,7 +406,7 @@ const I18N = {
   ko:{
     title:'골프 날씨', searchPh:'도시·골프장 검색 …',
     curTitle:'현재 날씨', feels:'체감', wind:'바람', gust:'돌풍', humid:'습도', uv:'자외선', vis:'시정',
-    fitTitle:'라운딩 적합도', hourly:'시간대별 예보', teeLegend:'라운딩 시간대(07–15시) 강조',
+    hourly:'시간대별 예보', teeLegend:'라운딩 시간대(07–15시) 강조',
     week:'7일 예보', today:'오늘', tomorrow:'내일',
     sunrise:'일출', sunset:'일몰', source:'자료: Open-Meteo', updated:'갱신', home:'사내 도구함',
     loading:'날씨를 불러오는 중…', errLoad:'날씨를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -448,13 +422,13 @@ const I18N = {
     now:'지금', dayAll:'오늘 하루', heed:'오늘 유의',
     dew:'이슬점', cloud:'구름', pressure:'기압', pop:'강수확률', rain:'강수량', rainHrs:'비 오는 시간',
     sun:'일조 시간', daylen:'낮 길이', soilT:'지면 온도', soilM:'지면 습기', windDir:'우세 풍향',
-    feelHi:'체감 최고/최저', feelLo:'체감 최저', gustMax:'최대 돌풍',
+    feelHi:'체감 최고/최저', gustMax:'최대 돌풍',
     uHpa:'hPa', uMm:'mm', uHr:'시간',
   },
   ja:{
     title:'ゴルフ天気', searchPh:'都市・ゴルフ場を検索 …',
     curTitle:'現在の天気', feels:'体感', wind:'風', gust:'突風', humid:'湿度', uv:'紫外線', vis:'視程',
-    fitTitle:'ラウンド適性', hourly:'時間別予報', teeLegend:'ラウンド時間帯(07–15時)を強調',
+    hourly:'時間別予報', teeLegend:'ラウンド時間帯(07–15時)を強調',
     week:'7日間予報', today:'今日', tomorrow:'明日',
     sunrise:'日の出', sunset:'日の入', source:'データ: Open-Meteo', updated:'更新', home:'社内ツール',
     loading:'天気を読み込み中…', errLoad:'天気を取得できませんでした。しばらくして再度お試しください。',
@@ -470,7 +444,7 @@ const I18N = {
     now:'現在', dayAll:'今日一日', heed:'今日の注意点',
     dew:'露点', cloud:'雲量', pressure:'気圧', pop:'降水確率', rain:'降水量', rainHrs:'降水時間',
     sun:'日照時間', daylen:'昼の長さ', soilT:'地面温度', soilM:'地面の湿り', windDir:'主風向',
-    feelHi:'体感 最高/最低', feelLo:'体感最低', gustMax:'最大突風',
+    feelHi:'体感 最高/最低', gustMax:'最大突風',
     uHpa:'hPa', uMm:'mm', uHr:'時間',
   }
 };
@@ -1013,25 +987,6 @@ function renderFooter(){
     `<span>${t.updated} ${upd}</span>`;
 }
 
-/* 원형 게이지 SVG (§5.2) */
-function gaugeSVG(score, color){
-  const R = 30, C = 2*Math.PI*R, off = C*(1 - score/100);
-  return `<svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${score} / 100">
-    <circle cx="38" cy="38" r="${R}" fill="none" stroke="rgba(15,27,45,.10)" stroke-width="7"/>
-    <circle cx="38" cy="38" r="${R}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"
-      stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 38 38)"/>
-    <text x="38" y="43" text-anchor="middle" font-size="24" font-weight="800" fill="${color}"
-      font-family="Pretendard,-apple-system,system-ui,sans-serif" letter-spacing="-1">${score}</text>
-  </svg>`;
-}
-/* 골프 깃대 아이콘 */
-function flagSVG(color){
-  return `<svg width="19" height="21" viewBox="0 0 22 24" aria-hidden="true">
-    <path d="M5 22 L5 2" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
-    <path d="M5 3 L17 6 L5 10 Z" fill="${color}"/>
-    <circle cx="5" cy="22" r="2" fill="${color}"/>
-  </svg>`;
-}
 
 /* ════════════ 상태 표시 ════════════ */
 function showState(msg, spin){
