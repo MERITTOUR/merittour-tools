@@ -27,12 +27,12 @@
 `05_data_registry.sql` 첫 줄에 이렇게 적혀 있다.
 
 ```
--- 선행: 01_user_access.sql (mt_has_role/mt_is_admin/mt_is_active 헬퍼)
+-- 선행: 04_user_access.sql (mt_has_role/mt_is_admin/mt_is_active 헬퍼)
 ```
 
-**그런데 `01_user_access.sql`이 저장소에 없었다.** `migrations/`에는 `05`와 `06`만 있고 `mt_has_role`을 정의하는 SQL이 어디에도 없어, 05를 실행할 수 없는 상태였다(존재하지 않는 함수를 참조하는 정책이라 생성에서 막힌다).
+**그런데 `04_user_access.sql`이 저장소에 없었다.** `migrations/`에는 `05`와 `06`만 있고 `mt_has_role`을 정의하는 SQL이 어디에도 없어, 05를 실행할 수 없는 상태였다(존재하지 않는 함수를 참조하는 정책이라 생성에서 막힌다).
 
-> **→ 이 커밋에서 `supabase/migrations/01_user_access.sql`을 작성했다.** 아직 실행 전이다.
+> **→ 이 커밋에서 `supabase/migrations/04_user_access.sql`을 작성했다.** 아직 실행 전이다.
 
 그리고 `data_registry`의 정책은 전부 `to authenticated` + `mt_has_role(...)`이다.
 
@@ -178,7 +178,7 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 
 - 등록소는 그 방식을 쓰면 안 된다. `data_registry`가 `anon` 차단으로 설계된 이유다.
 - **로그인(Supabase Auth) + 역할(admin/sales/air/manage)** 이 전제다.
-- `01_user_access.sql`(`mt_has_role` 등)을 **저장소에 넣었다.** 없으면 05를 실행할 수 없고, 나중에 누가 재현하지도 못한다.
+- `04_user_access.sql`(`mt_has_role` 등)을 **저장소에 넣었다.** 없으면 05를 실행할 수 없고, 나중에 누가 재현하지도 못한다.
 - 확정서 쪽 anon 키 사용도 같이 정리 대상이다(별건, 이 설계 범위 밖으로 두되 기록은 남긴다).
 
 ---
@@ -198,8 +198,8 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 
 | # | 할 일 | 끝났다고 볼 기준 |
 |---|---|---|
-| **0a** | `01_user_access.sql` 작성 ✅ · `07_data_registry_block.sql` 작성 ✅ | 저장소에 있음 (이 커밋) |
-| **0b** | Supabase 재연동 후 01 → 05 → 06 → 07 실행 + 첫 owner 승격 | `mt_has_role` 호출 성공, `app_users`·`data_registry` 조회 가능 |
+| **0a** | `04_user_access.sql` 작성 ✅ · `07_data_registry_block.sql` 작성 ✅ | 저장소에 있음 (이 커밋) |
+| **0b** | 콘솔에서 04 → 05 → 06 → 07 실행 + 첫 owner 승격 | `mt_has_role` 호출 성공, `app_users`·`data_registry` 조회 가능 |
 | **1** | 로그인 페이지 + `access.js` | 직원 계정으로 로그인 → 역할 확인됨 |
 | **2** | `shared/store.js` | Node 테스트에서 `listPeriods()`·`load()`·`save()` 동작 |
 | **3** | 정지 방지(keep-alive) + 연결 실패 안내 | 7일 무접속 후에도 프로젝트가 살아 있음 |
@@ -208,7 +208,23 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 | **6** | 마스터 서버 공유 | admin 저장 → 다른 PC에서 새로고침만으로 반영 |
 | **7** | 검증 + 문서화 | 실제 엑셀로 등록→불러오기 왕복, `npm run verify` |
 
-**0b가 안 되면 그 뒤는 전부 못 한다.** 지금 막혀 있는 지점이 여기다 — Supabase 프로젝트 재연동.
+**0b가 안 되면 그 뒤는 전부 못 한다.** 지금 막혀 있는 지점이 여기다.
+
+### 8-1. 프로젝트는 하나만 쓴다
+
+Supabase 조직 `Merittour` / 프로젝트 **`Merittour-hub`** 하나에 전부 넣는다. 프로젝트를 새로 만들면 데이터가 갈라지고 무료 티어 정지 관리 대상이 둘로 늘어난다.
+
+콘솔에 이미 저장된 쿼리(`01_resort_master` · `02_reservations` · `03_confirm_docs_storage`)와 번호가 겹치지 않도록 **`user_access`를 04로** 뒀다. 전체 순서는 이렇게 이어진다.
+
+```
+01_resort_master   ✅ 실행됨    supabase/resort_master_setup.sql
+02_reservations    ✅ 실행됨    supabase/reservations_setup.sql
+03_confirm_docs    ✅ 실행됨    supabase/confirm_docs_storage.sql
+04_user_access     ← 여기부터   supabase/migrations/04_user_access.sql
+05_data_registry                supabase/migrations/05_data_registry.sql
+06_special_cases                supabase/migrations/06_special_cases.sql
+07_data_registry_block          supabase/migrations/07_data_registry_block.sql
+```
 
 ---
 
@@ -220,7 +236,7 @@ MT_STORE.loadMaster() / saveMaster(data, version)
 | 2 | **로그인 — 이메일 발급** (Supabase Auth 초대 → 비밀번호 설정) |
 | 3 | **역할 5단계** — `owner`(슈퍼 마스터) · `admin`(관리자) · `manage` · `sales` · `air` |
 | 4 | **블록표도 등록소에 담는다** |
-| 5 | `01_user_access.sql` **미실행** — 이 커밋에서 작성함. Supabase 프로젝트가 정지 상태라 재연동 중 |
+| 5 | `04_user_access.sql` **미실행** — 이 커밋에서 작성함. Supabase 프로젝트가 정지 상태라 재연동 중 |
 
 ### 9-1. 무료 티어 — 정지가 반복된다
 
@@ -256,7 +272,7 @@ air     항공        — 읽기 전용
 
 ### 9-3. 첫 owner 만들기
 
-`01_user_access.sql` 맨 아래에 절차를 적어 뒀다. 요약하면 콘솔에서 초대 → 비밀번호 설정 → SQL 한 줄로 승격.
+`04_user_access.sql` 맨 아래에 절차를 적어 뒀다. 요약하면 콘솔에서 초대 → 비밀번호 설정 → SQL 한 줄로 승격.
 
 ```sql
 update public.app_users

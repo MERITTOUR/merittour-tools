@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════
--- 01_user_access.sql — 사용자·역할 + 접근 헬퍼  (신규 · 멱등 · 비파괴)
+-- 04_user_access.sql — 사용자·역할 + 접근 헬퍼  (신규 · 멱등 · 비파괴)
 --
 -- 05_data_registry.sql · 06_special_cases.sql 이 이 파일의 헬퍼
 -- (mt_has_role / mt_is_admin / mt_is_active)를 전제로 한다. 이 파일을 먼저 실행할 것.
@@ -11,7 +11,14 @@
 --   sales   영업        — 등록소 등록·수정
 --   air     항공        — 읽기 전용
 --
--- 실행 순서: 01 → 05 → 06 → 07
+-- 실행 순서 (Supabase 콘솔 SQL Editor · 프로젝트 Merittour-hub 하나에 전부)
+--   01_resort_master        supabase/resort_master_setup.sql       (이미 실행됨)
+--   02_reservations         supabase/reservations_setup.sql        (이미 실행됨)
+--   03_confirm_docs_storage supabase/confirm_docs_storage.sql      (이미 실행됨)
+--   04_user_access          ← 이 파일
+--   05_data_registry        supabase/migrations/05_data_registry.sql
+--   06_special_cases        supabase/migrations/06_special_cases.sql
+--   07_data_registry_block  supabase/migrations/07_data_registry_block.sql
 -- 재실행해도 안전하다(if not exists / create or replace / drop policy if exists).
 -- ════════════════════════════════════════════════════════════════
 
