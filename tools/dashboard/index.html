@@ -6013,7 +6013,66 @@ function blkRenderStatus(){
   });
   body+='</tbody>';
   document.getElementById('blk-mtx').innerHTML=head+body;
+  blkFixHeadSync(true);
 }
+
+/* ── 블록 현황 표: 날짜 헤더 상단 고정 ──
+   표 컨테이너가 가로 스크롤(overflow-x:auto)이라 CSS sticky 만으로는 페이지 스크롤에
+   헤더를 고정할 수 없다(sticky 범위가 컨테이너로 한정). 그래서 화면 상단에 헤더 사본 바를
+   fixed 로 띄우고, 가로 스크롤 위치를 원본과 동기화한다.
+   바 자체를 overflow:hidden 스크롤포트로 두면 첫 열(호텔·룸타입)의 sticky left 도 그대로 살아난다. */
+let _blkFixSig='';
+function blkFixHeadBar(){
+  let bar=document.getElementById('blk-fixhd');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='blk-fixhd';
+    bar.style.cssText='position:fixed;z-index:150;overflow:hidden;display:none;'+
+      'box-shadow:0 4px 10px rgba(20,30,50,.10);border-bottom:1px solid var(--border);background:var(--surface3)';
+    document.body.appendChild(bar);
+    // 헤더 바에서도 좌우 스크롤(휠/트랙패드)하면 표가 같이 움직이도록
+    bar.addEventListener('wheel', e=>{
+      const wrap=document.querySelector('.blk-mtx-wrap');
+      if(wrap && e.deltaX){ wrap.scrollLeft += e.deltaX; blkFixHeadSync(); }
+    }, {passive:true});
+  }
+  return bar;
+}
+function blkFixHeadSync(rebuild){
+  const wrap=document.querySelector('.blk-mtx-wrap');
+  const tbl=document.getElementById('blk-mtx');
+  const bar=blkFixHeadBar();
+  if(!wrap || !tbl || !tbl.tHead || !tbl.rows.length || !wrap.offsetParent){ bar.style.display='none'; return; }
+  const topOff=(document.querySelector('.header')?.offsetHeight||0)+(document.querySelector('.nav')?.offsetHeight||0);
+  const wr=wrap.getBoundingClientRect();
+  const headH=tbl.tHead.getBoundingClientRect().height||28;
+  // 헤더가 상단 고정선 위로 올라갔고, 표가 아직 화면에 남아 있을 때만 노출
+  if(!(wr.top < topOff && wr.bottom > topOff + headH + 8)){ bar.style.display='none'; return; }
+  // 열 폭 시그니처가 바뀌면 사본 재생성
+  const ths=[...tbl.tHead.rows[0].cells];
+  const widths=ths.map(th=>th.getBoundingClientRect().width);
+  const sig=tbl.tHead.innerHTML.length+'|'+widths.map(w=>Math.round(w)).join(',');
+  if(rebuild || sig!==_blkFixSig){
+    _blkFixSig=sig;
+    bar.innerHTML='<table class="blk-mtx" style="width:'+tbl.offsetWidth+'px;table-layout:fixed">'+
+      '<colgroup>'+widths.map(w=>'<col style="width:'+w+'px">').join('')+'</colgroup>'+
+      '<thead>'+tbl.tHead.innerHTML+'</thead></table>';
+  }
+  bar.style.display='block';
+  bar.style.top=topOff+'px';
+  bar.style.left=wr.left+'px';
+  bar.style.width=wrap.clientWidth+'px';
+  bar.style.height=headH+'px';
+  bar.scrollLeft=wrap.scrollLeft;
+}
+(function blkFixHeadInit(){
+  const on=()=>blkFixHeadSync();
+  window.addEventListener('scroll', on, {passive:true});
+  window.addEventListener('resize', ()=>blkFixHeadSync(true));
+  document.addEventListener('scroll', e=>{
+    if(e.target && e.target.classList && e.target.classList.contains('blk-mtx-wrap')) blkFixHeadSync();
+  }, true);
+})();
 
 /* ── 블록 현황 내부 공유용 내보내기 (엑셀 / 안 잘리는 PNG) ── */
 /* 현황 매트릭스 데이터 산출 (엑셀·PNG 공용): 행=호텔·룸타입, 열=1~말일, 값=잔여/사용 */
