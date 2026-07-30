@@ -232,7 +232,7 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .scale-legend{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:5px; font-weight:600; }
 
 /* 지표 타일 */
-.metrics{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:14px; }
+.metrics{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
 .metric{
   background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.65);
   border-radius:var(--r-sm); padding:11px 10px; text-align:center;
@@ -240,6 +240,12 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 .metric .ml{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.03em; }
 .metric .mv{ font-size:15px; font-weight:800; letter-spacing:-.01em; margin-top:2px; white-space:nowrap; }
 .metric .mv small{ font-size:.72em; font-weight:700; color:var(--ink-2); margin-left:1px; }
+.mgroup{ font-size:11px; font-weight:800; letter-spacing:.05em; color:var(--muted); margin:16px 0 7px; text-transform:uppercase; }
+.mgroup span{ font-weight:600; text-transform:none; letter-spacing:0; margin-left:5px; color:var(--ink-2); }
+.heed{ margin-top:14px; padding:10px 13px; border-radius:var(--r-sm); font-size:13.5px; font-weight:600; color:var(--ink-2);
+  background:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.7); }
+.heed b{ color:var(--ink); }
+.metric .msub{ font-size:10px; color:var(--muted); font-weight:700; margin-top:1px; }
 .metric .mq{ font-size:10px; font-weight:700; margin-top:3px; line-height:1.25; word-break:keep-all; }
 /* 정도 색: 0 문제없음 · 1 보통 · 2 주의 · 3 심함 */
 .q0{ color:#0e9f6e; } .q1{ color:#5b6b80; } .q2{ color:#d98324; } .q3{ color:#dc3b2f; }
@@ -270,7 +276,7 @@ main{ max-width:900px; margin:0 auto; padding:16px 18px 44px; width:100%; flex:1
 /* ══ 7일 — 세로 리스트 + 온도 레인지 바 ══ */
 .days{ display:flex; flex-direction:column; }
 .drow{
-  display:grid; grid-template-columns:64px 34px 46px 1fr auto; align-items:center; gap:10px;
+  display:grid; grid-template-columns:64px 34px 46px 1fr; align-items:center; gap:10px;
   width:100%; border:0; background:transparent; text-align:left;
   padding:9px 10px; border-radius:var(--r-sm); transition:background .15s;
   border-bottom:1px solid rgba(15,27,45,.07);
@@ -326,8 +332,7 @@ footer.bot{
   .hero-state{ font-size:15px; }
   .fit-verdict{ font-size:19px; }
   .metrics{ grid-template-columns:repeat(3,1fr); }
-  .metrics .metric:nth-child(4),.metrics .metric:nth-child(5){ grid-column:span 1; }
-  .drow{ grid-template-columns:56px 30px 38px 1fr auto; gap:7px; padding:9px 6px; }
+  .drow{ grid-template-columns:56px 30px 38px 1fr; gap:7px; padding:9px 6px; }
   .rlo,.rhi{ width:28px; font-size:13px; }
   .brand .ttl{ font-size:17px; }
   .homebtn{ padding:7px 10px; }
@@ -440,6 +445,11 @@ const I18N = {
     verdicts:['라운딩 최적','라운딩 좋음','라운딩 보통·주의','라운딩 주의','라운딩 비추천'],
     uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
     poplabel:'강수확률', maxwind:'최대풍속',
+    now:'지금', dayAll:'오늘 하루', heed:'오늘 유의',
+    dew:'이슬점', cloud:'구름', pressure:'기압', pop:'강수확률', rain:'강수량', rainHrs:'비 오는 시간',
+    sun:'일조 시간', daylen:'낮 길이', soilT:'지면 온도', soilM:'지면 습기', windDir:'우세 풍향',
+    feelHi:'체감 최고/최저', feelLo:'체감 최저', gustMax:'최대 돌풍',
+    uHpa:'hPa', uMm:'mm', uHr:'시간',
   },
   ja:{
     title:'ゴルフ天気', searchPh:'都市・ゴルフ場を検索 …',
@@ -457,6 +467,11 @@ const I18N = {
     verdicts:['ラウンド最適','ラウンド良好','まずまず・注意','注意','非推奨'],
     uProb:'%', uWind:'m/s', uTemp:'°', uVis:'km',
     poplabel:'降水確率', maxwind:'最大風速',
+    now:'現在', dayAll:'今日一日', heed:'今日の注意点',
+    dew:'露点', cloud:'雲量', pressure:'気圧', pop:'降水確率', rain:'降水量', rainHrs:'降水時間',
+    sun:'日照時間', daylen:'昼の長さ', soilT:'地面温度', soilM:'地面の湿り', windDir:'主風向',
+    feelHi:'体感 最高/最低', feelLo:'体感最低', gustMax:'最大突風',
+    uHpa:'hPa', uMm:'mm', uHr:'時間',
   }
 };
 
@@ -500,6 +515,35 @@ const GRADE = {
     [4000,  ['볼 추적 어려움','ボールが見にくい'], 2],
     [10000, ['보통','普通'], 1],
     [Infinity, ['맑음','良好'], 0],
+  ],
+  // 이슬점 °C — 후텁지근함의 실제 지표(습도보다 체감에 가깝다)
+  dew:[
+    [10, ['쾌적','快適'], 0],
+    [16, ['보통','普通'], 0],
+    [20, ['다소 습함','やや蒸す'], 1],
+    [24, ['후텁지근','蒸し暑い'], 2],
+    [Infinity, ['매우 습함','非常に蒸す'], 3],
+  ],
+  // 구름량 %
+  cloud:[
+    [20, ['맑음','快晴'], 0],
+    [50, ['구름 조금','晴れ'], 0],
+    [80, ['구름 많음','曇りがち'], 1],
+    [Infinity, ['흐림','曇り'], 1],
+  ],
+  // 기압 hPa — 낮으면 공기가 옅어 볼이 더 나간다
+  pressure:[
+    [1000, ['낮음·볼 더 감','低い・飛distance増'], 1],
+    [1020, ['보통','標準'], 0],
+    [Infinity, ['높음·볼 덜 감','高い・飛distance減'], 1],
+  ],
+  // 지면 수분 m³/m³ — 카트 진입·라이에 영향
+  soilM:[
+    [0.10, ['매우 건조','非常に乾燥'], 1],
+    [0.20, ['건조·볼 많이 굴러','乾燥・ラン多め'], 0],
+    [0.32, ['적당','適度'], 0],
+    [0.42, ['젖음·볼 덜 굴러','湿り・ラン少なめ'], 1],
+    [Infinity, ['질척임','ぬかるみ'], 2],
   ],
   // 체감온도 °C
   feel:[
@@ -761,9 +805,9 @@ async function loadForecast(place){
   showState(I18N[LANG].loading, true);
   const p = new URLSearchParams({
     latitude:place.lat, longitude:place.lon, timezone:'auto', forecast_days:'7', wind_speed_unit:'ms',
-    current:'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
-    hourly:'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,relative_humidity_2m',
-    daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,uv_index_max,sunrise,sunset',
+    current:'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,pressure_msl,is_day',
+    hourly:'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,relative_humidity_2m,dew_point_2m,cloud_cover,pressure_msl,soil_temperature_0cm,soil_moisture_0_1cm',
+    daily:'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,rain_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset,daylight_duration,sunshine_duration',
   });
   if(place.elevation!=null) p.set('elevation', place.elevation);
   try{
@@ -810,10 +854,12 @@ function hoursForDay(dayIdx){
 // 현재 시각 hourly 인덱스(자외선·시정 보완용)
 function currentHourExtra(){
   const H = DATA.hourly, key = (DATA.current.time||'').slice(0,13);
-  for(let i=0;i<H.time.length;i++){
-    if(H.time[i].slice(0,13)===key) return { uv:H.uv_index[i] ?? 0, vis:H.visibility[i] };
-  }
-  return { uv:0, vis:null };
+  const pick = i => ({
+    uv:H.uv_index?.[i] ?? 0, vis:H.visibility?.[i],
+    dew:H.dew_point_2m?.[i], soilT:H.soil_temperature_0cm?.[i], soilM:H.soil_moisture_0_1cm?.[i],
+  });
+  for(let i=0;i<H.time.length;i++) if(H.time[i].slice(0,13)===key) return pick(i);
+  return { uv:0, vis:null, dew:null, soilT:null, soilM:null };
 }
 
 /* ════════════ 렌더 ════════════ */
@@ -831,6 +877,8 @@ function renderAll(){
   const dayEval = scoreDay(dayHours, LANG);
 
   const visTxt = v => v==null ? '—' : (v/1000).toFixed(v<10000?1:0)+' '+t.uVis;
+  const hrsTxt = sec => { if(sec==null) return '—'; const h=Math.floor(sec/3600), m=Math.round((sec%3600)/60); return `${h}<small>h</small>${m?` ${m}<small>m</small>`:''}`; };
+  const tempPair = (hi,lo) => (hi==null||lo==null) ? '—' : `${Math.round(hi)}° <span style="color:var(--muted)">${Math.round(lo)}°</span>`;
 
   // 날짜 라벨
   const dLabel = idx => {
@@ -861,25 +909,33 @@ function renderAll(){
       </div>
     </div>
 
-    <div class="fit">
-      <div class="fit-ring">${gaugeSVG(dayEval.score, dayEval.color)}</div>
-      <div class="fit-body">
-        <div class="fit-when">${dLabel(SEL_DAY)} · ${t.fitTitle}</div>
-        <div class="fit-verdict" style="color:${dayEval.color}">
-          <span class="fit-flag">${flagSVG(dayEval.color)}</span>${dayEval.verdict}
-        </div>
-        <div class="fit-reason">${esc(dayEval.reason)}</div>
-        <div class="scale">${VERDICT_COLORS.map((col,i)=>`<span class="${i===verdictIndex(dayEval.score)?'on':''}" style="background:${col}"></span>`).join('')}</div>
-        <div class="scale-legend"><span>${t.verdicts[0]}</span><span>${t.verdicts[4]}</span></div>
-      </div>
-    </div>
+    ${dayEval.reason && dayEval.reason!==t.reasonNone
+      ? `<div class="heed"><b>${t.heed}</b> · ${esc(dayEval.reason)}</div>` : ''}
 
+    <div class="mgroup">${t.now}</div>
     <div class="metrics">
-      <div class="metric"><div class="ml">${t.wind}</div><div class="mv">${cur.wind_speed_10m.toFixed(1)}<small>${t.uWind}</small></div>${gradeLine('wind',cur.wind_speed_10m)}</div>
+      <div class="metric"><div class="ml">${t.wind}</div><div class="mv">${cur.wind_speed_10m.toFixed(1)}<small>${t.uWind}</small></div><div class="msub">${dirOf(cur.wind_direction_10m)}</div>${gradeLine('wind',cur.wind_speed_10m)}</div>
       <div class="metric"><div class="ml">${t.gust}</div><div class="mv">${(cur.wind_gusts_10m??0).toFixed(1)}<small>${t.uWind}</small></div>${gradeLine('gust',cur.wind_gusts_10m??0)}</div>
       <div class="metric"><div class="ml">${t.humid}</div><div class="mv">${cur.relative_humidity_2m}<small>%</small></div>${gradeLine('humid',cur.relative_humidity_2m)}</div>
+      <div class="metric"><div class="ml">${t.dew}</div><div class="mv">${extra.dew!=null?Math.round(extra.dew)+'°':'—'}</div>${gradeLine('dew',extra.dew)}</div>
+      <div class="metric"><div class="ml">${t.cloud}</div><div class="mv">${cur.cloud_cover!=null?cur.cloud_cover+'<small>%</small>':'—'}</div>${gradeLine('cloud',cur.cloud_cover)}</div>
       <div class="metric"><div class="ml">${t.uv}</div><div class="mv">${Math.round(extra.uv)}</div>${gradeLine('uv',extra.uv)}</div>
       <div class="metric"><div class="ml">${t.vis}</div><div class="mv">${visTxt(extra.vis)}</div>${gradeLine('vis',extra.vis)}</div>
+      <div class="metric"><div class="ml">${t.pressure}</div><div class="mv">${cur.pressure_msl!=null?Math.round(cur.pressure_msl)+`<small>${t.uHpa}</small>`:'—'}</div>${gradeLine('pressure',cur.pressure_msl)}</div>
+    </div>
+
+    <div class="mgroup">${t.dayAll} <span>${dLabel(SEL_DAY)}</span></div>
+    <div class="metrics">
+      <div class="metric"><div class="ml">${t.pop}</div><div class="mv">${D.precipitation_probability_max?.[SEL_DAY] ?? 0}<small>%</small></div></div>
+      <div class="metric"><div class="ml">${t.rain}</div><div class="mv">${(D.precipitation_sum?.[SEL_DAY] ?? 0).toFixed(1)}<small>${t.uMm}</small></div></div>
+      <div class="metric"><div class="ml">${t.rainHrs}</div><div class="mv">${Math.round(D.precipitation_hours?.[SEL_DAY] ?? 0)}<small>${t.uHr}</small></div></div>
+      <div class="metric"><div class="ml">${t.gustMax}</div><div class="mv">${(D.wind_gusts_10m_max?.[SEL_DAY] ?? 0).toFixed(1)}<small>${t.uWind}</small></div>${gradeLine('gust',D.wind_gusts_10m_max?.[SEL_DAY])}</div>
+      <div class="metric"><div class="ml">${t.windDir}</div><div class="mv">${D.wind_direction_10m_dominant?.[SEL_DAY]!=null?dirOf(D.wind_direction_10m_dominant[SEL_DAY]):'—'}</div></div>
+      <div class="metric"><div class="ml">${t.sun}</div><div class="mv">${hrsTxt(D.sunshine_duration?.[SEL_DAY])}</div></div>
+      <div class="metric"><div class="ml">${t.daylen}</div><div class="mv">${hrsTxt(D.daylight_duration?.[SEL_DAY])}</div></div>
+      <div class="metric"><div class="ml">${t.feelHi}</div><div class="mv">${tempPair(D.apparent_temperature_max?.[SEL_DAY], D.apparent_temperature_min?.[SEL_DAY])}</div></div>
+      ${SEL_DAY===0&&extra.soilT!=null?`<div class="metric"><div class="ml">${t.soilT}</div><div class="mv">${Math.round(extra.soilT)}°</div></div>`:''}
+      ${SEL_DAY===0&&extra.soilM!=null?`<div class="metric"><div class="ml">${t.soilM}</div><div class="mv">${(extra.soilM*100).toFixed(0)}<small>%</small></div>${gradeLine('soilM',extra.soilM)}</div>`:''}
     </div>
   </div>`;
 
@@ -888,7 +944,6 @@ function renderAll(){
   for(let hr=SHOW_START; hr<=SHOW_END; hr++){
     const h = dayHours[hr];
     if(!h) continue;
-    const r = scoreHour(h);
     const tee = (hr>=ROUND_START && hr<ROUND_END) ? ' tee' : '';
     const pop = h.pop>=10 ? `${h.pop}%` : '';
     cells += `<div class="hcell${tee}">
@@ -897,7 +952,6 @@ function renderAll(){
       <div class="htemp">${Math.round(h.temp)}°</div>
       <div class="hpop">${pop}</div>
       <div class="hwind">${h.wind.toFixed(1)}</div>
-      <div class="hbar"><i style="width:${r.score}%;background:${verdictColor(r.score)}"></i></div>
     </div>`;
   }
   html += `<div class="card"><div class="sec-title">${t.hourly}</div>
@@ -909,7 +963,6 @@ function renderAll(){
   const wkSpan = Math.max(1, wkHi - wkLo);
   let rows = '';
   for(let i=0;i<D.time.length;i++){
-    const ev = scoreDay(hoursForDay(i), LANG);
     const iso = D.time[i];
     const wd = t.wdays[ new Date(iso+'T00:00').getDay() ];
     const tag = i===0 ? t.today : (i===1 ? t.tomorrow : '');
@@ -926,7 +979,6 @@ function renderAll(){
         <span class="range"><i style="left:${left}%;width:${width}%;background:linear-gradient(90deg,${tempColor(lo,wkLo,wkHi)},${tempColor(hi,wkLo,wkHi)})"></i></span>
         <span class="rhi">${Math.round(hi)}°</span>
       </span>
-      <span class="dpill" style="background:${ev.color}">${ev.score}</span>
     </button>`;
   }
   html += `<div class="card"><div class="sec-title">${t.week}</div><div class="days">${rows}</div></div>`;
