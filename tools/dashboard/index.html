@@ -1571,7 +1571,7 @@ function parseProduct(name){
   }
   else if(s.indexOf('미야자키')>=0){ accom='미야자키 상품 호텔'; roomType='트윈'; region='미야자키'; golf='미야자키'; }
   else if(s.indexOf('구마모토 시내')>=0){ accom='구마모토 시내 상품 호텔'; roomType='트윈'; region='구마모토'; golf=''; }
-  else if(s.indexOf('닐라이스프링스')>=0){ accom='닐라이스프링스 리조트'; roomType='트윈'; region='쿠알라룸푸르'; golf='닐라이스프링스GC'; }
+  else if(s.indexOf('닐라이스프링스')>=0){ accom='닐라이스프링스 리조트'; roomType='트윈'; region='쿠알라룸푸르'; golf='닐라이스프링스CC'; }
   else if(s.indexOf('국제공항')>=0){ accom='미야자키 상품 호텔'; roomType='트윈'; region='미야자키'; golf='국제공항CC'; }
 
   const m=name.match(/(\d+)박/); const nights=m?parseInt(m[1]):0;
@@ -4127,7 +4127,7 @@ const RESORT_DEFAULTS=[
   {key:'kumamoto_city', name:'구마모토 시내 상품 호텔', region:'구마모토', golf:'-', holes:0,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'자유', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{}, aliases:['소테츠 그랜드 프레사 구마모토','다이와 로이넷 호텔 구마모토','구마모토 시내 호텔'], assign:true, memo:'소테츠·다이와 임의배정(블록 안 깜)'},
-  {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스GC', holes:18,
+  {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', golf:'닐라이스프링스CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'자유', airOut:'인천', airIn:'쿠알라룸푸르', arrCode:'KUL', rooms:{'트윈':50}, aliases:['닐라이스프링스리조트호텔','닐라이스프링스 리조트 호텔'], assign:false, memo:''}
 ];
