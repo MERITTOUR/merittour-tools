@@ -4048,7 +4048,7 @@ const RESORT_DEFAULTS=[
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':1}, aliases:['아소 야마나미 관내별장','아소별장','관내별장'], assign:false, memo:'8인 대형 별장 1동 (구 관내별장 15실은 별장 5동 + 소형트윈으로 분리)'},
   {key:'yamanami_dome', name:'야마나미 포레스트 돔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'돔하우스':4}, aliases:['아소 야마나미 돔하우스','돔하우스'], assign:false, memo:''},
+   depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'돔하우스':4}, roomAlias:{'트윈':'돔하우스'}, aliases:['아소 야마나미 돔하우스','돔하우스'], assign:false, memo:''},
   {key:'yamanami_hinoki_cabin', name:'야마나미 히노키빌라 - 캐빈', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':3}, aliases:['소보별장','통나무집'], assign:false, memo:'편백 2인 별장 · 3동'},
@@ -4084,10 +4084,10 @@ const RESORT_DEFAULTS=[
    depart:'월7박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{'온천호텔':35}, aliases:[], assign:false, memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{'온천호텔':35}, roomAlias:{'트윈':'온천호텔'}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{'맨션':10}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
+   depart:'목5박, 화7박, 목7박, 화14박, 목14박', airOut:'인천 (니가타)', airIn:'니가타', arrCode:'KIJ', rooms:{'맨션':10}, roomAlias:{'트윈':'맨션'}, aliases:['스가다이라 맨션형 숙소'], assign:false, memo:''},
   {key:'miyazaki', name:'미야자키 상품 호텔', region:'미야자키', golf:'미야자키', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일5박', airOut:'인천', airIn:'미야자키', arrCode:'KMI', rooms:{'트윈':10}, aliases:['미야자키 시내 호텔','국제공항CC 골프텔','미야자키 국제공항CC'], assign:false, memo:''},
@@ -4194,6 +4194,25 @@ function deriveAssignNames(){
   return resortMaster.filter(r=>r.assign).map(r=>r.name);
 }
 
+/* 코드가 소유하는 항목 — 저장본이 덮어써서는 안 된다.
+   UI에 수정 수단이 없고(updateResort의 편집 대상에 없다) 코드가 유일한 출처인데,
+   {...def, ...saved} 병합에서 저장본이 이기면 코드에서 숙소명을 바꿔도
+   이미 쓰던 PC에는 영원히 반영되지 않는다. 실제로 신규 명칭 16종을 정리한 뒤에도
+   기존 PC에는 「아소 야마나미 골프텔」이 그대로 남아 있었다. */
+const MASTER_CODE_OWNED=['name','region','golf','holes'];
+
+/* 룸타입 구조가 바뀐 숙소의 「바뀌기 전 기본값」.
+   저장본이 이 값 그대로면(= 손대지 않았으면) 새 구조로 올린다.
+   직접 조정한 보유는 건드리지 않는다 — 임의로 되돌리면 없는 방을 팔게 된다. */
+const ROOMS_BEFORE_RENAME={
+  yamanami_bessou:{'트윈':15}, yamanami_dome:{'트윈':4},
+  sugadaira_onsen:{'트윈':35}, sugadaira_mansion:{}
+};
+function sameRooms(a,b){
+  const k=o=>Object.keys(o||{}).sort().map(x=>x+':'+o[x]).join('|');
+  return k(a)===k(b);
+}
+
 function loadResortMaster(){
   try{
     const saved=JSON.parse(localStorage.getItem(STORE_RESORT)||'null');
@@ -4201,9 +4220,19 @@ function loadResortMaster(){
     resortMaster = RESORT_DEFAULTS.map(def=>{
       const s = saved && saved.find(x=>x.key===def.key);
       const r = s ? {...def, ...s} : {...def};
+      // 코드 소유 항목은 항상 기본값으로 — 숙소명 변경이 기존 PC에도 반영되도록
+      MASTER_CODE_OWNED.forEach(k=>{ if(def[k]!==undefined) r[k]=def[k]; });
+      // 별칭은 합집합 — 새 표준 별칭을 보장하면서 직접 추가한 별칭도 지킨다
+      r.aliases=[...new Set([...(def.aliases||[]), ...(Array.isArray(s&&s.aliases)?s.aliases:[])])];
+      // 룸타입 구조가 바뀐 숙소: 손대지 않은 옛 기본값이면 새 구조로 올린다
+      if(s && ROOMS_BEFORE_RENAME[def.key] && sameRooms(s.rooms, ROOMS_BEFORE_RENAME[def.key])){
+        r.rooms={...(def.rooms||{})};
+        delete r.roomMeta;                   // 새 룸타입 기준으로 다시 만든다
+      }
       // 기간 예외: 없던 저장본은 빈 배열 = 기존 동작 그대로 (별도 마이그레이션 불필요)
       if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
-      r.roomAlias = normRoomAlias(r);        // 룸타입 표기 별칭 (엠클릭 표기 → 마스터 이름)
+      // 룸타입 표기 별칭 (엠클릭 표기 → 마스터 룸타입). 기본값 밑에 저장본을 얹어 직접 등록분이 이긴다.
+      r.roomAlias = {...(def.roomAlias||{}), ...normRoomAlias(r)};
       r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
       return r;
     });
