@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>엠클릭 등록소 · MERITTOUR 사내 도구함</title>
+<title>엠클릭 통합 업로드 · MERITTOUR 사내 도구함</title>
 <script src="../../shared/gate.js"></script>
 <script src="../../shared/supabase-config.js"></script>
 <script src="../../shared/access.js"></script>
@@ -103,7 +103,7 @@
 <body>
 <div class="card">
   <div class="brand"><span class="mark" aria-hidden="true"></span> MERITTOUR 사내 도구함</div>
-  <h1>엠클릭 등록소</h1>
+  <h1>엠클릭 통합 업로드</h1>
   <p class="sub">엠클릭 파일을 <b>한 사람이 한 번</b> 올리면 모두가 같은 자료를 씁니다.<br>
     올린 뒤에는 대시보드에서 파일 없이 바로 불러 쓸 수 있습니다.</p>
 
@@ -136,7 +136,7 @@
     <textarea class="paste" id="blk-paste" placeholder="엠클릭 호텔별 예약현황 표를 붙여넣으세요 (Ctrl+V) — 안 넣으면 이미 등록된 표가 그대로 유지됩니다"></textarea>
 
     <div class="sum" id="sum"></div>
-    <button class="pri big" id="btn-save" disabled>등록소에 저장</button>
+    <button class="pri big" id="btn-save" disabled>서버에 올리기</button>
 
     <div class="grp-h">등록된 출발월 <span class="n" id="cnt">0</span></div>
     <div id="list"></div>
@@ -362,7 +362,7 @@
           say(esc((e && e.message) || '저장에 실패했습니다.'));
         }
       })
-      .then(function () { btn.disabled = false; btn.textContent = '등록소에 저장'; });
+      .then(function () { btn.disabled = false; btn.textContent = '서버에 올리기'; });
   });
 
   /* ── 목록 ───────────────────────────────────────────────────── */

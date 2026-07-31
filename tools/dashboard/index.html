@@ -6,6 +6,9 @@
 <title>MERITTOUR 통합 업무 허브</title>
 <script src="../../shared/gate.js"></script>
 <script src="../../shared/util.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
+<script src="../../shared/store.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -770,7 +773,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
 <!-- NAV -->
 <div class="nav" id="nav">
-  <div class="nav-tab active" id="nav-upload" onclick="gotoSection('upload')"><div class="nav-dot"></div> 업로드</div>
+  <div class="nav-tab active" id="nav-upload" onclick="gotoSection('upload')"><div class="nav-dot"></div> 자료 불러오기</div>
   <div class="nav-tab" id="nav-resort" onclick="gotoSection('resort')"><div class="nav-dot"></div> ① 리조트 마스터</div>
   <div class="nav-tab" id="nav-block" onclick="gotoSection('block')"><div class="nav-dot"></div> ② 호텔 블록</div>
   <div class="nav-tab" id="nav-audit" onclick="gotoSection('audit')"><div class="nav-dot"></div> ③ 데이터 검수</div>
@@ -794,39 +797,50 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
   <div class="card">
     <div class="card-head">
       <div>
-        <div class="card-title">파일 업로드</div>
-        <div class="card-sub">엠클릭 2종 · 예약리스트는 500행 분할, 일행별예약은 1개월 단위 다운로드 — 여러 파일 동시 선택 가능</div>
+        <div class="card-title">자료 불러오기</div>
+        <div class="card-sub">엠클릭 파일은 <b>엠클릭 통합 업로드</b>에서 한 사람이 한 번만 올립니다 — 여기서는 출발월만 고르면 됩니다</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <a class="btn-sm" href="../register/" style="text-decoration:none;border-color:var(--accent);color:var(--accent)">↗ 엠클릭 통합 업로드</a>
+        <button class="btn-sm" onclick="regLoadList()">새로고침</button>
       </div>
     </div>
 
-    <div class="upload-grid">
-      <!-- 예약리스트 -->
-      <div class="upload-area" id="drop-res" onclick="document.getElementById('inp-res').click()" ondragover="onDrag(event,'drop-res')" ondragleave="offDrag('drop-res')" ondrop="onDrop(event,'res')">
-        <input type="file" id="inp-res" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'res')">
-        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
-        <div class="upload-title">예약 리스트</div>
-        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 예약현황</b> 탭에서 다운로드<br>판매금액·미수금액·구분·비고 포함 · 500행씩 분할 시 여러 파일 등록 가능</div>
-        <div class="upload-meta"><span class="upload-dot empty" id="dot-res"></span><span id="meta-res">미선택</span></div>
-      </div>
-      <!-- 일행별예약 -->
-      <div class="upload-area" id="drop-ilhaeng" onclick="document.getElementById('inp-ilhaeng').click()" ondragover="onDrag(event,'drop-ilhaeng')" ondragleave="offDrag('drop-ilhaeng')" ondrop="onDrop(event,'ilhaeng')">
-        <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
-        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
-        <div class="upload-title">일행별 예약</div>
-        <div class="upload-sub">엠클릭 <b>출발일별 / 예약일별 → 탑승자정보</b> 탭에서 다운로드<br>개인 명단 + 항공·PNR·여권 통합 · <b>1개월 단위</b>로 명단 인원수 관계없이 한 번에 다운로드(여러 달이면 월별 파일 여러 개 등록)</div>
-        <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
-      </div>
+    <div id="reg-msg" class="note" style="display:none"></div>
+
+    <div id="reg-pick" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <label style="font-size:12px;font-weight:700;color:var(--text2)">출발월</label>
+      <select id="reg-period" style="padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;min-width:210px"></select>
+      <button class="btn-primary" id="btn-reg-load" disabled onclick="regLoadPeriod()">불러오기 →</button>
+      <span class="muted" id="reg-meta" style="font-size:12px"></span>
     </div>
 
-    <div class="note">
-      <b>결합 방식</b> · 두 파일은 <b>eventSeq</b>(행사 일련번호)를 마스터 키로 통합됩니다. 일행별예약 한 파일에 개인 명단과 항공시각(한국출발·현지도착·현지출발·한국도착)·PNR·여권·사전좌석이 모두 포함됩니다.
-      두 파일 모두 엠클릭의 <b>출발일별 / 예약일별</b> 화면에서 받습니다 — <b>예약현황</b> 탭 → 예약 리스트, <b>탑승자정보</b> 탭 → 일행별예약. <b>예약리스트</b>는 한 번에 500행씩 다운로드되어 건수가 많으면 나눠 받고, <b>일행별예약</b>은 <b>1개월 단위</b>로 명단 인원수와 관계없이 한 번에 받습니다. 기간이 여러 달이거나 분할분이 생기면 <b>같은 칸에 여러 개 등록</b>하면 자동 병합됩니다.
-      그룹코드 마스터는 이 도구에서 사용하지 않습니다. <b>예약리스트·일행별예약</b>이 모두 업로드되면 통합이 가능합니다.
+    <div class="note" style="margin-top:14px">
+      <b>왜 바뀌었나</b> · 예전에는 각자 엠클릭에서 파일을 받아 올렸습니다. 이제 <b>한 사람이 엠클릭 통합 업로드에 한 번 올리면</b> 모두가 같은 자료를 씁니다 —
+      사람마다 다른 시점의 파일을 보고 다른 숫자를 말하는 일이 없어집니다. 호텔 블록표도 함께 올라오면 자동으로 채워집니다.
     </div>
 
-    <div style="display:flex;justify-content:flex-end;gap:10px">
-      <button class="btn-primary" id="btn-analyze" disabled onclick="analyze()">통합 분석 실행 →</button>
-    </div>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:12.5px;color:var(--text3);font-weight:600">파일로 직접 열기 (업로드가 안 될 때)</summary>
+      <div class="upload-grid" style="margin-top:12px">
+        <div class="upload-area" id="drop-res" onclick="document.getElementById('inp-res').click()" ondragover="onDrag(event,'drop-res')" ondragleave="offDrag('drop-res')" ondrop="onDrop(event,'res')">
+          <input type="file" id="inp-res" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'res')">
+          <div class="upload-title">예약 리스트</div>
+          <div class="upload-sub">예약현황 탭 · 500행씩 분할분은 여러 개 선택</div>
+          <div class="upload-meta"><span class="upload-dot empty" id="dot-res"></span><span id="meta-res">미선택</span></div>
+        </div>
+        <div class="upload-area" id="drop-ilhaeng" onclick="document.getElementById('inp-ilhaeng').click()" ondragover="onDrag(event,'drop-ilhaeng')" ondragleave="offDrag('drop-ilhaeng')" ondrop="onDrop(event,'ilhaeng')">
+          <input type="file" id="inp-ilhaeng" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'ilhaeng')">
+          <div class="upload-title">일행별 예약</div>
+          <div class="upload-sub">탑승자정보 탭 · 1개월 단위</div>
+          <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:10px">여기서 연 자료는 <b>내 화면에만</b> 있습니다. 다른 직원과 맞추려면 엠클릭 통합 업로드에 올려 주세요.</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button class="btn-primary" id="btn-analyze" disabled onclick="analyze()">통합 분석 실행 →</button>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -1713,6 +1727,110 @@ function markUploaded(type,file,rows,cnt){
 function checkReady(){
   document.getElementById('btn-analyze').disabled = !(resData && ilhaengData);
 }
+
+/* ════════════════════════════════════════════════════════════
+   엠클릭 통합 업로드에서 불러오기
+   파일을 각자 올리던 것을 대신한다. 저장된 것은 원본 행이므로
+   여기서는 되돌려서 파일로 연 것과 똑같은 값으로 만든다.
+════════════════════════════════════════════════════════════ */
+let regList=[];
+
+function regSay(html, kind){
+  const box=document.getElementById('reg-msg');
+  if(!box) return;
+  if(!html){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='';
+  box.style.borderLeftColor = kind==='err' ? 'var(--red)' : (kind==='ok' ? 'var(--green)' : 'var(--amber)');
+  box.innerHTML=html;
+}
+function regWhen(s){
+  if(!s) return '';
+  const d=new Date(s);
+  if(isNaN(d)) return '';
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function regLoadList(){
+  const sel=document.getElementById('reg-period'), btn=document.getElementById('btn-reg-load');
+  if(!sel) return;
+  if(typeof MT_AUTH==='undefined' || !MT_AUTH.configured()){
+    regSay('접속 설정이 비어 있어 서버에서 불러올 수 없습니다. 아래 <b>파일로 직접 열기</b>를 쓰세요.','err');
+    return;
+  }
+  sel.innerHTML='<option>불러오는 중…</option>'; btn.disabled=true;
+  MT_STORE.listPeriods().then(list=>{
+    regList=list;
+    if(!list.length){
+      sel.innerHTML='<option value="">등록된 달이 없습니다</option>';
+      regSay('아직 등록된 달이 없습니다. <a href="../register/" style="color:var(--accent);font-weight:700">엠클릭 통합 업로드</a>에서 먼저 올려 주세요.','warn');
+      return;
+    }
+    regSay('');
+    sel.innerHTML=list.map(p=>
+      `<option value="${p.period}">${p.period} · 팀 ${p.teamCount}건 · 인원 ${p.paxCount}명${p.hasBlock?' · 블록표 있음':''}</option>`).join('');
+    btn.disabled=false;
+    regShowMeta();
+  }).catch(e=>{
+    sel.innerHTML='<option value="">불러오지 못했습니다</option>';
+    // 로그인이 필요한 경우가 대부분이다 — 어디로 가야 하는지까지 적는다
+    const msg=(e&&e.message)||'등록 목록을 불러오지 못했습니다.';
+    regSay(MT.escHtml(msg)+' <a href="../../login/?next='+encodeURIComponent('../tools/dashboard/')+'" style="color:var(--accent);font-weight:700">로그인하기</a>','err');
+  });
+}
+function regShowMeta(){
+  const sel=document.getElementById('reg-period'), meta=document.getElementById('reg-meta');
+  if(!sel||!meta) return;
+  const p=regList.filter(x=>x.period===sel.value)[0];
+  meta.textContent = p ? `${regWhen(p.updatedAt)} ${p.uploaderName} 님이 올림` : '';
+}
+
+function regLoadPeriod(){
+  const sel=document.getElementById('reg-period'), btn=document.getElementById('btn-reg-load');
+  const period=sel && sel.value;
+  if(!period) return;
+  btn.disabled=true; btn.textContent='불러오는 중…';
+  regSay('');
+  MT_STORE.load(period).then(d=>{
+    if(!d){ regSay('그 달의 자료를 찾지 못했습니다. 새로고침 후 다시 골라 주세요.','err'); return; }
+    // 저장할 때 로컬 기준 문자열로 바꿔 둔 날짜를 Date 로 되돌린다.
+    // 안 되돌리면 fmtDate 는 통과해도 Date 를 기대하는 곳이 문자열을 받는다.
+    resData     = MT.decodeRows(d.resRows||[]);
+    ilhaengData = MT.decodeRows(d.ilhaengRows||[]);
+    resMerged=resData; ilhaengMerged=ilhaengData;
+    markUploaded('res', null, resData.length, d.meta.resFiles||1);
+    markUploaded('ilhaeng', null, ilhaengData.length, d.meta.ilhaengFiles||1);
+
+    // 블록표가 함께 올라왔으면 채워 넣고 바로 읽는다.
+    // 표의 달(blk-month)도 같이 맞춘다 — 안 맞추면 7월 표를 5월 달력에 그린다.
+    let blkNote='';
+    const ta=document.getElementById('blk-paste'), mi=document.getElementById('blk-month');
+    if(d.blockRaw && ta){
+      ta.value=d.blockRaw;
+      ta.classList.add('filled');
+      if(mi) mi.value=d.blockMonth||period;
+      try{
+        blkRender();
+        blkNote=blkParsed
+          ? ` · 블록표(${MT.escHtml(d.blockMonth||period)})도 함께 불러왔습니다`
+          : ' · 블록표는 형식을 알아보지 못했습니다 — ② 호텔 블록에서 확인해 주세요';
+      }catch(e){ blkNote=' · 블록표를 읽는 중 오류가 났습니다 — ② 호텔 블록에서 확인해 주세요'; }
+    }
+
+    analyze();
+    regSay(`<b>${MT.escHtml(period)}</b> 자료를 불러왔습니다 — 팀 ${d.meta.teamCount}건 · 인원 ${d.meta.paxCount}명 `
+      + `(${MT.escHtml(regWhen(d.meta.updatedAt))} ${MT.escHtml(d.meta.uploaderName||'')} 님이 올림)${blkNote}`, 'ok');
+  }).catch(e=>{
+    regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
+  }).then(()=>{
+    btn.disabled=false; btn.textContent='불러오기 →';
+  });
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  const sel=document.getElementById('reg-period');
+  if(sel) sel.addEventListener('change', regShowMeta);
+  regLoadList();
+});
 
 /* ════════════════════════════════════════════════════════════
    통합 분석

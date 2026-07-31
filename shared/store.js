@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   MERITTOUR 사내 도구함 — 엠클릭 등록소 데이터 접근  (shared/store.js)
+   MERITTOUR 사내 도구함 — 엠클릭 통합 업로드 데이터 접근  (shared/store.js)
 
    네트워크·인증·충돌 처리를 여기 한 곳에 모은다. 대시보드·등록 페이지는
    순수 함수만 부르고, REST 세부는 몰라도 되게 한다.
@@ -70,7 +70,7 @@
     return e;
   }
 
-  /* ── 등록소 ──────────────────────────────────────────────────── */
+  /* ── 엠클릭 통합 업로드 ──────────────────────────────────────────────────── */
 
   var LIST_COLS = 'period,team_count,pax_count,res_files,ilhaeng_files,uploader_name,updated_at,block_month,block_at,block_by';
 
