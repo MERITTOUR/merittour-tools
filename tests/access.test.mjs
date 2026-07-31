@@ -240,3 +240,71 @@ test('token_hash 가 만료면 세션을 세우지 않는다', async () => {
   await assert.rejects(() => AUTH.verifyTokenHash('invite', 'OLD'), /만료/);
   assert.equal(AUTH.session(), null);
 });
+
+test('계정 목록 — 승인 대기가 먼저 오게 요청한다', async () => {
+  reset();
+  route('/auth/v1/token?grant_type=password', 200, { access_token: 'AT', refresh_token: 'RT', expires_in: 3600 });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw');
+
+  calls.length = 0;
+  const list = await AUTH.listUsers();
+  assert.equal(list.length, 1);
+  const c = calls.find(x => x.url.includes('app_users'));
+  assert.match(c.url, /order=active\.asc/, '승인 대기(active=false)가 위로 와야 한다');
+  assert.equal(c.auth, 'Bearer AT');
+});
+
+test('계정 저장 — 바꾼 값만 보낸다', async () => {
+  reset();
+  route('/auth/v1/token?grant_type=password', 200, { access_token: 'AT', refresh_token: 'RT', expires_in: 3600 });
+  route('/rest/v1/app_users', 200, [{ id: 'u2', email: 'x@y.z', role: 'sales', active: true }]);
+  await AUTH.login('a@b.c', 'pw');
+
+  calls.length = 0;
+  const saved = await AUTH.updateUser('u2', { active: true, role: 'sales' });
+  assert.equal(saved.id, 'u2');
+  const c = calls.find(x => x.method === 'PATCH');
+  assert.match(c.url, /id=eq\.u2/);
+  assert.deepEqual(c.body, { role: 'sales', active: true });
+  assert.ok(!('name' in c.body), '건드리지 않은 값은 보내지 않는다');
+});
+
+test('계정 저장 — RLS 로 막히면 0행이 온다. 성공한 척하면 안 된다', async () => {
+  reset();
+  route('/auth/v1/token?grant_type=password', 200, { access_token: 'AT', refresh_token: 'RT', expires_in: 3600 });
+  route('/rest/v1/app_users', 200, []);
+  await AUTH.login('a@b.c', 'pw');
+  await assert.rejects(() => AUTH.updateUser('u2', { active: true }),
+    err => err.forbidden === true && /owner 권한/.test(err.message));
+});
+
+test('계정 저장 — 없는 역할은 보내지 않는다', async () => {
+  reset();
+  await assert.rejects(() => AUTH.updateUser('u2', { role: 'boss' }), /역할 값/);
+  assert.equal(calls.length, 0);
+});
+
+test('guardChange — 자기 발등을 못 찍게 한다', () => {
+  const meOwner = { id: 'me', role: 'owner', active: true };
+  const other   = { id: 'o2', role: 'owner', active: true };
+  const sales   = { id: 's1', role: 'sales', active: true };
+
+  // 본인
+  assert.match(AUTH.guardChange([meOwner, other], meOwner, { role: 'sales' }, 'me'), /본인의 역할/);
+  assert.match(AUTH.guardChange([meOwner, other], meOwner, { active: false }, 'me'), /본인 계정은 정지/);
+  assert.equal(AUTH.guardChange([meOwner, other], meOwner, { name: '새이름' }, 'me'), null, '이름은 바꿔도 된다');
+
+  // 마지막 owner — 그 사람 말고 활성 owner 가 없을 때만 막는다
+  assert.match(AUTH.guardChange([other, sales], other, { role: 'sales' }, 'x'), /마지막 owner/);
+  assert.match(AUTH.guardChange([other, sales], other, { active: false }, 'x'), /마지막 owner/);
+  assert.equal(AUTH.guardChange([meOwner, other, sales], other, { role: 'sales' }, 'x'), null,
+    '다른 활성 owner 가 남아 있으면 막지 않는다');
+  assert.match(AUTH.guardChange([{ id: 'o3', role: 'owner', active: false }, other], other, { role: 'sales' }, 'x'),
+    /마지막 owner/, '정지된 owner 는 남은 owner 로 세지 않는다');
+  assert.equal(AUTH.guardChange([meOwner, other, sales], other, { role: 'admin' }, 'me'), null,
+    'owner 가 둘이면 한 명은 내릴 수 있다');
+  assert.equal(AUTH.guardChange([meOwner, sales], sales, { role: 'admin' }, 'me'), null,
+    'owner 가 아닌 사람은 자유롭게 바꾼다');
+  assert.equal(AUTH.guardChange([meOwner, sales], sales, { active: false }, 'me'), null);
+});
