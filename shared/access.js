@@ -73,6 +73,9 @@
     if (status === 400 || status === 401) {
       if (/Invalid login credentials/i.test(msg)) return '이메일 또는 비밀번호가 맞지 않습니다.';
       if (/Email not confirmed/i.test(msg))       return '이메일 인증이 아직 끝나지 않았습니다. 받으신 메일의 링크를 먼저 눌러 주세요.';
+      // 메일 링크(초대·재설정)를 확인할 때 나오는 문구. 영어 그대로 두면 읽히지 않는다.
+      if (/expired/i.test(msg))                   return '링크가 만료되었습니다. 관리자에게 다시 초대를 요청해 주세요.';
+      if (/token.*(invalid|not found)|invalid.*token/i.test(msg)) return '이미 사용되었거나 올바르지 않은 링크입니다. 다시 초대를 요청해 주세요.';
       return msg || '로그인에 실패했습니다.';
     }
     if (status === 422) return msg || '입력값을 확인해 주세요.';
@@ -165,6 +168,37 @@
     return { type: p.type || '', email: (p.email || '') };
   }
 
+  /* 메일 링크가 ?token_hash=...&type=invite 로 올 때 (템플릿이 {{ .TokenHash }} 인 경우).
+     PKCE 와 달리 브라우저에 미리 저장해 둔 값이 없어도 되므로 그대로 세션이 선다. */
+  function verifyTokenHash(type, tokenHash) {
+    return req('/auth/v1/verify', {
+      method: 'POST', body: { type: String(type || ''), token_hash: String(tokenHash || '') }
+    }).then(function (j) {
+      saveSession(j);
+      writeJSON(ME_KEY, null);
+      return { type: String(type || '') };
+    });
+  }
+
+  /* 메일 링크가 오류를 달고 돌아온 경우를 사람 말로. 해시·쿼리 양쪽을 본다.
+     이걸 안 보면 만료된 링크로 들어와도 그냥 로그인 화면이 떠서, 왜 안 되는지 알 수 없다. */
+  function linkError(hash, search) {
+    var p = {};
+    [String(hash || '').replace(/^#/, ''), String(search || '').replace(/^\?/, '')].forEach(function (s) {
+      if (!s) return;
+      s.split('&').forEach(function (kv) {
+        var i = kv.indexOf('=');
+        if (i > 0) p[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' '));
+      });
+    });
+    if (!p.error && !p.error_code && !p.error_description) return null;
+    var d = p.error_description || p.error_code || p.error || '';
+    if (/expired/i.test(d)) return '초대 링크가 만료되었습니다. 관리자에게 다시 초대를 요청해 주세요.';
+    if (/invalid|already/i.test(d)) return '이미 사용되었거나 올바르지 않은 링크입니다. 다시 초대를 요청해 주세요.';
+    if (/otp_disabled|signup.*disabled/i.test(d)) return '가입이 막혀 있습니다. 관리자에게 문의해 주세요.';
+    return d || '링크 확인에 실패했습니다.';
+  }
+
   /* 초대받은 사람이 비밀번호를 정한다 */
   function setPassword(password) {
     return token().then(function (t) {
@@ -243,6 +277,8 @@
     rank: rank,
     require: require_,
     adoptHash: adoptHash,
+    verifyTokenHash: verifyTokenHash,
+    linkError: linkError,
     setPassword: setPassword,
     _dep: dep,                 // 테스트에서 fetch/storage/now 를 갈아 끼운다
     _expired: expired,
