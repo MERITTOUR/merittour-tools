@@ -53,6 +53,8 @@
     background:radial-gradient(circle at 34% 30%,var(--olive),var(--olive-deep));
     box-shadow:0 0 0 4px color-mix(in srgb,var(--olive) 14%,transparent)}
   .brand b{color:var(--ink)}
+  .brand .logo{display:block;height:24px;width:auto;color:var(--ink)}
+  footer .logo{display:block;height:26px;width:auto;margin:0 auto 10px;color:var(--ink-soft)}
   .brand .jp{color:var(--muted);font-weight:600}
 
   /* ── 히어로 ── */
@@ -247,34 +249,42 @@
     transition:max-height .3s cubic-bezier(.2,.7,.2,1),opacity .2s,visibility 0s}
   .rail-sub a{font-size:11.5px;padding:4px 0 4px 24px}
 
-  /* ── 좁은 화면(1160px 미만): 오른쪽 가장자리 손잡이 → 슬라이드 패널 ── */
-  .rail-tab{display:none}
-  .rail-back{display:none}
+  /* ── 좁은 화면(1160px 미만): 목차를 접지 않고 상단에 한 줄로 모두 펼친다 ──
+     오른쪽 세로 레일을 모바일에 그대로 두면 폭의 40%를 가리고 본문과 겹친다.
+     대신 화면 상단에 붙는 가로 스크롤 칩 줄로 15개 항목을 전부 노출한다. */
+  .tocbar{display:none}
   @media (max-width:1159px){
-    .rail-tab{display:block;position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:31;
-      writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:.14em;
-      background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);border-right:0;
-      border-radius:10px 0 0 10px;padding:14px 7px;font-size:12.5px;font-weight:800;cursor:pointer;
-      box-shadow:-2px 0 10px rgba(0,0,0,.06)}
-    .rail-tab:active{background:var(--surface-warm)}
-    .rail-tab.hide{opacity:0;pointer-events:none;transition:opacity .18s}
-    .rail-back{display:block;position:fixed;inset:0;z-index:29;background:rgba(20,24,16,.34);
-      opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
-    .rail-back.open{opacity:1;visibility:visible;transition:opacity .2s}
-    .rail{display:block;position:fixed;top:0;right:0;bottom:0;left:auto;transform:translateX(100%);
-      width:min(78vw,252px);max-width:none;z-index:30;background:var(--surface);
-      border-left:1px solid var(--line);box-shadow:-6px 0 24px rgba(0,0,0,.10);
-      padding:58px 18px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;
-      transition:transform .26s cubic-bezier(.2,.7,.2,1)}
-    .rail.open{transform:none}
-    .rail a{font-size:14px;padding:9px 0 9px 13px}
-    .rail-sub a{font-size:13px;padding:7px 0 7px 24px}
-    /* 패널에서는 지역 목록을 항상 펼쳐 둔다 */
-    .rail .rail-sub{max-height:none;opacity:1;visibility:visible;overflow:visible}
-    .rail-close{position:absolute;top:12px;right:14px;border:0;background:none;cursor:pointer;
-      font-size:20px;line-height:1;color:var(--muted);padding:6px}
+    .tocbar{display:block;position:sticky;top:0;z-index:25;
+      background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);
+      border-bottom:1px solid var(--line-soft);margin:0 -20px 4px}
+    .tocbar-in{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+      padding:9px 16px;-webkit-overflow-scrolling:touch}
+    .tocbar-in::-webkit-scrollbar{display:none}
+    .tocbar a{flex:none;text-decoration:none;font-size:12.5px;font-weight:700;white-space:nowrap;
+      color:var(--muted);background:var(--surface);border:1px solid var(--line);
+      border-radius:999px;padding:6px 11px}
+    .tocbar a b{font-family:var(--serif);font-size:10.5px;opacity:.7;margin-right:5px;
+      font-variant-numeric:tabular-nums}
+    .tocbar a.sub{border-style:dashed}
+    .tocbar a.on{color:#fff;background:var(--olive);border-color:var(--olive)}
+    .tocbar a.on b{opacity:.85}
+    section{scroll-margin-top:56px}
   }
-  @media (min-width:1160px){ .rail-close{display:none} }
+
+  /* ── 지역 사진·영상 ── */
+  /* 사진이 없으면 스트립 자체가 화면에서 사라진다(파일만 올리면 자동으로 붙는다) */
+  .media{margin:2px 0 18px}
+  .media-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+    padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .media-strip::-webkit-scrollbar{display:none}
+  .media-strip figure{flex:none;width:min(70vw,268px);margin:0;border-radius:10px;overflow:hidden;
+    background:var(--surface-warm);border:1px solid var(--line-soft)}
+  .media-strip img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+  .media-video{display:inline-flex;align-items:center;gap:7px;margin-top:9px;
+    font-size:13px;font-weight:700;color:var(--olive-deep);text-decoration:none;
+    border-bottom:1px solid color-mix(in srgb,var(--olive) 45%,transparent);padding-bottom:1px}
+  .media-video::before{content:"▶";font-size:10px}
+  .media-video:hover{color:var(--ink)}
 
   @media (max-width:560px){
     body{font-size:16px}
@@ -286,6 +296,26 @@
     .grades{grid-template-columns:1fr}
   }
 
+  /* ── 떠 있는 버튼: 카카오톡 상담 · 맨 위로 ── */
+  .fabs{position:fixed;right:16px;bottom:18px;z-index:28;display:flex;flex-direction:column;gap:9px}
+  .fab{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.10);font-family:inherit;
+    font-size:12.5px;font-weight:800;padding:11px 14px;text-decoration:none}
+  .fab:hover{color:var(--ink);border-color:var(--muted)}
+  .fab-kakao{background:#FAE100;border-color:#EBD400;color:#3C1E1E}
+  .fab-kakao:hover{background:#F5DC00;color:#3C1E1E}
+  .fab-top{width:44px;height:44px;padding:0;font-size:16px;align-self:flex-end;
+    opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+  .fab-top.on{opacity:1;visibility:visible;transition:opacity .2s}
+  .kakao-tip{position:fixed;right:16px;bottom:74px;z-index:28;max-width:min(78vw,270px);
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 6px 20px rgba(0,0,0,.12);padding:13px 15px;font-size:13.5px;line-height:1.65;
+    color:var(--ink-soft);opacity:0;visibility:hidden;transition:opacity .18s,visibility 0s .18s}
+  .kakao-tip.on{opacity:1;visibility:visible;transition:opacity .18s}
+  .kakao-tip b{color:var(--ink)}
+  @media (max-width:560px){ .fabs{right:12px;bottom:14px} .kakao-tip{right:12px;bottom:70px} }
+
   @media (prefers-reduced-motion:no-preference){
     .reveal{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
     .hero{animation-delay:.02s}
@@ -296,11 +326,7 @@
 </head>
 <body>
 
-<button class="rail-tab" id="railTab" type="button" aria-controls="rail" aria-expanded="false">목차</button>
-<div class="rail-back" id="railBack" hidden></div>
-
 <nav class="rail" id="rail" aria-label="섹션 바로가기">
-  <button class="rail-close" id="railClose" type="button" aria-label="목차 닫기">✕</button>
   <a href="#s-01" data-t="s-01"><b>01</b>예약·배정 원칙</a>
   <a href="#s-02" data-t="s-02"><b>02</b>예약 오픈 일정</a>
   <a href="#s-03" data-t="s-03"><b>03</b>지역 · 상품별 안내</a>
@@ -322,9 +348,24 @@
 
 <div class="wrap">
 
+  <nav class="tocbar" id="tocbar" aria-label="목차">
+    <div class="tocbar-in" id="tocbarIn"></div>
+  </nav>
+
   <div class="brand reveal">
-    <span class="mark" aria-hidden="true"></span>
-    <span><b>메리트투어</b> <span class="jp">MERITTOUR</span></span>
+    <svg class="logo" viewBox="172 207 1340 181" fill="currentColor" role="img" aria-label="MERITTOUR">
+        <polygon points="540.15 341.14 539.77 341.14 511.06 239.37 470.37 239.37 470.37 357.89 492.8 357.89 492.03 248.79 492.42 248.79 525.92 357.89 552.86 357.89 586.55 248.09 586.93 248.09 586.17 357.89 609.37 357.89 609.37 239.37 569.44 239.37 540.15 341.14"/>
+        <polygon points="662.88 302.13 707.38 302.13 707.38 291.3 662.88 291.3 662.88 250.37 713.49 250.37 713.49 239.37 639.1 239.37 639.1 357.89 717.3 357.89 717.3 346.89 662.88 346.89 662.88 302.13"/>
+        <rect x="860.93" y="239.37" width="23.77" height="118.52"/>
+        <polygon points="906.53 250.59 943.34 250.59 943.34 357.89 967.12 357.89 967.12 250.59 1004.12 250.59 1004.12 239.37 906.53 239.37 906.53 250.59"/>
+        <polygon points="1023.82 250.66 1060.63 250.66 1060.63 357.89 1084.4 357.89 1084.4 250.66 1121.4 250.66 1121.4 239.37 1023.82 239.37 1023.82 250.66"/>
+        <path d="M1245.24,254a64.61,64.61,0,0,0-21.66-12.9,70.13,70.13,0,0,0-25.7-4.54,68.44,68.44,0,0,0-25.52,4.62,65,65,0,0,0-21.65,13.08,59.32,59.32,0,0,0-14.29,19.87,60.73,60.73,0,0,0-5.08,25q0,18.14,8.72,32a59.9,59.9,0,0,0,24.26,21.7,70.16,70.16,0,0,0,33.56,7.84,68.91,68.91,0,0,0,25.7-4.62,66.47,66.47,0,0,0,21.66-12.9,58,58,0,0,0,14.29-19.61,63.78,63.78,0,0,0,0-49.84A58.86,58.86,0,0,0,1245.24,254ZM1234,324.73a41.11,41.11,0,0,1-15.24,16.9,36.32,36.32,0,0,1-20.91,6.06c-8.44,0-14.2-2.05-20.72-6.15a41.48,41.48,0,0,1-15.24-17.3q-5.46-11.14-5.46-25.61,0-14.65,5.46-25.7a41.57,41.57,0,0,1,15.24-17.2,35.87,35.87,0,0,1,20.91-6.16c8.44,0,14.16,2.08,20.62,6.26a42.94,42.94,0,0,1,15.24,17.49q5.57,11.24,5.56,25.9T1234,324.73Z"/>
+        <path d="M1360.46,322.84q0,11-6.13,18t-20.14,7.06q-13.8,0-20-7.32t-6.23-18.3V239.37h-23.77v77.91q0,13.07,5.65,22.83a37.93,37.93,0,0,0,16.78,15.17q11.12,5.4,27.6,5.4t27.61-5.58a38.75,38.75,0,0,0,16.78-15.43q5.65-9.84,5.65-22.91V239.37h-23.77Z"/>
+        <path d="M810.87,306.13q10.74-4.2,16.78-12.12a30.33,30.33,0,0,0,6-18.91,31.42,31.42,0,0,0-5.76-18.82,37.29,37.29,0,0,0-16.2-12.46q-10.44-4.45-24.25-4.45H743.39V357.89h23.77V250h19c6.77,0,12.15.57,16.62,3.94s9.44,8.21,8.14,21.9a20.19,20.19,0,0,1-5.68,12.23,25.14,25.14,0,0,1-11.7,6.27,62.39,62.39,0,0,1-15.43,1.83h-8.82L803.06,345h0l1.06,1.54a29.66,29.66,0,0,0,7.71,7.37,34.44,34.44,0,0,0,6.38,2.37c5.33,1.42,15.7,1.62,19.73,1.64h1.68L803,308.44A56.1,56.1,0,0,0,810.87,306.13Z"/>
+        <path d="M387.49,215.11s-61.35-.55-103.58,46.11a43.74,43.74,0,0,0-4.25,5.79l0-.14C262.47,290.93,260,311.17,260,319.38c0,21.42,5.62,29.94,5.62,29.94.07-3.83.22-7.5.39-10.89.8-9.07,3.06-22.44,9.24-34.84,1.81-3.28,3.66-6.4,5.54-9.32.54-.8,1.1-1.63,1.51-2.3,34.5-51.42,79.45-46.81,79.45-46.81s7.35,46.48-10,80.75-59.67,54.25-59.67,54.25h3.46c40.26-3.11,62.93-32.76,64.8-35.3C400.51,288.64,387.49,215.11,387.49,215.11Z"/>
+        <path d="M218.17,325.91c-17.3-34.27-9.95-80.75-9.95-80.75s29.85-3.06,59.56,23.63a73.39,73.39,0,0,1,11.08-14.87c-41.65-39.28-96.39-38.81-96.39-38.81s-13,73.53,27.11,129.75c1.87,2.54,24.54,32.19,64.81,35.3h3.45S235.48,360.19,218.17,325.91Z"/>
+        <path d="M1474.57,306.13q10.73-4.2,16.77-12.12a30.27,30.27,0,0,0,6-18.91,31.41,31.41,0,0,0-5.75-18.82,37.29,37.29,0,0,0-16.2-12.46q-10.46-4.45-24.25-4.45h-44.1V357.89h23.78V250h19c6.77,0,12.15.57,16.62,3.94s9.44,8.21,8.14,21.9a20.15,20.15,0,0,1-5.69,12.23,25.05,25.05,0,0,1-11.69,6.27,62.39,62.39,0,0,1-15.43,1.83H1433L1466.76,345h0l1.06,1.54a29.66,29.66,0,0,0,7.71,7.37,34.44,34.44,0,0,0,6.38,2.37c5.33,1.42,15.69,1.62,19.73,1.64h1.68l-36.64-49.45A56.1,56.1,0,0,0,1474.57,306.13Z"/>
+      </svg>
   </div>
 
   <header class="hero reveal">
@@ -742,11 +783,32 @@
   </section>
 
   <footer>
-    <p class="sig">메리트투어 <span class="jp">MERITTOUR</span></p>
+    <svg class="logo" viewBox="172 207 1340 181" fill="currentColor" role="img" aria-label="MERITTOUR">
+        <polygon points="540.15 341.14 539.77 341.14 511.06 239.37 470.37 239.37 470.37 357.89 492.8 357.89 492.03 248.79 492.42 248.79 525.92 357.89 552.86 357.89 586.55 248.09 586.93 248.09 586.17 357.89 609.37 357.89 609.37 239.37 569.44 239.37 540.15 341.14"/>
+        <polygon points="662.88 302.13 707.38 302.13 707.38 291.3 662.88 291.3 662.88 250.37 713.49 250.37 713.49 239.37 639.1 239.37 639.1 357.89 717.3 357.89 717.3 346.89 662.88 346.89 662.88 302.13"/>
+        <rect x="860.93" y="239.37" width="23.77" height="118.52"/>
+        <polygon points="906.53 250.59 943.34 250.59 943.34 357.89 967.12 357.89 967.12 250.59 1004.12 250.59 1004.12 239.37 906.53 239.37 906.53 250.59"/>
+        <polygon points="1023.82 250.66 1060.63 250.66 1060.63 357.89 1084.4 357.89 1084.4 250.66 1121.4 250.66 1121.4 239.37 1023.82 239.37 1023.82 250.66"/>
+        <path d="M1245.24,254a64.61,64.61,0,0,0-21.66-12.9,70.13,70.13,0,0,0-25.7-4.54,68.44,68.44,0,0,0-25.52,4.62,65,65,0,0,0-21.65,13.08,59.32,59.32,0,0,0-14.29,19.87,60.73,60.73,0,0,0-5.08,25q0,18.14,8.72,32a59.9,59.9,0,0,0,24.26,21.7,70.16,70.16,0,0,0,33.56,7.84,68.91,68.91,0,0,0,25.7-4.62,66.47,66.47,0,0,0,21.66-12.9,58,58,0,0,0,14.29-19.61,63.78,63.78,0,0,0,0-49.84A58.86,58.86,0,0,0,1245.24,254ZM1234,324.73a41.11,41.11,0,0,1-15.24,16.9,36.32,36.32,0,0,1-20.91,6.06c-8.44,0-14.2-2.05-20.72-6.15a41.48,41.48,0,0,1-15.24-17.3q-5.46-11.14-5.46-25.61,0-14.65,5.46-25.7a41.57,41.57,0,0,1,15.24-17.2,35.87,35.87,0,0,1,20.91-6.16c8.44,0,14.16,2.08,20.62,6.26a42.94,42.94,0,0,1,15.24,17.49q5.57,11.24,5.56,25.9T1234,324.73Z"/>
+        <path d="M1360.46,322.84q0,11-6.13,18t-20.14,7.06q-13.8,0-20-7.32t-6.23-18.3V239.37h-23.77v77.91q0,13.07,5.65,22.83a37.93,37.93,0,0,0,16.78,15.17q11.12,5.4,27.6,5.4t27.61-5.58a38.75,38.75,0,0,0,16.78-15.43q5.65-9.84,5.65-22.91V239.37h-23.77Z"/>
+        <path d="M810.87,306.13q10.74-4.2,16.78-12.12a30.33,30.33,0,0,0,6-18.91,31.42,31.42,0,0,0-5.76-18.82,37.29,37.29,0,0,0-16.2-12.46q-10.44-4.45-24.25-4.45H743.39V357.89h23.77V250h19c6.77,0,12.15.57,16.62,3.94s9.44,8.21,8.14,21.9a20.19,20.19,0,0,1-5.68,12.23,25.14,25.14,0,0,1-11.7,6.27,62.39,62.39,0,0,1-15.43,1.83h-8.82L803.06,345h0l1.06,1.54a29.66,29.66,0,0,0,7.71,7.37,34.44,34.44,0,0,0,6.38,2.37c5.33,1.42,15.7,1.62,19.73,1.64h1.68L803,308.44A56.1,56.1,0,0,0,810.87,306.13Z"/>
+        <path d="M387.49,215.11s-61.35-.55-103.58,46.11a43.74,43.74,0,0,0-4.25,5.79l0-.14C262.47,290.93,260,311.17,260,319.38c0,21.42,5.62,29.94,5.62,29.94.07-3.83.22-7.5.39-10.89.8-9.07,3.06-22.44,9.24-34.84,1.81-3.28,3.66-6.4,5.54-9.32.54-.8,1.1-1.63,1.51-2.3,34.5-51.42,79.45-46.81,79.45-46.81s7.35,46.48-10,80.75-59.67,54.25-59.67,54.25h3.46c40.26-3.11,62.93-32.76,64.8-35.3C400.51,288.64,387.49,215.11,387.49,215.11Z"/>
+        <path d="M218.17,325.91c-17.3-34.27-9.95-80.75-9.95-80.75s29.85-3.06,59.56,23.63a73.39,73.39,0,0,1,11.08-14.87c-41.65-39.28-96.39-38.81-96.39-38.81s-13,73.53,27.11,129.75c1.87,2.54,24.54,32.19,64.81,35.3h3.45S235.48,360.19,218.17,325.91Z"/>
+        <path d="M1474.57,306.13q10.73-4.2,16.77-12.12a30.27,30.27,0,0,0,6-18.91,31.41,31.41,0,0,0-5.75-18.82,37.29,37.29,0,0,0-16.2-12.46q-10.46-4.45-24.25-4.45h-44.1V357.89h23.78V250h19c6.77,0,12.15.57,16.62,3.94s9.44,8.21,8.14,21.9a20.15,20.15,0,0,1-5.69,12.23,25.05,25.05,0,0,1-11.69,6.27,62.39,62.39,0,0,1-15.43,1.83H1433L1466.76,345h0l1.06,1.54a29.66,29.66,0,0,0,7.71,7.37,34.44,34.44,0,0,0,6.38,2.37c5.33,1.42,15.69,1.62,19.73,1.64h1.68l-36.64-49.45A56.1,56.1,0,0,0,1474.57,306.13Z"/>
+      </svg>
     <p style="font-size:12px">직영 · 아소 야마나미 리조트(株式会社 SaiZen) <span class="jp">阿蘇やまなみリゾート</span></p>
     <p>변함없는 성원에 깊이 감사드립니다.</p>
   </footer>
 
+</div>
+
+<div class="fabs">
+  <button class="fab fab-kakao" id="fabKakao" type="button">카카오톡 상담</button>
+  <button class="fab fab-top" id="fabTop" type="button" aria-label="맨 위로">↑</button>
+</div>
+<div class="kakao-tip" id="kakaoTip" role="status">
+  카카오톡에서 <b>메리트투어</b> 채널을 검색해 주세요.<br>
+  전화 <a href="tel:0223659800"><b>02-365-9800</b></a> <span style="opacity:.75">(평일 09:00~18:00)</span>
 </div>
 
 <script>
@@ -789,22 +851,31 @@
       else links[k].removeAttribute('aria-current');
     }
     rail.classList.toggle('at-03', inSub || i === idx03);
+    syncChips(i);
   }
 
-  /* 좁은 화면 — 오른쪽 손잡이로 패널을 열고 닫는다 */
-  var tab = document.getElementById('railTab');
-  var back = document.getElementById('railBack');
-  var closeBtn = document.getElementById('railClose');
-  function setOpen(on) {
-    rail.classList.toggle('open', on);
-    if (back) { back.classList.toggle('open', on); back.hidden = !on; }
-    if (tab) { tab.setAttribute('aria-expanded', on ? 'true' : 'false'); tab.classList.toggle('hide', on); }
+  /* 좁은 화면 — 목차를 접지 않고 상단 칩 줄에 전부 펼친다(레일과 같은 항목·같은 순서) */
+  var bar = document.getElementById('tocbarIn');
+  var chips = [];
+  if (bar) {
+    links.forEach(function (a) {
+      var c = document.createElement('a');
+      c.href = a.getAttribute('href');
+      c.className = (subEl && subEl.contains(a)) ? 'sub' : '';
+      c.innerHTML = a.innerHTML;
+      bar.appendChild(c);
+      chips.push(c);
+    });
   }
-  if (tab) tab.addEventListener('click', function () { setOpen(!rail.classList.contains('open')); });
-  if (back) back.addEventListener('click', function () { setOpen(false); });
-  if (closeBtn) closeBtn.addEventListener('click', function () { setOpen(false); });
-  rail.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+  function syncChips(i) {
+    for (var k = 0; k < chips.length; k++) chips[k].classList.toggle('on', k === i);
+    var el = chips[i];
+    if (el && bar) {
+      var l = el.offsetLeft, r = l + el.offsetWidth;
+      if (l < bar.scrollLeft + 12) bar.scrollTo({ left: Math.max(0, l - 12), behavior: 'smooth' });
+      else if (r > bar.scrollLeft + bar.clientWidth - 12) bar.scrollTo({ left: r - bar.clientWidth + 12, behavior: 'smooth' });
+    }
+  }
 
   var queued = false;
   function onScroll() {
@@ -815,6 +886,89 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   apply();
+})();
+
+/* 떠 있는 버튼 — 카카오톡 상담 · 맨 위로 */
+(function () {
+  'use strict';
+  /* 채널 주소를 넣으면 버튼이 바로 채널로 연결된다(예: 'http://pf.kakao.com/_xxxxx').
+     비워 두면 채널명·전화 안내 말풍선을 띄운다. */
+  var KAKAO_URL = '';
+
+  var kk = document.getElementById('fabKakao');
+  var tip = document.getElementById('kakaoTip');
+  var top = document.getElementById('fabTop');
+
+  if (kk) kk.addEventListener('click', function () {
+    if (KAKAO_URL) { window.open(KAKAO_URL, '_blank', 'noopener'); return; }
+    if (tip) tip.classList.toggle('on');
+  });
+  document.addEventListener('click', function (e) {
+    if (!tip || !tip.classList.contains('on')) return;
+    if (e.target.closest('#fabKakao') || e.target.closest('#kakaoTip')) return;
+    tip.classList.remove('on');
+  });
+  if (top) top.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  function onScroll() { if (top) top.classList.toggle('on', window.pageYOffset > 400); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+
+/* 지역 사진·영상 — assets/2027/<지역>/01~04.webp 를 올리면 자동으로 붙고,
+   없으면 스트립 자체가 사라진다(문서 모양은 그대로). 영상은 주소를 넣은 지역만 링크가 생긴다. */
+(function () {
+  'use strict';
+  var SHOTS = 4;                       // 지역당 최대 사진 수
+  var VIDEO = {};                      // 예) { kumamoto: 'https://youtu.be/xxxx' }
+
+  var regions = Array.prototype.slice.call(document.querySelectorAll('.region[id^="r-"]'));
+  regions.forEach(function (sec) {
+    var key = sec.id.replace(/^r-/, '');
+    var head = sec.querySelector('.r-head');
+    if (!head) return;
+
+    var box = document.createElement('div');
+    box.className = 'media';
+    var strip = document.createElement('div');
+    strip.className = 'media-strip';
+    box.appendChild(strip);
+
+    /* 슬롯을 순서대로 만들어 두고 실제로 불러와진 것만 보여 준다.
+       (핸들러를 src 보다 먼저 붙여야 한다 · lazy 를 쓰면 화면 밖 사진은 오류가 안 나 빈 칸이 남는다) */
+    var pending = SHOTS;
+    function settle() {
+      if (--pending > 0) return;
+      if (!strip.querySelector('img')) strip.remove();
+      if (!box.querySelector('.media-strip') && !box.querySelector('.media-video')) box.remove();
+    }
+    for (var i = 1; i <= SHOTS; i++) {
+      (function (n) {
+        var fig = document.createElement('figure');
+        fig.style.display = 'none';
+        var img = document.createElement('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.addEventListener('load', function () { fig.style.display = ''; settle(); });
+        img.addEventListener('error', function () { fig.remove(); settle(); });
+        img.src = '../assets/2027/' + key + '/' + (n < 10 ? '0' + n : n) + '.webp';
+        fig.appendChild(img);
+        strip.appendChild(fig);
+      })(i);
+    }
+
+    if (VIDEO[key]) {
+      var a = document.createElement('a');
+      a.className = 'media-video';
+      a.href = VIDEO[key];
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = '영상 보기';
+      box.appendChild(a);
+    }
+    head.parentNode.insertBefore(box, head.nextSibling);
+  });
 })();
 </script>
 
