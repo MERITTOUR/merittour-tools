@@ -430,7 +430,7 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.has-wait::after{content:"";position:absolute;top:2px;right:2px;
   width:5px;height:5px;border-radius:50%;background:#A855F7;box-shadow:0 0 0 1px #fff}
 .blk-tag-wait{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
-.blk-team-note{margin-top:10px;font-size:12px;color:var(--text2);
+.blk-team-note{margin:0 0 10px;font-size:12px;color:var(--text2);
   background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--amber);
   border-radius:0 8px 8px 0;padding:9px 12px;line-height:1.6}
 .blk-team-note b{color:var(--ink)}
@@ -1140,8 +1140,10 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;border:1px solid var(--border2);border-radius:3px;padding:1px 5px;line-height:1.1;text-align:center;background:var(--green-dim)"><b style="font-size:10px;color:var(--green2)">12</b><br><span style="font-size:8px;color:var(--green2);opacity:.6;border-top:1px dotted currentColor">20</span></span> 위=잔여 · 아래=보유 (사용 = 보유 − 잔여)</span>
         <span class="muted">· 임의배정형(구마모토 시내 등)은 사용수만 표시 · ← 좌우 스크롤</span>
       </div>
-      <div class="tbl-wrap blk-mtx-wrap"><table class="blk-mtx" id="blk-mtx"></table></div>
+      <!-- 안내는 표 위에 둔다. 표가 화면보다 길어 아래에 두면 스크롤해야 보이는데,
+           「왜 칸이 안 눌리는지」는 표를 만지기 전에 읽혀야 한다. -->
       <div id="blk-team-note"></div>
+      <div class="tbl-wrap blk-mtx-wrap"><table class="blk-mtx" id="blk-mtx"></table></div>
       <div id="blk-cellpick"></div>
     </div>
     <div class="card" id="blk-unmapped-card" style="display:none">
@@ -6124,18 +6126,46 @@ function blkTeamNote(usage, tidx){
     box.innerHTML='⑤ 예약 관리에서 <b>[통합 분석 실행]</b>을 누르면 대기 건수와 날짜 칸 클릭 시 예약 목록이 표시됩니다. (엠클릭 표만 붙여넣은 상태에는 구분값이 없습니다)';
     return;
   }
-  // 표에 실제로 있는 (표시단위|룸타입) 조합
+  // 표에 실제로 있는 (표시단위|룸타입) 조합 · 표에 실제로 그려진 날짜
   const rows=new Set();
   Object.keys(usage).forEach(u=>Object.keys(usage[u]).forEach(rm=>rows.add(u+'|'+rm)));
+  const view=new Set(blkViewDays().map(d=>d.ymd));
+  const tkey=t=>t.eventSeq||t.eventNo||t.repName;
+
   const miss={};
-  let placed=0;
+  const placedSeq=new Set();   // 행도 있고 날짜도 표 안 = 실제로 칸에 붙은 건
+  const monthSeq={};           // 예약이 걸쳐 있는 달
   Object.keys(tidx).forEach(u=>Object.keys(tidx[u]).forEach(rm=>{
-    const seqs=new Set();
-    Object.keys(tidx[u][rm]).forEach(ymd=>tidx[u][rm][ymd].forEach(t=>seqs.add(t.eventSeq||t.eventNo||t.repName)));
-    if(rows.has(u+'|'+rm)) placed+=seqs.size;
-    else miss[`${u} · ${rm||'(룸타입 없음)'}`]=(miss[`${u} · ${rm||'(룸타입 없음)'}`]||0)+seqs.size;
+    const hasRow=rows.has(u+'|'+rm);
+    const miss1=new Set();
+    Object.keys(tidx[u][rm]).forEach(ymd=>{
+      const ym=ymd.slice(0,7);
+      tidx[u][rm][ymd].forEach(t=>{
+        const k=tkey(t);
+        (monthSeq[ym]=monthSeq[ym]||new Set()).add(k);
+        if(!hasRow) miss1.add(k);
+        else if(view.has(ymd)) placedSeq.add(k);
+      });
+    });
+    if(miss1.size) miss[`${u} · ${rm||'(룸타입 없음)'}`]=(miss[`${u} · ${rm||'(룸타입 없음)'}`]||0)+miss1.size;
   }));
   const missKeys=Object.keys(miss);
+  const placed=placedSeq.size;
+
+  /* 표 안에 걸리는 예약이 하나도 없으면 칸을 눌러도 아무 일이 안 일어난다.
+     달이 어긋난 경우(8월 파일을 분석해 두고 7월 표를 보는 중)가 대부분인데,
+     예전에는 이 상태에서 아무 말도 안 해 「클릭이 고장났다」로 읽혔다. */
+  if(!placed){
+    const ms=Object.keys(monthSeq).sort();
+    const shown=ms.slice(0,4).join(' · ')+(ms.length>4?` 외 ${ms.length-4}개월`:'');
+    box.className='blk-team-note';
+    box.innerHTML=`이 표의 날짜 칸에 걸리는 예약이 없습니다 — <b>칸을 눌러도 목록이 나오지 않고 대기 배지도 뜨지 않습니다.</b><br>`
+      +`표는 <b>${blkViewMonths().join(' · ')}</b> 인데, 분석된 예약은 <b>${shown||'(숙소가 연결된 건 없음)'}</b> 입니다.`
+      +(missKeys.length?`<br>숙소·룸타입이 표의 행과 안 맞는 건도 ${missKeys.reduce((a,k)=>a+miss[k],0)}건 있습니다 — ${missKeys.slice(0,4).join(' / ')}${missKeys.length>4?` 외 ${missKeys.length-4}종`:''}.`:'')
+      +`<br><span class="muted">표와 같은 달의 엠클릭 파일로 ⑤ 예약 관리에서 다시 [통합 분석 실행]을 하시거나, 보시려는 달의 표를 붙여넣어 주세요.</span>`;
+    return;
+  }
+
   if(!missKeys.length){ box.className=''; box.innerHTML=''; return; }
   box.className='blk-team-note';
   box.innerHTML=`예약 데이터가 표의 행과 연결되지 않은 건이 있습니다 — 그 숙소·룸타입은 <b>날짜 칸을 눌러도 목록이 나오지 않고 대기 배지도 뜨지 않습니다.</b><br>`
