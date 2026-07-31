@@ -19,8 +19,8 @@
 (function (root) {
   'use strict';
   var CFG = {
-    URL: '',        // 예: https://xxxxxxxxxxxx.supabase.co
-    ANON_KEY: ''    // 예: eyJhbGciOi...
+    URL: 'https://mbfmiynwycvhsoepdnxe.supabase.co',
+    ANON_KEY: ''    // ← Project Settings → API 의 anon public 키 (eyJ... 로 시작)
   };
   CFG.ready = function () { return !!(CFG.URL && CFG.ANON_KEY); };
 
