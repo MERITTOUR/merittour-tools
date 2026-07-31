@@ -214,3 +214,29 @@ test('로그아웃은 서버 호출이 실패해도 로컬 세션을 지운다',
   await AUTH.logout();
   assert.equal(AUTH.session(), null);
 });
+
+test('링크 오류를 사람 말로 — 해시·쿼리 양쪽에서 읽는다', () => {
+  assert.match(AUTH.linkError('#error=access_denied&error_description=Email+link+is+invalid+or+has+expired', ''), /만료/);
+  assert.match(AUTH.linkError('', '?error_code=otp_expired&error_description=Token+has+expired'), /만료/);
+  assert.match(AUTH.linkError('#error=access_denied&error_description=Invalid+token', ''), /이미 사용되었거나/);
+  assert.equal(AUTH.linkError('', ''), null);
+  assert.equal(AUTH.linkError('#access_token=AT&type=invite', ''), null, '정상 링크를 오류로 보면 안 된다');
+});
+
+test('token_hash 형식 초대도 세션이 선다', async () => {
+  reset();
+  route('/auth/v1/verify', 200, { access_token: 'IT', refresh_token: 'IR', expires_in: 3600 });
+  const r = await AUTH.verifyTokenHash('invite', 'TH1');
+  assert.equal(r.type, 'invite');
+  assert.equal(AUTH.session().access_token, 'IT');
+  const c = calls.find(x => x.url.includes('/auth/v1/verify'));
+  assert.equal(c.method, 'POST');
+  assert.deepEqual(c.body, { type: 'invite', token_hash: 'TH1' });
+});
+
+test('token_hash 가 만료면 세션을 세우지 않는다', async () => {
+  reset();
+  route('/auth/v1/verify', 401, { error_description: 'Token has expired' });
+  await assert.rejects(() => AUTH.verifyTokenHash('invite', 'OLD'), /만료/);
+  assert.equal(AUTH.session(), null);
+});
