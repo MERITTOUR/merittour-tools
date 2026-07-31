@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    MERITTOUR 사내 도구함 — Supabase 접속 설정  (shared/supabase-config.js)
 
-   ⚠ 여기에 두 값을 채워야 로그인·등록소가 동작합니다.
+   ⚠ 여기에 두 값을 채워야 로그인·엠클릭 통합 업로드가 동작합니다.
      Supabase 콘솔 → 프로젝트 Merittour-hub → Project Settings → API 에서 복사.
 
        Project URL   →  URL
