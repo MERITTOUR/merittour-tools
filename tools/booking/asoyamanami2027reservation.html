@@ -15,6 +15,8 @@
     --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Pretendard',system-ui,sans-serif;
     --serif:'Iowan Old Style','Palatino Linotype','Palatino',Georgia,serif;
     --maxw:720px;
+    /* 카카오톡 말풍선 — 인라인 데이터라 외부 요청이 없다 */
+    --kko:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill='%23000' d='M12 0C5.373 0 0 4.243 0 9.476c0 3.383 2.246 6.35 5.623 8.02-.248.902-.898 3.267-1.028 3.774-.16.63.231.62.487.451.2-.132 3.19-2.166 4.487-3.047.79.116 1.605.178 2.431.178 6.627 0 12-4.243 12-9.476C24 4.243 18.627 0 12 0z'/%3E%3C/svg%3E");
   }
   @media (prefers-color-scheme:dark){
     :root{
@@ -220,6 +222,14 @@
   .contact .val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .contact a{color:var(--olive-deep);text-decoration:none;font-weight:800}
   .contact a:hover{text-decoration:underline}
+  /* 카카오톡은 눌러서 상담으로 가는 자리라는 게 보여야 한다 — 전화번호와 달리
+     글자만으로는 링크인지 알 수 없다. 카카오 노랑은 그대로 쓴다. */
+  .contact a.kko{display:inline-flex;align-items:center;gap:6px;color:#3C1E1E;
+    background:#FEE500;border-radius:8px;padding:5px 11px;font-size:14px;
+    text-decoration:none;line-height:1.3}
+  .contact a.kko::before{content:"";width:15px;height:14px;flex:none;background:#3C1E1E;
+    -webkit-mask:var(--kko) center/contain no-repeat;mask:var(--kko) center/contain no-repeat}
+  .contact a.kko:hover{background:#F5DB00;text-decoration:none}
   footer{padding:34px 0 60px;text-align:center;color:var(--muted);font-size:13px}
   footer .sig{font-weight:800;color:var(--ink-soft);letter-spacing:.01em}
   footer .sig .jp{color:var(--muted);font-weight:600}
@@ -778,7 +788,7 @@
     <div class="contact">
       <span class="citem"><span class="lbl">문의</span><span class="val">메리트투어</span></span>
       <span class="citem"><span class="lbl">전화</span><span class="val"><a href="tel:0223659800">02-365-9800</a></span></span>
-      <span class="citem"><span class="lbl">카카오톡</span><span class="val">메리트투어</span></span>
+      <span class="citem"><span class="lbl">카카오톡</span><span class="val"><a class="kko" href="https://pf.kakao.com/_dxhWus/chat" target="_blank" rel="noopener">메리트투어 채널 상담</a></span></span>
     </div>
   </section>
 
@@ -796,7 +806,7 @@
         <path d="M218.17,325.91c-17.3-34.27-9.95-80.75-9.95-80.75s29.85-3.06,59.56,23.63a73.39,73.39,0,0,1,11.08-14.87c-41.65-39.28-96.39-38.81-96.39-38.81s-13,73.53,27.11,129.75c1.87,2.54,24.54,32.19,64.81,35.3h3.45S235.48,360.19,218.17,325.91Z"/>
         <path d="M1474.57,306.13q10.73-4.2,16.77-12.12a30.27,30.27,0,0,0,6-18.91,31.41,31.41,0,0,0-5.75-18.82,37.29,37.29,0,0,0-16.2-12.46q-10.46-4.45-24.25-4.45h-44.1V357.89h23.78V250h19c6.77,0,12.15.57,16.62,3.94s9.44,8.21,8.14,21.9a20.15,20.15,0,0,1-5.69,12.23,25.05,25.05,0,0,1-11.69,6.27,62.39,62.39,0,0,1-15.43,1.83H1433L1466.76,345h0l1.06,1.54a29.66,29.66,0,0,0,7.71,7.37,34.44,34.44,0,0,0,6.38,2.37c5.33,1.42,15.69,1.62,19.73,1.64h1.68l-36.64-49.45A56.1,56.1,0,0,0,1474.57,306.13Z"/>
       </svg>
-    <p style="font-size:12px">직영 · 아소 야마나미 리조트(株式会社 SaiZen) <span class="jp">阿蘇やまなみリゾート</span></p>
+    <p style="font-size:12px">아소 야마나미 리조트(株式会社 SaiZen) <span class="jp">阿蘇やまなみリゾート</span></p>
     <p>변함없는 성원에 깊이 감사드립니다.</p>
   </footer>
 
