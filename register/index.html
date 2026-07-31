@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>엠클릭 데이터 등록 · MERITTOUR 사내 도구함</title>
+<script src="../shared/gate.js"></script>
+<script src="../shared/supabase-config.js"></script>
+<script src="../shared/access.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#EEF2F8; --surface:#fff; --navy:#1a2332; --accent:#2E5A88; --accent2:#4A7BB0;
+    --text:#22303F; --text2:#5A6A7A; --text3:#8A97A6; --border:#D8E0EA; --border2:#C3CEDB;
+    --red:#C0392B; --red-dim:#FDECEA; --amber:#B7791F; --amber-dim:#FEF6E7;
+    --green:#1E7A4C; --green-dim:#E7F6EE;
+    --sans:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6}
+  .wrap{max-width:980px;margin:0 auto;padding:26px 20px 60px}
+
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;
+    letter-spacing:.04em;color:var(--text2)}
+  .brand .mark{width:22px;height:22px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 34% 30%,var(--accent2),var(--navy))}
+  header.top .sp{flex:1}
+  .who{font-size:13px;color:var(--text2)}
+  .who b{color:var(--text)}
+  .lnk{font-size:13px;color:var(--accent);text-decoration:none;font-weight:700}
+  .lnk:hover{text-decoration:underline}
+
+  h1{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0 0 5px;color:var(--navy)}
+  .lead{font-size:14px;color:var(--text2);margin:0 0 20px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:15.5px;font-weight:800;margin:0 0 4px;color:var(--navy)}
+  .card .cdesc{font-size:13px;color:var(--text2);margin:0 0 14px}
+
+  .drops{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:700px){ .drops{grid-template-columns:1fr} }
+  .drop{border:2px dashed var(--border2);border-radius:12px;padding:20px 16px;text-align:center;
+    cursor:pointer;background:#FAFCFE;transition:border-color .12s,background .12s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#F2F7FC}
+  .drop.done{border-style:solid;border-color:var(--green);background:var(--green-dim)}
+  .drop .nm{font-size:15px;font-weight:800;color:var(--navy)}
+  .drop .hint{font-size:12.5px;color:var(--text2);margin-top:6px;line-height:1.55}
+  .drop .meta{font-size:12.5px;font-weight:800;color:var(--green);margin-top:8px;min-height:18px}
+  .drop input[type=file]{display:none}
+
+  .actions{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  button.go{padding:11px 20px;border:none;border-radius:9px;background:var(--accent);color:#fff;
+    font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer}
+  button.go:hover{background:var(--navy)}
+  button.go:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{padding:9px 14px;border:1px solid var(--border2);border-radius:9px;background:#fff;
+    color:var(--text2);font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer}
+  button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+  .msg{margin-top:14px;font-size:13.5px;line-height:1.65;border-radius:9px;padding:11px 13px;display:none}
+  .msg.on{display:block}
+  .msg.err{background:var(--red-dim);color:var(--red);border:1px solid #F5C6C0}
+  .msg.warn{background:var(--amber-dim);color:var(--amber);border:1px solid #F0DCB0}
+  .msg.ok{background:var(--green-dim);color:var(--green);border:1px solid #B7E2CB}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{border-bottom:1px solid var(--border);padding:9px 8px;text-align:left}
+  th{font-size:12px;font-weight:800;color:var(--text2);background:#F7FAFD}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.mine td{background:#F6FBF8}
+  .empty{font-size:13.5px;color:var(--text3);padding:14px 2px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;
+    padding:2px 8px;background:#EDF3F9;color:var(--accent)}
+
+  .note{background:#F7FAFD;border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;
+    padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.7;margin-top:14px}
+  .note b{color:var(--text)}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <span class="brand"><span class="mark" aria-hidden="true"></span>MERITTOUR</span>
+    <span class="sp"></span>
+    <span class="who" id="who"></span>
+    <a class="lnk" href="../tools/dashboard/">대시보드 →</a>
+    <a class="lnk" href="../sales/">도구함</a>
+  </header>
+
+  <div id="gateMsg" class="msg on warn">권한을 확인하고 있습니다…</div>
+
+  <main id="main" class="hide">
+    <h1>엠클릭 데이터 등록</h1>
+    <p class="lead">예약리스트·일행별예약 2종을 올리면 <b>출발월 단위로 저장</b>됩니다.
+      한 번 등록하면 전 직원이 같은 데이터를 봅니다. 같은 달을 다시 올리면 덮어씁니다.</p>
+
+    <section class="card">
+      <h2>파일 올리기</h2>
+      <p class="cdesc">엠클릭 <b>출발일별 / 예약일별</b> 화면에서 받은 파일입니다.
+        여러 파일을 한 칸에 함께 올리면 자동으로 합쳐집니다.</p>
+
+      <div class="drops">
+        <label class="drop" id="drop-res">
+          <div class="nm">예약 리스트</div>
+          <div class="hint">예약현황 탭에서 다운로드<br>500행씩 분할 시 여러 파일 선택</div>
+          <div class="meta" id="meta-res"></div>
+          <input type="file" id="file-res" accept=".xlsx,.xls" multiple>
+        </label>
+        <label class="drop" id="drop-ilhaeng">
+          <div class="nm">일행별 예약</div>
+          <div class="hint">탑승자정보 탭에서 다운로드<br>1개월 단위로 한 번에</div>
+          <div class="meta" id="meta-ilhaeng"></div>
+          <input type="file" id="file-ilhaeng" accept=".xlsx,.xls" multiple>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="go" id="btn-save" disabled>등록하기</button>
+        <button class="ghost" id="btn-clear">비우기</button>
+        <span class="pill hide" id="monthPill"></span>
+      </div>
+
+      <div class="msg" id="saveMsg"></div>
+
+      <div class="note">
+        두 파일은 <b>eventSeq(행사 일련번호)</b>로 묶입니다. 출발일자를 기준으로 <b>출발월</b>을 판단해
+        그 달의 자리에 저장하며, 파일이 여러 달에 걸쳐 있으면 달마다 나눠 저장합니다.<br>
+        같은 달을 다시 올리면 <b>덮어쓰기</b>라 중복이 쌓이지 않습니다.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>등록된 데이터</h2>
+      <p class="cdesc">대시보드는 여기 등록된 데이터를 읽어 분석합니다.</p>
+      <div id="listBox"><div class="empty">불러오는 중…</div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   엠클릭 데이터 등록 — 파일 2종 → 출발월 단위로 data_registry 에 저장
+
+   대시보드는 지금까지 각자 PC 에서 파일을 올려 분석했다. 그래서 새로고침하거나
+   다른 직원 PC 에서는 처음부터 다시 올려야 했다. 여기서 한 번 등록하면
+   전 직원이 같은 데이터를 본다(야마나미 「등록된 데이터」와 같은 방식).
+
+   저장 위치: public.data_registry (supabase/migrations/05_data_registry.sql)
+     period(YYYY-MM) 이 기본키 — 같은 달 재등록은 업서트
+   권한: admin / sales / manage 만 등록. air 는 읽기 전용(RLS 가 막는다)
+════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var LOGIN = '../login/';
+  var ME = null;
+  var resRows = null, ilhaengRows = null;   // 시트를 그대로 읽은 행 배열(대시보드와 같은 모양)
+  var resFiles = 0, ilhaengFiles = 0;
+
+  /* ── 화면 도우미 ─────────────────────────────────────────── */
+  function $(id) { return document.getElementById(id); }
+  function show(el, on) { if (el) el.classList.toggle('hide', !on); }
+  function msg(el, kind, html) {
+    el.className = 'msg on ' + kind;
+    el.innerHTML = html;
+  }
+  function clearMsg(el) { el.className = 'msg'; el.innerHTML = ''; }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+    });
+  }
+  function num(v) {
+    var n = parseInt(String(v == null ? '' : v).replace(/[^0-9-]/g, ''), 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  /* ── 출발월 판정 ─────────────────────────────────────────────
+     엠클릭 날짜는 문자열('2027-03-11', '2027.03.11')과 Date 가 섞여 들어온다.
+     달만 알면 되므로 앞 7자리(YYYY-MM)만 뽑는다. */
+  function ym(v) {
+    if (v == null || v === '') return '';
+    if (v instanceof Date && !isNaN(v)) {
+      return v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0');
+    }
+    var s = String(v).trim().replace(/[./]/g, '-');
+    var m = s.match(/^(\d{4})-(\d{1,2})/);
+    return m ? m[1] + '-' + String(m[2]).padStart(2, '0') : '';
+  }
+
+  /* ── 파일 읽기 ───────────────────────────────────────────── */
+  function readOne(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onerror = function () { reject(new Error(file.name + ' 을(를) 읽지 못했습니다.')); };
+      r.onload = function (e) {
+        try {
+          var wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+          var ws = wb.Sheets[wb.SheetNames[0]];
+          resolve(XLSX.utils.sheet_to_json(ws, { defval: '' }));
+        } catch (err) {
+          reject(new Error(file.name + ' 은(는) 엑셀 파일이 아닌 것 같습니다.'));
+        }
+      };
+      r.readAsArrayBuffer(file);
+    });
+  }
+  function readAll(files) {
+    return Promise.all(Array.prototype.slice.call(files).map(readOne))
+      .then(function (lists) {
+        return lists.reduce(function (a, b) { return a.concat(b); }, []);
+      });
+  }
+
+  function takeFiles(type, files) {
+    if (!files || !files.length) return;
+    clearMsg($('saveMsg'));
+    readAll(files).then(function (rows) {
+      if (type === 'res') { resRows = rows; resFiles = files.length; }
+      else { ilhaengRows = rows; ilhaengFiles = files.length; }
+      markDrop(type, files.length, rows.length);
+      syncReady();
+    }).catch(function (e) {
+      msg($('saveMsg'), 'err', esc(e.message || '파일을 읽지 못했습니다.'));
+    });
+  }
+  function markDrop(type, cnt, rows) {
+    $('drop-' + type).classList.add('done');
+    $('meta-' + type).textContent = (cnt > 1 ? cnt + '개 병합 · ' : '') + rows.toLocaleString() + '행';
+  }
+
+  /* ── 월별로 나누기 ───────────────────────────────────────────
+     예약리스트의 eventSeq → 출발월 을 만들고, 일행별예약은 그 지도를 따라간다.
+     (일행별예약에는 출발일자가 없거나 형식이 다른 행이 있어 팀 기준이 안전하다) */
+  function splitByMonth() {
+    var seqYm = {}, months = {};
+    (resRows || []).forEach(function (r) {
+      var seq = String(r['eventSeq'] || '').trim();
+      var p = ym(r['출발일자']);
+      if (!seq || !p) return;
+      seqYm[seq] = p;
+      if (!months[p]) months[p] = { res: [], ilhaeng: [], seqs: {}, pax: 0 };
+      months[p].res.push(r);
+      if (!months[p].seqs[seq] && ['견적', '대기', '확정', '정산'].indexOf(String(r['구분'] || '').trim()) >= 0) {
+        months[p].seqs[seq] = true;
+        months[p].pax += num(r['예약']);
+      }
+    });
+    (ilhaengRows || []).forEach(function (r) {
+      var seq = String(r['eventSeq'] || '').trim();
+      var p = seqYm[seq];
+      if (!p || !months[p]) return;
+      months[p].ilhaeng.push(r);
+    });
+    return months;
+  }
+
+  function syncReady() {
+    var ok = !!(resRows && ilhaengRows);
+    $('btn-save').disabled = !ok;
+    var pill = $('monthPill');
+    if (!ok) { show(pill, false); return; }
+    var months = Object.keys(splitByMonth()).sort();
+    if (!months.length) {
+      show(pill, false);
+      msg($('saveMsg'), 'warn', '출발일자에서 <b>출발월</b>을 읽지 못했습니다. 예약리스트가 맞는지 확인해 주세요.');
+      $('btn-save').disabled = true;
+      return;
+    }
+    pill.textContent = months.length === 1 ? months[0] + ' 등록 예정'
+      : months[0] + ' 외 ' + (months.length - 1) + '개 달 등록 예정';
+    show(pill, true);
+  }
+
+  /* ── 저장 ────────────────────────────────────────────────── */
+  function save() {
+    var months = splitByMonth();
+    var keys = Object.keys(months).sort();
+    if (!keys.length) return;
+
+    $('btn-save').disabled = true;
+    msg($('saveMsg'), 'warn', '등록하는 중입니다…');
+
+    var payload = keys.map(function (p) {
+      var m = months[p];
+      return {
+        period: p,
+        res_json: m.res,
+        ilhaeng_json: m.ilhaeng,
+        team_count: Object.keys(m.seqs).length,
+        pax_count: m.pax,
+        res_files: resFiles,
+        ilhaeng_files: ilhaengFiles,
+        uploaded_by: ME ? ME.id : null,
+        uploader_name: (ME && (ME.name || ME.email)) || '',
+        updated_at: new Date().toISOString()
+      };
+    });
+
+    MT_AUTH.token().then(function (t) {
+      if (!t) throw new Error('로그인이 풀렸습니다. 다시 로그인해 주세요.');
+      return fetch(MT_SB.URL.replace(/\/+$/, '') + '/rest/v1/data_registry?on_conflict=period', {
+        method: 'POST',
+        headers: {
+          apikey: MT_SB.ANON_KEY,
+          Authorization: 'Bearer ' + t,
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.text().then(function (txt) {
+          throw new Error(friendlySave(r.status, txt));
+        });
+      }
+      msg($('saveMsg'), 'ok',
+        '<b>' + keys.join(', ') + '</b> 등록을 마쳤습니다. 대시보드에서 바로 쓰실 수 있습니다.');
+      loadList();
+    }).catch(function (e) {
+      msg($('saveMsg'), 'err', esc(e.message || '등록에 실패했습니다.'));
+    }).then(function () {
+      $('btn-save').disabled = false;
+    });
+  }
+  function friendlySave(status, txt) {
+    if (status === 401 || status === 403) {
+      return '등록 권한이 없습니다. 관리자에게 역할(sales·manage·admin) 부여를 요청해 주세요.';
+    }
+    if (status === 404) {
+      return '등록소 테이블이 아직 없습니다. Supabase 콘솔에서 05_data_registry.sql 을 먼저 실행해 주세요.';
+    }
+    return '등록에 실패했습니다. (' + status + ') ' + String(txt || '').slice(0, 200);
+  }
+
+  function clearAll() {
+    resRows = ilhaengRows = null; resFiles = ilhaengFiles = 0;
+    ['res', 'ilhaeng'].forEach(function (t) {
+      $('drop-' + t).classList.remove('done');
+      $('meta-' + t).textContent = '';
+      $('file-' + t).value = '';
+    });
+    clearMsg($('saveMsg'));
+    show($('monthPill'), false);
+    $('btn-save').disabled = true;
+  }
+
+  /* ── 등록 목록 ───────────────────────────────────────────── */
+  function loadList() {
+    var box = $('listBox');
+    MT_AUTH.token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return fetch(MT_SB.URL.replace(/\/+$/, '')
+        + '/rest/v1/data_registry?select=period,team_count,pax_count,res_files,ilhaeng_files,uploader_name,updated_at'
+        + '&order=period.desc', {
+        headers: { apikey: MT_SB.ANON_KEY, Authorization: 'Bearer ' + t }
+      });
+    }).then(function (r) {
+      if (!r.ok) {
+        if (r.status === 404) throw new Error('등록소 테이블이 아직 없습니다. Supabase 콘솔에서 05_data_registry.sql 을 실행해 주세요.');
+        throw new Error('목록을 불러오지 못했습니다. (' + r.status + ')');
+      }
+      return r.json();
+    }).then(function (rows) {
+      box.innerHTML = renderList(rows || []);
+    }).catch(function (e) {
+      box.innerHTML = '<div class="empty">' + esc(e.message || '목록을 불러오지 못했습니다.') + '</div>';
+    });
+  }
+  function renderList(rows) {
+    if (!rows.length) return '<div class="empty">아직 등록된 데이터가 없습니다. 위에서 파일을 올려 주세요.</div>';
+    var mine = (ME && (ME.name || ME.email)) || '';
+    return '<table><tr><th>출발월</th><th class="n">팀</th><th class="n">인원</th>'
+      + '<th>등록자</th><th>등록 시각</th></tr>'
+      + rows.map(function (r) {
+        return '<tr class="' + (r.uploader_name === mine ? 'mine' : '') + '">'
+          + '<td><b>' + esc(r.period) + '</b></td>'
+          + '<td class="n">' + Number(r.team_count || 0).toLocaleString() + '</td>'
+          + '<td class="n">' + Number(r.pax_count || 0).toLocaleString() + '</td>'
+          + '<td>' + esc(r.uploader_name || '-') + '</td>'
+          + '<td>' + esc(fmtAt(r.updated_at)) + '</td>'
+          + '</tr>';
+      }).join('') + '</table>';
+  }
+  function fmtAt(iso) {
+    if (!iso) return '-';
+    var d = new Date(iso);
+    if (isNaN(d)) return String(iso).slice(0, 16).replace('T', ' ');
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  /* ── 드래그 앤 드롭 ──────────────────────────────────────── */
+  function wireDrop(type) {
+    var el = $('drop-' + type), input = $('file-' + type);
+    input.addEventListener('change', function () { takeFiles(type, input.files); });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      el.addEventListener(ev, function (e) { e.preventDefault(); el.classList.add('over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      el.addEventListener(ev, function (e) { e.preventDefault(); el.classList.remove('over'); });
+    });
+    el.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files) takeFiles(type, e.dataTransfer.files);
+    });
+  }
+
+  /* ── 시작 ────────────────────────────────────────────────── */
+  function start() {
+    wireDrop('res'); wireDrop('ilhaeng');
+    $('btn-save').addEventListener('click', save);
+    $('btn-clear').addEventListener('click', clearAll);
+    loadList();
+  }
+
+  function boot() {
+    var gate = $('gateMsg');
+    if (!MT_AUTH.configured()) {
+      msg(gate, 'err', 'Supabase 접속 설정이 비어 있습니다. <b>shared/supabase-config.js</b> 를 채워 주세요.');
+      return;
+    }
+    MT_AUTH.require(['admin', 'sales', 'manage'], {
+      loginUrl: LOGIN,
+      onDeny: function (res) {
+        if (res.reason === 'no-session') { location.href = LOGIN; return; }
+        msg(gate, res.reason === 'forbidden' ? 'warn' : 'err',
+          esc(res.message) + (res.reason === 'forbidden'
+            ? ' 등록은 <b>영업·관리·관리자</b>만 할 수 있습니다. 항공 계정은 대시보드에서 읽기만 됩니다.' : ''));
+      }
+    }).then(function (r) {
+      if (!r.ok) return;
+      ME = r.user;
+      $('who').innerHTML = '<b>' + esc(ME.name || ME.email) + '</b> · ' + esc(ME.role);
+      gate.className = 'msg';
+      show($('main'), true);
+      start();
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  /* 테스트에서 들여다보는 창구 */
+  window.__REG = {
+    ym: ym,
+    split: function (res, il) { resRows = res; ilhaengRows = il; return splitByMonth(); },
+    renderList: renderList,
+    setMe: function (m) { ME = m; }
+  };
+})();
+</script>
+</body>
+</html>
