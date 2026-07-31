@@ -19,8 +19,11 @@
 (function (root) {
   'use strict';
   var CFG = {
-    URL: '',        // 예: https://xxxxxxxxxxxx.supabase.co
-    ANON_KEY: ''    // 예: eyJhbGciOi...
+    URL: 'https://mbfmiynwycvhsoepdnxe.supabase.co',
+    // anon public (legacy JWT). Supabase 가 쓰는 새 형식은 sb_publishable_... 이고
+    // 둘 다 같은 자리에 들어가지만, 지금은 호환 범위가 넓은 legacy 를 쓴다.
+    // 교체할 때는 이 한 줄만 바꾸면 된다.
+    ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZm1peW53eWN2aHNvZXBkbnhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjY0NTYsImV4cCI6MjA5NTgwMjQ1Nn0.Y4z9Vwy1Unoghe_k3u4hkh4sGrnJslOGP8rCqYG-KgA'
   };
   CFG.ready = function () { return !!(CFG.URL && CFG.ANON_KEY); };
 
