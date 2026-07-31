@@ -19,6 +19,7 @@
      window.MT_USER.get()           → 현재 이름(문자열, 없으면 '')
      window.MT_USER.set('홍길동')    → 이름 저장(+헤더 갱신)
      window.MT_USER.prompt()        → 이름 변경 모달 열기
+     window.MT_USER.logout()        → 로그아웃(게이트 기록·이름 삭제, 새로고침)
      window.addEventListener('mt-user-change', e => e.detail.name)
    ════════════════════════════════════════════════════════════════ */
 (function () {
@@ -90,9 +91,11 @@
           'background:#fff;border:1px solid #E3E5EA;border-radius:24px;' +
           'font-size:12.5px;color:#5A6472;cursor:pointer;font-family:inherit;' +
           'transition:border-color .15s,color .15s;';
+        badge.setAttribute('aria-haspopup', 'menu');
+        badge.setAttribute('aria-expanded', 'false');
         badge.onmouseenter = function () { badge.style.borderColor = '#353C48'; badge.style.color = '#353C48'; };
         badge.onmouseleave = function () { badge.style.borderColor = '#E3E5EA'; badge.style.color = '#5A6472'; };
-        badge.addEventListener('click', openNameModal);
+        badge.addEventListener('click', function (e) { e.stopPropagation(); toggleMenu(badge); });
         actions.insertBefore(badge, actions.firstChild);
       }
     }
@@ -107,6 +110,82 @@
     return String(s == null ? '' : s).replace(/[&<>]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
     });
+  }
+
+  /* ── 헤더 배지 메뉴 (이름 변경 · 로그아웃) ──
+     종전에는 배지에 ▾ 만 있고 눌러도 이름 모달만 떴다. 로그아웃 수단이
+     아예 없어서, 공용 PC 에서 앞사람 이름으로 남는 것을 끊을 방법이 없었다. */
+  var MENU_ID = 'mt-user-menu';
+  function closeMenu() {
+    var m = document.getElementById(MENU_ID);
+    if (m) m.remove();
+    var b = document.getElementById('mtUserBadge');
+    if (b) b.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', closeMenu);
+    document.removeEventListener('keydown', onMenuKey);
+    window.removeEventListener('resize', closeMenu);
+    window.removeEventListener('scroll', closeMenu, true);
+  }
+  function onMenuKey(e) { if (e.key === 'Escape') closeMenu(); }
+
+  function toggleMenu(badge) {
+    if (document.getElementById(MENU_ID)) { closeMenu(); return; }
+    var r = badge.getBoundingClientRect();
+    var m = document.createElement('div');
+    m.id = MENU_ID;
+    m.setAttribute('role', 'menu');
+    // position:fixed — 헤더에 overflow 가 걸려 있어도 잘리지 않는다
+    m.style.cssText =
+      'position:fixed;z-index:2147483645;min-width:172px;background:#fff;' +
+      'border:1px solid #E3E5EA;border-radius:10px;padding:5px;' +
+      'box-shadow:0 8px 24px rgba(26,35,50,.16);' +
+      "font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Pretendard','Malgun Gothic',sans-serif;" +
+      'top:' + Math.round(r.bottom + 6) + 'px;' +
+      'left:' + Math.round(Math.max(8, Math.min(r.right - 172, window.innerWidth - 180))) + 'px;';
+
+    [
+      { label: '이름 변경', color: '#353C48', fn: openNameModal },
+      { label: '로그아웃',  color: '#C0392B', fn: doLogout }
+    ].forEach(function (it) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'menuitem');
+      b.textContent = it.label;
+      b.style.cssText =
+        'display:block;width:100%;text-align:left;padding:9px 12px;border:none;' +
+        'background:none;border-radius:7px;font-size:13.5px;font-weight:600;' +
+        'font-family:inherit;cursor:pointer;color:' + it.color + ';';
+      b.onmouseenter = function () { b.style.background = '#F2F5F9'; };
+      b.onmouseleave = function () { b.style.background = 'none'; };
+      b.addEventListener('click', function (e) { e.stopPropagation(); closeMenu(); it.fn(); });
+      m.appendChild(b);
+    });
+
+    document.body.appendChild(m);
+    badge.setAttribute('aria-expanded', 'true');
+    // 지금 이 클릭이 그대로 닫기로 이어지지 않게 다음 틱에 건다
+    setTimeout(function () {
+      document.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', onMenuKey);
+      window.addEventListener('resize', closeMenu);
+      window.addEventListener('scroll', closeMenu, true);
+    }, 0);
+  }
+
+  /* 로그아웃 — 게이트 기록과 이름을 지운다.
+     이름을 남기면 공용 PC 에서 다음 사람이 앞사람 이름 그대로 통과한다.
+     로그인(Supabase)이 붙어 있는 페이지면 그 세션도 같이 끊는다. */
+  function doLogout() {
+    if (!window.confirm('로그아웃하시겠습니까?\n다음 접속 때 이름과 접근 비밀번호를 다시 입력해야 합니다.')) return;
+    try { localStorage.removeItem(GATE_KEY); } catch (e) {}
+    try { localStorage.removeItem(NAME_KEY); } catch (e) {}
+    if (window.MT_AUTH && typeof window.MT_AUTH.logout === 'function') {
+      window.MT_AUTH.logout()
+        .catch(function () {})
+        .then(function () { location.reload(); });
+      return;
+    }
+    location.reload();
   }
 
   /* ── 이름만 변경하는 모달 (헤더 클릭 시) ── */
@@ -166,7 +245,7 @@
   }
 
   /* ── 전역 노출 (다른 스크립트가 이름 사용) ── */
-  window.MT_USER = { get: getName, set: setName, prompt: openNameModal };
+  window.MT_USER = { get: getName, set: setName, prompt: openNameModal, logout: doLogout };
 
   // 게이트를 안 거치는 페이지(이미 세션 통과)에서도 헤더 이름은 표시
   function whenReady(fn) {
