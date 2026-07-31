@@ -247,6 +247,35 @@
     transition:max-height .3s cubic-bezier(.2,.7,.2,1),opacity .2s,visibility 0s}
   .rail-sub a{font-size:11.5px;padding:4px 0 4px 24px}
 
+  /* ── 좁은 화면(1160px 미만): 오른쪽 가장자리 손잡이 → 슬라이드 패널 ── */
+  .rail-tab{display:none}
+  .rail-back{display:none}
+  @media (max-width:1159px){
+    .rail-tab{display:block;position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:31;
+      writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:.14em;
+      background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);border-right:0;
+      border-radius:10px 0 0 10px;padding:14px 7px;font-size:12.5px;font-weight:800;cursor:pointer;
+      box-shadow:-2px 0 10px rgba(0,0,0,.06)}
+    .rail-tab:active{background:var(--surface-warm)}
+    .rail-tab.hide{opacity:0;pointer-events:none;transition:opacity .18s}
+    .rail-back{display:block;position:fixed;inset:0;z-index:29;background:rgba(20,24,16,.34);
+      opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+    .rail-back.open{opacity:1;visibility:visible;transition:opacity .2s}
+    .rail{display:block;position:fixed;top:0;right:0;bottom:0;left:auto;transform:translateX(100%);
+      width:min(78vw,252px);max-width:none;z-index:30;background:var(--surface);
+      border-left:1px solid var(--line);box-shadow:-6px 0 24px rgba(0,0,0,.10);
+      padding:58px 18px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+    .rail.open{transform:none}
+    .rail a{font-size:14px;padding:9px 0 9px 13px}
+    .rail-sub a{font-size:13px;padding:7px 0 7px 24px}
+    /* 패널에서는 지역 목록을 항상 펼쳐 둔다 */
+    .rail .rail-sub{max-height:none;opacity:1;visibility:visible;overflow:visible}
+    .rail-close{position:absolute;top:12px;right:14px;border:0;background:none;cursor:pointer;
+      font-size:20px;line-height:1;color:var(--muted);padding:6px}
+  }
+  @media (min-width:1160px){ .rail-close{display:none} }
+
   @media (max-width:560px){
     body{font-size:16px}
     .facts{grid-template-columns:1fr;gap:0}
@@ -267,7 +296,11 @@
 </head>
 <body>
 
+<button class="rail-tab" id="railTab" type="button" aria-controls="rail" aria-expanded="false">목차</button>
+<div class="rail-back" id="railBack" hidden></div>
+
 <nav class="rail" id="rail" aria-label="섹션 바로가기">
+  <button class="rail-close" id="railClose" type="button" aria-label="목차 닫기">✕</button>
   <a href="#s-01" data-t="s-01"><b>01</b>예약·배정 원칙</a>
   <a href="#s-02" data-t="s-02"><b>02</b>예약 오픈 일정</a>
   <a href="#s-03" data-t="s-03"><b>03</b>지역 · 상품별 안내</a>
@@ -405,7 +438,7 @@
       <dt>식사</dt><dd>
         <b>아소 야마나미</b><br>
         <span class="soft" style="display:block;padding-left:12px">조식 · 중식 매일 뷔페식(중식은 한식 위주) · 도착일 점심은 서울 출발팀 <b style="color:var(--ink)">카츠카레</b>(라운딩 직행) / 부산 출발팀은 <b style="color:var(--ink)">저녁 식사부터</b> 시작</span>
-        <span class="soft" style="display:block;padding-left:12px">석식 요일별 — 일 해물전골 · 월 일본산 삼겹살 · 화 매운탕 · 수 소불고기 코스 · 목 해물 순두부찌개 · 금 일본산 삼겹살 · 토 흑돼지 샤브샤브</span>
+        <span class="soft" style="display:block;padding-left:12px">석식은 <b style="color:var(--ink)">요일별 메뉴</b>로 제공됩니다</span>
         <b style="display:inline-block;margin-top:6px">간지호텔 · 시즈노야도 료칸</b><br>
         <span class="soft" style="display:block;padding-left:12px">조식은 <b style="color:var(--ink)">각 숙소</b>에서 · 중식은 <b style="color:var(--ink)">그날 라운딩하는 골프장</b>에서(야마나미CC면 야마나미, 구주고원CC면 구주고원) · 석식은 <b style="color:var(--ink)">각 숙소</b>에서</span>
         <span class="soft" style="display:block;padding-left:12px">메뉴는 아소 야마나미와 같습니다. <b style="color:var(--ink)">시즈노야도 료칸은 일부 다를 수 있습니다.</b></span>
@@ -502,7 +535,7 @@
         <dt>식사</dt><dd>
           <b>조식</b> 매일 뷔페식<br>
           <b>중식</b> 도착일 <b>간편식(샌드위치)</b> <span class="soft">· 인천·부산 동일</span> / 체류일은 <b>화·목·일 단품메뉴</b>, 그 외 요일 뷔페식<br>
-          <b>석식</b> 요일별 — 일 삼겹살 · 월 포틴힐즈 정식요리 · 화 해물전골 · 수 일본식 닭볶음 · 목 돼지샤브샤브 · 금 불고기 · 토 해물 순두부찌개
+          <b>석식</b> 요일별 메뉴
           <span class="soft">· 당일 메뉴는 현지 사정에 따라 변경될 수 있습니다</span></dd>
       </dl>
       <h3 class="subh" style="margin-top:20px">체재비용 · 송영비</h3>
@@ -757,6 +790,21 @@
     }
     rail.classList.toggle('at-03', inSub || i === idx03);
   }
+
+  /* 좁은 화면 — 오른쪽 손잡이로 패널을 열고 닫는다 */
+  var tab = document.getElementById('railTab');
+  var back = document.getElementById('railBack');
+  var closeBtn = document.getElementById('railClose');
+  function setOpen(on) {
+    rail.classList.toggle('open', on);
+    if (back) { back.classList.toggle('open', on); back.hidden = !on; }
+    if (tab) { tab.setAttribute('aria-expanded', on ? 'true' : 'false'); tab.classList.toggle('hide', on); }
+  }
+  if (tab) tab.addEventListener('click', function () { setOpen(!rail.classList.contains('open')); });
+  if (back) back.addEventListener('click', function () { setOpen(false); });
+  if (closeBtn) closeBtn.addEventListener('click', function () { setOpen(false); });
+  rail.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
 
   var queued = false;
   function onScroll() {
