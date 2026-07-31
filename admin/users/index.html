@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>계정 관리 · MERITTOUR 사내 도구함</title>
+<script src="../../shared/gate.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
+<style>
+  :root{
+    --bg:#EEF2F8; --surface:#fff; --navy:#1a2332; --accent:#2E5A88; --accent2:#4A7BB0;
+    --text:#22303F; --text2:#5A6A7A; --text3:#8A97A6; --border:#D8E0EA; --border2:#C3CEDB;
+    --red:#C0392B; --red-dim:#FDECEA; --amber:#B7791F; --amber-dim:#FEF6E7;
+    --green:#1E7A4C; --green-dim:#E7F6EE;
+    --sans:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    width:100%;max-width:760px;padding:34px 30px;box-shadow:0 2px 20px rgba(26,35,50,.06)}
+  .brand{display:flex;align-items:center;gap:9px;margin:0 0 4px;
+    font-size:12.5px;font-weight:800;letter-spacing:.04em;color:var(--text2)}
+  .brand .mark{width:22px;height:22px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 34% 30%,var(--accent2),var(--navy))}
+  h1{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;color:var(--navy)}
+  .sub{font-size:13.5px;color:var(--text2);margin:0 0 22px;line-height:1.6}
+  .sub b{color:var(--text)}
+
+  .msg{margin:0 0 16px;font-size:13.5px;line-height:1.6;border-radius:9px;padding:11px 13px;display:none}
+  .msg.on{display:block}
+  .msg.err{background:var(--red-dim);color:var(--red);border:1px solid #F5C6C0}
+  .msg.warn{background:var(--amber-dim);color:var(--amber);border:1px solid #F0DCB0}
+  .msg.ok{background:var(--green-dim);color:var(--green);border:1px solid #B7E2CB}
+
+  .grp{margin-top:22px}
+  .grp:first-of-type{margin-top:0}
+  .grp-h{display:flex;align-items:baseline;gap:8px;margin:0 0 10px;
+    font-size:13px;font-weight:800;color:var(--navy)}
+  .grp-h .n{font-size:12px;font-weight:700;color:#fff;background:var(--accent);
+    border-radius:999px;padding:1px 8px}
+  .grp-h .n.wait{background:var(--amber)}
+  .grp-note{font-size:12.5px;color:var(--text3);margin:-4px 0 10px;line-height:1.6}
+
+  .u{border:1px solid var(--border);border-radius:12px;padding:13px 15px;background:#fff}
+  .u+.u{margin-top:9px}
+  .u.wait{border-color:#EFD9A8;background:#FFFCF5}
+  .u.off{opacity:.62}
+  .u.me{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(46,90,136,.08)}
+  .u-top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+  .u-name{font-size:15.5px;font-weight:800;color:var(--navy)}
+  .u-mail{font-size:12.5px;color:var(--text3);word-break:break-all}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.02em;border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .pill.wait{background:var(--amber-dim);color:var(--amber);border:1px solid #F0DCB0}
+  .pill.on{background:var(--green-dim);color:var(--green);border:1px solid #B7E2CB}
+  .pill.me{background:#E8F0F8;color:var(--accent);border:1px solid #C3D8EC}
+
+  .u-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .u-row label{font-size:11.5px;font-weight:700;color:var(--text3);margin:0}
+  select,input[type=text]{padding:8px 10px;border:1px solid var(--border2);border-radius:8px;
+    font-size:14px;font-family:inherit;background:#fff;color:var(--text)}
+  input[type=text]{min-width:120px;flex:1}
+  select:focus,input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,90,136,.12)}
+  select:disabled,input:disabled{background:#F4F7FA;color:var(--text3);cursor:not-allowed}
+  button{padding:8px 14px;border:1px solid var(--border2);border-radius:8px;background:#fff;
+    font-size:13.5px;font-weight:700;font-family:inherit;color:var(--text2);cursor:pointer}
+  button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.pri:hover:not(:disabled){background:var(--navy);border-color:var(--navy);color:#fff}
+  button.danger:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+  .u-why{font-size:12px;color:var(--text3);margin-top:7px;line-height:1.5;display:none}
+  .u-why.on{display:block}
+  .u-why.bad{color:var(--red)}
+
+  .foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);
+    font-size:12px;color:var(--text3);line-height:1.7}
+  .foot b{color:var(--text2)}
+  .foot a{color:var(--accent);font-weight:700}
+  .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 20px}
+  .topbar .who{font-size:12.5px;color:var(--text2)}
+  .topbar .who b{color:var(--navy)}
+  .topbar .sp{flex:1}
+  .empty{font-size:13.5px;color:var(--text3);padding:14px 2px}
+  .hide{display:none}
+  @media (max-width:520px){
+    body{padding:14px}
+    .card{padding:24px 18px}
+    input[type=text]{min-width:0;width:100%;flex:1 1 100%}
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand"><span class="mark" aria-hidden="true"></span> MERITTOUR 사내 도구함</div>
+  <h1>계정 관리</h1>
+  <p class="sub">초대받은 계정을 <b>승인</b>하고 <b>역할</b>을 정합니다.<br>
+    계정 발급(초대) 자체는 Supabase 콘솔 → Authentication → Users 에서 합니다.</p>
+
+  <div class="topbar hide" id="topbar">
+    <span class="who">로그인: <b id="me-name"></b> <span id="me-role"></span></span>
+    <span class="sp"></span>
+    <button type="button" id="btn-reload">새로고침</button>
+    <button type="button" id="btn-logout">로그아웃</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div id="list"></div>
+
+  <div class="foot">
+    <b>역할</b> — owner 슈퍼 마스터(계정 승인·역할 변경) · admin 관리자(마스터 저장·등록소 삭제) ·
+    manage 관리 · sales 영업(등록소 등록·수정) · air 항공(읽기 전용)<br>
+    계정을 바꿀 수 있는 것은 <b>owner</b> 뿐입니다. admin 은 목록만 보실 수 있습니다.
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var LOGIN = '../../login/?next=' + encodeURIComponent('../admin/users/');
+  var ROLE_LABEL = {
+    owner: 'owner · 슈퍼 마스터', admin: 'admin · 관리자', manage: 'manage · 관리',
+    sales: 'sales · 영업', air: 'air · 항공(읽기)'
+  };
+  var rows = [], me = null, canEdit = false;
+
+  function say(text, kind) {
+    var m = $('msg');
+    m.className = 'msg on ' + (kind || 'err');
+    m.textContent = text;
+  }
+  function clearMsg() { $('msg').className = 'msg'; $('msg').textContent = ''; }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d)) return '';
+    return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate();
+  }
+
+  /* ── 그리기 ─────────────────────────────────────────────────── */
+  function render() {
+    var wait = rows.filter(function (u) { return !u.active; });
+    var live = rows.filter(function (u) { return u.active; });
+    var html = '';
+    html += group('승인 대기', wait, 'wait',
+      wait.length ? '' : '지금 기다리는 계정이 없습니다.');
+    html += group('사용 중', live, '',
+      live.length ? '' : '아직 승인된 계정이 없습니다.');
+    $('list').innerHTML = html;
+    rows.forEach(bind);
+  }
+
+  function group(title, list, cls, emptyText) {
+    var h = '<div class="grp"><div class="grp-h">' + esc(title)
+          + '<span class="n ' + cls + '">' + list.length + '</span></div>';
+    if (!list.length) return h + '<div class="empty">' + esc(emptyText) + '</div></div>';
+    h += list.map(card).join('');
+    return h + '</div>';
+  }
+
+  function card(u) {
+    var isMe = me && String(u.id) === String(me.id);
+    var cls = 'u' + (u.active ? '' : ' wait') + (isMe ? ' me' : '');
+    var opts = ['owner', 'admin', 'manage', 'sales', 'air'].map(function (r) {
+      return '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + esc(ROLE_LABEL[r]) + '</option>';
+    }).join('');
+    var dis = canEdit ? '' : ' disabled';
+    return '<div class="' + cls + '" data-id="' + esc(u.id) + '">'
+      + '<div class="u-top">'
+        + '<span class="u-name">' + esc(u.name || '(이름 없음)') + '</span>'
+        + '<span class="u-mail">' + esc(u.email) + '</span>'
+        + (isMe ? '<span class="pill me">나</span>' : '')
+        + '<span class="pill ' + (u.active ? 'on' : 'wait') + '">' + (u.active ? '사용 중' : '승인 대기') + '</span>'
+        + (u.created_at ? '<span class="u-mail">' + esc(fmtDate(u.created_at)) + ' 등록</span>' : '')
+      + '</div>'
+      + '<div class="u-row">'
+        + '<label for="n-' + esc(u.id) + '">이름</label>'
+        + '<input type="text" id="n-' + esc(u.id) + '" class="f-name" value="' + esc(u.name || '') + '"' + dis + '>'
+        + '<label for="r-' + esc(u.id) + '">역할</label>'
+        + '<select id="r-' + esc(u.id) + '" class="f-role"' + dis + '>' + opts + '</select>'
+        + '<button type="button" class="pri f-save" disabled>저장</button>'
+        + (u.active
+            ? '<button type="button" class="danger f-toggle"' + dis + '>정지</button>'
+            : '<button type="button" class="pri f-toggle"' + dis + '>승인</button>')
+      + '</div>'
+      + '<div class="u-why"></div>'
+      + '</div>';
+  }
+
+  function bind(u) {
+    var el = document.querySelector('.u[data-id="' + CSS.escape(String(u.id)) + '"]');
+    if (!el) return;
+    var name = el.querySelector('.f-name'), role = el.querySelector('.f-role');
+    var save = el.querySelector('.f-save'), tog = el.querySelector('.f-toggle');
+    var why = el.querySelector('.u-why');
+
+    function note(text, bad) {
+      why.className = 'u-why' + (text ? ' on' : '') + (bad ? ' bad' : '');
+      why.textContent = text || '';
+    }
+    function dirty() {
+      return name.value !== (u.name || '') || role.value !== u.role;
+    }
+    function refresh() {
+      if (!canEdit) { save.disabled = true; return; }
+      var block = role.value !== u.role
+        ? MT_AUTH.guardChange(rows, u, { role: role.value }, me && me.id) : null;
+      note(block || '', !!block);
+      save.disabled = !dirty() || !!block;
+    }
+    name.addEventListener('input', refresh);
+    role.addEventListener('change', refresh);
+
+    save.addEventListener('click', function () {
+      var patch = {};
+      if (name.value !== (u.name || '')) patch.name = name.value.trim();
+      if (role.value !== u.role) patch.role = role.value;
+      apply(el, [save, tog], patch, u);
+    });
+
+    tog.addEventListener('click', function () {
+      var next = !u.active;
+      var block = MT_AUTH.guardChange(rows, u, { active: next }, me && me.id);
+      if (block) { note(block, true); return; }
+      apply(el, [save, tog], { active: next }, u);
+    });
+
+    function apply(elm, btns, patch, target) {
+      clearMsg(); note('');
+      btns.forEach(function (b) { b.disabled = true; });
+      MT_AUTH.updateUser(target.id, patch)
+        .then(function (saved) {
+          say((saved.name || saved.email) + ' — ' + (saved.active ? '사용 중' : '승인 대기')
+              + ' · ' + saved.role + ' 로 저장했습니다.', 'ok');
+          return load();          // 서버가 준 값으로 다시 그린다
+        })
+        .catch(function (e) {
+          btns.forEach(function (b) { b.disabled = false; });
+          note(e && e.message ? e.message : '저장에 실패했습니다.', true);
+        });
+    }
+    refresh();
+  }
+
+  /* ── 불러오기 ───────────────────────────────────────────────── */
+  function load() {
+    return MT_AUTH.listUsers().then(function (list) {
+      rows = list;
+      render();
+    }).catch(function (e) {
+      $('list').innerHTML = '';
+      say(e && e.message ? e.message : '계정 목록을 불러오지 못했습니다.');
+    });
+  }
+
+  /* ── 진입 ───────────────────────────────────────────────────── */
+  if (!MT_AUTH.configured()) {
+    say('접속 설정이 아직 비어 있습니다. shared/supabase-config.js 에 Supabase URL 과 anon key 를 넣어 주세요.', 'warn');
+    return;
+  }
+
+  MT_AUTH.require(['admin'], { loginUrl: LOGIN, onDeny: function (res) {
+    if (res.reason === 'no-session') { location.href = LOGIN; return; }
+    if (res.reason === 'pending') {
+      say('계정이 아직 승인되지 않았습니다. 첫 계정이라면 Supabase SQL Editor 에서 본인을 owner 로 올려 주세요.', 'warn');
+    } else if (res.reason === 'forbidden') {
+      say('이 화면은 owner · admin 만 볼 수 있습니다.', 'warn');
+    } else {
+      say(res.message || '확인에 실패했습니다.');
+    }
+  }}).then(function (res) {
+    if (!res.ok) return;
+    me = res.user;
+    canEdit = me.role === 'owner';
+    $('topbar').classList.remove('hide');
+    $('me-name').textContent = me.name || me.email;
+    $('me-role').textContent = '(' + me.role + ')';
+    if (!canEdit) say('admin 은 목록만 보실 수 있습니다. 승인·역할 변경은 owner 만 가능합니다.', 'warn');
+    return load();
+  });
+
+  $('btn-reload').addEventListener('click', function () { clearMsg(); load(); });
+  $('btn-logout').addEventListener('click', function () {
+    MT_AUTH.logout().then(function () { location.href = LOGIN; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -89,9 +89,11 @@
       return Promise.reject(new Error('Supabase 접속 설정이 비어 있습니다. shared/supabase-config.js 를 채워 주세요.'));
     }
     opts = opts || {};
+    var h = headers(opts.token);
+    if (opts.prefer) h['Prefer'] = opts.prefer;
     return dep.fetch(base() + path, {
       method: opts.method || 'GET',
-      headers: headers(opts.token),
+      headers: h,
       body: opts.body ? JSON.stringify(opts.body) : undefined
     }).then(function (r) {
       return r.text().then(function (t) {
@@ -232,6 +234,66 @@
     });
   }
 
+  /* ── 계정 관리 (owner 가 쓴다. admin 은 보기만) ────────────────── */
+  /* 승인 대기(active=false)를 먼저 준다 — 손이 가야 할 줄이 위로 와야 한다. */
+  function listUsers() {
+    return token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return req('/rest/v1/app_users?select=id,email,name,role,active,created_at,updated_at'
+               + '&order=active.asc,created_at.desc', { token: t });
+    }).then(function (rows) { return rows || []; });
+  }
+
+  /* 승인·역할·표시명 변경. 화면에서 막는 것은 안내일 뿐이고,
+     실제 차단은 서버 RLS(au_write_owner)가 한다. */
+  function updateUser(id, patch) {
+    patch = patch || {};
+    var body = {};
+    if (patch.role   !== undefined) body.role   = String(patch.role || '');
+    if (patch.active !== undefined) body.active = !!patch.active;
+    if (patch.name   !== undefined) body.name   = String(patch.name || '');
+    if (!Object.keys(body).length) return Promise.resolve(null);
+    if (body.role !== undefined && ROLES.indexOf(body.role) < 0) {
+      return Promise.reject(new Error('역할 값이 올바르지 않습니다.'));
+    }
+    return token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return req('/rest/v1/app_users?id=eq.' + encodeURIComponent(String(id)), {
+        method: 'PATCH', token: t, body: body, prefer: 'return=representation'
+      });
+    }).then(function (rows) {
+      // RLS 로 막히면 오류가 아니라 0행이 돌아온다. 조용히 성공한 척하면 안 된다.
+      if (!rows || !rows.length) {
+        var e = new Error('저장되지 않았습니다. 계정을 바꾸려면 owner 권한이 필요합니다.');
+        e.forbidden = true;
+        throw e;
+      }
+      return rows[0];
+    });
+  }
+
+  /* 자기 발등 찍기 방지 — 화면에서 미리 막고 이유를 말해 준다.
+     owner 가 스스로를 내리거나 마지막 owner 를 없애면 아무도 계정을 못 고친다. */
+  function guardChange(all, target, patch, meId) {
+    var next = {
+      role:   patch.role   !== undefined ? patch.role   : target.role,
+      active: patch.active !== undefined ? !!patch.active : !!target.active
+    };
+    if (String(target.id) === String(meId)) {
+      if (next.role !== target.role)     return '본인의 역할은 바꿀 수 없습니다. 다른 owner 에게 부탁하세요.';
+      if (!next.active && target.active) return '본인 계정은 정지할 수 없습니다.';
+    }
+    var owners = (all || []).filter(function (u) {
+      return u.active && u.role === 'owner' && String(u.id) !== String(target.id);
+    });
+    var wasOwner = target.active && target.role === 'owner';
+    var stillOwner = next.active && next.role === 'owner';
+    if (wasOwner && !stillOwner && !owners.length) {
+      return '마지막 owner 입니다. 다른 분을 owner 로 올린 뒤에 바꿔 주세요.';
+    }
+    return null;
+  }
+
   function rank(role) { var i = ROLES.indexOf(role); return i < 0 ? 99 : i; }
   /* owner 는 무엇을 물어도 통과한다. 서버(mt_has_role)와 같은 규칙이어야
      화면에서는 보이는데 저장이 막히는 어긋남이 안 생긴다. */
@@ -275,6 +337,9 @@
     me: me,
     can: can,
     rank: rank,
+    listUsers: listUsers,
+    updateUser: updateUser,
+    guardChange: guardChange,
     require: require_,
     adoptHash: adoptHash,
     verifyTokenHash: verifyTokenHash,
