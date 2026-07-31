@@ -183,3 +183,57 @@ test('bookablePax — 온라인에서 고를 수 있는 인원', () => {
   assert.deepEqual(MT.bookablePax([T4], 12), [4, 8, 12]);   // 4인실만이면 4의 배수
   assert.deepEqual(MT.bookablePax([], 10), []);
 });
+
+/* ── 엑셀 셀 저장·복원 ─────────────────────────────────────────
+   대시보드가 cellDates:true 로 읽어 만든 Date 를 JSON 으로 보냈다가
+   되돌릴 때 날짜가 밀리면 안 된다. */
+test('encodeCell — 로컬 기준으로 적는다(UTC 로 밀리지 않는다)', () => {
+  const d = new Date(2026, 6, 15);           // 2026-07-15 00:00 로컬
+  assert.equal(MT.encodeCell(d), '@D:2026-07-15T00:00:00');
+  // toISOString 을 썼다면 +9 지역에서 07-14 가 됐을 자리다
+  assert.ok(!/2026-07-14/.test(MT.encodeCell(d)));
+});
+
+test('encodeCell — 시각이 붙은 칸도 초까지 살린다', () => {
+  assert.equal(MT.encodeCell(new Date(2026, 0, 2, 9, 5, 7)), '@D:2026-01-02T09:05:07');
+});
+
+test('encodeCell — 날짜가 아니면 손대지 않는다', () => {
+  assert.equal(MT.encodeCell('09:20'), '09:20');
+  assert.equal(MT.encodeCell(123), 123);
+  assert.equal(MT.encodeCell(''), '');
+  assert.equal(MT.encodeCell(null), null);
+  const bad = new Date('nope');                 // 못 읽은 날짜 칸
+  assert.ok(MT.encodeCell(bad) === bad, '망가진 Date 는 그대로 돌려준다');
+});
+
+test('decodeCell — 되돌리면 같은 시각이 나온다', () => {
+  const d = new Date(2026, 6, 15, 14, 30, 0);
+  const back = MT.decodeCell(MT.encodeCell(d));
+  assert.ok(back instanceof Date);
+  assert.equal(back.getTime(), d.getTime());
+});
+
+test('decodeCell — 비슷하게 생긴 글자를 날짜로 오해하지 않는다', () => {
+  assert.equal(MT.decodeCell('2026-07-15'), '2026-07-15');
+  assert.equal(MT.decodeCell('@D:2026-07-15'), '@D:2026-07-15');
+  assert.equal(MT.decodeCell('@D:틀림'), '@D:틀림');
+  assert.equal(MT.decodeCell(7), 7);
+});
+
+test('encodeRows/decodeRows — 행 전체가 왕복한다', () => {
+  const rows = [
+    { eventSeq: 'A1', 출발일자: new Date(2026, 6, 15), 한국출발: '09:20', 예약: 4 },
+    { eventSeq: 'A2', 출발일자: new Date(2026, 11, 31), 한국출발: '', 예약: 0 }
+  ];
+  const wire = JSON.parse(JSON.stringify(MT.encodeRows(rows)));   // 실제로 JSON 을 태운다
+  assert.equal(wire[0].출발일자, '@D:2026-07-15T00:00:00');
+  assert.equal(wire[1].출발일자, '@D:2026-12-31T00:00:00');
+  const back = MT.decodeRows(wire);
+  assert.equal(back[0].출발일자.getTime(), rows[0].출발일자.getTime());
+  assert.equal(back[1].출발일자.getTime(), rows[1].출발일자.getTime());
+  assert.equal(back[0].한국출발, '09:20');
+  assert.equal(back[0].예약, 4);
+  // 원본을 건드리면 안 된다
+  assert.ok(rows[0].출발일자 instanceof Date);
+});

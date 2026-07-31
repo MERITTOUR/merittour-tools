@@ -264,6 +264,45 @@
     }, ms || 2200);
   };
 
+  /* ── 엑셀 셀 값의 저장·복원 ──────────────────────────────────
+     대시보드는 XLSX 를 cellDates:true 로 읽어서 날짜 칸이 Date 객체가 된다.
+     그걸 그대로 JSON.stringify 하면 toISOString() 이 불려 UTC 로 바뀌고,
+     한국(+9)에서는 자정 날짜가 **하루 앞으로 밀린다**
+     (2026-07-15 00:00 KST → "2026-07-14T15:00:00.000Z").
+     출발일이 하루 틀리면 잔여도 송영도 전부 틀리므로, 저장할 때 로컬 기준
+     문자열로 바꾸고 불러올 때 다시 Date 로 되돌린다.
+     시각이 붙은 칸(항공 시각 등)도 그대로 살리려고 초까지 적는다. */
+
+  const DATE_CELL = /^@D:(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/;
+
+  // Date → "@D:2026-07-15T00:00:00" (로컬 기준. toISOString 은 쓰지 않는다)
+  MT.encodeCell = v => {
+    if (!(v instanceof Date) || isNaN(v)) return v;
+    const p = MT.pad2;
+    return '@D:' + v.getFullYear() + '-' + p(v.getMonth() + 1) + '-' + p(v.getDate())
+         + 'T' + p(v.getHours()) + ':' + p(v.getMinutes()) + ':' + p(v.getSeconds());
+  };
+
+  // "@D:..." → Date. 그 밖의 값은 손대지 않는다.
+  MT.decodeCell = v => {
+    if (typeof v !== 'string') return v;
+    const m = v.match(DATE_CELL);
+    if (!m) return v;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  };
+
+  // 행 배열 전체를 한 번에. 원본은 건드리지 않고 새 배열을 준다.
+  MT.encodeRows = rows => (rows || []).map(r => {
+    const o = {};
+    Object.keys(r || {}).forEach(k => { o[k] = MT.encodeCell(r[k]); });
+    return o;
+  });
+  MT.decodeRows = rows => (rows || []).map(r => {
+    const o = {};
+    Object.keys(r || {}).forEach(k => { o[k] = MT.decodeCell(r[k]); });
+    return o;
+  });
+
 })(typeof window !== 'undefined' ? window
    : typeof globalThis !== 'undefined' ? globalThis : this);
 
