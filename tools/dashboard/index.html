@@ -433,6 +433,23 @@ tr:hover td{background:#EEF3FA}
 .blk-mtx td.has-wait::after{content:"";position:absolute;top:2px;right:2px;
   width:5px;height:5px;border-radius:50%;background:#A855F7;box-shadow:0 0 0 1px #fff}
 .blk-tag-wait{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+/* 등록된 자료 칩 — 한눈에 보고 한 번에 누른다 */
+.reg-panel{border:1px solid var(--green);background:var(--green-dim);border-radius:12px;padding:14px 16px;margin-top:4px}
+.reg-panel-h{font-size:13.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
+.reg-chips{display:flex;flex-wrap:wrap;gap:8px}
+.reg-chip{display:inline-flex;align-items:baseline;gap:7px;background:#fff;
+  border:1px solid var(--border);border-radius:999px;padding:7px 14px;cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--text2);transition:border-color .12s,box-shadow .12s}
+.reg-chip:hover{border-color:var(--green);box-shadow:0 1px 6px rgba(30,122,76,.14)}
+.reg-chip .p{font-size:13.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.reg-chip .n{font-weight:800;color:var(--green2)}
+.reg-chip .who{color:var(--text3)}
+.reg-chip .blk{font-size:10.5px;font-weight:800;color:var(--green2);
+  background:var(--green-dim);border:1px solid var(--green);border-radius:5px;padding:0 5px}
+.reg-chip.on{border-color:var(--green);background:var(--green-dim);box-shadow:inset 0 0 0 1px var(--green)}
+.reg-chip.on .p{color:var(--green2)}
+.reg-chip.busy{opacity:.55;cursor:default}
+.reg-empty{font-size:13px;color:var(--text2);padding:4px 2px}
 .blk-team-note{margin:0 0 10px;font-size:12px;color:var(--text2);
   background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--amber);
   border-radius:0 8px 8px 0;padding:9px 12px;line-height:1.6}
@@ -807,11 +824,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
     <div id="reg-msg" class="note" style="display:none"></div>
 
-    <div id="reg-pick" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
-      <label style="font-size:12px;font-weight:700;color:var(--text2)">출발월</label>
-      <select id="reg-period" style="padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;min-width:210px"></select>
-      <button class="btn-primary" id="btn-reg-load" disabled onclick="regLoadPeriod()">불러오기 →</button>
-      <span class="muted" id="reg-meta" style="font-size:12px"></span>
+    <div class="reg-panel">
+      <div class="reg-panel-h">📅 등록된 자료 <span class="muted" style="font-weight:600;font-size:11.5px">— 누르면 그 달을 불러옵니다</span></div>
+      <div id="reg-list" class="reg-chips"></div>
     </div>
 
     <div class="note" style="margin-top:14px">
@@ -819,9 +834,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       사람마다 다른 시점의 파일을 보고 다른 숫자를 말하는 일이 없어집니다. 호텔 블록표도 함께 올라오면 자동으로 채워집니다.
     </div>
 
-    <details style="margin-top:14px" id="reg-up">
-      <summary style="cursor:pointer;font-size:13px;color:var(--accent);font-weight:700">＋ 새 자료 올리기 (엠클릭 파일)</summary>
-      <div class="note" style="margin-top:10px">올린 자료는 <b>바로 모두에게 공유</b>됩니다. 같은 달을 다시 올리면 통째로 교체됩니다.</div>
+    <div style="margin-top:16px" id="reg-up">
+      <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:8px">＋ 새 자료 올리기 (엠클릭 파일)</div>
+      <div class="note">올린 자료는 <b>바로 모두에게 공유</b>됩니다. 같은 달을 다시 올리면 통째로 교체됩니다.</div>
       <div class="upload-grid" style="margin-top:12px">
         <div class="upload-area" id="drop-res" onclick="document.getElementById('inp-res').click()" ondragover="onDrag(event,'drop-res')" ondragleave="offDrag('drop-res')" ondrop="onDrop(event,'res')">
           <input type="file" id="inp-res" accept=".xlsx,.xls" style="display:none" multiple onchange="loadFile(event,'res')">
@@ -849,7 +864,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       <div style="display:flex;justify-content:flex-end;margin-top:12px">
         <button class="btn-primary" id="btn-reg-save" disabled onclick="regSaveUpload()">올리고 열기 →</button>
       </div>
-    </details>
+    </div>
   </div>
 </div>
 
@@ -1829,6 +1844,7 @@ function regSaveUpload(){
     .then(()=>{
       analyze();                          // 올린 자료로 바로 화면을 채운다
       // 목록을 먼저 새로 받고 나서 알린다 — regLoadList 가 안내를 지우기 때문이다
+      regLoaded=sc.period;
       return regLoadList().then(()=>{
         regSay(`<b>${MT.escHtml(sc.period)}</b> 을 서버에 올렸습니다. 이제 다른 직원도 같은 자료를 씁니다.`,'ok');
       });
@@ -1864,47 +1880,59 @@ function regWhen(s){
 
 /* 항상 Promise 를 준다. 예전에 undefined 를 돌려줘서 부르는 쪽의 .then 이
    터졌고, 저장은 성공했는데 영어 오류가 화면에 떴다. */
+/* 항상 Promise 를 준다. 예전에 undefined 를 돌려줘서 부르는 쪽의 .then 이
+   터졌고, 저장은 성공했는데 영어 오류가 화면에 떴다. */
 function regLoadList(){
-  const sel=document.getElementById('reg-period'), btn=document.getElementById('btn-reg-load');
-  if(!sel) return Promise.resolve();
+  const box=document.getElementById('reg-list');
+  if(!box) return Promise.resolve();
   if(typeof MT_AUTH==='undefined' || !MT_AUTH.configured()){
-    regSay('접속 설정이 비어 있어 서버를 쓸 수 없습니다. 관리자에게 알려 주세요.','err');
+    box.innerHTML='<div class="reg-empty">접속 설정이 비어 있어 서버를 쓸 수 없습니다. 관리자에게 알려 주세요.</div>';
     return Promise.resolve();
   }
-  sel.innerHTML='<option>불러오는 중…</option>'; btn.disabled=true;
+  box.innerHTML='<div class="reg-empty">불러오는 중…</div>';
   return MT_STORE.listPeriods().then(list=>{
     regList=list;
-    if(!list.length){
-      sel.innerHTML='<option value="">등록된 달이 없습니다</option>';
-      regSay('아직 올라온 달이 없습니다. 아래 <b>＋ 새 자료 올리기</b>를 열어 엠클릭 파일을 올려 주세요.','warn');
-      return;
-    }
-    regSay('');
-    sel.innerHTML=list.map(p=>
-      `<option value="${p.period}">${p.period} · 팀 ${p.teamCount}건 · 인원 ${p.paxCount}명${p.hasBlock?' · 블록표 있음':''}</option>`).join('');
-    btn.disabled=false;
-    regShowMeta();
+    regRenderChips();
   }).catch(e=>{
-    sel.innerHTML='<option value="">불러오지 못했습니다</option>';
-    // 로그인이 필요한 경우가 대부분이다 — 어디로 가야 하는지까지 적는다
     const msg=(e&&e.message)||'등록 목록을 불러오지 못했습니다.';
-    regSay(MT.escHtml(msg)+' <a href="../../login/?next='+encodeURIComponent('../tools/dashboard/')+'" style="color:var(--accent);font-weight:700">로그인하기</a>','err');
+    box.innerHTML='<div class="reg-empty">'+MT.escHtml(msg)
+      +' <a href="../../login/?next='+encodeURIComponent('../tools/dashboard/')
+      +'" style="color:var(--accent);font-weight:700">로그인하기</a></div>';
   });
 }
-function regShowMeta(){
-  const sel=document.getElementById('reg-period'), meta=document.getElementById('reg-meta');
-  if(!sel||!meta) return;
-  const p=regList.filter(x=>x.period===sel.value)[0];
-  meta.textContent = p ? `${regWhen(p.updatedAt)} ${p.uploaderName} 님이 올림` : '';
+
+/* 등록된 달을 칩으로 늘어놓는다. 드롭다운이면 몇 달이 올라와 있는지 열어 봐야
+   알고, 고른 뒤 버튼을 또 눌러야 한다 — 한 번에 보이고 한 번에 누르게 한다. */
+function regRenderChips(){
+  const box=document.getElementById('reg-list');
+  if(!box) return;
+  if(!regList.length){
+    box.innerHTML='<div class="reg-empty">아직 올라온 달이 없습니다. 아래 <b>＋ 새 자료 올리기</b>에서 엠클릭 파일을 올려 주세요.</div>';
+    return;
+  }
+  const n=v=>Number(v||0).toLocaleString('ko-KR');
+  box.innerHTML=regList.slice().sort((a,b)=>a.period<b.period?-1:1).map(p=>
+    `<button type="button" class="reg-chip${p.period===regLoaded?' on':''}" data-p="${MT.escAttr(p.period)}"
+       title="${MT.escAttr(p.period)} · ${MT.escAttr(p.uploaderName||'')} 님이 올림${p.hasBlock?' · 블록표 있음':' · 블록표 없음'}">
+       <span class="p">${MT.escHtml(p.period)}</span>
+       <span class="who">${MT.escHtml(p.uploaderName||'-')}</span>
+       <span class="who">${MT.escHtml(regWhen(p.updatedAt))}</span>
+       <span><span class="n">${n(p.teamCount)}</span>팀 <span class="n">${n(p.paxCount)}</span>명</span>
+       ${p.hasBlock?'<span class="blk">블록표</span>':''}
+     </button>`).join('');
+  box.querySelectorAll('.reg-chip').forEach(el=>{
+    el.addEventListener('click',()=>regLoadPeriod(el.getAttribute('data-p')));
+  });
 }
 
-function regLoadPeriod(){
-  const sel=document.getElementById('reg-period'), btn=document.getElementById('btn-reg-load');
-  const period=sel && sel.value;
-  if(!period) return;
-  btn.disabled=true; btn.textContent='불러오는 중…';
-  regSay('');
-  MT_STORE.load(period).then(d=>{
+let regLoaded='';                      // 지금 화면에 올라온 달
+function regLoadPeriod(period){
+  period=String(period||'');
+  if(!period) return Promise.resolve();
+  const box=document.getElementById('reg-list');
+  if(box) box.querySelectorAll('.reg-chip').forEach(el=>el.classList.add('busy'));
+  regSay(`<b>${MT.escHtml(period)}</b> 자료를 불러오는 중입니다…`,'warn');
+  return MT_STORE.load(period).then(d=>{
     if(!d){ regSay('그 달의 자료를 찾지 못했습니다. 새로고침 후 다시 골라 주세요.','err'); return; }
     // 저장할 때 로컬 기준 문자열로 바꿔 둔 날짜를 Date 로 되돌린다.
     // 안 되돌리면 fmtDate 는 통과해도 Date 를 기대하는 곳이 문자열을 받는다.
@@ -1937,6 +1965,8 @@ function regLoadPeriod(){
     }
 
     analyze();
+    regLoaded=period;
+    regRenderChips();
     regSay(`<b>${MT.escHtml(period)}</b> 자료를 불러왔습니다 — 팀 ${d.meta.teamCount}건 · 인원 ${d.meta.paxCount}명 `
       + `(${MT.escHtml(regWhen(d.meta.updatedAt))} ${MT.escHtml(d.meta.uploaderName||'')} 님이 올림)${blkNote}`, 'ok');
 
@@ -1946,7 +1976,8 @@ function regLoadPeriod(){
   }).catch(e=>{
     regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
   }).then(()=>{
-    btn.disabled=false; btn.textContent='불러오기 →';
+    const bx=document.getElementById('reg-list');
+    if(bx) bx.querySelectorAll('.reg-chip').forEach(el=>el.classList.remove('busy'));
   });
 }
 
@@ -1980,8 +2011,6 @@ function regLoadNeighbourBlocks(period){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  const sel=document.getElementById('reg-period');
-  if(sel) sel.addEventListener('change', regShowMeta);
   regUpRefresh();
   regLoadList();
 });
