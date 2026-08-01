@@ -163,6 +163,25 @@
       });
   }
 
+  /* 블록표만. 월 경계 연박을 보려면 옆 달 표도 있어야 하는데,
+     그것 때문에 옆 달 예약 원본(수 MB)까지 받으면 안 된다. */
+  function loadBlock(period) {
+    var p = encodeURIComponent(String(period || ''));
+    return rest('/data_registry?period=eq.' + p
+              + '&select=period,block_raw,block_month,block_by,block_at&limit=1')
+      .then(function (rows) {
+        var r = (rows && rows[0]) || null;
+        if (!r || !r.block_raw) return null;      // 그 달은 있는데 표는 안 올린 경우도 null
+        return {
+          period: r.period,
+          blockRaw: r.block_raw,
+          blockMonth: r.block_month || r.period,
+          blockBy: r.block_by || '',
+          blockAt: r.block_at || null
+        };
+      });
+  }
+
   function remove(period) {
     return rest('/data_registry?period=eq.' + encodeURIComponent(String(period || '')), { method: 'DELETE' })
       .then(function () { return { ok: true }; });
@@ -226,6 +245,7 @@
   return {
     listPeriods: listPeriods,
     load: load,
+    loadBlock: loadBlock,
     save: save,
     remove: remove,
     loadMaster: loadMaster,

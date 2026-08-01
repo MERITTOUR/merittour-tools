@@ -1810,19 +1810,58 @@ function regLoadPeriod(){
       if(mi) mi.value=d.blockMonth||period;
       try{
         blkRender();
-        blkNote=blkParsed
-          ? ` · 블록표(${MT.escHtml(d.blockMonth||period)})도 함께 불러왔습니다`
-          : ' · 블록표는 형식을 알아보지 못했습니다 — ② 호텔 블록에서 확인해 주세요';
+        if(blkParsed){
+          // 이 달 표를 등록월로도 넣어 둔다. 예전에는 「요금 달력에 이 달 등록」을
+          // 사람이 눌러야 했고, 안 누르면 월 경계 연박이 조용히 끊겼다.
+          vcalBlocks[d.blockMonth||period]=blkParsed.rows.slice();
+          vcalSaveMonths();
+          blkNote=` · 블록표(${MT.escHtml(d.blockMonth||period)})도 함께 불러왔습니다`;
+        } else {
+          blkNote=' · 블록표는 형식을 알아보지 못했습니다 — ② 호텔 블록에서 확인해 주세요';
+        }
       }catch(e){ blkNote=' · 블록표를 읽는 중 오류가 났습니다 — ② 호텔 블록에서 확인해 주세요'; }
     }
 
     analyze();
     regSay(`<b>${MT.escHtml(period)}</b> 자료를 불러왔습니다 — 팀 ${d.meta.teamCount}건 · 인원 ${d.meta.paxCount}명 `
       + `(${MT.escHtml(regWhen(d.meta.updatedAt))} ${MT.escHtml(d.meta.uploaderName||'')} 님이 올림)${blkNote}`, 'ok');
+
+    // 옆 달 블록표도 이어서 받는다(무겁지 않게 블록 칸만). 월말 출발 연박이
+    // 다음 달로 넘어가므로, 이게 없으면 월말 건이 「판단 보류」로 빠진다.
+    return regLoadNeighbourBlocks(period);
   }).catch(e=>{
     regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
   }).then(()=>{
     btn.disabled=false; btn.textContent='불러오기 →';
+  });
+}
+
+/* 앞뒤 달 블록표를 등록월(vcalBlocks)에 채운다.
+   엠클릭 표는 한 달치만 복사되지만, 서버에는 달마다 따로 올라와 있으므로
+   여기서 모으면 사람이 두 번 붙여넣지 않아도 이어보기가 된다. */
+function regLoadNeighbourBlocks(period){
+  const nx=nextYm(period), pv=prevYm(period);
+  const want=[pv, nx].filter(ym=>ym && !vcalBlocks[ym]);
+  if(!want.length){ blkRenderMonthNav && blkRenderMonthNav(); return Promise.resolve(); }
+  return Promise.all(want.map(ym=>
+    MT_STORE.loadBlock(ym).then(b=>{
+      if(!b || !b.blockRaw) return null;
+      const rows=blkParse(b.blockRaw);
+      if(!rows) return null;                       // 형식을 못 알아보면 조용히 넘긴다
+      vcalBlocks[b.blockMonth||ym]=rows;
+      return b.blockMonth||ym;
+    }).catch(()=>null)                             // 옆 달이 없는 건 흔한 일이라 오류로 만들지 않는다
+  )).then(got=>{
+    const added=got.filter(Boolean);
+    if(added.length){
+      vcalSaveMonths();
+      if(typeof renderVcalRegBar==='function') renderVcalRegBar();
+      const box=document.getElementById('reg-msg');
+      if(box && box.style.display!=='none'){
+        box.innerHTML += ` · 이어보기용으로 <b>${added.sort().join(' · ')}</b> 블록표도 받아 뒀습니다`;
+      }
+    }
+    if(typeof blkRenderMonthNav==='function') blkRenderMonthNav();
   });
 }
 
@@ -5731,6 +5770,12 @@ function blkDays(month, rows){
 function nextYm(ym){
   const [y,m]=String(ym).split('-').map(Number);
   const d=new Date(y, m, 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function prevYm(ym){
+  const [y,m]=String(ym).split('-').map(Number);
+  if(!y||!m) return '';
+  const d=new Date(y, m-2, 1);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 /* 화면에 표시할 월 목록. 이어보기라도 다음 달이 등록돼 있지 않으면 이 달만. */
