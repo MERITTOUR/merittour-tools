@@ -237,3 +237,44 @@ test('encodeRows/decodeRows — 행 전체가 왕복한다', () => {
   // 원본을 건드리면 안 된다
   assert.ok(rows[0].출발일자 instanceof Date);
 });
+
+/* ── 엠클릭 예약리스트 훑기 ─────────────────────────────────────
+   대시보드 analyze() 와 같은 기준으로 세야 「몇 건 줄었다」를 믿을 수 있다. */
+test('scanRes — 취소·미확정 구분은 세지 않는다', () => {
+  const r = MT.scanRes([
+    { 구분: '확정', 예약: 4, 출발일자: '2026-07-03' },
+    { 구분: '대기', 예약: 2, 출발일자: '2026-07-15' },
+    { 구분: '견적', 예약: 3, 출발일자: '2026-07-20' },
+    { 구분: '정산', 예약: 1, 출발일자: '2026-07-22' },
+    { 구분: '취소', 예약: 9, 출발일자: '2026-07-25' },          // 구분이 아님
+    { 구분: '확정', 예약: 9, 출발일자: '2026-07-26', cancCd: 'X' } // 취소 코드
+  ]);
+  assert.equal(r.teamCount, 4);
+  assert.equal(r.paxCount, 4 + 2 + 3 + 1);
+});
+
+test('scanRes — 가장 많은 달을 출발월로 본다(월 경계는 섞여 들어온다)', () => {
+  const r = MT.scanRes([
+    { 구분: '확정', 예약: 2, 출발일자: '2026-07-03' },
+    { 구분: '확정', 예약: 2, 출발일자: '2026-07-28' },
+    { 구분: '확정', 예약: 2, 출발일자: '2026-08-05' }
+  ]);
+  assert.equal(r.period, '2026-07');
+  assert.deepEqual(r.monthKeys, ['2026-07', '2026-08']);
+  assert.deepEqual(r.months, { '2026-07': 2, '2026-08': 1 });
+});
+
+test('scanRes — Date 객체도 문자열도 같게 읽는다', () => {
+  const a = MT.scanRes([{ 구분: '확정', 예약: 2, 출발일자: new Date(2026, 6, 31) }]);
+  const b = MT.scanRes([{ 구분: '확정', 예약: 2, 출발일자: '2026-07-31' }]);
+  assert.equal(a.period, '2026-07');
+  assert.equal(a.period, b.period, '월말이 8월로 새면 안 된다');
+});
+
+test('scanRes — 빈 입력도 죽지 않는다', () => {
+  const r = MT.scanRes([]);
+  assert.equal(r.teamCount, 0);
+  assert.equal(r.period, '');
+  assert.deepEqual(r.monthKeys, []);
+  assert.equal(MT.scanRes(null).teamCount, 0);
+});

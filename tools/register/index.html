@@ -133,6 +133,11 @@
     </div>
 
     <div class="grp-h">호텔 블록표 <span style="font-weight:600;color:var(--text3);font-size:11.5px">(선택)</span></div>
+    <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px">
+      <label for="blk-month" style="font-size:12px;font-weight:700;color:var(--text2)">이 표는 몇 월 것인가요?</label>
+      <input type="month" id="blk-month" style="padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit">
+      <span style="font-size:11.5px;color:var(--text3)">엠클릭 표에는 월이 안 들어 있어 직접 골라 주셔야 합니다</span>
+    </div>
     <textarea class="paste" id="blk-paste" placeholder="엠클릭 호텔별 예약현황 표를 붙여넣으세요 (Ctrl+V) — 안 넣으면 이미 등록된 표가 그대로 유지됩니다"></textarea>
 
     <div class="sum" id="sum"></div>
@@ -160,7 +165,6 @@
   var ilhRows = null, ilhFiles = 0;
   var periods = [];                 // 서버 목록
   var parsed = null;                // {period, teamCount, paxCount, months}
-  var blkParsed = null;             // {rows, month}
 
   function say(text, kind) {
     var m = $('msg');
@@ -238,32 +242,22 @@
   /* ── 올린 자료 훑기 ─────────────────────────────────────────
      여기서는 분석하지 않는다. 어느 달인지·몇 팀인지만 세어
      사람이 「맞게 올렸나」를 눈으로 확인할 수 있게 한다. */
-  /* 대시보드 analyze() 와 같은 기준으로 센다 — 여기 숫자와 대시보드 숫자가
-     다르면 「몇 건이 줄었다」는 경고를 믿을 수 없게 된다. */
-  var LIVE = ['견적', '대기', '확정', '정산'];
-  function scanRes(rows) {
-    var months = {}, pax = 0, n = 0;
-    (rows || []).forEach(function (r) {
-      if (r['cancCd']) return;
-      if (LIVE.indexOf(String(r['구분'] || '').trim()) < 0) return;
-      n++;
-      pax += MT.num(r['예약']);
-      var ymd = MT.normalizeDate(r['출발일자']);
-      if (ymd) months[ymd.slice(0, 7)] = (months[ymd.slice(0, 7)] || 0) + 1;
-    });
-    return { months: months, monthKeys: Object.keys(months).sort(), teamCount: n, paxCount: pax };
-  }
+  /* 세는 기준은 shared/util.js 의 MT.scanRes 하나만 쓴다 —
+     대시보드와 다른 코드를 두면 숫자가 갈라진다. */
+  var scanRes = MT.scanRes;
 
-  /* 붙여넣은 블록표에서 대상 월만 읽는다. 표 자체는 원문 그대로 저장하고,
-     행 해석은 대시보드가 한다 — 파서를 두 곳에 두면 갈라진다. */
-  function scanBlock(text) {
-    var t = String(text || '').trim();
-    if (!t) return null;
-    var m = t.match(/(20\d{2})\s*[.\-\/년]\s*(\d{1,2})/);
-    return { month: m ? m[1] + '-' + String(m[2]).padStart(2, '0') : '' };
+  /* 블록표의 달은 **추측하지 않는다.** 엠클릭 「호텔별 예약현황」은 표 안에
+     월이 없고(1(토)·2(일)… 일자만 있다) 출발년월은 표 바깥 셀렉터에 있어서
+     복사하면 따라오지 않는다. 추측했다가 틀리면 7월 표가 8월 잔여로 들어간다.
+     그래서 올리는 사람이 직접 고른다. */
+  function blockMonth() {
+    var v = ($('blk-month') && $('blk-month').value) || '';
+    return /^\d{4}-\d{2}$/.test(v) ? v : '';
   }
+  function hasBlockText() { return $('blk-paste').value.trim().length > 0; }
 
-  $('blk-paste').addEventListener('input', function () { blkParsed = scanBlock(this.value); refresh(); });
+  $('blk-paste').addEventListener('input', refresh);
+  $('blk-month').addEventListener('change', refresh);
 
   /* ── 요약 · 저장 가능 여부 ─────────────────────────────────── */
   function refresh() {
@@ -282,14 +276,14 @@
       box.innerHTML = '<div class="empty" style="color:var(--red)">출발일자를 읽을 수 없습니다. 예약리스트 파일이 맞는지 확인해 주세요.</div>';
       btn.disabled = true; parsed = null; return;
     }
-    // 가장 많은 달을 그 파일의 출발월로 본다(월 경계 팀이 조금 섞여 들어온다)
-    var main = sc.monthKeys.slice().sort(function (a, b) { return sc.months[b] - sc.months[a]; })[0];
+    var main = sc.period;
     parsed = { period: main, teamCount: sc.teamCount, paxCount: sc.paxCount, monthKeys: sc.monthKeys, months: sc.months };
 
     var before = periods.filter(function (p) { return p.period === main; })[0] || null;
+    var hasBlk = hasBlockText(), bm = blockMonth();
     var d = MT_STORE.diff(before, {
       teamCount: sc.teamCount, paxCount: sc.paxCount,
-      blockRows: blkParsed ? [] : undefined
+      blockRows: hasBlk ? [] : undefined
     });
 
     var warn = [];
@@ -298,9 +292,12 @@
         return k + ' ' + sc.months[k] + '팀';
       }).join(' · ') + '. <b>' + main + '</b> 로 등록합니다.');
     }
-    if (blkParsed) {
-      var chk = MT_STORE.checkBlockMonth(main, blkParsed.month);
-      if (!chk.ok) warn.push(chk.message);
+    if (hasBlk && !bm) {
+      warn.push('블록표를 붙여넣으셨습니다 — <b>몇 월 표인지 골라 주세요.</b> 엠클릭 표에는 월이 들어 있지 않아 저희가 알 수 없습니다.');
+    } else if (hasBlk && bm !== main) {
+      // 막지는 않는다. 8월 표를 7월 등록에 얹는 건 실수지만, 다른 달을
+      // 일부러 올리는 경우도 있어 판단은 사람에게 맡기고 크게 알린다.
+      warn.push('블록표는 <b>' + esc(bm) + '</b> 인데 자료는 <b>' + esc(main) + '</b> 로 등록됩니다. 맞는지 확인해 주세요.');
     }
     d.warnings.forEach(function (w) { warn.push(w); });
 
@@ -314,8 +311,8 @@
       + '<dt>팀</dt><dd>' + d.team.to + '건' + delta(d.team.delta) + '</dd>'
       + '<dt>인원</dt><dd>' + d.pax.to + '명' + delta(d.pax.delta) + '</dd>'
       + '<dt>파일</dt><dd>예약리스트 ' + resFiles + '개 · 일행별예약 ' + ilhFiles + '개</dd>'
-      + '<dt>블록표</dt><dd>' + (blkParsed
-          ? '이번에 함께 올림' + (blkParsed.month ? ' (' + esc(blkParsed.month) + ')' : ' <span class="warn">(달을 못 읽음)</span>')
+      + '<dt>블록표</dt><dd>' + (hasBlk
+          ? (bm ? '이번에 함께 올림 (' + esc(bm) + ')' : '<span class="warn">몇 월 표인지 골라 주세요</span>')
           : (before && before.hasBlock ? '이미 등록된 표 유지' : '없음'))
         + '</dd>'
       + '</dl>'
@@ -332,6 +329,10 @@
         + '(' + fmtWhen(before.updatedAt) + ' ' + (before.uploaderName || '') + ' · 팀 ' + before.teamCount + '건)\n\n'
         + '이번 파일로 통째로 교체할까요?')) return;
 
+    if (hasBlockText() && !blockMonth()) {
+      say('블록표가 몇 월 것인지 골라 주세요. 엠클릭 표에는 월이 들어 있지 않아 추측하면 다른 달 잔여가 틀어집니다.');
+      return;
+    }
     var btn = $('btn-save');
     btn.disabled = true; btn.textContent = '저장 중…';
     clearMsg();
@@ -346,7 +347,7 @@
     if (raw) {
       payload.blockRaw = raw;
       payload.blockRows = [];                  // 행 해석은 대시보드가 한다
-      payload.blockMonth = (blkParsed && blkParsed.month) || parsed.period;
+      payload.blockMonth = blockMonth();       // 사람이 고른 달. 추측하지 않는다
     }
 
     MT_STORE.save(parsed.period, payload, before ? { expect: before.updatedAt } : {})

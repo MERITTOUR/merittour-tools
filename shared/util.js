@@ -264,6 +264,33 @@
     }, ms || 2200);
   };
 
+  /* ── 엠클릭 예약리스트 훑기 ──────────────────────────────────
+     올린 파일이 어느 달인지·몇 팀인지만 센다. 분석은 대시보드가 한다.
+     세는 기준은 대시보드 analyze() 와 **똑같아야** 한다 — 다르면
+     「몇 건 줄었다」 경고를 믿을 수 없다.
+     (구분이 견적·대기·확정·정산이고 cancCd 가 없는 행) */
+  MT.LIVE_STATUS = ['견적', '대기', '확정', '정산'];
+
+  MT.scanRes = rows => {
+    const months = {};
+    let pax = 0, n = 0;
+    (rows || []).forEach(r => {
+      if (!r || r['cancCd']) return;
+      if (MT.LIVE_STATUS.indexOf(String(r['구분'] || '').trim()) < 0) return;
+      n++;
+      pax += MT.num(r['예약']);
+      const ymd = MT.normalizeDate(r['출발일자']);
+      if (ymd) {
+        const ym = ymd.slice(0, 7);
+        months[ym] = (months[ym] || 0) + 1;
+      }
+    });
+    const monthKeys = Object.keys(months).sort();
+    // 가장 많은 달을 그 파일의 출발월로 본다(월 경계 팀이 조금 섞여 들어온다)
+    const period = monthKeys.slice().sort((a, b) => months[b] - months[a])[0] || '';
+    return { months, monthKeys, period, teamCount: n, paxCount: pax };
+  };
+
   /* ── 엑셀 셀 값의 저장·복원 ──────────────────────────────────
      대시보드는 XLSX 를 cellDates:true 로 읽어서 날짜 칸이 Date 객체가 된다.
      그걸 그대로 JSON.stringify 하면 toISOString() 이 불려 UTC 로 바뀌고,
