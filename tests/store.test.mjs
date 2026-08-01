@@ -198,3 +198,28 @@ test('표가 가리키는 달이 다르면 막는다 — 7월 표를 8월에 올
   assert.equal(STORE.checkBlockMonth('2026-07', '2026-07').ok, true);
   assert.equal(STORE.checkBlockMonth('2026-07', '').ok, true);   // 블록표 없이 등록하는 경우
 });
+
+test('loadBlock — 옆 달 표만 가볍게 가져온다 (예약 원본은 안 받는다)', async () => {
+  reset();
+  route('/data_registry?period=eq.', 200, [{
+    period: '2026-08', block_raw: '호텔명\t룸타입\t1(토)\n야마나미 호텔\t트윈\t4',
+    block_month: '2026-08', block_by: '김대웅', block_at: '2026-07-28T01:00:00Z'
+  }]);
+  const b = await STORE.loadBlock('2026-08');
+  assert.equal(b.blockMonth, '2026-08');
+  assert.match(b.blockRaw, /야마나미/);
+  const url = calls[0].url;
+  assert.ok(!url.includes('res_json'), '예약 원본을 같이 받으면 안 된다');
+  assert.ok(!url.includes('ilhaeng_json'), '명단 원본도 받으면 안 된다');
+  assert.ok(!/select=\*/.test(url), 'select=* 는 무거운 칸까지 다 가져온다');
+});
+
+test('loadBlock — 그 달이 없거나 표를 안 올렸으면 null', async () => {
+  reset();
+  route('/data_registry?period=eq.', 200, []);
+  assert.equal(await STORE.loadBlock('2099-01'), null);
+
+  reset();
+  route('/data_registry?period=eq.', 200, [{ period: '2026-08', block_raw: null }]);
+  assert.equal(await STORE.loadBlock('2026-08'), null, '달은 있는데 표만 없는 경우도 null');
+});
