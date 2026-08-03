@@ -438,27 +438,22 @@ tr:hover td{background:#EEF3FA}
 .reg-panel-h{font-size:13.5px;font-weight:700;color:var(--green2);margin-bottom:10px}
 .reg-chips{display:flex;flex-wrap:wrap;gap:8px}
 .reg-chip{display:inline-flex;align-items:baseline;gap:7px;background:#fff;
-  border:1px solid var(--border);border-radius:999px;padding:7px 14px;cursor:pointer;
-  font-family:inherit;font-size:12.5px;color:var(--text2);transition:border-color .12s,box-shadow .12s}
-.reg-chip:hover{border-color:var(--green);box-shadow:0 1px 6px rgba(30,122,76,.14)}
+  border:1px solid var(--green);border-radius:999px;padding:7px 14px;
+  font-family:inherit;font-size:12.5px;color:var(--text2)}
 .reg-chip .p{font-size:13.5px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .reg-chip .n{font-weight:800;color:var(--green2)}
 .reg-chip .who{color:var(--text3)}
 .reg-chip .blk{font-size:10.5px;font-weight:800;color:var(--green2);
   background:var(--green-dim);border:1px solid var(--green);border-radius:5px;padding:0 5px}
-.reg-chip.on{border-color:var(--green);background:var(--green-dim);box-shadow:inset 0 0 0 1px var(--green)}
-.reg-chip.on .p{color:var(--green2)}
-.reg-chip.busy{opacity:.55;cursor:default}
-.reg-chip .tick{font-size:11px;font-weight:800;color:var(--text3);width:11px;text-align:center}
-.reg-chip.on .tick{color:var(--green2)}
+.reg-chip.busy{opacity:.55}
+.reg-chip.miss{border-color:var(--amber);background:#FFFBEB}
+.reg-chip .warnbadge{font-size:10.5px;font-weight:800;color:#92400E;
+  background:#FEF3C7;border:1px solid var(--amber);border-radius:5px;padding:0 5px}
 .reg-empty{font-size:13px;color:var(--text2);padding:4px 2px}
 /* 지금 몇 달이 합쳐져 있는지 — 화면 숫자가 어디까지를 센 것인지 알려 준다 */
 .reg-sumline{margin-top:11px;padding-top:10px;border-top:1px dashed var(--green);
   font-size:12.5px;color:var(--text2);line-height:1.75}
 .reg-sumline b{color:var(--green2)}
-.reg-link{background:none;border:0;padding:0 0 0 9px;font:inherit;font-size:12px;
-  color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
-.reg-link:hover{color:var(--navy)}
 .reg-dup{margin-top:7px;color:var(--amber);font-size:12px;line-height:1.7}
 .reg-dup b{color:var(--amber)}
 .blk-team-note{margin:0 0 10px;font-size:12px;color:var(--text2);
@@ -829,14 +824,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <div class="card-sub">엠클릭 파일은 <b>한 사람이 한 번만</b> 올리면 됩니다 — 평소에는 출발월만 고르세요</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn-sm" onclick="regLoadList()">새로고침</button>
+        <button class="btn-sm" onclick="regRefreshAll()">새로고침</button>
       </div>
     </div>
 
     <div id="reg-msg" class="note" style="display:none"></div>
 
     <div class="reg-panel">
-      <div class="reg-panel-h">📅 등록된 자료 <span class="muted" style="font-weight:600;font-size:11.5px">— 눌러서 켜고 끕니다. 켠 달은 모두 <b>합쳐서</b> 봅니다</span></div>
+      <div class="reg-panel-h">📅 등록된 자료 <span class="muted" style="font-weight:600;font-size:11.5px">— 올라온 달은 <b>모두 합쳐서</b> 봅니다</span></div>
       <div id="reg-list" class="reg-chips"></div>
       <div id="reg-sumline" class="reg-sumline"></div>
     </div>
@@ -1869,7 +1864,7 @@ function regSaveUpload(){
                 updatedAt:new Date().toISOString(),
                 resFiles:resCount||1, ilhaengFiles:ilhaengCount||1 }
       };
-      regOn.add(sc.period); regBlkFocus=sc.period;
+      regBlkFocus=sc.period;
       regRebuild();                       // 올린 달을 포함해 다시 합친다
       // 목록을 먼저 새로 받고 나서 알린다 — regLoadList 가 안내를 지우기 때문이다
       return regLoadList().then(()=>{
@@ -1938,9 +1933,9 @@ function regLoadList(){
    영원히 살아남아 없는 손님이 명단에 남는다.
 ════════════════════════════════════════════════════════════ */
 const regCache={};        // period → {resRows, ilhaengRows, blockRaw, blockMonth, meta}
-let regOn=new Set();      // 지금 합쳐서 보고 있는 달
 let regDupSeqs=[];        // 두 달에 걸쳐 보이는 예약(일정이 옮겨진 것)
 let regBlkFocus='';       // ② 호텔 블록 붙여넣기 칸에 보여 줄 달
+let regEdgeNote='';       // 앞뒤 달 블록표를 더 받았을 때의 안내
 let regBusy=false;
 
 /* 아직 안 받은 달만 받는다. 한 번 받은 달은 다시 받지 않는다.
@@ -1970,8 +1965,11 @@ function regEnsure(periods){
    옛 달을 아직 다시 안 올렸을 때다. 최근에 올라온 달을 이기게 하되,
    겹쳤다는 사실은 화면에 적는다. 조용히 하나를 버리면 팀 수가 왜 안 맞는지
    아무도 못 찾는다. */
+/* 화면에 합쳐져 있는 달 = 받아 둔 달 전부. 고르는 개념이 없다. */
+function regMonths(){ return Object.keys(regCache).sort(); }
+
 function regRebuild(){
-  const on=[...regOn].filter(p=>regCache[p]).sort();
+  const on=regMonths();
   regDupSeqs=[];
   if(!on.length){
     resData=null; ilhaengData=null;
@@ -2043,7 +2041,7 @@ function regApplyBlocks(on){
    월말 출발 연박이 다음 달로 넘어가므로, 이게 없으면 월말 건이 「판단 보류」로
    빠진다. 옆 달이 아직 안 올라온 것은 흔한 일이라 오류로 만들지 않는다. */
 function regLoadEdgeBlocks(){
-  const on=[...regOn].sort();
+  const on=regMonths();
   if(!on.length) return Promise.resolve();
   const want=[prevYm(on[0]), nextYm(on[on.length-1])].filter(ym=>ym && !vcalBlocks[ym]);
   if(!want.length){ if(typeof blkRenderMonthNav==='function') blkRenderMonthNav(); return Promise.resolve(); }
@@ -2060,79 +2058,58 @@ function regLoadEdgeBlocks(){
     if(added.length){
       vcalSaveMonths();
       if(typeof renderVcalRegBar==='function') renderVcalRegBar();
-      const box=document.getElementById('reg-msg');
-      if(box && box.style.display!=='none')
-        box.innerHTML += ` · 이어보기용으로 <b>${MT.escHtml(added.sort().join(' · '))}</b> 블록표도 받아 뒀습니다`;
+      regEdgeNote='이어보기용으로 '+added.sort().join(' · ')+' 블록표도 받아 뒀습니다.';
+      regRenderSummary();
     }
     if(typeof blkRenderMonthNav==='function') blkRenderMonthNav();
   });
 }
 
-/* 칩 하나를 켜거나 끈다. */
-function regToggle(period){
-  period=String(period||'');
-  if(!period || regBusy) return Promise.resolve();
-
-  if(regOn.has(period)){                    // 끄기 — 이미 받아 둔 것이라 즉시
-    regOn.delete(period);
-    if(regBlkFocus===period) regBlkFocus='';
-    regRebuild();
-    regSayLoaded();
-    return Promise.resolve();
-  }
-
-  regBusy=true; regRenderChips();
-  regSay(`<b>${MT.escHtml(period)}</b> 자료를 받는 중입니다…`,'warn');
-  return regEnsure([period]).then(()=>{
-    if(!regCache[period]) throw new Error('그 달의 자료를 찾지 못했습니다. 새로고침 후 다시 눌러 주세요.');
-    regOn.add(period); regBlkFocus=period;
-    regBusy=false;
-    regRebuild();
-    return regLoadEdgeBlocks();
-  }).then(()=>regSayLoaded())
-    .catch(e=>{
-      regBusy=false; regRenderChips();
-      regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
-    });
-}
-
-/* 전체 켜기 / 전체 끄기 */
-function regSetAll(on){
-  if(regBusy) return Promise.resolve();
-  if(!on){
-    regOn=new Set(); regBlkFocus='';
-    regRebuild(); regSayLoaded();
-    return Promise.resolve();
-  }
+/* 등록된 달을 전부 받아서 합친다.
+   force 면 캐시를 비우고 다시 받는다 — 다른 사람이 올린 것을 반영할 때. */
+function regLoadAll(force){
   const all=regList.map(p=>p.period).filter(Boolean);
-  if(!all.length) return Promise.resolve();
+  if(!all.length){ regRebuild(); return Promise.resolve(); }
+  if(force) all.forEach(p=>{ delete regCache[p]; });
   regBusy=true; regRenderChips();
-  regSay('등록된 달을 모두 받는 중입니다…','warn');
+  regSay(force?'서버에서 다시 받는 중입니다…':'등록된 자료를 받는 중입니다…','warn');
   return regEnsure(all).then(()=>{
-    all.forEach(p=>{ if(regCache[p]) regOn.add(p); });
     regBusy=false;
     regRebuild();
     return regLoadEdgeBlocks();
-  }).then(()=>regSayLoaded())
+  }).then(()=>regSayLoaded(force))
     .catch(e=>{
       regBusy=false; regRenderChips();
       regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
     });
 }
 
-function regSayLoaded(){
-  const on=[...regOn].sort();
-  if(!on.length){ regSay('켜 놓은 달이 없습니다 — 위에서 달을 눌러 주세요.','warn'); return; }
-  const k=v=>Number(v||0).toLocaleString('ko-KR');
-  const pax=teams.reduce((a,t)=>a+(Number(t.pax)||0),0);
-  regSay(`<b>${MT.escHtml(on.join(' · '))}</b> 을 합쳐서 보고 있습니다 — 팀 ${k(teams.length)}건 · 인원 ${k(pax)}명`
-    + (regDupSeqs.length
-        ? ` · <span style="color:var(--amber)">두 달에 걸친 예약 ${regDupSeqs.length}건은 최근에 올라온 달 것으로 셌습니다</span>`
-        : ''), 'ok');
+/* 새로고침 — 목록과 자료를 다시 받는다. 다른 사람이 올린 것이 내 화면에
+   반영되는 길은 이것 하나다(자동 감지는 아직 없다). */
+function regRefreshAll(){
+  if(regBusy) return Promise.resolve();
+  return regLoadList().then(()=>regLoadAll(true));
 }
 
-/* 등록된 달을 칩으로 늘어놓는다. 드롭다운이면 몇 달이 올라와 있는지 열어 봐야
-   알고, 고른 뒤 버튼을 또 눌러야 한다 — 한 번에 보이고 한 번에 누르게 한다. */
+/* 안내 줄(#reg-msg)은 「알릴 일」만 말한다 — 지금 무엇이 합쳐져 있는지는
+   요약 줄(#reg-sumline)이 이미 적고 있어서, 둘 다 말하면 같은 문장이 두 번
+   나온다. 못 받은 달·겹친 예약도 요약 줄에 적혀 있다. */
+function regSayLoaded(force){
+  if(!regMonths().length){ regSay('아직 올라온 자료가 없습니다. 아래에서 엠클릭 파일을 올려 주세요.','warn'); return; }
+  if(force) regSay('서버에서 다시 받았습니다 — 지금이 최신입니다.','ok');
+  else regSay('');
+}
+
+/* 등록된 달을 칩으로 늘어놓는다.
+
+   칩은 **누르는 것이 아니라 보는 것**이다. 한때 눌러서 켜고 끄게 했는데,
+   그건 예전 「한 달 고르기」 구조의 잔재였고 정당화되지 않았다 —
+   ① 12달을 다 받아도 gzip 0.3MB·0.16초라 끌 이유가 성능에도 없고,
+   ② 달을 끄면 그 달이 잔여 계산에서 통째로 빠져 없는 방을 팔게 되고,
+   ③ 다같이 쓰는 프로그램이라 사람마다 다른 달을 켜 두면 사람마다 다른
+      숫자를 말하게 된다(「내 화면에서만 열기」를 없앤 이유와 같다).
+   기간을 좁혀 보고 싶으면 각 탭의 날짜 필터를 쓴다 — 그건 계산 대상을
+   바꾸지 않고 보기만 바꾼다. */
 function regRenderChips(){
   const box=document.getElementById('reg-list');
   if(!box) return;
@@ -2143,52 +2120,49 @@ function regRenderChips(){
   }
   const n=v=>Number(v||0).toLocaleString('ko-KR');
   box.innerHTML=regList.slice().sort((a,b)=>a.period<b.period?-1:1).map(p=>{
-    const on=regOn.has(p.period);
-    return `<button type="button" class="reg-chip${on?' on':''}${regBusy?' busy':''}" data-p="${MT.escAttr(p.period)}"
-       aria-pressed="${on?'true':'false'}"
-       title="${MT.escAttr(p.period)} · ${MT.escAttr(p.uploaderName||'')} 님이 올림${p.hasBlock?' · 블록표 있음':' · 블록표 없음'} — 누르면 ${on?'화면에서 뺍니다':'화면에 더합니다'}">
-       <span class="tick">${on?'✔':'＋'}</span>
+    // 목록에는 있는데 자료를 못 받은 달은 그렇다고 적는다. 조용히 빼면
+    // 팀 수가 왜 모자란지 알 길이 없다.
+    const miss=!regBusy && !regCache[p.period];
+    return `<div class="reg-chip${miss?' miss':''}${regBusy?' busy':''}" data-p="${MT.escAttr(p.period)}"
+       title="${MT.escAttr(p.period)} · ${MT.escAttr(p.uploaderName||'')} 님이 올림${p.hasBlock?' · 블록표 있음':' · 블록표 없음'}">
        <span class="p">${MT.escHtml(p.period)}</span>
        <span class="who">${MT.escHtml(p.uploaderName||'-')}</span>
        <span class="who">${MT.escHtml(regWhen(p.updatedAt))}</span>
        <span><span class="n">${n(p.teamCount)}</span>팀 <span class="n">${n(p.paxCount)}</span>명</span>
        ${p.hasBlock?'<span class="blk">블록표</span>':''}
-     </button>`;
+       ${miss?'<span class="warnbadge">못 받음</span>':''}
+     </div>`;
   }).join('');
-  box.querySelectorAll('.reg-chip').forEach(el=>{
-    el.addEventListener('click',()=>regToggle(el.getAttribute('data-p')));
-  });
   regRenderSummary();
 }
 
-/* 지금 몇 달이 합쳐져 있는지 적는다 — 화면의 숫자가 어디까지를 센 것인지
+/* 지금 무엇이 합쳐져 있는지 적는다 — 화면의 숫자가 어디까지를 센 것인지
    모르면 「이 숫자 맞아?」를 매번 되묻게 된다. */
 function regRenderSummary(){
   const box=document.getElementById('reg-sumline');
   if(!box) return;
-  const on=[...regOn].sort();
+  const on=regMonths();
   const k=v=>Number(v||0).toLocaleString('ko-KR');
-  const btns=regList.length
-    ? ` <button type="button" class="reg-link" onclick="regSetAll(true)">전체 켜기</button>`
-      + (on.length?` <button type="button" class="reg-link" onclick="regSetAll(false)">전체 끄기</button>`:'')
-    : '';
   if(!on.length){
-    box.innerHTML='<span class="muted">켜 놓은 달이 없습니다 — 달을 눌러 화면에 더하세요.</span>'+btns;
+    box.innerHTML='<span class="muted">아직 합쳐진 자료가 없습니다.</span>';
     return;
   }
-  const pax=teams.reduce((a,t)=>a+(Number(t.pax)||0),0);
   const span=on.length>1 ? `${MT.escHtml(on[0])} ~ ${MT.escHtml(on[on.length-1])}` : MT.escHtml(on[0]);
-  box.innerHTML=`<b>${on.length}개 달</b> 합쳐서 보는 중 · ${span} · 팀 <b>${k(teams.length)}</b>건 · 인원 <b>${k(pax)}</b>명`+btns
+  const missing=regList.map(p=>p.period).filter(p=>!regCache[p]);
+  box.innerHTML=`등록된 <b>${on.length}개 달</b>이 모두 합쳐져 있습니다 · ${span} · 팀 <b>${k(teams.length)}</b>건 · 인원 <b>${k(pax0())}</b>명`
+    + (regEdgeNote ? ` <span class="muted">· ${MT.escHtml(regEdgeNote)}</span>` : '')
+    + (missing.length ? `<div class="reg-dup">※ ${MT.escHtml(missing.join(', '))} 은 자료를 받지 못해 빠져 있습니다. <b>새로고침</b>을 눌러 주세요.</div>` : '')
     + (regDupSeqs.length
         ? `<div class="reg-dup">※ 예약 <b>${regDupSeqs.length}건</b>이 두 달에 걸쳐 올라와 있습니다 — 일정이 다른 달로 옮겨졌는데 옛 달을 아직 다시 안 올린 경우입니다. <b>최근에 올라온 달</b> 것으로 셌습니다. (${MT.escHtml(regDupSeqs.slice(0,8).join(', '))}${regDupSeqs.length>8?' 외':''})</div>`
         : '');
 }
+function pax0(){ return teams.reduce((a,t)=>a+(Number(t.pax)||0),0); }
 
 document.addEventListener('DOMContentLoaded',function(){
   regUpRefresh();
   // 등록된 달은 열자마자 모두 합쳐서 연다. 자료는 쌓이는 것이지 한 달씩
   // 갈아 끼우는 것이 아니다 — 12달을 다 받아도 gzip 0.3MB 라 아낄 이유가 없다.
-  regLoadList().then(()=>{ if(regList.length) return regSetAll(true); });
+  regLoadList().then(()=>{ if(regList.length) return regLoadAll(false); });
 });
 
 /* ════════════════════════════════════════════════════════════
