@@ -883,7 +883,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율 — 입력 즉시 자동 저장됩니다</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-sm" onclick="exportMaster()" title="지금 값을 파일로 내려받습니다(백업용). 이 파일로 되돌리는 기능은 없습니다.">📤 백업 내려받기</button>
+        <button class="btn-sm" onclick="exportMaster()" title="지금 값을 파일로 내려받습니다(백업용).">📤 백업 내려받기</button>
+        <button class="btn-sm" id="rm-import-btn" style="display:none" onclick="document.getElementById('master-import-file').click()">📥 마스터 불러오기</button>
+        <input type="file" id="master-import-file" accept="application/json,.json" style="display:none" onchange="importMaster(this)">
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
     </div>
@@ -4993,6 +4995,9 @@ function masterRenderStatus(){
     box.innerHTML=h;
     box.style.display='';
   }
+  // 서버가 정답이 되면 「불러오기」는 화면에서 뺀다 — 그 뒤로는 되돌리기 버튼이 된다.
+  const imp=document.getElementById('rm-import-btn');
+  if(imp) imp.style.display = (masterMode==='on') ? 'none' : '';
   masterApplyLock();
 }
 
@@ -5107,10 +5112,51 @@ function exportMaster(){
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   if(typeof showToast==='function') showToast('마스터 파일을 내보냈습니다');
 }
-/* 「마스터 불러오기」는 없앴다.
-   서버가 단일 출처가 된 뒤에는 이 버튼이 「석 달 전 JSON 파일 하나로 전 직원의
-   단가·보유를 되돌리는 버튼」이 된다. 되돌리기는 서버 스냅샷(resort_master_history)
-   으로 하고, 파일은 백업으로만 남긴다. */
+/* 「마스터 불러오기」 — 서버로 넘어가기 전까지만 남겨 둔다.
+   서버가 정답이 된 뒤(masterMode==='on')에는 이 버튼이 「석 달 전 JSON 파일
+   하나로 전 직원의 단가·보유를 되돌리는 버튼」이 되므로 화면에서도 빼고
+   함수에서도 막는다. 그 전까지는 이것이 유일한 공유 수단이라 지우면 안 된다. */
+function importMaster(input){
+  if(masterMode==='on'){
+    if(input) input.value='';
+    alert('마스터는 이제 서버에 하나만 있습니다.\n파일로 되돌리면 전 직원 값이 한꺼번에 바뀌므로 막았습니다.\n\n되돌리려면 관리자에게 문의해 주세요(서버 스냅샷으로 복구합니다).');
+    return;
+  }
+  const file=input.files&&input.files[0];
+  input.value=''; // 같은 파일 다시 선택 가능하도록 초기화
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    let data;
+    try{ data=JSON.parse(e.target.result); }
+    catch(err){ alert('파일을 읽을 수 없습니다. 올바른 마스터 JSON 파일인지 확인해주세요.'); return; }
+    // 형식 검증
+    if(!data || data._type!==MASTER_EXPORT_TYPE || !Array.isArray(data.resortMaster) || typeof data.commonMaster!=='object'){
+      alert('메리트투어 마스터 파일 형식이 아닙니다. 「마스터 내보내기」로 만든 파일을 선택해주세요.'); return;
+    }
+    const when = data.exportedAt ? chlogTime(data.exportedAt) : '(시각 정보 없음)';
+    if(!confirm(`현재 마스터를 불러온 파일로 교체할까요?\n\n· 내보낸 시각: ${when}\n· 숙소 ${data.resortMaster.length}개\n\n현재 입력해 둔 요금·환율·항공요금이 이 파일 내용으로 덮어쓰기 됩니다.`)) return;
+    // 적용: 기본값과 병합(누락 필드 보호)
+    resortMaster = RESORT_DEFAULTS.map(def=>{
+      const s = data.resortMaster.find(x=>x.key===def.key);
+      const r = s ? {...def, ...s} : {...def};
+      if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];   // 구버전 마스터 파일 호환
+      r.roomAlias = normRoomAlias(r);
+      r.roomMeta = normRoomMeta(r);
+      return r;
+    });
+    commonMaster = {...COMMON_DEFAULTS, ...data.commonMaster};
+    // 파일 안의 이력은 가져오지 않는다. 이력은 이제 서버 한 벌이고,
+    // 남의 파일에 든 이력을 내 목록에 섞으면 누가 언제 무엇을 했는지가 흐려진다.
+    saveResortMaster();
+    if(typeof blkSyncFromResort==='function') blkSyncFromResort();
+    logChange('공통','마스터 일괄 불러오기', '', `${when} 기준 (숙소 ${data.resortMaster.length}개)`);
+    renderResortMaster();
+    if(blkParsed) blkRender();
+    alert(`마스터를 불러왔습니다.\n(내보낸 시각: ${when})`);
+  };
+  reader.readAsText(file);
+}
 
 /* 리조트 마스터 아코디언 열림 상태 */
 let blkRmOpen=new Set();
