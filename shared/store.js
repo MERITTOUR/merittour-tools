@@ -95,31 +95,45 @@
       });
   }
 
+  function shape(r) {
+    return {
+      period: r.period,
+      resRows: r.res_json || [],
+      ilhaengRows: r.ilhaeng_json || [],
+      // null(아직 안 올림)과 []( 올렸는데 사용 0)를 구분해서 그대로 넘긴다.
+      // 여기서 [] 로 뭉개면 다음 달 미등록을 사용 0 으로 오해해 월 경계 연박이 틀린다.
+      blockRows: (r.block_rows === undefined ? null : r.block_rows),
+      blockRaw: r.block_raw || '',
+      blockMonth: r.block_month || '',
+      meta: {
+        teamCount: r.team_count, paxCount: r.pax_count,
+        resFiles: r.res_files, ilhaengFiles: r.ilhaeng_files,
+        uploaderName: r.uploader_name || '',
+        updatedAt: r.updated_at,
+        blockBy: r.block_by || '', blockAt: r.block_at || null
+      }
+    };
+  }
+
   /* 한 달치 전체. 없으면 null. */
   function load(period) {
     var p = encodeURIComponent(String(period || ''));
     return rest('/data_registry?period=eq.' + p + '&select=*&limit=1')
       .then(function (rows) {
         var r = (rows && rows[0]) || null;
-        if (!r) return null;
-        return {
-          period: r.period,
-          resRows: r.res_json || [],
-          ilhaengRows: r.ilhaeng_json || [],
-          // null(아직 안 올림)과 []( 올렸는데 사용 0)를 구분해서 그대로 넘긴다.
-          // 여기서 [] 로 뭉개면 다음 달 미등록을 사용 0 으로 오해해 월 경계 연박이 틀린다.
-          blockRows: (r.block_rows === undefined ? null : r.block_rows),
-          blockRaw: r.block_raw || '',
-          blockMonth: r.block_month || '',
-          meta: {
-            teamCount: r.team_count, paxCount: r.pax_count,
-            resFiles: r.res_files, ilhaengFiles: r.ilhaeng_files,
-            uploaderName: r.uploader_name || '',
-            updatedAt: r.updated_at,
-            blockBy: r.block_by || '', blockAt: r.block_at || null
-          }
-        };
+        return r ? shape(r) : null;
       });
+  }
+
+  /* 여러 달을 한 번에. 달마다 따로 부르면 왕복이 그만큼 늘어난다 —
+     12달을 12번 부르면 느린 회선에서 눈에 띄게 밀린다.
+     아직 안 올라온 달은 그냥 빠진 채로 온다(오류가 아니다). */
+  function loadMany(periods) {
+    var list = (periods || []).map(function (p) { return String(p || ''); })
+      .filter(function (p) { return /^\d{4}-\d{2}$/.test(p); });
+    if (!list.length) return Promise.resolve([]);
+    var q = '/data_registry?period=in.(' + list.map(encodeURIComponent).join(',') + ')&select=*';
+    return rest(q).then(function (rows) { return (rows || []).map(shape); });
   }
 
   /* 저장 = 그 달을 통째 교체(업서트).
@@ -245,6 +259,7 @@
   return {
     listPeriods: listPeriods,
     load: load,
+    loadMany: loadMany,
     loadBlock: loadBlock,
     save: save,
     remove: remove,
