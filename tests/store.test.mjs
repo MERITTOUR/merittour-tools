@@ -133,15 +133,70 @@ test('save — 블록표를 안 주면 블록 컬럼을 아예 건드리지 않�
   assert.ok(!('block_rows' in b), '안 올린 회차가 기존 블록표를 지우면 안 된다');
 });
 
-test('마스터 저장은 낙관적 잠금 — version 이 어긋나면 막는다', async () => {
+test('마스터 저장은 낙관적 잠금 — 그 사이 남이 저장했으면 충돌', async () => {
   reset();
   route('/resort_master?id=eq.1', 200, [], 'PATCH');
+  // 0행이 왔을 때 원인을 되묻는다. 서버 version 이 올라가 있으면 충돌이다.
+  route('/resort_master?id=eq.1', 200, [{ data: {}, version: 9 }], 'GET');
   await assert.rejects(
     () => STORE.saveMaster({ a: 1 }, 7, '최민창'),
-    err => err.conflict === true && /마스터를 저장/.test(err.message)
+    err => err.conflict === true && !err.forbidden && /다른 분이/.test(err.message)
   );
   assert.match(calls[0].url, /version=eq\.7/);
   assert.equal(calls[0].body.version, 8);
+});
+
+test('★ 0행이 권한 때문이면 충돌이라고 하지 않는다', async () => {
+  reset();
+  route('/resort_master?id=eq.1', 200, [], 'PATCH');
+  // version 이 그대로인데 0행 = RLS 로 막힌 것. 충돌이라고 말하면 몇 번을
+  // 새로고침해도 안 되는데 원인에 닿지 못한 채 같은 값을 다시 입력하게 된다.
+  route('/resort_master?id=eq.1', 200, [{ data: {}, version: 7 }], 'GET');
+  await assert.rejects(
+    () => STORE.saveMaster({ a: 1 }, 7, '최민창'),
+    err => err.forbidden === true && !err.conflict && /권한/.test(err.message)
+  );
+});
+
+test('이력은 한 번에 모아 보낸다', async () => {
+  reset();
+  route('/mt_change_log', 201, null, 'POST');
+  const r = await STORE.logChanges([
+    { scope: 'master', target: '야마나미 호텔', field: '체재비', before: '15,000', after: '16,000' },
+    { scope: 'master', target: '간지호텔', field: '송영비', before: '6,000', after: '7,000' }
+  ]);
+  assert.equal(r.n, 2);
+  assert.equal(calls.length, 1, '2건이면 왕복도 1번 — 일괄 수정 300건을 300번 보내면 안 된다');
+  assert.equal(calls[0].body.length, 2);
+  assert.equal(calls[0].body[0].before_text, '15,000');
+});
+
+test('이력에 「누가」를 클라이언트가 못 넣는다', async () => {
+  reset();
+  route('/mt_change_log', 201, null, 'POST');
+  await STORE.logChanges([{ target: 'x', field: 'y', before: 1, after: 2, actor_name: '남의이름' }]);
+  const b = calls[0].body[0];
+  // 서버 트리거가 auth.uid() 로 박는다. 보내는 쪽이 이름을 정하면 사칭이 된다.
+  assert.ok(!('actor_name' in b) && !('actor_id' in b) && !('changed_at' in b), JSON.stringify(b));
+});
+
+test('빈 이력은 요청 자체를 안 보낸다', async () => {
+  reset();
+  const r = await STORE.logChanges([]);
+  assert.equal(r.n, 0);
+  assert.equal(calls.length, 0);
+});
+
+test('이력 조회는 최신순', async () => {
+  reset();
+  route('/mt_change_log', 200, [
+    { id: 2, scope: 'master', target: 'A', field: 'f', before_text: '1', after_text: '2',
+      actor_name: '최민창', changed_at: '2026-08-02T01:00:00Z' }
+  ], 'GET');
+  const rows = await STORE.listChanges({ limit: 50 });
+  assert.equal(rows[0].by, '최민창');
+  assert.match(calls[0].url, /order=changed_at\.desc/);
+  assert.match(calls[0].url, /limit=50/);
 });
 
 test('마스터 저장 성공', async () => {
