@@ -125,6 +125,25 @@
     return rec;
   }
   function session() { return readJSON(SESSION_KEY); }
+
+  /* 내 사용자 id. 로그인 응답의 user.id 를 먼저 쓰고, 없으면 access token 의 sub 를 읽는다.
+     서명을 검증하는 것이 아니라 「내가 누구인지」를 알아내는 용도다 — 진짜 검증은 서버가 한다.
+     둘 다 못 얻으면 빈 문자열을 준다(그때는 조회를 좁히지 않는다 — 예전 동작 그대로). */
+  function uid() {
+    var s = session();
+    if (!s) return '';
+    if (s.user && s.user.id) return String(s.user.id);
+    var tk = s.access_token;
+    if (!tk || typeof atob !== 'function') return '';
+    var parts = String(tk).split('.');
+    if (parts.length < 3) return '';
+    try {
+      var b = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b.length % 4) b += '=';
+      var j = JSON.parse(decodeURIComponent(escape(atob(b))));
+      return j && j.sub ? String(j.sub) : '';
+    } catch (e) { return ''; }
+  }
   function expired(s, pad) {
     if (!s || !s.expires_at) return true;
     return Math.floor(dep.now() / 1000) >= (s.expires_at - (pad == null ? REFRESH_PAD : pad));
@@ -223,7 +242,15 @@
     if (!force && c && c.at && (dep.now() - c.at) < ME_TTL_MS) return Promise.resolve(c);
     return token().then(function (t) {
       if (!t) return null;
-      return req('/rest/v1/app_users?select=id,email,name,role,active&limit=1', { token: t })
+      // 가능하면 내 id 로 좁힌다. owner·admin 은 app_users 전체 행이 보이므로,
+      // 필터도 order 도 없는 limit=1 은 **남의 행**을 줄 수 있다 — 그러면 내 역할이
+      // 남의 역할로 보이고, 이력의 「누가」도 틀린 사람이 된다.
+      // id 를 못 얻으면 좁히지 않는다. 여기서 null 을 주면 로그인이 돼 있는데도
+      // 「세션 없음」으로 로그인 화면에 튕긴다 — 안전한 쪽이 아니라 못 쓰는 쪽이다.
+      var id = uid();
+      return req('/rest/v1/app_users?'
+                 + (id ? 'id=eq.' + encodeURIComponent(id) + '&' : '')
+                 + 'select=id,email,name,role,active&limit=1', { token: t })
         .then(function (rows) {
           var u = (rows && rows[0]) || null;
           if (!u) return null;                     // 아직 app_users 에 행이 없다(트리거 전)
@@ -328,6 +355,7 @@
   }
 
   return {
+    uid: uid,
     ROLES: ROLES,
     configured: cfgReady,
     login: login,

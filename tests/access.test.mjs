@@ -65,6 +65,28 @@ test('로그인 성공 → 세션 저장 + 역할 조회', async () => {
   assert.equal(meCall.auth, 'Bearer AT');
 });
 
+test('me — 내 id 로 좁혀 조회한다 (남의 행을 받지 않도록)', async () => {
+  reset();
+  route('/auth/v1/token?grant_type=password', 200,
+        { access_token: 'AT', refresh_token: 'RT', expires_in: 3600, user: { id: 'u1' } });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw');
+  const meCall = calls.find(c => c.url.includes('/rest/v1/app_users'));
+  // owner·admin 은 전체 행이 보이므로, 필터 없는 limit=1 은 남의 역할을 내 역할로 보이게 한다
+  assert.match(meCall.url, /id=eq\.u1/);
+});
+
+test('me — id 를 못 얻어도 로그아웃시키지 않는다', async () => {
+  reset();
+  route('/auth/v1/token?grant_type=password', 200,
+        { access_token: 'AT', refresh_token: 'RT', expires_in: 3600 });   // user 없음 · JWT 아님
+  route('/rest/v1/app_users', 200, [USER]);
+  const u = await AUTH.login('a@b.c', 'pw');
+  assert.equal(u.role, 'owner');                       // 조회는 되어야 한다
+  const meCall = calls.find(c => c.url.includes('/rest/v1/app_users'));
+  assert.ok(!/id=eq\./.test(meCall.url));               // 좁히지 못했을 뿐
+});
+
 test('비밀번호가 틀리면 안내 문구가 한국어', async () => {
   reset();
   route('/auth/v1/token?grant_type=password', 400, { error_description: 'Invalid login credentials' });
