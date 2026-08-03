@@ -1935,6 +1935,7 @@ function regLoadList(){
 const regCache={};        // period → {resRows, ilhaengRows, blockRaw, blockMonth, meta}
 let regDupSeqs=[];        // 두 달에 걸쳐 보이는 예약(일정이 옮겨진 것)
 let regBlkFocus='';       // ② 호텔 블록 붙여넣기 칸에 보여 줄 달
+let regEdgeNote='';       // 앞뒤 달 블록표를 더 받았을 때의 안내
 let regBusy=false;
 
 /* 아직 안 받은 달만 받는다. 한 번 받은 달은 다시 받지 않는다.
@@ -2057,9 +2058,8 @@ function regLoadEdgeBlocks(){
     if(added.length){
       vcalSaveMonths();
       if(typeof renderVcalRegBar==='function') renderVcalRegBar();
-      const box=document.getElementById('reg-msg');
-      if(box && box.style.display!=='none')
-        box.innerHTML += ` · 이어보기용으로 <b>${MT.escHtml(added.sort().join(' · '))}</b> 블록표도 받아 뒀습니다`;
+      regEdgeNote='이어보기용으로 '+added.sort().join(' · ')+' 블록표도 받아 뒀습니다.';
+      regRenderSummary();
     }
     if(typeof blkRenderMonthNav==='function') blkRenderMonthNav();
   });
@@ -2077,7 +2077,7 @@ function regLoadAll(force){
     regBusy=false;
     regRebuild();
     return regLoadEdgeBlocks();
-  }).then(()=>regSayLoaded())
+  }).then(()=>regSayLoaded(force))
     .catch(e=>{
       regBusy=false; regRenderChips();
       regSay(MT.escHtml((e&&e.message)||'불러오지 못했습니다.'),'err');
@@ -2091,15 +2091,13 @@ function regRefreshAll(){
   return regLoadList().then(()=>regLoadAll(true));
 }
 
-function regSayLoaded(){
-  const on=regMonths();
-  if(!on.length){ regSay('아직 올라온 자료가 없습니다.','warn'); return; }
-  const k=v=>Number(v||0).toLocaleString('ko-KR');
-  const pax=teams.reduce((a,t)=>a+(Number(t.pax)||0),0);
-  regSay(`등록된 <b>${on.length}개 달</b>(${MT.escHtml(on.join(' · '))})이 합쳐져 있습니다 — 팀 ${k(teams.length)}건 · 인원 ${k(pax)}명`
-    + (regDupSeqs.length
-        ? ` · <span style="color:var(--amber)">두 달에 걸친 예약 ${regDupSeqs.length}건은 최근에 올라온 달 것으로 셌습니다</span>`
-        : ''), 'ok');
+/* 안내 줄(#reg-msg)은 「알릴 일」만 말한다 — 지금 무엇이 합쳐져 있는지는
+   요약 줄(#reg-sumline)이 이미 적고 있어서, 둘 다 말하면 같은 문장이 두 번
+   나온다. 못 받은 달·겹친 예약도 요약 줄에 적혀 있다. */
+function regSayLoaded(force){
+  if(!regMonths().length){ regSay('아직 올라온 자료가 없습니다. 아래에서 엠클릭 파일을 올려 주세요.','warn'); return; }
+  if(force) regSay('서버에서 다시 받았습니다 — 지금이 최신입니다.','ok');
+  else regSay('');
 }
 
 /* 등록된 달을 칩으로 늘어놓는다.
@@ -2152,6 +2150,7 @@ function regRenderSummary(){
   const span=on.length>1 ? `${MT.escHtml(on[0])} ~ ${MT.escHtml(on[on.length-1])}` : MT.escHtml(on[0]);
   const missing=regList.map(p=>p.period).filter(p=>!regCache[p]);
   box.innerHTML=`등록된 <b>${on.length}개 달</b>이 모두 합쳐져 있습니다 · ${span} · 팀 <b>${k(teams.length)}</b>건 · 인원 <b>${k(pax0())}</b>명`
+    + (regEdgeNote ? ` <span class="muted">· ${MT.escHtml(regEdgeNote)}</span>` : '')
     + (missing.length ? `<div class="reg-dup">※ ${MT.escHtml(missing.join(', '))} 은 자료를 받지 못해 빠져 있습니다. <b>새로고침</b>을 눌러 주세요.</div>` : '')
     + (regDupSeqs.length
         ? `<div class="reg-dup">※ 예약 <b>${regDupSeqs.length}건</b>이 두 달에 걸쳐 올라와 있습니다 — 일정이 다른 달로 옮겨졌는데 옛 달을 아직 다시 안 올린 경우입니다. <b>최근에 올라온 달</b> 것으로 셌습니다. (${MT.escHtml(regDupSeqs.slice(0,8).join(', '))}${regDupSeqs.length>8?' 외':''})</div>`
