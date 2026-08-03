@@ -887,6 +887,11 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
     </div>
+    <div id="rm-loadfail" class="note" style="display:none;border-left-color:var(--red);margin:2px 0 12px">
+      <b style="color:var(--red)">⚠ 저장된 마스터를 읽지 못했습니다.</b> 지금 화면에 보이는 값은 <b>기본값</b>이고,
+      저장은 막아 두었습니다(저장하면 읽지 못한 진짜 값을 기본값으로 덮어씁니다).
+      새로고침해 보시고 그래도 같으면 관리자에게 알려 주세요.
+    </div>
     <div class="note" style="border-left-color:var(--accent);margin:2px 0 12px">
       <b>📦 배포 방법</b> · 마스터(단가·환율·항공요금)는 이 브라우저(PC)에만 저장됩니다. 관리자가 모두 입력한 뒤 <b>「마스터 내보내기」</b>로 JSON 파일을 만들어 직원들에게 전달하면, 각 직원은 <b>「마스터 불러오기」</b>로 한 번 등록하고 이후 각자 엠클릭 파일만 올려 사용합니다. 마스터가 바뀌면 새 JSON을 다시 배포하세요.
       <div id="rm-completeness" style="margin-top:8px"></div>
@@ -1527,14 +1532,12 @@ function agencyChipsHTML(){
 let arrivalMap = {};   // eventSeq → 현지도착 보완
 let apisMap = {};      // eventSeq → APIS 보완(PNR 등)
 let teamAssign = {};   // eventSeq → 사용자 지정 팀명
-let ticketDone = {};   // eventSeq → 발권완료 여부 (미사용·레거시 보존)
 let editOverrides = {}; // eventSeq → {status, hotelY, listY, remark} 일괄 수정 오버라이드
 const STORE_EDIT = 'mt_edit_overrides';
 let selectedSeqs = new Set();  // 알리고 발송용 선택 팀
 let sortState = { booking:{key:null,dir:1}, air:{key:null,dir:1} };  // 컬럼 정렬
 
 const STORE_TEAM = 'mt_notify_teamAssign';
-const STORE_TICKET = 'mt_notify_ticketDone';
 
 /* 팀 색상 팔레트 */
 const TEAM_COLORS=[
@@ -2012,6 +2015,9 @@ function regRebuild(){
 /* 켠 달들의 블록표를 등록월(vcalBlocks)에 채운다. 예전에는 「요금 달력에
    이 달 등록」을 사람이 눌러야 했고, 안 누르면 월 경계 연박이 조용히 끊겼다. */
 function regApplyBlocks(on){
+  // 서버가 원본이다. 지난번에 남은 사본을 먼저 비우지 않으면, 서버에서 지워지거나
+  // 줄어든 달이 옛 값으로 살아남아 잔여가 실제보다 많게 나온다.
+  vcalBlocks={};
   let any=false;
   on.forEach(p=>{
     const d=regCache[p];
@@ -2043,7 +2049,10 @@ function regApplyBlocks(on){
 function regLoadEdgeBlocks(){
   const on=regMonths();
   if(!on.length) return Promise.resolve();
-  const want=[prevYm(on[0]), nextYm(on[on.length-1])].filter(ym=>ym && !vcalBlocks[ym]);
+  // 이미 vcalBlocks 에 있다고 건너뛰면 안 된다. 그 값은 지난번에 받아 localStorage 에
+  // 남은 옛 표일 수 있고, 옛 표는 사용량이 적어 **잔여가 실제보다 많게** 나온다 —
+  // 없는 방을 파는 쪽으로 틀린다. 옆 달은 열 때마다 다시 받는다.
+  const want=[prevYm(on[0]), nextYm(on[on.length-1])].filter(Boolean);
   if(!want.length){ if(typeof blkRenderMonthNav==='function') blkRenderMonthNav(); return Promise.resolve(); }
   return Promise.all(want.map(ym=>
     MT_STORE.loadBlock(ym).then(b=>{
@@ -4406,7 +4415,7 @@ function openDdayModal(){
       arr.map(({t,d})=>{
         const pnr=(t.pnrList&&t.pnrList.length)?`<span class="pnr-tag">${t.pnrList.join(', ')}</span>`:'<span class="muted">미발권</span>';
         const due=t.due>0?`<span style="color:var(--red);font-weight:700">미수 ${won(t.due)}</span>`:'';
-        const tk=ticketDone[t.eventSeq]?'<span class="ystamp" title="발권완료">✓</span>':'';
+        const tk='';   // 발권완료 도장은 값을 넣는 코드가 없어 폐기 — 아무도 못 지우는 유령이었다
         const checked=selectedSeqs.has(t.eventSeq)?'checked':'';
         return `<div class="dday-item">
           <input type="checkbox" class="chk" ${checked} onchange="toggleSel('${t.eventSeq}',this.checked)">
@@ -4750,32 +4759,38 @@ function loadResortMaster(){
       r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
       return r;
     });
-    // 1회성 마이그레이션: 과거 mgmt 기본값(0) 시절 저장본 → 50,000원으로 끌어올림
-    // (회원관리비를 의도적으로 0으로 비운 숙소는 mgmtMigrated 플래그 이후 그대로 유지됨)
-    if(!localStorage.getItem('mt_notify_mgmtMigrated')){
-      resortMaster.forEach(r=>{ if(!r.mgmt) r.mgmt=50000; });
-      try{ localStorage.setItem('mt_notify_mgmtMigrated','1'); }catch(e){}
-      saveResortMaster();
-    }
-  }catch(e){ resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomAlias:{}, roomMeta:normRoomMeta(d)})); }
+    // (구) mgmt 50,000 승격 마이그레이션은 없앴다 — RESORT_DEFAULTS 가 이미 mgmt:50000 이라
+    //     새 PC 에는 돌 일이 없고, 이미 돌아간 PC 는 값이 저장돼 있다. 남겨 두면 「읽기가 곧
+    //     쓰기」가 되어, 마스터가 서버로 올라간 뒤 새 PC 가 화면을 열기만 해도 공유 마스터에
+    //     쓰기가 나가고 면제 숙소의 mgmt 0 이 50,000 으로 되살아난다.
+  }catch(e){
+    // 조용히 기본값으로 되돌리지 않는다. 예전에는 파싱이 한 번 깨지면 기본값으로 갈아치운 뒤
+    // 「입력 즉시 자동 저장」이 그것을 저장해, 확인 창 하나 없이 전 직원 단가가 날아갔다.
+    masterLoadFailed=true;
+    resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomAlias:{}, roomMeta:normRoomMeta(d)}));
+  }
   try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
   catch(e){ commonMaster={...COMMON_DEFAULTS}; }
   if(!commonMaster.memberPax || !Object.keys(commonMaster.memberPax).length){
     commonMaster.memberPax={...MEMBER_PAX_DEFAULTS};
   }
-  // 1회성 마이그레이션: 기존 항공요금의 한글 출발지·도착지·항공사를 IATA 코드로 변환
-  if(!localStorage.getItem('mt_notify_airfareCodeMigrated')){
-    (commonMaster.airfares||[]).forEach(a=>{
-      if(a.origin) a.origin=airportCode(a.origin);
-      if(a.dest) a.dest=airportCode(a.dest);
-      if(a.airline) a.airline=(airlineCode(a.airline)||String(a.airline).toUpperCase());
-    });
-    try{ localStorage.setItem('mt_notify_airfareCodeMigrated','1'); }catch(e){}
-    saveResortMaster();
-  }
+  // (구) 항공요금 IATA 변환 마이그레이션도 같은 이유로 없앴다 — 읽기 경로에서 저장이 나가면 안 된다.
   loadChangeLog();
+  if(masterLoadFailed) masterWarnLoadFailed();
+}
+/* 저장본을 못 읽은 상태에서는 저장하지 않는다. 지금 화면에 있는 것은 기본값이라,
+   저장하면 읽지 못한 진짜 값을 기본값으로 덮어쓴다. */
+let masterLoadFailed=false;
+function masterWarnLoadFailed(){
+  const box=document.getElementById('rm-loadfail');
+  if(box){ box.style.display=''; return; }
+  console.warn('[마스터] 저장본을 읽지 못했습니다 — 저장을 막습니다.');
 }
 function saveResortMaster(){
+  if(masterLoadFailed){
+    showToast('저장본을 읽지 못해 저장을 막았습니다. 새로고침해 주세요.','error');
+    return;
+  }
   try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
 }
 function resetResortMaster(){
@@ -5669,10 +5684,10 @@ function updateCommon(field, val, el){
    영속화 (localStorage)
 ════════════════════════════════════════════════════════════ */
 function savePersist(){
-  try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_TICKET,JSON.stringify(ticketDone)); localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides)); }catch(e){}
+  try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides)); }catch(e){}
 }
 function loadPersist(){
-  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); ticketDone=JSON.parse(localStorage.getItem(STORE_TICKET)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; ticketDone={}; insExclude={}; vAdjust={}; editOverrides={}; }
+  try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; insExclude={}; vAdjust={}; editOverrides={}; }
   try{ settleAdjust=JSON.parse(localStorage.getItem(STORE_SETTLE)||'{}'); settleDed=JSON.parse(localStorage.getItem(STORE_SETTLE_DED)||'[]'); }catch(e){ settleAdjust={}; settleDed=[]; }
   loadDocHotelName();
 }
@@ -5767,7 +5782,9 @@ document.addEventListener('keydown',e=>{
   // Ctrl/Cmd + S : 저장
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){
     e.preventDefault();
-    try{ if(typeof savePersist==='function') savePersist(); if(typeof saveResortMaster==='function') saveResortMaster(); if(typeof blkSave==='function') blkSave(); }catch(_){}
+    // 마스터는 입력 즉시 자동 저장되므로 여기서 또 쓰지 않는다 — 아무것도 안 고쳤는데
+    // Ctrl+S 를 누른 것만으로 공유 마스터에 쓰기가 나가면 남의 편집이 충돌로 튕긴다.
+    try{ if(typeof savePersist==='function') savePersist(); if(typeof blkSave==='function') blkSave(); }catch(_){}
     showToast('저장되었습니다');
     return;
   }
@@ -5790,7 +5807,8 @@ loadResortMaster();
 /* ════════════════════════════════════════════════════════════
    ② 호텔 블록 — 엠클릭 붙여넣기 기반 즉석 분석
 ════════════════════════════════════════════════════════════ */
-const BLK_STORE={master:'mt_notify_blkMaster',pools:'mt_notify_blkPools',alias:'mt_notify_blkAlias',over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths'};
+/* master·pools·alias 키는 선언만 있고 읽지도 쓰지도 않아 뺐다(보유의 단일 출처는 리조트 마스터다). */
+const BLK_STORE={over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths'};
 const BLK_MONTH_KEEP=3;   // 등록월 보관 개월 수(지난 달 자동 정리)
 
 /* 기본 보유 마스터 (블록 대시보드 실데이터에서 추출) — 호텔|룸타입 → 보유 */
@@ -6133,6 +6151,8 @@ function blkViewDays(){
 /* 붙여넣기 이벤트 */
 document.getElementById('blk-month').addEventListener('change',function(){
   if(typeof regUpRefresh==='function') regUpRefresh();
+  // 달만 바꾸고 표를 안 건드리면 저장이 안 돼, 새로고침하면 옛 달로 되돌아가 있었다.
+  try{ localStorage.setItem(BLK_STORE.month,this.value); }catch(e){}
 });
 document.getElementById('blk-paste').addEventListener('input',function(){
   if(typeof regUpRefresh==='function') regUpRefresh();
