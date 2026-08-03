@@ -220,10 +220,69 @@
     return rest(q, { method: 'PATCH', body: body, prefer: 'return=representation' })
       .then(function (rows) {
         if (rows && rows.length) return { ok: true, version: rows[0].version };
-        var e = new Error('그 사이 다른 분이 마스터를 저장했습니다. 새로고침 후 다시 저장해 주세요.');
-        e.conflict = true;
-        throw e;
+        // 0행이 왔다. 두 가지 이유가 있는데 사람에게는 전혀 다른 이야기다.
+        //   ① 그 사이 남이 저장해서 version 이 어긋났다  → 다시 받아 얹으면 된다
+        //   ② RLS 로 막혔다(권한 없음)                  → 몇 번을 새로고침해도 안 된다
+        // 둘을 뭉뚱그려 「그 사이 다른 분이…」로 말하면, 권한이 없는 사람은
+        // 원인에 닿지 못한 채 같은 숫자를 계속 다시 입력하게 된다.
+        return loadMaster().then(function (cur) {
+          var e;
+          if (cur && String(cur.version) === String(version)) {
+            e = new Error('마스터를 저장할 권한이 없습니다. 관리자에게 역할 승인을 요청해 주세요.');
+            e.forbidden = true;
+          } else {
+            e = new Error('그 사이 다른 분이 마스터를 저장했습니다.');
+            e.conflict = true;
+            e.current = cur;
+          }
+          throw e;
+        });
       });
+  }
+
+  /* ── 변경 이력 ───────────────────────────────────────────────────
+     누가·언제는 서버 트리거가 박는다(mt_mcl_stamp). 클라이언트가 보낸 이름은
+     믿지 않는다 — 게이트 이름은 본인이 타이핑한 자유 문자열이라 진위가 없다.
+     지울 수 없다: update/delete 정책이 없으므로 여기에도 만들지 않는다. */
+
+  var CHLOG_COLS = 'id,scope,target,field,before_text,after_text,actor_name,changed_at';
+
+  /* 여러 건을 한 번에 넣는다. 일괄 수정 300건을 300번 왕복하면 안 된다. */
+  function logChanges(rows) {
+    var list = (rows || []).filter(Boolean).map(function (r) {
+      return {
+        scope: String(r.scope || 'master'),
+        target: String(r.target == null ? '' : r.target),
+        field: String(r.field == null ? '' : r.field),
+        before_text: r.before == null ? null : String(r.before),
+        after_text: r.after == null ? null : String(r.after),
+        before_val: r.beforeVal === undefined ? null : r.beforeVal,
+        after_val: r.afterVal === undefined ? null : r.afterVal,
+        path: r.path || null,
+        ref_version: r.refVersion == null ? null : Number(r.refVersion)
+      };
+    });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_change_log', { method: 'POST', body: list, prefer: 'return=minimal' })
+      .then(function () { return { ok: true, n: list.length }; });
+  }
+
+  /* 최근 이력. scope/target 으로 좁힐 수 있다. */
+  function listChanges(opts) {
+    opts = opts || {};
+    var q = '/mt_change_log?select=' + CHLOG_COLS + '&order=changed_at.desc,id.desc'
+          + '&limit=' + (Number(opts.limit) || 200);
+    if (opts.scope)  q += '&scope=eq.'  + encodeURIComponent(opts.scope);
+    if (opts.target) q += '&target=eq.' + encodeURIComponent(opts.target);
+    return rest(q).then(function (rows) {
+      return (rows || []).map(function (r) {
+        return {
+          id: r.id, scope: r.scope, target: r.target, field: r.field,
+          before: r.before_text, after: r.after_text,
+          by: r.actor_name || '', at: r.changed_at
+        };
+      });
+    });
   }
 
   /* ── 등록 전 차이 확인 ───────────────────────────────────────── */
@@ -265,6 +324,8 @@
     remove: remove,
     loadMaster: loadMaster,
     saveMaster: saveMaster,
+    logChanges: logChanges,
+    listChanges: listChanges,
     diff: diff,
     checkBlockMonth: checkBlockMonth,
     _dep: dep,

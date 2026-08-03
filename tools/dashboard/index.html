@@ -450,6 +450,8 @@ tr:hover td{background:#EEF3FA}
 .reg-chip .warnbadge{font-size:10.5px;font-weight:800;color:#92400E;
   background:#FEF3C7;border:1px solid var(--amber);border-radius:5px;padding:0 5px}
 .reg-empty{font-size:13px;color:var(--text2);padding:4px 2px}
+/* 서버 마스터가 아직 등록되지 않은 동안 — 편집을 잠갔다는 것이 보여야 한다 */
+#sec-resort.rm-locked #resort-cards{opacity:.55}
 /* 지금 몇 달이 합쳐져 있는지 — 화면 숫자가 어디까지를 센 것인지 알려 준다 */
 .reg-sumline{margin-top:11px;padding-top:10px;border-top:1px dashed var(--green);
   font-size:12.5px;color:var(--text2);line-height:1.75}
@@ -881,8 +883,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div><div class="card-title">① 리조트 마스터</div><div class="card-sub">리조트별 기준 단가·식사·환율 — 입력 즉시 자동 저장됩니다</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-sm" onclick="exportMaster()" style="border-color:var(--accent);color:var(--accent)">📤 마스터 내보내기</button>
-        <button class="btn-sm" onclick="document.getElementById('master-import-file').click()" style="border-color:var(--accent);color:var(--accent)">📥 마스터 불러오기</button>
+        <button class="btn-sm" onclick="exportMaster()" title="지금 값을 파일로 내려받습니다(백업용).">📤 백업 내려받기</button>
+        <button class="btn-sm" id="rm-import-btn" style="display:none" onclick="document.getElementById('master-import-file').click()">📥 마스터 불러오기</button>
         <input type="file" id="master-import-file" accept="application/json,.json" style="display:none" onchange="importMaster(this)">
         <button class="btn-sm" onclick="resetResortMaster()" style="color:var(--red);border-color:var(--red)">기본값 복원</button>
       </div>
@@ -892,9 +894,9 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       저장은 막아 두었습니다(저장하면 읽지 못한 진짜 값을 기본값으로 덮어씁니다).
       새로고침해 보시고 그래도 같으면 관리자에게 알려 주세요.
     </div>
+    <div id="rm-server" class="note" style="display:none;margin:2px 0 12px"></div>
     <div class="note" style="border-left-color:var(--accent);margin:2px 0 12px">
-      <b>📦 배포 방법</b> · 마스터(단가·환율·항공요금)는 이 브라우저(PC)에만 저장됩니다. 관리자가 모두 입력한 뒤 <b>「마스터 내보내기」</b>로 JSON 파일을 만들어 직원들에게 전달하면, 각 직원은 <b>「마스터 불러오기」</b>로 한 번 등록하고 이후 각자 엠클릭 파일만 올려 사용합니다. 마스터가 바뀌면 새 JSON을 다시 배포하세요.
-      <div id="rm-completeness" style="margin-top:8px"></div>
+      <div id="rm-completeness"></div>
     </div>
     <div id="resort-cards"></div>
   </div>
@@ -4485,26 +4487,67 @@ const STORE_COMMON='mt_notify_commonMaster';
 
 /* ── 리조트 마스터 변경이력 (세부 추적: 대상·항목·전→후) ──
    localStorage 별도 키, 최근 100건 링버퍼. 값이 실제로 바뀐 경우만 기록. */
-const STORE_CHLOG='mt_notify_changeLog';
-const CHLOG_MAX=100;
-let changeLog=[];
+/* ════════════════════════════════════════════════════════════
+   변경 이력 — 누가·언제·무엇을
+   예전에는 내 PC 에만 쌓였고 「누가」가 아예 없었다. 그래서 남이 무엇을
+   고쳤는지 볼 방법이 구조적으로 없었고, 마스터 JSON 을 받아야만 그 사람
+   이력이 섞여 들어왔다. 이제 서버에 한 벌로 쌓고 전 직원이 같이 본다.
+
+   「누가」는 서버가 auth 로 박는다(mt_mcl_stamp). 게이트 이름은 본인이
+   타이핑한 자유 문자열이라 주체로 쓸 수 없다.
+   지우는 기능은 만들지 않는다 — 지울 수 있으면 이력이 아니다.
+════════════════════════════════════════════════════════════ */
+const STORE_CHLOG='mt_notify_changeLog';   // 서버에 못 닿을 때만 쓰는 임시 보관
+let changeLog=[];             // 화면에 그리는 목록(서버에서 받은 것 + 방금 내가 한 것)
+let masterPendingLog=[];      // 아직 서버로 못 보낸 것 — 저장이 성공한 뒤에 보낸다
 function loadChangeLog(){
   try{ changeLog=JSON.parse(localStorage.getItem(STORE_CHLOG)||'[]'); if(!Array.isArray(changeLog)) changeLog=[]; }
   catch(e){ changeLog=[]; }
 }
 function saveChangeLog(){
-  try{ localStorage.setItem(STORE_CHLOG,JSON.stringify(changeLog.slice(0,CHLOG_MAX))); }catch(e){}
+  try{ localStorage.setItem(STORE_CHLOG,JSON.stringify(changeLog.slice(0,200))); }catch(e){}
 }
+
+/* 서버에서 이력을 받아 온다. 못 받으면 로컬 것을 그대로 쓴다. */
+function chlogLoadServer(){
+  if(!masterServerReady()) return Promise.resolve();
+  return MT_STORE.listChanges({limit:300}).then(rows=>{
+    changeLog=(rows||[]).map(r=>({ts:r.at, target:r.target, field:r.field, before:r.before, after:r.after, by:r.by}));
+    saveChangeLog();
+    if(document.getElementById('chlog-body')) renderChangeLog();
+  }).catch(()=>{});
+}
+
 /* 변경 1건 기록. target=대상(숙소명/공통), field=항목 라벨, before/after=전·후 값.
-   before==after면 기록하지 않음(빈→빈 포함). */
-function logChange(target, field, before, after){
+   before==after면 기록하지 않음(빈→빈 포함).
+   서버로는 **값 저장이 성공한 뒤에** 보낸다(masterFlushLog) — 저장이 막혔는데
+   이력만 남으면 이력이 거짓말을 한다. */
+function logChange(target, field, before, after, scope){
   const b=(before==null||before==='')?'(없음)':String(before);
   const a=(after==null||after==='')?'(없음)':String(after);
   if(b===a) return;
-  changeLog.unshift({ts:new Date().toISOString(), target, field, before:b, after:a});
-  if(changeLog.length>CHLOG_MAX) changeLog.length=CHLOG_MAX;
+  const me=masterUserName();
+  changeLog.unshift({ts:new Date().toISOString(), target, field, before:b, after:a, by:me, pending:true});
+  if(changeLog.length>200) changeLog.length=200;
+  masterPendingLog.push({scope:scope||'master', target, field, before:b, after:a, refVersion:masterVer});
   saveChangeLog();
   if(document.getElementById('chlog-body')) renderChangeLog();
+}
+
+/* 쌓인 이력을 한 번에 보낸다. 일괄 수정 300건을 300번 왕복하면 안 된다. */
+function masterFlushLog(){
+  if(!masterPendingLog.length) return Promise.resolve();
+  if(!masterServerReady()) return Promise.resolve();
+  const batch=masterPendingLog.slice();
+  masterPendingLog=[];
+  return MT_STORE.logChanges(batch).then(()=>{
+    changeLog.forEach(c=>{ delete c.pending; });
+    saveChangeLog();
+    if(document.getElementById('chlog-body')) renderChangeLog();
+  }).catch(e=>{
+    masterPendingLog=batch.concat(masterPendingLog);   // 되돌려 놓고 다음에 다시 시도
+    console.warn('[이력] 서버 기록 실패 — 다음 저장 때 다시 보냅니다.', e&&e.message);
+  });
 }
 function chlogTime(iso){
   try{ const d=new Date(iso); const p=n=>String(n).padStart(2,'0');
@@ -4515,18 +4558,17 @@ function renderChangeLog(){
   const box=document.getElementById('chlog-body'); if(!box) return;
   if(!changeLog.length){ box.innerHTML='<div class="muted" style="font-size:11px;padding:8px">변경 이력이 없습니다.</div>'; return; }
   box.innerHTML='<div class="tbl-wrap" style="max-height:260px;overflow-y:auto"><table style="font-size:11px"><thead><tr>'+
-    '<th style="width:130px">시각</th><th style="width:130px">대상</th><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead><tbody>'+
+    '<th style="width:130px">시각</th><th style="width:90px">바꾼 사람</th><th style="width:130px">대상</th>'+
+    '<th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead><tbody>'+
     changeLog.map(c=>`<tr><td class="muted" style="font-family:var(--mono)">${chlogTime(c.ts)}</td>`+
-      `<td>${c.target||'공통'}</td><td>${c.field||''}</td>`+
-      `<td class="muted">${c.before}</td>`+
-      `<td style="color:var(--accent);font-weight:600">${c.after}</td></tr>`).join('')+
+      `<td>${MT.escHtml(c.by||'-')}${c.pending?'<span class="muted" title="아직 서버에 안 올라감"> ·</span>':''}</td>`+
+      `<td>${MT.escHtml(c.target||'공통')}</td><td>${MT.escHtml(c.field||'')}</td>`+
+      `<td class="muted">${MT.escHtml(c.before)}</td>`+
+      `<td style="color:var(--accent);font-weight:600">${MT.escHtml(c.after)}</td></tr>`).join('')+
     '</tbody></table></div>';
 }
-function clearChangeLog(){
-  if(!changeLog.length){ alert('비울 이력이 없습니다.'); return; }
-  if(!confirm('변경 이력을 모두 비울까요? (되돌릴 수 없습니다)')) return;
-  changeLog=[]; saveChangeLog(); renderChangeLog();
-}
+/* 「이력 비우기」는 없앴다. 지울 수 있으면 이력이 아니다 — 서버에도 delete
+   정책을 만들지 않았다. 오등록은 지우는 대신 반대 방향으로 한 줄 더 남긴다. */
 
 /* 기본값 — 실제 판매 상품 18개 숙소. 단가는 사이님이 화면에서 입력(localStorage 저장).
    rooms: 룸타입별 보유 블록 (호텔 블록 보유 마스터 통합). aliases: 엠클릭 표기 별칭. assign: 임의배정형(블록 안 깜).
@@ -4731,53 +4773,56 @@ function sameRooms(a,b){
   return k(a)===k(b);
 }
 
+/* 저장본(로컬 캐시든 서버 값이든)을 코드 기본값과 병합한다.
+   순수 함수 — 아무것도 저장하지 않는다. 예전에는 이 안에서 저장이 나가
+   「읽기가 곧 쓰기」였고, 마스터가 공유되는 순간 그게 사고가 된다. */
+function masterFromPayload(savedResort, savedCommon){
+  const saved = Array.isArray(savedResort) ? savedResort : null;
+  const list = RESORT_DEFAULTS.map(def=>{
+    const s = saved && saved.find(x=>x.key===def.key);
+    const r = s ? {...def, ...s} : {...def};
+    // 코드 소유 항목은 항상 기본값으로 — 숙소명 변경이 기존 PC에도 반영되도록
+    MASTER_CODE_OWNED.forEach(k=>{ if(def[k]!==undefined) r[k]=def[k]; });
+    // 별칭은 합집합 — 새 표준 별칭을 보장하면서 직접 추가한 별칭도 지킨다
+    const drop=ALIAS_MOVED[def.key]||[];
+    r.aliases=[...new Set([...(def.aliases||[]), ...(Array.isArray(s&&s.aliases)?s.aliases:[])])]
+      .filter(a=>!drop.includes(a));
+    // 기본값을 고친 항목: 저장본이 옛 기본값 그대로일 때만 새 값으로 올린다
+    const fx=s && FIELD_BEFORE_FIX[def.key];
+    if(fx) Object.keys(fx).forEach(k=>{ if(s[k]===fx[k] && def[k]!==undefined) r[k]=def[k]; });
+    // 룸타입 구조가 바뀐 숙소: 손대지 않은 옛 기본값이면 새 구조로 올린다
+    if(s && ROOMS_BEFORE_RENAME[def.key] && sameRooms(s.rooms, ROOMS_BEFORE_RENAME[def.key])){
+      r.rooms={...(def.rooms||{})};
+      delete r.roomMeta;                   // 새 룸타입 기준으로 다시 만든다
+    }
+    if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
+    r.roomAlias = {...(def.roomAlias||{}), ...normRoomAlias(r)};
+    r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
+    return r;
+  });
+  const common = {...COMMON_DEFAULTS, ...(savedCommon||{})};
+  if(!common.memberPax || !Object.keys(common.memberPax).length) common.memberPax={...MEMBER_PAX_DEFAULTS};
+  return {resortMaster:list, commonMaster:common};
+}
+
+/* 첫 화면은 로컬 캐시로 즉시 그린다. 서버 값은 masterLoadServer() 가 덮는다. */
 function loadResortMaster(){
   try{
-    const saved=JSON.parse(localStorage.getItem(STORE_RESORT)||'null');
-    // 기본값과 병합 (새 항목 추가 시에도 안전)
-    resortMaster = RESORT_DEFAULTS.map(def=>{
-      const s = saved && saved.find(x=>x.key===def.key);
-      const r = s ? {...def, ...s} : {...def};
-      // 코드 소유 항목은 항상 기본값으로 — 숙소명 변경이 기존 PC에도 반영되도록
-      MASTER_CODE_OWNED.forEach(k=>{ if(def[k]!==undefined) r[k]=def[k]; });
-      // 별칭은 합집합 — 새 표준 별칭을 보장하면서 직접 추가한 별칭도 지킨다
-      const drop=ALIAS_MOVED[def.key]||[];
-      r.aliases=[...new Set([...(def.aliases||[]), ...(Array.isArray(s&&s.aliases)?s.aliases:[])])]
-        .filter(a=>!drop.includes(a));
-      // 기본값을 고친 항목: 저장본이 옛 기본값 그대로일 때만 새 값으로 올린다
-      const fx=s && FIELD_BEFORE_FIX[def.key];
-      if(fx) Object.keys(fx).forEach(k=>{ if(s[k]===fx[k] && def[k]!==undefined) r[k]=def[k]; });
-      // 룸타입 구조가 바뀐 숙소: 손대지 않은 옛 기본값이면 새 구조로 올린다
-      if(s && ROOMS_BEFORE_RENAME[def.key] && sameRooms(s.rooms, ROOMS_BEFORE_RENAME[def.key])){
-        r.rooms={...(def.rooms||{})};
-        delete r.roomMeta;                   // 새 룸타입 기준으로 다시 만든다
-      }
-      // 기간 예외: 없던 저장본은 빈 배열 = 기존 동작 그대로 (별도 마이그레이션 불필요)
-      if(!Array.isArray(r.roomExceptions)) r.roomExceptions=[];
-      // 룸타입 표기 별칭 (엠클릭 표기 → 마스터 룸타입). 기본값 밑에 저장본을 얹어 직접 등록분이 이긴다.
-      r.roomAlias = {...(def.roomAlias||{}), ...normRoomAlias(r)};
-      r.roomMeta = normRoomMeta(r);          // 룸타입 정원·온라인 판매 여부
-      return r;
-    });
-    // (구) mgmt 50,000 승격 마이그레이션은 없앴다 — RESORT_DEFAULTS 가 이미 mgmt:50000 이라
-    //     새 PC 에는 돌 일이 없고, 이미 돌아간 PC 는 값이 저장돼 있다. 남겨 두면 「읽기가 곧
-    //     쓰기」가 되어, 마스터가 서버로 올라간 뒤 새 PC 가 화면을 열기만 해도 공유 마스터에
-    //     쓰기가 나가고 면제 숙소의 mgmt 0 이 50,000 으로 되살아난다.
+    const m=masterFromPayload(
+      JSON.parse(localStorage.getItem(STORE_RESORT)||'null'),
+      JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'));
+    resortMaster=m.resortMaster; commonMaster=m.commonMaster;
   }catch(e){
     // 조용히 기본값으로 되돌리지 않는다. 예전에는 파싱이 한 번 깨지면 기본값으로 갈아치운 뒤
     // 「입력 즉시 자동 저장」이 그것을 저장해, 확인 창 하나 없이 전 직원 단가가 날아갔다.
     masterLoadFailed=true;
-    resortMaster=RESORT_DEFAULTS.map(d=>({...d, roomExceptions:[], roomAlias:{}, roomMeta:normRoomMeta(d)}));
+    const m=masterFromPayload(null,{});
+    resortMaster=m.resortMaster; commonMaster=m.commonMaster;
   }
-  try{ commonMaster={...COMMON_DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE_COMMON)||'{}'))}; }
-  catch(e){ commonMaster={...COMMON_DEFAULTS}; }
-  if(!commonMaster.memberPax || !Object.keys(commonMaster.memberPax).length){
-    commonMaster.memberPax={...MEMBER_PAX_DEFAULTS};
-  }
-  // (구) 항공요금 IATA 변환 마이그레이션도 같은 이유로 없앴다 — 읽기 경로에서 저장이 나가면 안 된다.
   loadChangeLog();
   if(masterLoadFailed) masterWarnLoadFailed();
 }
+
 /* 저장본을 못 읽은 상태에서는 저장하지 않는다. 지금 화면에 있는 것은 기본값이라,
    저장하면 읽지 못한 진짜 값을 기본값으로 덮어쓴다. */
 let masterLoadFailed=false;
@@ -4786,12 +4831,240 @@ function masterWarnLoadFailed(){
   if(box){ box.style.display=''; return; }
   console.warn('[마스터] 저장본을 읽지 못했습니다 — 저장을 막습니다.');
 }
+
+/* ════════════════════════════════════════════════════════════
+   마스터는 서버에 하나만 있다
+   예전에는 각 PC localStorage 에만 있고 JSON 파일로 손수 배포했다.
+   그래서 누가 언제 무엇을 바꿨는지 아무도 몰랐고, 파일을 못 받은 PC 는
+   옛 단가로 견적을 냈다. 이제 서버가 단일 출처이고 localStorage 는
+   첫 화면을 그리기 위한 마지막-정상-사본(캐시)일 뿐이다.
+
+   상태는 셋뿐이다.
+     · off    — 서버에 못 닿았다(미설정·로그인 전·장애). 예전처럼 이 PC 값으로 돈다.
+     · unseed — 서버는 닿았는데 마스터가 비어 있다. **편집을 잠그고** owner 를 기다린다.
+     · on     — 서버 값이 정답. 편집·저장이 서버로 나간다.
+   unseed 에서 편집을 잠그는 이유: 저장할 곳이 정해지지 않았는데 고치면
+   그 값이 어디로 가는지 아무도 모른다.
+════════════════════════════════════════════════════════════ */
+let masterMode='off';          // off | unseed | on
+let masterVer=null;            // 서버 version (낙관적 잠금)
+let masterBy='', masterAt='';  // 마지막으로 저장한 사람·시각
+let masterErr='';
+let masterSaveTimer=null, masterSaving=false, masterDirty=false;
+let masterConflict=null;   // 충돌 시 서버에 있던 값(사람이 고를 때까지 들고 있는다)
+
+function masterServerReady(){
+  return typeof MT_STORE!=='undefined' && typeof MT_AUTH!=='undefined' && MT_AUTH.configured();
+}
+function masterCacheWrite(){
+  try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster));
+       localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
+}
+
+function masterLoadServer(){
+  if(!masterServerReady()){ masterMode='off'; masterRenderStatus(); return Promise.resolve(); }
+  return MT_STORE.loadMaster().then(r=>{
+    masterErr='';
+    if(!r){
+      // 행이 안 왔다. 두 가지가 구분되지 않는다 — 정말 행이 없거나, RLS 로 막혀
+      // 0행이 온 것이거나(정책이 아직 anon 대상이면 이렇게 된다).
+      // 이때 「미시드」로 보고 편집을 잠그면, SQL 을 아직 안 돌린 상태로 배포됐을 때
+      // 전 직원이 마스터를 못 고치게 된다. 확실하지 않으면 잠그지 않는다.
+      masterMode='off'; masterVer=null;
+      masterErr='마스터 행을 읽지 못했습니다(권한 설정 확인 필요).';
+      masterRenderStatus(); return;
+    }
+    masterVer=r.version;
+    masterBy=r.updatedBy||''; masterAt=r.updatedAt||'';
+    const d=r.data||{};
+    // 「행이 없으면 미시드」로 보면 안 된다 — 서버 행은 처음부터 data='{}' 로
+    // 존재하므로 그 판정은 영원히 걸리지 않는다. 내용으로 본다.
+    const seeded = Array.isArray(d.resortMaster) && d.resortMaster.length>0;
+    if(!seeded){ masterMode='unseed'; masterRenderStatus(); return; }
+    const m=masterFromPayload(d.resortMaster, d.commonMaster||{});
+    resortMaster=m.resortMaster; commonMaster=m.commonMaster;
+    masterMode='on';
+    masterLoadFailed=false;        // 서버 값을 받았으니 로컬 파싱 실패는 더 이상 문제가 아니다
+    const fail=document.getElementById('rm-loadfail'); if(fail) fail.style.display='none';
+    masterCacheWrite();
+    masterRenderStatus();
+    if(typeof blkSyncFromResort==='function') blkSyncFromResort();
+    if(typeof renderResortMaster==='function') renderResortMaster();
+    if(blkParsed && typeof blkRender==='function') blkRender();
+    if(typeof secRefreshAll==='function') secRefreshAll();
+  }).catch(e=>{
+    // 서버에 못 닿는 것은 오류 화면으로 만들지 않는다 — 이 PC 값으로 계속 일한다.
+    masterMode='off'; masterErr=(e&&e.message)||'';
+    masterRenderStatus();
+  });
+}
+
+/* 씨앗 심기 — owner 가 한 번만. 자동으로 하지 않는 이유:
+   여러 PC 가 각자 자기 값을 밀어 넣으면 마지막에 연 사람이 이기고,
+   브라우저 데이터를 지운 PC 는 **코드 기본값**(그린피 0·식사 0)을 밀어 넣어
+   전 직원 견적을 망친다. 누구 값이 기준이 됐는지도 아무도 모르게 된다. */
+function masterSeedServer(){
+  if(masterMode!=='unseed') return;
+  const n=resortMaster.length;
+  if(!window.confirm(`지금 이 PC 의 마스터(숙소 ${n}개 + 공통 설정)를 서버 기준으로 등록합니다.\n\n`
+    +`이후 전 직원이 이 값을 보게 되고, 다른 PC 에 있던 값은 서버 값으로 덮입니다.\n`
+    +`이 PC 값이 최신인지 확인하셨나요?`)) return;
+  const btn=document.getElementById('rm-seed-btn');
+  if(btn){ btn.disabled=true; btn.textContent='등록하는 중…'; }
+  MT_STORE.saveMaster({resortMaster, commonMaster}, masterVer==null?1:masterVer, masterUserName())
+    .then(r=>{
+      masterVer=r.version; masterMode='on';
+      logChange('공통','서버 마스터 등록','', `숙소 ${n}개 기준값으로 시드`);
+      masterFlushLog();
+      masterRenderStatus();
+      showToast('서버 마스터로 등록했습니다');
+    })
+    .catch(e=>{ masterSayErr(e); })
+    .then(()=>{ if(btn){ btn.disabled=false; btn.textContent='이 PC 값을 서버 마스터로 등록'; } });
+}
+
+/* 충돌 해소 — 사람이 고른다. 어느 쪽도 조용히 사라지지 않는다. */
+function masterTakeServer(){
+  if(!masterConflict) return;
+  const d=masterConflict.data||{};
+  const m=masterFromPayload(d.resortMaster, d.commonMaster||{});
+  resortMaster=m.resortMaster; commonMaster=m.commonMaster;
+  masterVer=masterConflict.version;
+  masterBy=masterConflict.updatedBy||''; masterAt=masterConflict.updatedAt||'';
+  masterConflict=null; masterDirty=false; masterPendingLog=[];
+  masterCacheWrite(); masterRenderStatus();
+  if(typeof blkSyncFromResort==='function') blkSyncFromResort();
+  if(typeof renderResortMaster==='function') renderResortMaster();
+  if(typeof secRefreshAll==='function') secRefreshAll();
+  showToast('서버 값으로 되돌렸습니다');
+}
+function masterKeepMine(){
+  if(!masterConflict) return;
+  const who=masterConflict.updatedBy||'다른 분';
+  if(!window.confirm(`${who} 님이 저장한 내용을 내 값으로 덮어씁니다.\n그쪽 수정은 사라집니다. 진행할까요?`)) return;
+  masterVer=masterConflict.version;    // 최신 version 을 받아 다시 건다
+  masterConflict=null; masterDirty=true;
+  masterPushServer();
+}
+
+function masterUserName(){
+  // 서버가 auth 로 다시 박으므로 이것은 어디까지나 참고용이다.
+  return (typeof MT_USER!=='undefined' && MT_USER.get && MT_USER.get()) || '';
+}
+/* 지금 마스터가 어디서 왔는지, 누가 마지막으로 바꿨는지 화면에 적는다.
+   이걸 안 적으면 「내가 보는 단가가 최신인가」를 매번 사람에게 물어보게 된다. */
+function masterRenderStatus(){
+  const box=document.getElementById('rm-server');
+  if(box){
+    const when=masterAt?regWhen(masterAt):'';
+    let h='';
+    if(masterConflict){
+      const who=MT.escHtml(masterConflict.updatedBy||'다른 분');
+      h=`<b style="color:var(--amber)">⚠ 그 사이 ${who} 님이 마스터를 저장했습니다.</b>
+         내 수정은 아직 서버에 올라가지 않았습니다 — 어느 쪽을 남길지 골라 주세요.
+         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+           <button class="btn-sm" onclick="masterTakeServer()">서버 값으로 되돌리기 <span class="muted">(내 수정 버림)</span></button>
+           <button class="btn-sm" style="color:var(--red);border-color:var(--red)" onclick="masterKeepMine()">내 값으로 덮어쓰기</button>
+         </div>`;
+      box.style.borderLeftColor='var(--amber)';
+    } else if(masterMode==='on' && masterErr){
+      // 저장이 막혔는데 「전 직원에게 바로 반영됩니다」라고 적어 두면, 안 저장된 것을
+      // 저장된 줄 알고 그 값으로 견적을 낸다. 막혔으면 막혔다고 크게 말한다.
+      h=`<b style="color:var(--red)">⚠ 저장하지 못했습니다.</b> ${MT.escHtml(masterErr)}
+         <div class="muted" style="margin-top:5px">지금 화면의 값은 <b>아직 서버에 올라가지 않았습니다.</b></div>`;
+      box.style.borderLeftColor='var(--red)';
+    } else if(masterMode==='on'){
+      h=`<b>서버 마스터를 쓰고 있습니다.</b> 고치면 <b>전 직원에게 바로</b> 반영됩니다.`
+        +(masterBy||when?` <span class="muted">· 마지막 저장 ${MT.escHtml(masterBy||'-')} ${MT.escHtml(when)}</span>`:'')
+        +(masterSaving?' <span class="muted">· 저장 중…</span>':(masterDirty?' <span class="muted">· 곧 저장됩니다</span>':''));
+      box.style.borderLeftColor='var(--green)';
+    } else if(masterMode==='unseed'){
+      h=`<b style="color:var(--amber)">서버 마스터가 아직 비어 있습니다.</b>
+         지금 보이는 값은 <b>이 PC 값</b>이고, 마스터 편집은 잠겨 있습니다 —
+         저장할 곳이 정해지지 않았는데 고치면 그 값이 어디로 가는지 알 수 없습니다.`
+        +(masterIsOwner?`<div style="margin-top:8px"><button class="btn-sm" id="rm-seed-btn" onclick="masterSeedServer()"
+             style="border-color:var(--accent);color:var(--accent)">이 PC 값을 서버 마스터로 등록</button>
+             <span class="muted" style="margin-left:8px">이 PC 값이 최신인지 확인하고 눌러 주세요</span></div>`
+           :`<div class="muted" style="margin-top:6px">최고관리자(owner)가 기준값을 등록하면 열립니다.</div>`);
+      box.style.borderLeftColor='var(--amber)';
+    } else {
+      h=`<b>서버에 연결되지 않았습니다.</b> 지금 값은 <b>이 PC 값</b>이고, 고쳐도 이 PC 에만 남습니다.`
+        +(masterErr?` <span class="muted">· ${MT.escHtml(masterErr)}</span>`:'');
+      box.style.borderLeftColor='var(--text3)';
+    }
+    box.innerHTML=h;
+    box.style.display='';
+  }
+  // 서버가 정답이 되면 「불러오기」는 화면에서 뺀다 — 그 뒤로는 되돌리기 버튼이 된다.
+  const imp=document.getElementById('rm-import-btn');
+  if(imp) imp.style.display = (masterMode==='on') ? 'none' : '';
+  masterApplyLock();
+}
+
+/* 서버 마스터가 비어 있는 동안에는 마스터 칸을 못 만지게 한다. */
+let masterIsOwner=false;
+function masterApplyLock(){
+  const lock = (masterMode==='unseed');
+  const sec=document.getElementById('sec-resort');
+  if(!sec) return;
+  sec.querySelectorAll('input,select,textarea,button').forEach(el=>{
+    if(el.id==='rm-seed-btn') return;
+    if(el.closest('#rm-server')) return;
+    el.disabled=lock;
+  });
+  sec.classList.toggle('rm-locked', lock);
+}
+
+function masterSayErr(e){
+  const msg=(e&&e.message)||'저장하지 못했습니다.';
+  masterErr=msg; masterRenderStatus();
+  showToast(msg,'error');
+}
+
+/* 저장. 서버가 정답일 때는 서버로 나간다.
+   칸마다 바로 보내지 않고 2초 모아 보낸다 — 호출부가 28곳이라 칸마다 나가면
+   단일 행에서 거의 매번 충돌한다. */
 function saveResortMaster(){
   if(masterLoadFailed){
     showToast('저장본을 읽지 못해 저장을 막았습니다. 새로고침해 주세요.','error');
     return;
   }
-  try{ localStorage.setItem(STORE_RESORT,JSON.stringify(resortMaster)); localStorage.setItem(STORE_COMMON,JSON.stringify(commonMaster)); }catch(e){}
+  if(masterMode==='unseed'){
+    showToast('서버 마스터가 아직 등록되지 않아 편집이 잠겨 있습니다.','error');
+    return;
+  }
+  masterCacheWrite();                       // 캐시는 늘 최신으로
+  if(masterMode!=='on') return;             // 서버에 못 닿으면 예전처럼 이 PC 에만
+  masterDirty=true;
+  clearTimeout(masterSaveTimer);
+  masterSaveTimer=setTimeout(masterPushServer, 2000);
+  masterRenderStatus();
+}
+
+function masterPushServer(){
+  if(masterMode!=='on' || masterSaving || !masterDirty) return Promise.resolve();
+  masterSaving=true; masterDirty=false; masterRenderStatus();
+  return MT_STORE.saveMaster({resortMaster, commonMaster}, masterVer, masterUserName())
+    .then(r=>{
+      masterVer=r.version; masterErr='';
+      masterBy=masterUserName(); masterAt=new Date().toISOString();
+      masterSaving=false; masterRenderStatus();
+      return masterFlushLog();              // 저장이 성공한 뒤에만 이력을 남긴다
+    })
+    .catch(e=>{
+      masterSaving=false;
+      if(e && e.conflict){
+        // 자동으로 다시 밀지 않는다. 마스터는 통짜 JSON 한 벌이라, 서버 값을
+        // 받아 그대로 덮어쓰면 그 사이 남이 바꾼 것이 **조용히** 사라진다.
+        // 낙관적 잠금을 걸어 둔 이유가 바로 그것을 막기 위해서다.
+        // 방금 타이핑한 값도 버리지 않는다 — 사람이 둘 중 하나를 고르게 한다.
+        masterConflict = (e.current||null);
+        masterErr='';
+        masterRenderStatus();
+        return;
+      }
+      masterSayErr(e);
+    });
 }
 function resetResortMaster(){
   if(!confirm('리조트 마스터와 공통 마스터를 모두 기본값으로 되돌릴까요?\n(입력한 요금·환율·항공요금·보유블록 정보가 사라집니다)')) return;
@@ -4822,6 +5095,8 @@ function toggleSellStop(key){
    팀 지정·발권 체크·요금 보정 등 개인 작업값은 포함하지 않음. */
 const MASTER_EXPORT_TYPE='merittour-master';
 const MASTER_EXPORT_VER=1;
+/* 백업용 내려받기. 배포 수단이 아니다 — 마스터는 서버에 하나만 있고,
+   이 파일을 남에게 보내도 되돌릴 방법이 없다(불러오기를 없앴다). */
 function exportMaster(){
   const payload={
     _type:MASTER_EXPORT_TYPE, _ver:MASTER_EXPORT_VER,
@@ -4837,7 +5112,16 @@ function exportMaster(){
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   if(typeof showToast==='function') showToast('마스터 파일을 내보냈습니다');
 }
+/* 「마스터 불러오기」 — 서버로 넘어가기 전까지만 남겨 둔다.
+   서버가 정답이 된 뒤(masterMode==='on')에는 이 버튼이 「석 달 전 JSON 파일
+   하나로 전 직원의 단가·보유를 되돌리는 버튼」이 되므로 화면에서도 빼고
+   함수에서도 막는다. 그 전까지는 이것이 유일한 공유 수단이라 지우면 안 된다. */
 function importMaster(input){
+  if(masterMode==='on'){
+    if(input) input.value='';
+    alert('마스터는 이제 서버에 하나만 있습니다.\n파일로 되돌리면 전 직원 값이 한꺼번에 바뀌므로 막았습니다.\n\n되돌리려면 관리자에게 문의해 주세요(서버 스냅샷으로 복구합니다).');
+    return;
+  }
   const file=input.files&&input.files[0];
   input.value=''; // 같은 파일 다시 선택 가능하도록 초기화
   if(!file) return;
@@ -4862,11 +5146,8 @@ function importMaster(input){
       return r;
     });
     commonMaster = {...COMMON_DEFAULTS, ...data.commonMaster};
-    // 변경이력 병합(불러온 이력 + 현재 이력, 최신순, 100건)
-    if(Array.isArray(data.changeLog)){
-      changeLog = data.changeLog.concat(changeLog).slice(0,CHLOG_MAX);
-      saveChangeLog();
-    }
+    // 파일 안의 이력은 가져오지 않는다. 이력은 이제 서버 한 벌이고,
+    // 남의 파일에 든 이력을 내 목록에 섞으면 누가 언제 무엇을 했는지가 흐려진다.
     saveResortMaster();
     if(typeof blkSyncFromResort==='function') blkSyncFromResort();
     logChange('공통','마스터 일괄 불러오기', '', `${when} 기준 (숙소 ${data.resortMaster.length}개)`);
@@ -5355,8 +5636,8 @@ function renderResortMaster(){
     </div>
   </div>
   <div class="cm-box" style="margin-top:1rem">
-    <div class="cm-box-title">🕘 변경 이력 <span class="card-sub" style="font-weight:400">— 리조트 마스터·환율·항공요금의 세부 변경 기록 (최근 ${CHLOG_MAX}건, 최신순)</span>
-      <button class="btn-sm" style="margin-left:auto;padding:2px 10px;color:var(--red);border-color:var(--red)" onclick="clearChangeLog()">이력 비우기</button>
+    <div class="cm-box-title">🕘 변경 이력 <span class="card-sub" style="font-weight:400">— 누가 언제 무엇을 바꿨는지 (전 직원 공유 · 최신순)</span>
+      <span class="muted" style="margin-left:auto;font-size:11px">전 직원 공유 · 지울 수 없습니다</span>
     </div>
     <div id="chlog-body"></div>
   </div>`;
@@ -5802,6 +6083,19 @@ document.addEventListener('keydown',e=>{
 
 /* 페이지 로드 시 리조트 마스터 초기화 — blkMaster 로드 이후로 미룸(정원 배지 계산 위해) */
 loadResortMaster();
+/* 서버 마스터·이력은 화면이 그려진 뒤에 이어서 받는다. 첫 화면은 로컬 캐시로
+   바로 그리고(빈 화면을 보여 주지 않는다), 서버 응답이 오면 통째로 갈아 끼운다. */
+document.addEventListener('DOMContentLoaded',function(){
+  if(typeof MT_AUTH!=='undefined' && MT_AUTH.configured() && MT_AUTH.me){
+    MT_AUTH.me().then(u=>{ masterIsOwner = !!(u && u.role==='owner'); })
+      .catch(()=>{})
+      .then(()=>masterLoadServer())
+      .then(()=>chlogLoadServer());
+  } else {
+    masterMode='off';
+    masterRenderStatus();
+  }
+});
 /* renderResortMaster()는 스크립트 맨 끝, blkLoad() 이후 호출 */
 
 /* ════════════════════════════════════════════════════════════
