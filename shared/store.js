@@ -240,6 +240,45 @@
       });
   }
 
+  /* ── 행사 단위 덧칠 (mt_event_overlay) ───────────────────────────
+     구분·호텔Y·명단Y·비고·팀명·실제호텔명·요금 보정. 전부 eventSeq 하나를
+     키로 하는 같은 성격의 값이라 한 표에 모은다.
+
+     이것이 개인 PC 에 있으면 안 되는 이유: `status` 가 확정서 대상·정산 대상·
+     D-7 자동발송 대상을 정한다. PC 마다 다르면 어떤 손님에게 확정서가 나가는지가
+     사람마다 달라진다.
+
+     마스터와 달리 낙관적 잠금을 걸지 않는다 — 행이 팀 단위라 두 사람이 같은 팀을
+     동시에 고치는 일이 드물고, 통짜 문서가 아니라 남의 수정을 통째로 덮을 위험이 없다. */
+
+  var OVL_COLS = 'event_seq,status,hotel_y,list_y,remark,team_name,doc_hotel_name,'
+               + 'yen_etc,krw_etc,pkg_price,updated_at,updated_by';
+
+  function loadEventOverlays() {
+    return rest('/mt_event_overlay?select=' + OVL_COLS).then(function (rows) {
+      return rows || [];
+    });
+  }
+
+  /* 여러 건 업서트. 일괄 수정 300건을 300번 왕복하면 안 된다. */
+  function saveEventOverlays(rows) {
+    var list = (rows || []).filter(function (r) { return r && r.event_seq; });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_event_overlay?on_conflict=event_seq', {
+      method: 'POST', body: list,
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () { return { ok: true, n: list.length }; });
+  }
+
+  /* 덧칠을 지운다(원본 값으로 되돌리기). */
+  function deleteEventOverlays(seqs) {
+    var list = (seqs || []).map(String).filter(Boolean);
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    var q = '/mt_event_overlay?event_seq=in.(' + list.map(encodeURIComponent).join(',') + ')';
+    return rest(q, { method: 'DELETE', prefer: 'return=minimal' })
+      .then(function () { return { ok: true, n: list.length }; });
+  }
+
   /* ── 변경 이력 ───────────────────────────────────────────────────
      누가·언제는 서버 트리거가 박는다(mt_mcl_stamp). 클라이언트가 보낸 이름은
      믿지 않는다 — 게이트 이름은 본인이 타이핑한 자유 문자열이라 진위가 없다.
@@ -326,6 +365,9 @@
     saveMaster: saveMaster,
     logChanges: logChanges,
     listChanges: listChanges,
+    loadEventOverlays: loadEventOverlays,
+    saveEventOverlays: saveEventOverlays,
+    deleteEventOverlays: deleteEventOverlays,
     diff: diff,
     checkBlockMonth: checkBlockMonth,
     _dep: dep,

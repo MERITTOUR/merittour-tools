@@ -908,6 +908,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
 <!-- ════════ ⑤ 예약 관리 ════════ -->
 <div class="section" id="sec-booking">
+  <div id="ovl-note" class="note" style="display:none;border-left-color:var(--amber);margin-bottom:12px"></div>
   <div class="card">
     <div class="card-head">
       <div><div class="card-title">⑤ 예약 관리</div><div class="card-sub">예약 전체 현황 · 예약금/명단/미수금 확인 · 비고 팀 구분 · 구분/호텔/명단/비고 일괄 수정 · 취소건은 구분 칩 「취소」로 조회</div></div>
@@ -1514,8 +1515,12 @@ let cancelledTeams = []; // 취소(구분=취소) 팀 — 예약관리 조회 �
 
 /* ── 전역 거래유형(일반/여행사 B2B) 필터 — 전 탭 공유, PC별 기억 ── */
 const STORE_AGENCY='mt_agency_filter';
-let agencySel=new Set(['일반']);   // 기본: 일반만 (여행사 B2B 분리). 둘 다 켜면 합산
-(function(){ try{ const s=localStorage.getItem(STORE_AGENCY); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) agencySel=new Set(a.length?a:['일반']); } }catch(e){} })();
+/* 기본은 **전체**다. 예전에는 「일반만」이 기본이고 PC 마다 기억까지 해서,
+   여행사(B2B) 확정 팀이 확정서 목록에 아예 뜨지 않았다 — 일괄 발송 수신자에서
+   조용히 빠져 그 손님만 확정서를 못 받는다. 좁혀 보는 것은 그 세션 동안만 하고
+   다음에 열면 다시 전체로 돌아온다. */
+let agencySel=new Set(['일반','여행사']);
+(function(){ try{ localStorage.removeItem(STORE_AGENCY); }catch(e){} })();
 function agencyOk(t){
   if(!agencySel.size) return true;            // 안전장치: 둘 다 끄면 전체 표시
   return agencySel.has(t.isAgency?'여행사':'일반');
@@ -1523,7 +1528,7 @@ function agencyOk(t){
 function agencyBadge(t){ return t&&t.isAgency?' <span class="tag tag-agency" title="여행사 B2B">여행사</span>':''; }
 function toggleAgency(k){
   if(agencySel.has(k)) agencySel.delete(k); else agencySel.add(k);
-  try{ localStorage.setItem(STORE_AGENCY, JSON.stringify([...agencySel])); }catch(e){}
+  // 이 PC 에 기억하지 않는다 — 다음에 열면 전체로 돌아온다.
   // 모든 탭 재렌더 (현재 보이는 것 위주, 나머지는 자연 반영)
   ['renderBooking','renderAir','renderVerify','renderAudit','renderDocTeams','renderSettleAll'].forEach(fn=>{ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
 }
@@ -3426,6 +3431,7 @@ function updateActualHotel(seq, val){
   const v=String(val||'').trim();
   if(v) docHotelName[seq]=v; else delete docHotelName[seq];
   saveDocHotelName();
+  ovlMark(seq);   // 실제 호텔명도 전 직원 공유
   if(typeof showToast==='function') showToast(v?`실제 호텔명 저장: ${v}`:'실제 호텔명 비움');
 }
 
@@ -3795,6 +3801,7 @@ function setVAdj(seq, field, val){
   vAdjust[seq]=vAdjust[seq]||{};
   vAdjust[seq][field]=num(val);
   try{ localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
+  ovlMark(seq);   // 요금 보정도 전 직원 공유
   refreshVerifyView();
 }
 
@@ -4181,6 +4188,7 @@ function vcalApply(gid,accom,nights,total){
   if(!confirm(`${seqs.length}개 팀에 안내 투어피 ₩${total.toLocaleString()}/인을 패키지가로 적용합니다.${toPreset?`\n또한 「${accom} ${nights}박」 프리셋으로 등록(신규 예약 자동 적용)합니다.`:''}\n진행할까요?`)) return;
   seqs.forEach(seq=>{ vAdjust[seq]=vAdjust[seq]||{}; vAdjust[seq].pkgPrice=total; });
   try{ localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
+  seqs.forEach(seq=>ovlMark(seq));   // 여러 팀 판매가를 한 번에 정하는 업무 결정이다 — 한 대에만 남으면 안 된다
   if(toPreset){
     commonMaster.pkgPresets=commonMaster.pkgPresets||[];
     const n=Number(nights);
@@ -4462,12 +4470,14 @@ function saveTeam(){
   if(!modalSeq) return;
   const v=document.getElementById('tm-team-input').value.trim();
   if(v) teamAssign[modalSeq]=v; else delete teamAssign[modalSeq];
+  ovlMark(modalSeq);   // 팀 지정은 작업 큐라 사람마다 다르면 남은 일이 달라진다
   savePersist(); closeTeamModal(); renderBooking();
   showToast(v?'팀이 지정되었습니다':'팀 지정이 해제되었습니다');
 }
 function clearTeam(){
   if(!modalSeq) return;
   delete teamAssign[modalSeq];
+  ovlMark(modalSeq);
   savePersist(); closeTeamModal(); renderBooking();
   showToast('팀 지정이 해제되었습니다');
 }
@@ -5966,6 +5976,142 @@ function updateCommon(field, val, el){
 ════════════════════════════════════════════════════════════ */
 function savePersist(){
   try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign)); localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides)); }catch(e){}
+  ovlMarkAll();          // 서버에도 올린다(모아서)
+}
+
+/* ════════════════════════════════════════════════════════════
+   행사 단위 덧칠을 서버로 (mt_event_overlay)
+   구분·호텔Y·명단Y·비고·팀명·실제호텔명·요금 보정 — 전부 eventSeq 하나가 키다.
+   개인 PC 에 두면 안 되는 이유: `구분` 이 확정서 대상·정산 대상·D-7 자동발송
+   대상을 정한다. PC 마다 다르면 어떤 손님에게 확정서가 나가는지가 사람마다 달라진다.
+════════════════════════════════════════════════════════════ */
+let ovlMode='off';           // off | on
+let ovlDirty=new Set();      // 서버로 보낼 eventSeq
+let ovlTimer=null, ovlSaving=false;
+let ovlLocalOnly=[];         // 서버에 없고 이 PC 에만 있는 것
+
+function ovlRowOf(seq){
+  const e=editOverrides[seq]||{};
+  const v=vAdjust[seq]||{};
+  const row={event_seq:String(seq)};
+  row.status = (e.status!==undefined) ? e.status : null;
+  row.hotel_y = (e.hotelY!==undefined) ? !!e.hotelY : null;
+  row.list_y  = (e.listY!==undefined)  ? !!e.listY  : null;
+  row.remark  = (e.remark!==undefined) ? String(e.remark) : null;
+  row.team_name = teamAssign[seq] ? String(teamAssign[seq]) : null;
+  row.doc_hotel_name = docHotelName[seq] ? String(docHotelName[seq]) : null;
+  row.yen_etc  = v.yenEtc  ? Number(v.yenEtc)  : null;
+  row.krw_etc  = v.krwEtc  ? Number(v.krwEtc)  : null;
+  row.pkg_price= v.pkgPrice? Number(v.pkgPrice): null;
+  return row;
+}
+function ovlRowEmpty(r){
+  return r.status==null && r.hotel_y==null && r.list_y==null && r.remark==null
+      && r.team_name==null && r.doc_hotel_name==null
+      && r.yen_etc==null && r.krw_etc==null && r.pkg_price==null;
+}
+function ovlApplyRow(r){
+  const seq=String(r.event_seq||''); if(!seq) return;
+  const e={};
+  if(r.status!=null) e.status=r.status;
+  if(r.hotel_y!=null) e.hotelY=!!r.hotel_y;
+  if(r.list_y!=null)  e.listY=!!r.list_y;
+  if(r.remark!=null)  e.remark=r.remark;
+  if(Object.keys(e).length) editOverrides[seq]=e; else delete editOverrides[seq];
+  if(r.team_name) teamAssign[seq]=r.team_name; else delete teamAssign[seq];
+  if(r.doc_hotel_name) docHotelName[seq]=r.doc_hotel_name; else delete docHotelName[seq];
+  const v={};
+  if(r.yen_etc!=null)  v.yenEtc=Number(r.yen_etc);
+  if(r.krw_etc!=null)  v.krwEtc=Number(r.krw_etc);
+  if(r.pkg_price!=null) v.pkgPrice=Number(r.pkg_price);
+  if(Object.keys(v).length) vAdjust[seq]=v; else delete vAdjust[seq];
+}
+
+/* 서버 값이 이 PC 값을 이긴다. 이 PC 에만 있는 것은 지우지 않고 「올릴 수 있다」고
+   알린다 — 자동으로 밀면 여러 PC 가 서로 다른 값을 밀어 넣는다. */
+function ovlLoadServer(){
+  if(!masterServerReady()) { ovlMode='off'; return Promise.resolve(); }
+  return MT_STORE.loadEventOverlays().then(rows=>{
+    const onServer=new Set((rows||[]).map(r=>String(r.event_seq)));
+    const mine=new Set([...Object.keys(editOverrides), ...Object.keys(teamAssign),
+                        ...Object.keys(vAdjust), ...Object.keys(docHotelName)]);
+    ovlLocalOnly=[...mine].filter(seq=>!onServer.has(seq));
+    (rows||[]).forEach(ovlApplyRow);
+    (rows||[]).forEach(r=>ovlLast.set(String(r.event_seq), JSON.stringify(ovlRowOf(r.event_seq))));
+    ovlMode='on';
+    try{ localStorage.setItem(STORE_TEAM,JSON.stringify(teamAssign));
+         localStorage.setItem(STORE_EDIT,JSON.stringify(editOverrides));
+         localStorage.setItem(STORE_VADJ,JSON.stringify(vAdjust)); }catch(e){}
+    saveDocHotelName();
+    ovlRenderNote();
+    // 이미 분석이 끝나 화면이 그려져 있으면 새 값으로 다시 그린다.
+    if(typeof teams!=='undefined' && teams.length){
+      if(typeof applyEditOverrides==='function') applyEditOverrides();
+      if(typeof secRefreshAll==='function') secRefreshAll();
+    }
+  }).catch(()=>{ ovlMode='off'; ovlRenderNote(); });
+}
+
+/* 바뀐 행사만 모아서 보낸다. */
+function ovlMark(seq){
+  if(ovlMode!=='on' || !seq) return;
+  ovlDirty.add(String(seq));
+  clearTimeout(ovlTimer);
+  ovlTimer=setTimeout(ovlPush, 1200);
+}
+/* savePersist 는 아무 데서나 불린다. 그때마다 전부 밀면 수백 행이 반복해서
+   올라간다 — 마지막으로 올린 것과 **실제로 달라진 행사만** 고른다. */
+const ovlLast=new Map();     // eventSeq → 마지막으로 서버에 올린 모양(JSON)
+function ovlMarkAll(){
+  if(ovlMode!=='on') return;
+  const now=new Set([...Object.keys(editOverrides), ...Object.keys(teamAssign),
+                     ...Object.keys(vAdjust), ...Object.keys(docHotelName)]);
+  now.forEach(seq=>{
+    const j=JSON.stringify(ovlRowOf(seq));
+    if(ovlLast.get(seq)!==j) ovlDirty.add(seq);
+  });
+  ovlLast.forEach((_,seq)=>{ if(!now.has(seq)) ovlDirty.add(seq); });  // 통째로 지워진 것
+  if(!ovlDirty.size) return;
+  clearTimeout(ovlTimer);
+  ovlTimer=setTimeout(ovlPush, 1200);
+}
+function ovlPush(){
+  if(ovlMode!=='on' || ovlSaving || !ovlDirty.size) return Promise.resolve();
+  ovlSaving=true;
+  const seqs=[...ovlDirty]; ovlDirty.clear();
+  const rows=seqs.map(ovlRowOf);
+  const up=rows.filter(r=>!ovlRowEmpty(r));
+  const del=rows.filter(ovlRowEmpty).map(r=>r.event_seq);   // 비면 덧칠을 지운다(원본 복귀)
+  return Promise.all([
+    up.length ? MT_STORE.saveEventOverlays(up) : Promise.resolve(),
+    del.length ? MT_STORE.deleteEventOverlays(del) : Promise.resolve()
+  ]).then(()=>{
+      up.forEach(r=>ovlLast.set(r.event_seq, JSON.stringify(r)));
+      del.forEach(seq=>ovlLast.delete(seq));
+      ovlSaving=false; ovlLocalOnly=[]; ovlRenderNote();
+      return masterFlushLog();
+    })
+    .catch(e=>{
+      ovlSaving=false;
+      seqs.forEach(x=>ovlDirty.add(x));      // 되돌려 놓고 다음에 다시
+      showToast((e&&e.message)||'수정 내용을 서버에 올리지 못했습니다.','error');
+    });
+}
+
+/* 이 PC 에만 있는 수정 — 자동으로 밀지 않고 사람이 누르게 한다. */
+function ovlRenderNote(){
+  const box=document.getElementById('ovl-note');
+  if(!box) return;
+  if(ovlMode!=='on' || !ovlLocalOnly.length){ box.style.display='none'; return; }
+  box.style.display='';
+  box.innerHTML=`이 PC 에만 있는 수정이 <b>${ovlLocalOnly.length}건</b> 있습니다(서버에는 없습니다). `
+    +`<button class="btn-sm" onclick="ovlPushLocalOnly()">서버로 올리기</button>`
+    +`<div class="muted" style="margin-top:5px">여러 PC 가 각자 밀어 넣으면 마지막 사람이 이기므로, 확인하고 한 번만 눌러 주세요.</div>`;
+}
+function ovlPushLocalOnly(){
+  ovlLocalOnly.forEach(s=>ovlDirty.add(s));
+  ovlLocalOnly=[];
+  ovlPush().then(()=>showToast('서버에 올렸습니다'));
 }
 function loadPersist(){
   try{ teamAssign=JSON.parse(localStorage.getItem(STORE_TEAM)||'{}'); insExclude=JSON.parse(localStorage.getItem(STORE_INS_EXCLUDE)||'{}'); vAdjust=JSON.parse(localStorage.getItem(STORE_VADJ)||'{}'); editOverrides=JSON.parse(localStorage.getItem(STORE_EDIT)||'{}'); }catch(e){ teamAssign={}; insExclude={}; vAdjust={}; editOverrides={}; }
@@ -6090,6 +6236,7 @@ document.addEventListener('DOMContentLoaded',function(){
     MT_AUTH.me().then(u=>{ masterIsOwner = !!(u && u.role==='owner'); })
       .catch(()=>{})
       .then(()=>masterLoadServer())
+      .then(()=>ovlLoadServer())
       .then(()=>chlogLoadServer());
   } else {
     masterMode='off';
