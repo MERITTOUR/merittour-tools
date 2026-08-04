@@ -158,6 +158,39 @@ test('★ 0행이 권한 때문이면 충돌이라고 하지 않는다', async (
   );
 });
 
+test('행사 덧칠은 업서트로 한 번에', async () => {
+  reset();
+  route('/mt_event_overlay', 201, null, 'POST');
+  const r = await STORE.saveEventOverlays([
+    { event_seq: 'S1', status: '확정' }, { event_seq: 'S2', team_name: 'A팀' }
+  ]);
+  assert.equal(r.n, 2);
+  assert.equal(calls.length, 1, '일괄 수정 300건을 300번 보내면 안 된다');
+  assert.match(calls[0].url, /on_conflict=event_seq/);
+  assert.match(calls[0].prefer || '', /merge-duplicates/);
+});
+
+test('event_seq 없는 행은 보내지 않는다', async () => {
+  reset();
+  const r = await STORE.saveEventOverlays([{ status: '확정' }, null]);
+  assert.equal(r.n, 0);
+  assert.equal(calls.length, 0);
+});
+
+test('덧칠 지우기는 in.() 한 번', async () => {
+  reset();
+  route('/mt_event_overlay', 204, null, 'DELETE');
+  await STORE.deleteEventOverlays(['S1', 'S2']);
+  assert.equal(calls.length, 1);
+  assert.match(decodeURIComponent(calls[0].url), /event_seq=in\.\(S1,S2\)/);
+});
+
+test('지울 게 없으면 요청도 없다', async () => {
+  reset();
+  await STORE.deleteEventOverlays([]);
+  assert.equal(calls.length, 0);
+});
+
 test('이력은 한 번에 모아 보낸다', async () => {
   reset();
   route('/mt_change_log', 201, null, 'POST');
