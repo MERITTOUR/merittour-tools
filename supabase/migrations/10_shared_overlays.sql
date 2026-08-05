@@ -1,7 +1,8 @@
 -- ════════════════════════════════════════════════════════════════
 -- 10_shared_overlays.sql — 개인 PC 에만 있던 업무값의 서버 그릇
 --                          (신규 · 멱등 · 비파괴)
--- 선행: 04_user_access.sql
+-- 선행: 04_user_access.sql (mt_has_role), 08_resort_master_shared.sql (mt_actor_name)
+--       — 08 을 먼저 실행하지 않으면 mt_actor_stamp 가 없는 함수를 부른다.
 --
 -- 담는 것
 --   mt_event_overlay  행사 단위 덧칠 — 구분·호텔Y·명단Y·비고·팀명·실제호텔명·요금 보정
