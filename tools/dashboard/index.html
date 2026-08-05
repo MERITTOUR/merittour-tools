@@ -1403,21 +1403,18 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
       <input class="rm-input text" id="doc-acct-no" placeholder="계좌번호" style="width:190px;text-align:left" onchange="docSaveAcct('no',this.value)">
       <input class="rm-input text" id="doc-acct-holder" placeholder="예금주" style="width:130px;text-align:left" onchange="docSaveAcct('holder',this.value)">
       <input class="rm-input text" id="doc-acct-tel" placeholder="문의 전화 (예: 02-000-0000)" style="width:190px;text-align:left" onchange="docSaveAcct('tel',this.value)">
+      <span class="muted" style="font-size:11px;align-self:center">전 직원 공유 — 손님 문서에 찍힙니다</span>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:14px">
     <details>
-      <summary style="font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">🔗 연동 설정 (Supabase 링크 · 알림톡) <span class="muted" style="font-weight:400;font-size:11px">— 한 번 입력하면 이 PC에 저장됩니다. 미설정 시 링크는 비활성, 알림톡은 알리고 엑셀 내보내기로 대체됩니다</span></summary>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        <input class="rm-input text" id="doc-cfg-suburl" placeholder="Supabase URL (https://xxx.supabase.co)" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseUrl',this.value)">
-        <input class="rm-input text" id="doc-cfg-subkey" placeholder="Supabase anon key" style="width:280px;text-align:left" onchange="docSaveCfg('supabaseKey',this.value)">
-        <input class="rm-input text" id="doc-cfg-bucket" placeholder="Storage 버킷명 (기본 confirm-docs · private)" style="width:240px;text-align:left" onchange="docSaveCfg('bucket',this.value)">
-        <input class="rm-input text" id="doc-cfg-aligo" placeholder="알림톡 Edge Function URL (선택)" style="width:300px;text-align:left" onchange="docSaveCfg('aligoEndpoint',this.value)">
-      </div>
+      <summary style="font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">🔗 서버 연동 상태 <span class="muted" style="font-weight:400;font-size:11px">— 접속 설정은 코드에 있습니다. PC 마다 따로 입력하지 않습니다</span></summary>
+      <div id="doc-cfg-state" class="muted" style="font-size:11.5px;margin-top:10px"></div>
+      <div id="doc-sync-state" style="display:none;font-size:11.5px;margin-top:6px;font-weight:600"></div>
       <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn-sm" onclick="docSyncSupabase()" style="border-color:var(--accent);color:var(--accent)">↻ 지금 동기화</button>
-        <span class="muted" style="font-size:11px">연동 설정이 되어 있으면 <b>분석할 때마다 자동</b>으로 확정·정산 팀이 서버에 올라갑니다. 출발 <b>D-7 항공/PNR 자동발송</b>이 이 데이터를 사용합니다. (수동 재동기화: 왼쪽 버튼)</span>
+        <span class="muted" style="font-size:11px"><b>분석할 때마다 자동</b>으로 확정·정산 팀이 서버에 올라갑니다. 출발 <b>D-7 항공/PNR 자동발송</b>이 이 데이터를 사용합니다. (수동 재동기화: 왼쪽 버튼)</span>
       </div>
     </details>
   </div>
@@ -8156,16 +8153,30 @@ let _docSort={key:'dep',dir:1};   // 팀 목록 정렬 상태
 let docFilter={ depFrom:'', depTo:'', ready:'', accom:[] };  // 확정서 목록 필터(출발일기간·준비상태·숙소[다중])
 const DOC_LINK_TTL=90*24*60*60;   // 확정서 공유 링크 유효기간(초) — 90일
 
-/* 연동 설정 — 채워지면 Supabase 링크/알림톡 자동 활성화. localStorage(mt_doc_cfg)에 저장 */
-let DOC_CFG={ supabaseUrl:'', supabaseKey:'', bucket:'confirm-docs', aligoEndpoint:'' };
-try{ Object.assign(DOC_CFG, JSON.parse(localStorage.getItem('mt_doc_cfg')||'{}')); }catch(e){}
+/* 접속 설정은 **코드에 있다**(shared/supabase-config.js). 사람이 PC 마다 입력하던
+   칸을 없앴다 — 안 채운 PC 는 확정서 링크가 안 열리는 것으로 끝나지 않고,
+   analyze() 끝의 자동 동기화가 **조용히 건너뛰어져** D-7 알림톡이 낡은 데이터로
+   나갔다. 값이 사람마다 달라야 할 이유가 애초에 없었다. */
+const DOC_CFG={
+  get supabaseUrl(){ return (typeof MT_SB!=='undefined' && MT_SB.URL) || ''; },
+  get supabaseKey(){ return (typeof MT_SB!=='undefined' && MT_SB.ANON_KEY) || ''; },
+  bucket:'confirm-docs',
+  get aligoEndpoint(){
+    const u=(typeof MT_SB!=='undefined' && MT_SB.URL) || '';
+    return u ? u.replace(/\/+$/,'')+'/functions/v1/send-alimtalk' : '';
+  }
+};
 function docCfgReady(){ return !!(DOC_CFG.supabaseUrl && DOC_CFG.supabaseKey); }
-function docSaveCfg(k,v){ DOC_CFG[k]=String(v||'').trim(); try{ localStorage.setItem('mt_doc_cfg',JSON.stringify(DOC_CFG)); }catch(e){} }
 function docLoadCfg(){
-  [['supabaseUrl','doc-cfg-suburl'],['supabaseKey','doc-cfg-subkey'],['bucket','doc-cfg-bucket'],['aligoEndpoint','doc-cfg-aligo']].forEach(([k,id])=>{
-    const el=document.getElementById(id); if(el) el.value=DOC_CFG[k]||'';
-  });
+  // 더 이상 입력칸이 없다. 지금 무엇으로 연결돼 있는지만 적어 준다.
+  const box=document.getElementById('doc-cfg-state');
+  if(!box) return;
+  box.innerHTML = docCfgReady()
+    ? `서버에 연결돼 있습니다 <span class="muted">· ${MT.escHtml(DOC_CFG.supabaseUrl.replace(/^https?:\/\//,''))}</span>`
+    : `<b style="color:var(--red)">접속 설정이 비어 있습니다.</b> shared/supabase-config.js 를 채워야 합니다 — 관리자에게 알려 주세요.`;
 }
+/* 옛 개인 설정은 지운다. 남겨 두면 어느 값이 쓰이는지 헷갈린다. */
+try{ localStorage.removeItem('mt_doc_cfg'); }catch(e){}
 
 const DOC_KIND_LABEL={quote:'견 적 서', itinerary:'일 정 표', confirm:'확 정 서'};
 const DOC_KIND_FILE={quote:'견적서', itinerary:'일정표', confirm:'확정서'};
@@ -8177,16 +8188,36 @@ function docFmtMD(d){ return docPad(d.getMonth()+1)+'.'+docPad(d.getDate()); }
 function docWon(n){ return '₩'+Number(n||0).toLocaleString('ko'); }
 function docDow(d){ return DOC_DOW[d.getDay()===0?6:d.getDay()-1]; }
 
-/* 계좌·문의 (기존 mt_doc_acct 재사용: bank/no/holder/tel) */
+/* 계좌·문의(bank/no/holder/tel)는 **공통 마스터에 있다**(commonMaster.docAcct).
+   손님에게 나가는 문서에 찍히는 값이라 PC 마다 다르면 안 된다 — 안 넣은 PC 에서
+   뽑은 확정서는 계좌가 「별도 안내드립니다」로 나가고, 문의 전화는 폴백조차 없어
+   푸터가 **빈칸**으로 나갔다.
+   옛 개인 저장분(mt_doc_acct)은 마스터가 비어 있을 때 한 번만 끌어올린다. */
+const DOC_ACCT_KEYS=[['bank','doc-acct-bank'],['no','doc-acct-no'],
+                     ['holder','doc-acct-holder'],['tel','doc-acct-tel']];
+function docAcctSrc(){
+  if(typeof commonMaster==='undefined') return {};
+  if(!commonMaster.docAcct || typeof commonMaster.docAcct!=='object') commonMaster.docAcct={};
+  return commonMaster.docAcct;
+}
 function docLoadAcct(){
-  try{ _docAcct=JSON.parse(localStorage.getItem('mt_doc_acct')||'{}'); }catch(e){ _docAcct={}; }
-  [['bank','doc-acct-bank'],['no','doc-acct-no'],['holder','doc-acct-holder'],['tel','doc-acct-tel']].forEach(([k,id])=>{
+  _docAcct=docAcctSrc();
+  if(!Object.keys(_docAcct).some(k=>_docAcct[k])){
+    // 마스터가 비어 있으면 이 PC 에 남아 있던 값을 보여만 준다(저장은 사람이 눌러야 한다).
+    try{ const old=JSON.parse(localStorage.getItem('mt_doc_acct')||'{}');
+         DOC_ACCT_KEYS.forEach(([k])=>{ if(old[k]) _docAcct[k]=old[k]; }); }catch(e){}
+  }
+  DOC_ACCT_KEYS.forEach(([k,id])=>{
     const el=document.getElementById(id); if(el) el.value=_docAcct[k]||'';
   });
 }
 function docSaveAcct(k,v){
-  _docAcct[k]=String(v||'').trim();
-  try{ localStorage.setItem('mt_doc_acct',JSON.stringify(_docAcct)); }catch(e){}
+  const a=docAcctSrc(), before=a[k]||'';
+  a[k]=String(v||'').trim();
+  _docAcct=a;
+  const LBL={bank:'입금 은행',no:'입금 계좌번호',holder:'예금주',tel:'문의 전화'};
+  if(typeof logChange==='function') logChange('공통', LBL[k]||k, before, a[k], 'common');
+  if(typeof saveResortMaster==='function') saveResortMaster();   // 서버로 (전 직원 공유)
   if(_docModalSeq) docOpenModal(_docModalSeq);
 }
 
@@ -8406,9 +8437,11 @@ function docBuildHtmlV7(t, kind){
   const retFlight=t.arrRetFlight||(t.pax_list&&t.pax_list[0]&&t.pax_list[0].retFlight)||'';
 
   // 계좌·문의
-  const acctInfo=(_docAcct.bank||_docAcct.no)?`${_docAcct.bank||''} ${_docAcct.no||''}`.trim():'입금 계좌는 별도 안내드립니다';
-  const acctHolder=_docAcct.holder?('예금주 : '+_docAcct.holder):'';
-  const inquiryTel=_docAcct.tel||'';
+  const _ac=docAcctSrc();
+  const acctInfo=(_ac.bank||_ac.no)?`${_ac.bank||''} ${_ac.no||''}`.trim():'입금 계좌는 별도 안내드립니다';
+  const acctHolder=_ac.holder?('예금주 : '+_ac.holder):'';
+  // 폴백이 없으면 「예약 문의」 밑이 빈칸으로 나간다. 비어 있으면 그 줄 자체를 빼는 편이 낫다.
+  const inquiryTel=(docAcctSrc().tel||_docAcct.tel||'').trim();
 
   const L=m.lodge||{};
   return PAGE_TEMPLATE({
@@ -8560,8 +8593,8 @@ function docCopyLink(seq){
 
 /* ── Supabase 동기화 (D-7 항공/PNR 자동발송용 예약 데이터 업로드) ── */
 async function docSyncSupabase(silent){
-  if(!docCfgReady()){ if(!silent) alert('먼저 [연동 설정]에 Supabase URL·anon key를 입력하세요.'); return; }
-  if(!teams.length){ if(!silent) alert('먼저 업로드 탭에서 [통합 분석 실행]을 해주세요.'); return; }
+  if(!docCfgReady()){ docSyncSay('접속 설정이 비어 있어 동기화하지 못했습니다.','err'); if(!silent) alert('접속 설정이 비어 있습니다. 관리자에게 알려 주세요.'); return; }
+  if(!teams.length){ if(!silent) alert('먼저 자료를 불러와 주세요.'); return; }
   const rows=teams.filter(t=>t.status==='확정'||t.status==='정산').map(t=>({
     event_seq:String(t.eventSeq), event_no:t.eventNo||'', rep_name:t.repName||'',
     rep_phone:String(t.repPhone||'').replace(/[^0-9]/g,''), status:t.status||'',
@@ -8583,8 +8616,21 @@ async function docSyncSupabase(silent){
       body:JSON.stringify(rows)
     });
     if(!res.ok) throw new Error('('+res.status+') '+(await res.text()).slice(0,160));
-    showToast(`Supabase 동기화 완료 · ${rows.length}팀`);
-  }catch(e){ if(!silent) alert('동기화 실패: '+e.message); }
+    docSyncSay(`${rows.length}팀 동기화됨 · D-7 자동발송이 이 자료를 씁니다`,'ok');
+    if(!silent) showToast(`Supabase 동기화 완료 · ${rows.length}팀`);
+  }catch(e){
+    // 조용히 삼키지 않는다. 예전에는 자동 실행(silent)일 때 오류를 통째로 버려서,
+    // D-7 알림톡이 낡은 데이터로 나가는데 아무도 몰랐다.
+    docSyncSay('동기화 실패 — '+((e&&e.message)||'')+' · D-7 자동발송이 낡은 자료를 쓰게 됩니다.','err');
+    if(!silent) alert('동기화 실패: '+e.message);
+  }
+}
+function docSyncSay(msg, kind){
+  const box=document.getElementById('doc-sync-state');
+  if(!box) return;
+  box.style.display='';
+  box.style.color = kind==='err' ? 'var(--red)' : 'var(--green2)';
+  box.innerHTML = (kind==='err'?'⚠ ':'') + MT.escHtml(msg);
 }
 
 /* ── 선택 팀 일괄 링크 생성 ── */
