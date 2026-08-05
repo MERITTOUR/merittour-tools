@@ -279,6 +279,30 @@
       .then(function () { return { ok: true, n: list.length }; });
   }
 
+  /* ── 웹 오픈 수량 (구 오버부킹 보정) ─────────────────────────────
+     화면에는 오래도록 「내 PC 전용 임시 시뮬레이션」이라 적혀 있었지만, 실제로는
+     블록 현황 표의 잔여·선택 합계·현황 엑셀·현황 PNG 에 전부 실려 나갔다.
+     즉 공유되는 값인데 사람마다 다른 값을 들고 있었다. */
+
+  var BOVL_COLS = 'hotel,room,ymd,qty_delta,memo,updated_at,updated_by';
+
+  function loadBlockOverrides() {
+    return rest('/mt_block_override?select=' + BOVL_COLS).then(function (rows) { return rows || []; });
+  }
+
+  /* 업서트. delta 가 0 인 행은 뒤이어 지운다 —
+     0 짜리 행을 남기면 「조정한 것」과 「안 건드린 것」이 구분되지 않는다. */
+  function saveBlockOverrides(rows) {
+    var list = (rows || []).filter(function (r) { return r && r.hotel && r.room && r.ymd; });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_block_override?on_conflict=hotel,room,ymd', {
+      method: 'POST', body: list,
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () {
+      return rest('/mt_block_override?qty_delta=eq.0', { method: 'DELETE', prefer: 'return=minimal' });
+    }).then(function () { return { ok: true, n: list.length }; });
+  }
+
   /* ── 변경 이력 ───────────────────────────────────────────────────
      누가·언제는 서버 트리거가 박는다(mt_mcl_stamp). 클라이언트가 보낸 이름은
      믿지 않는다 — 게이트 이름은 본인이 타이핑한 자유 문자열이라 진위가 없다.
@@ -365,6 +389,8 @@
     saveMaster: saveMaster,
     logChanges: logChanges,
     listChanges: listChanges,
+    loadBlockOverrides: loadBlockOverrides,
+    saveBlockOverrides: saveBlockOverrides,
     loadEventOverlays: loadEventOverlays,
     saveEventOverlays: saveEventOverlays,
     deleteEventOverlays: deleteEventOverlays,

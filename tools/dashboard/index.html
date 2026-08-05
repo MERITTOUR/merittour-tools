@@ -1251,6 +1251,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <label>호텔</label>
         <select class="blk-month-input" id="blk-sim-hotel" onchange="blkRenderSim()"><option value="">전체</option></select>
       </div>
+      <div id="bovl-note" class="note" style="display:none;border-left-color:var(--amber);margin-bottom:10px"></div>
       <div class="blk-sim-grid" id="blk-sim-grid"></div>
     </div>
   </div>
@@ -1291,7 +1292,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
     <div class="blk-cfg-card">
       <div class="blk-cfg-title">🔄 오버부킹 보정 초기화 <span class="card-sub" style="font-weight:400">— 판매 시뮬레이션에서 입력한 오버부킹 조정값을 모두 지웁니다</span></div>
-      <div class="muted" style="font-size:11px;margin-bottom:8px;line-height:1.7">오버부킹 보정은 <b>내 PC에서만</b> 쓰는 임시 시뮬레이션입니다(마스터 내보내기에 포함되지 않음). 실제로 확보한 객실 수가 기간에 따라 다르다면 리조트 마스터의 <b>기간별 보유 예외</b>에 넣어야 전 직원이 같은 값을 봅니다.</div>
+      <div class="muted" style="font-size:11px;margin-bottom:8px;line-height:1.7">웹 오픈 수량은 <b>전 직원이 함께 보는 값</b>입니다(고치면 바로 공유됩니다). 이 값은 <b>온라인에 몇 실을 열지</b>를 정할 뿐이고, <b>실제로 확보한 객실 수</b>가 기간에 따라 다르다면 리조트 마스터의 <b>기간별 보유 예외</b>에 넣어야 합니다.</div>
       <button class="btn-sm" onclick="blkResetOver()" style="color:var(--red);border-color:var(--red)">오버부킹 보정값 초기화</button>
     </div>
   </div>
@@ -6237,6 +6238,7 @@ document.addEventListener('DOMContentLoaded',function(){
       .catch(()=>{})
       .then(()=>masterLoadServer())
       .then(()=>ovlLoadServer())
+      .then(()=>bovlLoadServer())
       .then(()=>chlogLoadServer());
   } else {
     masterMode='off';
@@ -6313,7 +6315,82 @@ function vcalLoadMonths(){
 }
 function blkSave(){
   try{ localStorage.setItem(BLK_STORE.over,JSON.stringify(blkOver)); }catch(e){}
-  // 보유·별칭·임의배정은 리조트 마스터에 저장되므로 여기선 오버부킹만
+  // 보유·별칭·임의배정은 리조트 마스터에 저장되므로 여기선 웹오픈 수량만
+}
+
+/* ════════════════════════════════════════════════════════════
+   웹 오픈 수량을 서버로 (mt_block_override)
+   화면에는 오래도록 「내 PC 에서만 쓰는 임시 시뮬레이션」이라 적혀 있었지만,
+   실제로는 블록 현황 표의 잔여·선택 합계·현황 엑셀·현황 PNG 에 전부 실려
+   나갔다 — 공유되는 값인데 사람마다 다른 값을 들고 있었다.
+════════════════════════════════════════════════════════════ */
+let bovlMode='off', bovlDirty=new Set(), bovlTimer=null, bovlSaving=false, bovlLocalOnly=[];
+const bovlLast=new Map();
+
+function bovlKeyParts(k){
+  const i=k.lastIndexOf('|'); if(i<0) return null;
+  const ymd=k.slice(i+1), rest=k.slice(0,i);
+  const j=rest.lastIndexOf('|'); if(j<0) return null;
+  return {hotel:rest.slice(0,j), room:rest.slice(j+1), ymd};
+}
+function bovlLoadServer(){
+  if(!masterServerReady()){ bovlMode='off'; return Promise.resolve(); }
+  return MT_STORE.loadBlockOverrides().then(rows=>{
+    const server={};
+    (rows||[]).forEach(r=>{
+      const ymd=String(r.ymd||'').slice(0,10);
+      if(!r.hotel||!r.room||!ymd) return;
+      server[`${r.hotel}|${r.room}|${ymd}`]=Number(r.qty_delta)||0;
+    });
+    bovlLocalOnly=Object.keys(blkOver).filter(k=>server[k]===undefined);
+    blkOver=server;                       // 서버 값이 이긴다
+    bovlLast.clear();
+    Object.keys(server).forEach(k=>bovlLast.set(k, server[k]));
+    bovlMode='on';
+    blkSave();
+    bovlRenderNote();
+    if(typeof blkParsed!=='undefined' && blkParsed && typeof blkRender==='function') blkRender();
+  }).catch(()=>{ bovlMode='off'; bovlRenderNote(); });
+}
+function bovlMark(key){
+  if(bovlMode!=='on' || !key) return;
+  bovlDirty.add(key);
+  clearTimeout(bovlTimer);
+  bovlTimer=setTimeout(bovlPush, 1200);
+}
+function bovlPush(){
+  if(bovlMode!=='on' || bovlSaving || !bovlDirty.size) return Promise.resolve();
+  bovlSaving=true;
+  const keys=[...bovlDirty]; bovlDirty.clear();
+  const rows=keys.map(k=>{
+    const p=bovlKeyParts(k); if(!p) return null;
+    return {hotel:p.hotel, room:p.room, ymd:p.ymd, qty_delta:Number(blkOver[k]||0)};
+  }).filter(Boolean);
+  if(!rows.length){ bovlSaving=false; return Promise.resolve(); }
+  return MT_STORE.saveBlockOverrides(rows).then(()=>{
+    rows.forEach(r=>{
+      const k=`${r.hotel}|${r.room}|${r.ymd}`;
+      if(r.qty_delta) bovlLast.set(k, r.qty_delta); else bovlLast.delete(k);
+    });
+    bovlSaving=false; bovlLocalOnly=[]; bovlRenderNote();
+  }).catch(e=>{
+    bovlSaving=false;
+    keys.forEach(k=>bovlDirty.add(k));
+    showToast((e&&e.message)||'웹 오픈 수량을 서버에 올리지 못했습니다.','error');
+  });
+}
+function bovlRenderNote(){
+  const box=document.getElementById('bovl-note');
+  if(!box) return;
+  if(bovlMode!=='on' || !bovlLocalOnly.length){ box.style.display='none'; return; }
+  box.style.display='';
+  box.innerHTML=`이 PC 에만 있는 웹 오픈 수량이 <b>${bovlLocalOnly.length}건</b> 있습니다. `
+    +`<button class="btn-sm" onclick="bovlPushLocalOnly()">서버로 올리기</button>`;
+}
+function bovlPushLocalOnly(){
+  bovlLocalOnly.forEach(k=>bovlDirty.add(k));
+  bovlLocalOnly=[];
+  bovlPush().then(()=>showToast('서버에 올렸습니다'));
 }
 
 /* 풀 매칭 (hotel은 별칭일 수 있으므로 실제 숙소명으로 해소 후 비교) */
@@ -7426,16 +7503,22 @@ function blkSetOver(u,rm,day,val,blk){
   const cap=num(val);
   const over=cap-blk;
   const key=`${u}|${rm}|${day}`;
-  if(over>0) blkOver[key]=over; else delete blkOver[key];
+  // 예전에는 over>0 만 저장해 **늘리는 쪽으로만** 조정됐다. 보유보다 적게 여는 것은
+  // 아예 불가능했고, 그래서 이 값은 잔여를 늘리기만 했다 — 없는 방을 파는 방향이다.
+  if(over!==0) blkOver[key]=over; else delete blkOver[key];
   blkSave();
+  bovlMark(key);
   blkRenderSim(); blkRenderStatus();
 }
 
 /* ── 설정 안내 (보유·별칭·임의배정은 리조트 마스터에서 관리) ── */
 function blkRenderConfig(){ /* 정적 안내 뷰 — 렌더할 동적 내용 없음 */ }
 function blkResetOver(){
-  if(!confirm('오버부킹 보정값을 모두 초기화할까요?')) return;
-  blkOver={}; blkSave(); if(blkParsed) blkRender();
+  if(!confirm('웹 오픈 수량 조정을 모두 지울까요?\n(전 직원 화면에서 함께 사라집니다)')) return;
+  const keys=Object.keys(blkOver);
+  blkOver={}; blkSave();
+  keys.forEach(k=>bovlMark(k));
+  if(blkParsed) blkRender();
 }
 
 /* ── 🛫 출발 일정 조회 ── */
