@@ -74,7 +74,7 @@ GitHub Pages로 배포되며, 진입점은 영업 도구함(`/sales/`)입니다.
 ## 접근 제어
 
 - `shared/gate.js` — 비밀번호(SHA-256) + 이름 입력 가림막. 비밀번호 통과는 sessionStorage, 이름은 localStorage. 정적 GitHub Pages라 강한 보안이 아니라 "URL 우연 노출 가림막 + 협업용 서명" 용도. 현재 sales·dashboard에 적용(admin·air·manage는 미적용 — 향후 과제).
-- `auth.js` — Google 로그인 화이트리스트(현재 `ENABLED:false` 비활성). 강한 보안 필요 시 활성화 또는 서버 사이드(Cloudflare Access 등) 전환 검토.
+- 로그인은 Supabase Auth(`shared/access.js`) + 게이트(`shared/gate.js`)가 한다. 옛 구글 로그인 `auth.js` 는 네 허브 모두 주석 처리돼 로드되지 않았고 `CONFIG.ENABLED:false` 로 이중으로 죽어 있어 삭제했다.
 - `robots.txt` — 전체 크롤링 차단(`Disallow: /`).
 
 ## 배포

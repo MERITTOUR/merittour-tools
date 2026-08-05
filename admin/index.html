@@ -73,12 +73,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       <span class="dept-badge admin">시스템 관리자</span>
     </div>
     <div class="header-actions">
-      <div class="user-info hidden" id="userInfo">
-        <img id="userPhoto" src="" alt="">
-        <span id="userName"></span>
-      </div>
-      
-      <button class="ghost-btn hidden" id="logoutBtn">로그아웃</button>
+
     </div>
   </div>
 
@@ -97,15 +92,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
   <div class="section-title">영업 도구</div>
   <div class="tool-grid">
-    <a href="../tools/inquiry/" class="tool-card">
-      <div class="tool-card-icon">📅</div>
-      <div class="tool-card-title">예약가능일자 안내</div>
-      <div class="tool-card-desc">Mclick 블록조회 엑셀 → 풀 기반 출발 가능 일정 자동 계산 + 손님 안내문</div>
-      <div class="tool-card-meta">
-        <span class="badge ver">v1.2</span>
-        <span class="badge team">영업</span>
-      </div>
-    </a>
     <a href="../tools/imgtoolkit/" class="tool-card">
       <div class="tool-card-icon">🖼️</div>
       <div class="tool-card-title">이미지 툴킷</div>
@@ -118,15 +104,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       </div>
     </a>
 
-    <a href="../tools/aligo/" class="tool-card disabled">
-      <div class="tool-card-icon">💬</div>
-      <div class="tool-card-title">Aligo 알림톡 발송</div>
-      <div class="tool-card-desc">APIS 엑셀 → 알리고 카톡/SMS 일괄 발송 메시지 생성</div>
-      <div class="tool-card-meta">
-        <span class="badge ver">v1.0</span>
-        <span class="badge team">영업</span>
-      </div>
-    </a>
     <a href="#" class="tool-card disabled">
       <div class="tool-card-icon">💱</div>
       <div class="tool-card-title">환율 계산기</div>
@@ -137,15 +114,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
   <div class="section-title">현장 운영</div>
   <div class="tool-grid">
-    <a href="../tools/saizen/" class="tool-card">
-      <div class="tool-card-icon">⛳</div>
-      <div class="tool-card-title">SaiZen 운영 자동화</div>
-      <div class="tool-card-desc">야마나미 현장 — 네임택·항공커버·송영·숙박·골프·정산표 일괄 생성</div>
-      <div class="tool-card-meta">
-        <span class="badge ver">v13.4</span>
-        <span class="badge team ops">현장</span>
-      </div>
-    </a>
   </div>
 
   <div class="section-title">손님용 페이지</div>
@@ -220,7 +188,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
     <h3>시스템 관리 안내</h3>
     <ul>
-      <li><strong>직원 추가</strong> — Phase 1B 진입 후 <code>auth.js</code>의 <code>ALLOWED_EMAILS</code>에 추가</li>
+      <li><strong>직원 추가</strong> — 콘솔에서 초대하면 <code>app_users</code>에 <code>air</code>·비활성으로 생기고, 최고관리자가 <a href="users/">계정 관리</a>에서 승인·역할 지정</li>
       <li><strong>도구 업데이트</strong> — 각 도구 HTML을 <code>tools/{도구명}/index.html</code>로 덮어쓰기</li>
       <li><strong>도구 활성화</strong> — 카드의 <code>disabled</code> 클래스 제거</li>
     </ul>
@@ -230,26 +198,8 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
   <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
 </div>
 
-<!-- Google Identity Services (활성화 시 주석 해제) -->
-<!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
-<!-- <script src="../auth.js"></script> -->
-
-<script>
-window.MERITTOUR_AUTH = {
-  onSignIn: (p) => {
-    document.getElementById('userInfo').classList.remove('hidden');
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('userName').textContent = p.name || p.email;
-    if (p.picture) document.getElementById('userPhoto').src = p.picture;
-    else document.getElementById('userPhoto').style.display = 'none';
-  },
-  onSignOut: () => location.href = '../',
-  onError: (m) => alert(m),
-  buttonContainer: 'gsiButtonBox'
-};
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if (window.MerittourAuth && window.MerittourAuth.signOut) window.MerittourAuth.signOut();
-});
-</script>
+<!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 <script> 가 주석 처리돼 로드되지 않았고
+     auth.js 의 CONFIG.ENABLED 도 false 라 이중으로 죽어 있었다.
+     실제 로그인은 Supabase Auth(shared/access.js)와 게이트(shared/gate.js)가 한다. -->
 </body>
 </html>

@@ -72,12 +72,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       <div class="brand-sub">INTERNAL TOOLS</div>
     </div>
     <div class="header-actions">
-      <div class="user-info hidden" id="userInfo">
-        <img id="userPhoto" src="" alt="">
-        <span id="userName"></span>
-      </div>
-      
-      <button class="ghost-btn hidden" id="logoutBtn">로그아웃</button>
+
     </div>
   </div>
 
@@ -93,26 +88,8 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
   <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
 </div>
 
-<!-- Google Identity Services (활성화 시 주석 해제) -->
-<!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
-<!-- <script src="../auth.js"></script> -->
-
-<script>
-window.MERITTOUR_AUTH = {
-  onSignIn: (p) => {
-    document.getElementById('userInfo').classList.remove('hidden');
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('userName').textContent = p.name || p.email;
-    if (p.picture) document.getElementById('userPhoto').src = p.picture;
-    else document.getElementById('userPhoto').style.display = 'none';
-  },
-  onSignOut: () => location.href = '../',
-  onError: (m) => alert(m),
-  buttonContainer: 'gsiButtonBox'
-};
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if (window.MerittourAuth && window.MerittourAuth.signOut) window.MerittourAuth.signOut();
-});
-</script>
+<!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 <script> 가 주석 처리돼 로드되지 않았고
+     auth.js 의 CONFIG.ENABLED 도 false 라 이중으로 죽어 있었다.
+     실제 로그인은 Supabase Auth(shared/access.js)와 게이트(shared/gate.js)가 한다. -->
 </body>
 </html>
