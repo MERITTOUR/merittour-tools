@@ -6412,7 +6412,20 @@ function blkPoolCap(pool){
 /* 정원 등록 여부 판정 전용 — 기간 예외로 그날만 0이 된 경우와 "정원 미등록"을 구분하기 위해
    기본 보유 기준으로만 본다. */
 function blkPoolCapBase(pool){ return blkPoolCap(pool); }
-/* 풀의 그날 정원 = 매칭되는 룸타입별로 기간 예외를 해소해 합산.
+/* 그날 그 룸타입을 실제로 몇 실까지 팔 수 있나 = **보유와 웹오픈 중 적은 쪽**.
+
+   웹오픈을 보유보다 **늘려** 뒀어도 여기서는 보유까지만 센다 — 늘린 숫자가
+   출발 일정 조회·손님 공지 PNG·요금 달력에 실리면 **없는 방을 팔게 된다.**
+   반대로 **줄여** 뒀으면 줄인 만큼만 센다 — 열지 않기로 한 방을 팔면 안 된다.
+   어느 방향으로도 실제보다 많게 나오지 않는다. */
+function blkSellableOn(hotel, room, ymd){
+  const info=blkBlockOnInfo(hotel, room, ymd);
+  if(!info) return null;
+  const d=Number(blkOver[`${hotel}|${room}|${ymd}`]||0);
+  return Math.max(0, info.qty + Math.min(0, d));
+}
+
+/* 풀의 그날 정원 = 매칭되는 룸타입별로 기간 예외·웹오픈 수량을 해소해 합산.
    ymd 없으면 기본 정원. 매칭 룸타입이 하나도 없으면 null. */
 function blkPoolCapOn(pool, ymd){
   if(!ymd) return blkPoolCap(pool);
@@ -6420,8 +6433,8 @@ function blkPoolCapOn(pool, ymd){
   Object.keys(blkMaster).forEach(k=>{
     const [h,rm]=k.split('|');
     if(!blkPoolMatch(pool,h,rm)) return;
-    const info=blkBlockOnInfo(h,rm,ymd);
-    if(info){ sum+=info.qty; has=true; }
+    const q=blkSellableOn(h,rm,ymd);
+    if(q!=null){ sum+=q; has=true; }
   });
   return has?sum:null;
 }
