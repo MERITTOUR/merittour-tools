@@ -279,6 +279,66 @@
       .then(function () { return { ok: true, n: list.length }; });
   }
 
+  /* ── 정산 조정·공제, 보험 제외 ───────────────────────────────────
+     정산 공제는 **현지에 실제로 보내는 송금액**을 정한다
+     (실정산액 = 체재 + 송영 − 공제). 공제 행이 없는 PC 는 그만큼 더 보낸다.
+
+     빈 행을 남기지 않는다 — 업서트한 뒤 「아무것도 안 적힌 행」을 한 번에 쓸어낸다.
+     0 이나 null 만 남은 행을 두면 「조정한 것」과 「안 건드린 것」이 구분되지 않는다. */
+
+  var SA_COLS = 'event_seq,pax_idx,air_cost,air_src,ins,ins_src,local_rate,trans_fee,'
+              + 'ex_stay,ex_trans,ex_mgmt,updated_at,updated_by';
+  var SA_EMPTY = '?air_cost=is.null&ins=is.null&local_rate=is.null&trans_fee=is.null'
+               + '&air_src=is.null&ins_src=is.null'
+               + '&ex_stay=is.false&ex_trans=is.false&ex_mgmt=is.false';
+
+  function loadSettleAdjust() {
+    return rest('/mt_settle_adjust?select=' + SA_COLS).then(function (r) { return r || []; });
+  }
+  function saveSettleAdjust(rows) {
+    var list = (rows || []).filter(function (r) { return r && r.event_seq && r.pax_idx != null; });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_settle_adjust?on_conflict=event_seq,pax_idx', {
+      method: 'POST', body: list, prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () {
+      return rest('/mt_settle_adjust' + SA_EMPTY, { method: 'DELETE', prefer: 'return=minimal' });
+    }).then(function () { return { ok: true, n: list.length }; });
+  }
+
+  function loadSettleDeductions() {
+    return rest('/mt_settle_deduction?select=id,type,amount,label,grp,updated_at,updated_by&order=id')
+      .then(function (r) { return r || []; });
+  }
+  function saveSettleDeductions(rows) {
+    var list = (rows || []).filter(function (r) { return r && r.id; });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_settle_deduction?on_conflict=id', {
+      method: 'POST', body: list, prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () { return { ok: true, n: list.length }; });
+  }
+  function deleteSettleDeductions(ids) {
+    var list = (ids || []).map(String).filter(Boolean);
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_settle_deduction?id=in.(' + list.map(encodeURIComponent).join(',') + ')',
+      { method: 'DELETE', prefer: 'return=minimal' })
+      .then(function () { return { ok: true, n: list.length }; });
+  }
+
+  /* 인원 단위 덧칠 — 지금은 보험 제외만 담는다. */
+  function loadPaxOverlays() {
+    return rest('/mt_pax_overlay?select=event_seq,pax_idx,ins_excluded,updated_at,updated_by')
+      .then(function (r) { return r || []; });
+  }
+  function savePaxOverlays(rows) {
+    var list = (rows || []).filter(function (r) { return r && r.event_seq && r.pax_idx != null; });
+    if (!list.length) return Promise.resolve({ ok: true, n: 0 });
+    return rest('/mt_pax_overlay?on_conflict=event_seq,pax_idx', {
+      method: 'POST', body: list, prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () {
+      return rest('/mt_pax_overlay?ins_excluded=is.false', { method: 'DELETE', prefer: 'return=minimal' });
+    }).then(function () { return { ok: true, n: list.length }; });
+  }
+
   /* ── 웹 오픈 수량 (구 오버부킹 보정) ─────────────────────────────
      화면에는 오래도록 「내 PC 전용 임시 시뮬레이션」이라 적혀 있었지만, 실제로는
      블록 현황 표의 잔여·선택 합계·현황 엑셀·현황 PNG 에 전부 실려 나갔다.
@@ -389,6 +449,13 @@
     saveMaster: saveMaster,
     logChanges: logChanges,
     listChanges: listChanges,
+    loadSettleAdjust: loadSettleAdjust,
+    saveSettleAdjust: saveSettleAdjust,
+    loadSettleDeductions: loadSettleDeductions,
+    saveSettleDeductions: saveSettleDeductions,
+    deleteSettleDeductions: deleteSettleDeductions,
+    loadPaxOverlays: loadPaxOverlays,
+    savePaxOverlays: savePaxOverlays,
     loadBlockOverrides: loadBlockOverrides,
     saveBlockOverrides: saveBlockOverrides,
     loadEventOverlays: loadEventOverlays,

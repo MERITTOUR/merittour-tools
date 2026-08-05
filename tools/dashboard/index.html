@@ -1442,6 +1442,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
 <!-- ════════ ⑧ 정산 ════════ -->
 <div class="section" id="sec-settle">
+  <div id="setl-note" class="note" style="display:none;border-left-color:var(--amber);margin-bottom:12px"></div>
   <div class="card">
     <div class="card-head">
       <div><div class="card-title">정산</div><div class="card-sub">현지정산(¥) + 수익(체재마진·항공수익·총수익) 통합 · 구분/거래유형/출발지 필터 · 항공원가 입력</div></div>
@@ -3097,6 +3098,7 @@ function toggleInsExclude(seq,idx,val){
   const k=insPaxKey(seq,idx);
   if(val) insExclude[k]=true; else delete insExclude[k];
   try{ localStorage.setItem(STORE_INS_EXCLUDE,JSON.stringify(insExclude)); }catch(e){}
+  setlMark('pax', k);          // 보험 대상은 사람마다 다르면 작업 목록이 갈린다
   renderInsurance();
 }
 
@@ -6031,6 +6033,10 @@ function ovlApplyRow(r){
 /* 서버 값이 이 PC 값을 이긴다. 이 PC 에만 있는 것은 지우지 않고 「올릴 수 있다」고
    알린다 — 자동으로 밀면 여러 PC 가 서로 다른 값을 밀어 넣는다. */
 function ovlLoadServer(){
+  // 로컬 값을 먼저 읽는다. loadPersist() 는 analyze() 안에서만 불리므로,
+  // 자료가 아직 없으면 이 맵들이 비어 있고 「이 PC 에만 있는 수정」이 0 으로 나온다
+  // (자료가 있어도 analyze 와 이 함수의 순서에 따라 달라졌다).
+  if(typeof loadPersist==='function') loadPersist();
   if(!masterServerReady()) { ovlMode='off'; return Promise.resolve(); }
   return MT_STORE.loadEventOverlays().then(rows=>{
     const onServer=new Set((rows||[]).map(r=>String(r.event_seq)));
@@ -6239,6 +6245,7 @@ document.addEventListener('DOMContentLoaded',function(){
       .then(()=>masterLoadServer())
       .then(()=>ovlLoadServer())
       .then(()=>bovlLoadServer())
+      .then(()=>setlLoadServer())
       .then(()=>chlogLoadServer());
   } else {
     masterMode='off';
@@ -8683,6 +8690,150 @@ let mclickData=null, mclickFileName='';
 
 function saveSettle(){
   try{ localStorage.setItem(STORE_SETTLE,JSON.stringify(settleAdjust)); localStorage.setItem(STORE_SETTLE_DED,JSON.stringify(settleDed)); }catch(e){}
+  setlMarkAll();
+}
+
+/* ════════════════════════════════════════════════════════════
+   정산 조정·공제, 보험 제외를 서버로
+   정산 공제는 **현지에 실제로 보내는 송금액**을 정한다
+   (실정산액 = 체재 + 송영 − 공제). 공제 행이 없는 PC 는 그만큼 더 보낸다.
+════════════════════════════════════════════════════════════ */
+let setlMode='off', setlTimer=null, setlSaving=false;
+const setlDirtyAdj=new Set(), setlDirtyPax=new Set();
+let setlDirtyDed=false, setlDedLast=new Map();
+const setlAdjLast=new Map(), setlPaxLast=new Map();
+let setlLocalOnly=0;
+
+function setlSplit(k){ const i=String(k).lastIndexOf('#'); return i<0?null
+  :{seq:String(k).slice(0,i), idx:Number(String(k).slice(i+1))}; }
+
+function setlAdjRow(k){
+  const p=setlSplit(k); if(!p) return null;
+  const a=settleAdjust[k]||{};
+  const n=v=>(v===''||v==null)?null:Number(v);
+  return {event_seq:p.seq, pax_idx:p.idx,
+    air_cost:n(a.airCost), air_src:a.airSrc||null,
+    ins:n(a.ins), ins_src:a.insSrc||null,
+    local_rate:n(a.localRate), trans_fee:n(a.transFee),
+    ex_stay:!!a.exStay, ex_trans:!!a.exTrans, ex_mgmt:!!a.exMgmt};
+}
+function setlApplyAdj(r){
+  const k=`${r.event_seq}#${r.pax_idx}`, a={};
+  if(r.air_cost!=null) a.airCost=Number(r.air_cost);
+  if(r.air_src) a.airSrc=r.air_src;
+  if(r.ins!=null) a.ins=Number(r.ins);
+  if(r.ins_src) a.insSrc=r.ins_src;
+  if(r.local_rate!=null) a.localRate=Number(r.local_rate);
+  if(r.trans_fee!=null) a.transFee=Number(r.trans_fee);
+  if(r.ex_stay) a.exStay=true;
+  if(r.ex_trans) a.exTrans=true;
+  if(r.ex_mgmt) a.exMgmt=true;
+  if(Object.keys(a).length) settleAdjust[k]=a; else delete settleAdjust[k];
+}
+
+function setlLoadServer(){
+  if(typeof loadPersist==='function') loadPersist();   // 위와 같은 이유
+  if(!masterServerReady()){ setlMode='off'; return Promise.resolve(); }
+  return Promise.all([
+    MT_STORE.loadSettleAdjust(), MT_STORE.loadSettleDeductions(), MT_STORE.loadPaxOverlays()
+  ]).then(([adj, ded, pax])=>{
+    const onAdj=new Set((adj||[]).map(r=>`${r.event_seq}#${r.pax_idx}`));
+    const onPax=new Set((pax||[]).map(r=>`${r.event_seq}#${r.pax_idx}`));
+    setlLocalOnly = Object.keys(settleAdjust).filter(k=>!onAdj.has(k)).length
+                  + Object.keys(insExclude).filter(k=>!onPax.has(k)).length
+                  + ((ded||[]).length===0 && settleDed.length ? settleDed.length : 0);
+    // 서버 값이 이긴다
+    settleAdjust={}; (adj||[]).forEach(setlApplyAdj);
+    insExclude={}; (pax||[]).forEach(r=>{ if(r.ins_excluded) insExclude[`${r.event_seq}#${r.pax_idx}`]=true; });
+    if((ded||[]).length || setlLocalOnly===0)
+      settleDed=(ded||[]).map(d=>({id:String(d.id), type:d.type, amount:Number(d.amount)||0,
+                                   label:d.label||'', group:d.grp||''}));
+    setlAdjLast.clear(); Object.keys(settleAdjust).forEach(k=>setlAdjLast.set(k, JSON.stringify(setlAdjRow(k))));
+    setlPaxLast.clear(); Object.keys(insExclude).forEach(k=>setlPaxLast.set(k,'1'));
+    setlDedLast=new Map(settleDed.map(d=>[String(d.id), JSON.stringify(d)]));
+    setlMode='on';
+    try{ localStorage.setItem(STORE_SETTLE,JSON.stringify(settleAdjust));
+         localStorage.setItem(STORE_SETTLE_DED,JSON.stringify(settleDed));
+         localStorage.setItem(STORE_INS_EXCLUDE,JSON.stringify(insExclude)); }catch(e){}
+    setlRenderNote();
+    if(typeof teams!=='undefined' && teams.length && typeof secRefreshAll==='function') secRefreshAll();
+  }).catch(()=>{ setlMode='off'; setlRenderNote(); });
+}
+
+function setlMark(kind, key){
+  if(setlMode!=='on') return;
+  if(kind==='pax') setlDirtyPax.add(key);
+  else if(kind==='adj') setlDirtyAdj.add(key);
+  else setlDirtyDed=true;
+  clearTimeout(setlTimer);
+  setlTimer=setTimeout(setlPush, 1200);
+}
+/* 실제로 달라진 것만 고른다 — saveSettle 은 칸을 칠 때마다 불린다. */
+function setlMarkAll(){
+  if(setlMode!=='on') return;
+  Object.keys(settleAdjust).forEach(k=>{
+    const j=JSON.stringify(setlAdjRow(k));
+    if(setlAdjLast.get(k)!==j) setlDirtyAdj.add(k);
+  });
+  setlAdjLast.forEach((_,k)=>{ if(!settleAdjust[k]) setlDirtyAdj.add(k); });
+  const nowDed=new Map(settleDed.map(d=>[String(d.id), JSON.stringify(d)]));
+  if(nowDed.size!==setlDedLast.size ||
+     [...nowDed].some(([id,j])=>setlDedLast.get(id)!==j)) setlDirtyDed=true;
+  if(!setlDirtyAdj.size && !setlDirtyPax.size && !setlDirtyDed) return;
+  clearTimeout(setlTimer);
+  setlTimer=setTimeout(setlPush, 1200);
+}
+
+function setlPush(){
+  if(setlMode!=='on' || setlSaving) return Promise.resolve();
+  if(!setlDirtyAdj.size && !setlDirtyPax.size && !setlDirtyDed) return Promise.resolve();
+  setlSaving=true;
+  const adjKeys=[...setlDirtyAdj]; setlDirtyAdj.clear();
+  const paxKeys=[...setlDirtyPax]; setlDirtyPax.clear();
+  const doDed=setlDirtyDed; setlDirtyDed=false;
+
+  const adjRows=adjKeys.map(setlAdjRow).filter(Boolean);
+  const paxRows=paxKeys.map(k=>{ const p=setlSplit(k); return p?
+    {event_seq:p.seq, pax_idx:p.idx, ins_excluded:!!insExclude[k]}:null; }).filter(Boolean);
+  const dedRows=settleDed.map(d=>({id:String(d.id), type:d.type,
+    amount:Number(d.amount)||0, label:d.label||'', grp:d.group||''}));
+  const gone=[...setlDedLast.keys()].filter(id=>!dedRows.some(d=>d.id===id));
+
+  return Promise.all([
+    adjRows.length ? MT_STORE.saveSettleAdjust(adjRows) : Promise.resolve(),
+    paxRows.length ? MT_STORE.savePaxOverlays(paxRows) : Promise.resolve(),
+    doDed && dedRows.length ? MT_STORE.saveSettleDeductions(dedRows) : Promise.resolve(),
+    doDed && gone.length ? MT_STORE.deleteSettleDeductions(gone) : Promise.resolve()
+  ]).then(()=>{
+    adjKeys.forEach(k=>{ const r=setlAdjRow(k);
+      if(settleAdjust[k]) setlAdjLast.set(k, JSON.stringify(r)); else setlAdjLast.delete(k); });
+    paxKeys.forEach(k=>{ if(insExclude[k]) setlPaxLast.set(k,'1'); else setlPaxLast.delete(k); });
+    if(doDed) setlDedLast=new Map(dedRows.map(d=>[d.id, JSON.stringify(
+      {id:d.id, type:d.type, amount:d.amount, label:d.label, group:d.grp})]));
+    setlSaving=false; setlLocalOnly=0; setlRenderNote();
+  }).catch(e=>{
+    setlSaving=false;
+    adjKeys.forEach(k=>setlDirtyAdj.add(k));
+    paxKeys.forEach(k=>setlDirtyPax.add(k));
+    if(doDed) setlDirtyDed=true;
+    showToast((e&&e.message)||'정산 값을 서버에 올리지 못했습니다.','error');
+  });
+}
+
+function setlRenderNote(){
+  const box=document.getElementById('setl-note');
+  if(!box) return;
+  if(setlMode!=='on' || !setlLocalOnly){ box.style.display='none'; return; }
+  box.style.display='';
+  box.innerHTML=`이 PC 에만 있는 정산·보험 값이 <b>${setlLocalOnly}건</b> 있습니다. `
+    +`<button class="btn-sm" onclick="setlPushLocalOnly()">서버로 올리기</button>`
+    +`<div class="muted" style="margin-top:5px">공제는 <b>현지에 실제로 보내는 송금액</b>을 정합니다 — 확인하고 한 번만 눌러 주세요.</div>`;
+}
+function setlPushLocalOnly(){
+  Object.keys(settleAdjust).forEach(k=>setlDirtyAdj.add(k));
+  Object.keys(insExclude).forEach(k=>setlDirtyPax.add(k));
+  setlDirtyDed=true; setlLocalOnly=0;
+  setlPush().then(()=>showToast('서버에 올렸습니다'));
 }
 function stWon(v){ return v==null?'-':'₩'+Math.round(v).toLocaleString(); }
 function stYen(v){ return v==null?'-':'¥'+Math.round(v).toLocaleString(); }
@@ -9063,10 +9214,15 @@ function stLocalChip(a){
   renderSettleLocal();
 }
 /* 차감 관리 */
-function settleAddDed(){ settleDed.push({id:Date.now(),type:SETTLE_DED_TYPES[0],amount:0,label:'',group:''}); saveSettle(); renderSettleLocal(); }
-function settleDelDed(id){ settleDed=settleDed.filter(d=>d.id!==id); saveSettle(); renderSettleLocal(); }
+function settleAddDed(){
+  // id 를 Date.now() 만으로 만들면 두 PC 가 같은 순간에 추가할 때 겹친다.
+  settleDed.push({id:String(Date.now())+'-'+Math.random().toString(36).slice(2,8),
+                  type:SETTLE_DED_TYPES[0],amount:0,label:'',group:''});
+  saveSettle(); renderSettleLocal();
+}
+function settleDelDed(id){ settleDed=settleDed.filter(d=>String(d.id)!==String(id)); saveSettle(); renderSettleLocal(); }
 function settleEditDed(id,field,val){
-  const d=settleDed.find(x=>x.id===id); if(!d) return;
+  const d=settleDed.find(x=>String(x.id)===String(id)); if(!d) return;
   d[field]= field==='amount'? num(val) : val;
   saveSettle(); renderSettleLocal();
 }
@@ -9074,12 +9230,12 @@ function renderSettleDed(gross){
   const box=document.getElementById('st-ded-rows');
   box.innerHTML = settleDed.length ? settleDed.map(d=>`
     <div class="st-dedrow">
-      <select class="rm-input" style="width:140px;text-align:left;font-family:var(--sans)" onchange="settleEditDed(${d.id},'type',this.value)">
+      <select class="rm-input" style="width:140px;text-align:left;font-family:var(--sans)" onchange="settleEditDed('${d.id}','type',this.value)">
         ${SETTLE_DED_TYPES.map(t=>`<option${d.type===t?' selected':''}>${t}</option>`).join('')}</select>
-      <input class="st-cellin" style="width:100px" value="${d.amount?Number(d.amount).toLocaleString():''}" placeholder="차감 금액(¥)" onchange="settleEditDed(${d.id},'amount',this.value)">
-      <input class="rm-input text" style="width:220px;text-align:left" value="${(d.label||'').replace(/"/g,'&quot;')}" placeholder="항목 내용 (예: 봄 시즌 쿠폰)" onchange="settleEditDed(${d.id},'label',this.value)">
-      <input class="rm-input text" style="width:170px;text-align:left" value="${(d.group||'').replace(/"/g,'&quot;')}" placeholder="대상 행사번호/고객명" onchange="settleEditDed(${d.id},'group',this.value)">
-      <button class="btn-sm" style="padding:1px 8px;color:var(--red);border-color:var(--red)" onclick="settleDelDed(${d.id})">×</button>
+      <input class="st-cellin" style="width:100px" value="${d.amount?Number(d.amount).toLocaleString():''}" placeholder="차감 금액(¥)" onchange="settleEditDed('${d.id}','amount',this.value)">
+      <input class="rm-input text" style="width:220px;text-align:left" value="${(d.label||'').replace(/"/g,'&quot;')}" placeholder="항목 내용 (예: 봄 시즌 쿠폰)" onchange="settleEditDed('${d.id}','label',this.value)">
+      <input class="rm-input text" style="width:170px;text-align:left" value="${(d.group||'').replace(/"/g,'&quot;')}" placeholder="대상 행사번호/고객명" onchange="settleEditDed('${d.id}','group',this.value)">
+      <button class="btn-sm" style="padding:1px 8px;color:var(--red);border-color:var(--red)" onclick="settleDelDed('${d.id}')">×</button>
     </div>`).join('')
     : '<div class="muted" style="font-size:11px;padding:6px 0">차감 항목이 없습니다. [＋ 항목 추가]를 눌러 추가하세요.</div>';
   const ded=settleDed.reduce((s,d)=>s+(Number(d.amount)||0),0);
