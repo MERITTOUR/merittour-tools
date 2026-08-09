@@ -8167,6 +8167,18 @@ const DOC_CFG={
   }
 };
 function docCfgReady(){ return !!(DOC_CFG.supabaseUrl && DOC_CFG.supabaseKey); }
+
+/* 확정서 저장·예약 동기화·알림톡은 **로그인한 사람의 토큰**으로 나간다.
+   예전에는 anon 키를 그대로 썼는데, 그 키는 public 저장소에 원문으로 있고
+   서버 정책도 anon 에 열려 있어서 브라우저 없이도 손님 데이터를 넣고 뺄 수 있었다.
+   토큰이 없으면 **보내지 않는다** — 조용히 anon 으로 흘러가면 안 된다. */
+function docAuthHeaders(extra){
+  return (typeof MT_AUTH!=='undefined' && MT_AUTH.token ? MT_AUTH.token() : Promise.resolve(null))
+    .then(tk=>{
+      if(!tk) throw new Error('로그인이 필요합니다. 다시 로그인해 주세요.');
+      return Object.assign({ apikey:DOC_CFG.supabaseKey, 'Authorization':'Bearer '+tk }, extra||{});
+    });
+}
 function docLoadCfg(){
   // 더 이상 입력칸이 없다. 지금 무엇으로 연결돼 있는지만 적어 준다.
   const box=document.getElementById('doc-cfg-state');
@@ -8556,16 +8568,14 @@ async function docUploadSupabase(t, blob){
   const path=`${_docKind}/${encodeURIComponent(t.eventNo)}.jpg`;
   const res=await fetch(`${base}/storage/v1/object/${bucket}/${path}`,{
     method:'POST',
-    headers:{ 'Authorization':'Bearer '+DOC_CFG.supabaseKey, 'apikey':DOC_CFG.supabaseKey,
-              'Content-Type':'image/jpeg', 'x-upsert':'true' },
+    headers: await docAuthHeaders({ 'Content-Type':'image/jpeg', 'x-upsert':'true' }),
     body:blob
   });
   if(!res.ok) throw new Error('업로드 실패('+res.status+') '+(await res.text()).slice(0,140));
   // 만료형 서명 링크 발급 (private 버킷, 90일 후 자동 소멸)
   const sg=await fetch(`${base}/storage/v1/object/sign/${bucket}/${path}`,{
     method:'POST',
-    headers:{ 'Authorization':'Bearer '+DOC_CFG.supabaseKey, 'apikey':DOC_CFG.supabaseKey,
-              'Content-Type':'application/json' },
+    headers: await docAuthHeaders({ 'Content-Type':'application/json' }),
     body:JSON.stringify({ expiresIn: DOC_LINK_TTL })
   });
   if(!sg.ok) throw new Error('링크 발급 실패('+sg.status+') '+(await sg.text()).slice(0,140));
@@ -8611,8 +8621,8 @@ async function docSyncSupabase(silent){
     const base=DOC_CFG.supabaseUrl.replace(/\/+$/,'').replace(/\/rest\/v1$/,'');
     const res=await fetch(`${base}/rest/v1/reservations?on_conflict=event_seq`,{
       method:'POST',
-      headers:{ apikey:DOC_CFG.supabaseKey, 'Authorization':'Bearer '+DOC_CFG.supabaseKey,
-        'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      headers: await docAuthHeaders({ 'Content-Type':'application/json',
+        'Prefer':'resolution=merge-duplicates,return=minimal' }),
       body:JSON.stringify(rows)
     });
     if(!res.ok) throw new Error('('+res.status+') '+(await res.text()).slice(0,160));
@@ -8675,7 +8685,10 @@ async function docBulkSend(){
     if(!confirm(msg)) return;
     showToast('알림톡 발송 요청 중…');
     try{
-      const res=await fetch(DOC_CFG.aligoEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},
+      // 로그인 토큰을 함께 보낸다. 이 함수는 손님에게 카카오 알림톡을 쏘므로
+      // 주소만 알면 누구나 부를 수 있으면 안 된다(서버도 fail-closed 로 막는다).
+      const res=await fetch(DOC_CFG.aligoEndpoint,{method:'POST',
+        headers: await docAuthHeaders({'Content-Type':'application/json'}),
         body:JSON.stringify({kind:_docKind, recipients:recipients.filter(r=>r.phone)})});
       const j=await res.json().catch(()=>({}));
       if(!res.ok) throw new Error(j.error||('HTTP '+res.status));
