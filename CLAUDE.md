@@ -8,7 +8,7 @@
 - 계정 `cmc338111-crypto`, 저장소 `merittour-tools` (public), 기본 브랜치 `main`.
 - 진입점: `/sales/` (영업 도구 허브). 루트 `index.html`은 `/sales/`로 리다이렉트.
 - 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library. (inquiry 폴더는 폐지됐으나 잔존)
-  - `golfweather`: 손님 공개용 골프 라운딩 적합도(Open-Meteo 키리스). **게이트 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML.
+  - `golfweather`: 손님 공개용 골프 라운딩 적합도(Open-Meteo 키리스). **게이트 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML. **영업 허브 카드는 뺐다** — 손님에게 주소를 직접 보내는 도구라 사내 진입점이 필요 없다. 페이지는 그대로 있다.
 - 그 외 디렉토리: admin, air, manage, sales, assets, cards, shared, supabase.
 
 ## 접근 게이트 (중요)
