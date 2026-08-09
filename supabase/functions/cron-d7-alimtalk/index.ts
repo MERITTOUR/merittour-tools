@@ -96,9 +96,16 @@ async function sendAligo(targets: Reservation[]): Promise<unknown> {
 }
 
 Deno.serve(async (req) => {
-  // cron 인증 (설정된 경우에만 검사)
+  // cron 인증 — fail-closed.
+  // 예전에는 `if (secret && …)` 라서 CRON_SECRET 을 설정하지 않으면 검사를 통째로
+  // 건너뛰었다. 설정을 빠뜨렸을 때 열리는 쪽으로 기울면, 주소만 알면 누구나
+  // 전 고객에게 D-7 알림톡을 쏠 수 있다.
   const secret = env("CRON_SECRET");
-  if (secret && req.headers.get("x-cron-secret") !== secret) {
+  if (!secret) {
+    return new Response(JSON.stringify({ error: "CRON_SECRET 이 설정되지 않아 실행을 막았습니다." }),
+      { status: 500, headers: { "content-type": "application/json" } });
+  }
+  if (req.headers.get("x-cron-secret") !== secret) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   }
 

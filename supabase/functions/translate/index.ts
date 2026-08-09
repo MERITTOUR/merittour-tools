@@ -76,9 +76,38 @@ interface ReqBody {
   model?: string;
 }
 
+/* ── 호출자 확인 (fail-closed) ────────────────────────────────────
+   예전에는 검사가 아예 없었다. 이 함수는 손님에게 카카오 알림톡을 쏘므로,
+   주소만 알면 누구나 전 고객에게 문자를 보낼 수 있는 상태였다.
+   Supabase 로그인 토큰을 받아 프로젝트에 직접 물어 확인한다.
+   환경변수가 없으면 **막는다** — 설정을 빠뜨렸을 때 열리는 쪽으로 기울면 안 된다. */
+async function requireUser(req: Request): Promise<Response | null> {
+  const url = env("SUPABASE_URL");
+  const anon = env("SUPABASE_ANON_KEY");
+  if (!url || !anon) {
+    return json({ error: "서버 설정이 비어 있어 요청을 막았습니다(SUPABASE_URL/ANON_KEY)." }, 500);
+  }
+  const auth = req.headers.get("authorization") || "";
+  if (!/^Bearer\s+\S+/i.test(auth)) return json({ error: "로그인이 필요합니다." }, 401);
+  try {
+    const r = await fetch(url.replace(/\/+$/, "") + "/auth/v1/user", {
+      headers: { apikey: anon, authorization: auth },
+    });
+    if (!r.ok) return json({ error: "로그인이 만료되었거나 올바르지 않습니다." }, 401);
+    const u = await r.json().catch(() => null);
+    if (!u || !u.id) return json({ error: "로그인이 필요합니다." }, 401);
+  } catch {
+    return json({ error: "로그인을 확인하지 못했습니다." }, 401);
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders() });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+
+  const denied = await requireUser(req);
+  if (denied) return denied;
 
   const apiKey = env("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "ANTHROPIC_API_KEY 가 설정되지 않았습니다" }, 500);
