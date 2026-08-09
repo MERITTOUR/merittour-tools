@@ -37,6 +37,10 @@
   .wx-actions { justify-content: stretch; }
   .wx-actions .mt-btn { flex: 1; justify-content: center; }
 }
+  .wx-fallback{margin:-6px 0 18px;padding:10px 13px;font-size:13px;line-height:1.7;
+    background:#F4F7FB;border:1px solid #D8E0EA;border-left:3px solid #2E5A88;border-radius:0 8px 8px 0;color:#5A6A7A}
+  .wx-fallback b{color:#22303F}
+  .wx-fallback a{color:#2E5A88;font-weight:700}
 </style>
 </head>
 <body>
@@ -56,6 +60,16 @@
   <p class="wx-intro">
     리조트별 현지 <strong>3시간 단위 날씨 예보</strong>를 바로 확인하고, 손님께 보낼 안내문을 한 번에 복사합니다.<br>
     <span class="src">출처: golfweather.info · 새 탭에서 열림</span>
+  </p>
+
+  <!-- 이 도구는 외부 사이트(golfweather.info)로 나간다. 그 사이트가 죽으면 여기도 같이
+       죽으므로, 대체 수단을 **그때 찾는 자리**에 붙여 둔다. 골프 날씨는 Open-Meteo
+       키리스라 외부 사이트에 기대지 않는다. 영업 허브 카드로 두면 평소에 자리만
+       차지하고, 정작 필요한 순간에는 여기서 헤매게 된다. -->
+  <p class="wx-fallback">
+    <b>golfweather.info 가 안 열리나요?</b>
+    <a href="../golfweather/">골프 날씨</a> 로 보실 수 있습니다 —
+    외부 사이트에 기대지 않고 직접 계산합니다(라운딩 적합도 100점·신호색).
   </p>
 
   <div id="wxRoot"></div>
