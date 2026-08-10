@@ -12,7 +12,11 @@
      같은 일은 통합 업무 허브의 ② 호텔 블록 → 「출발 일정 조회」에서 합니다.
      그쪽은 서버에 올라온 자료와 리조트 마스터 보유를 함께 봅니다. -->
 <meta http-equiv="refresh" content="0; url=../dashboard/">
-<script src="../../shared/guard.js" data-section="inquiry"></script>
+<!-- data-section 을 두지 않는다. 이 주소는 통합 업무 허브로 넘기기만 하는
+     자리라 허브에 카드가 없다. 섹션으로 두면 권한 화면에 「어디를 여는지
+     알 수 없는 줄」이 하나 늘고, 그 섹션이 꺼진 사람은 옛 즐겨찾기로 들어왔을 때
+     넘어가지도 못하고 차단 화면을 본다. 실제 통제는 넘어간 대시보드가 한다. -->
+<script src="../../shared/guard.js"></script>
 <style>
   :root{ --bg:#EEF2F8; --surface:#fff; --navy:#1a2332; --accent:#2E5A88; --accent2:#4A7BB0;
     --text:#22303F; --text2:#5A6A7A; --border:#D8E0EA;

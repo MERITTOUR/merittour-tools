@@ -46,18 +46,24 @@
 
      admin(관리자 화면)은 여기 없다 — 역할로만 연다. 섹션으로 두면 owner 가
      실수로 staff 에게 계정 관리 권한을 줄 수 있다. */
+  /* label 은 **허브에 실제로 보이는 카드 이름 그대로** 적는다. 권한 관리에서
+     「대시보드」를 켰는데 허브에는 「통합 업무 허브」가 뜨면, 무엇을 켠 것인지
+     매번 맞춰 보게 된다. 카드 이름을 바꾸면 여기도 같이 바꿀 것.
+     (guard.js 의 차단 안내문도 이 label 을 그대로 쓴다) */
   var SECTIONS = [
-    { key: 'sales',      label: '영업 허브',   path: 'sales/' },
-    { key: 'manage',     label: '관리 허브',   path: 'manage/' },
-    { key: 'air',        label: '항공 허브',   path: 'air/' },
-    { key: 'dashboard',  label: '대시보드',    path: 'tools/dashboard/' },
-    { key: 'booking',    label: '예약',        path: 'tools/booking/' },
-    { key: 'register',   label: '등록소',      path: 'tools/register/' },
-    { key: 'inquiry',    label: '문의',        path: 'tools/inquiry/' },
-    { key: 'insurance',  label: '보험',        path: 'tools/insurance/' },
-    { key: 'library',    label: '자료실',      path: 'tools/library/' },
-    { key: 'imgtoolkit', label: '이미지 도구', path: 'tools/imgtoolkit/' },
-    { key: 'weather',    label: '날씨',        path: 'tools/weather/' }
+    { key: 'sales',      label: '영업 허브',        path: 'sales/' },
+    { key: 'manage',     label: '관리 허브',        path: 'manage/' },
+    { key: 'air',        label: '항공 허브',        path: 'air/' },
+    { key: 'dashboard',  label: '통합 업무 허브',   path: 'tools/dashboard/' },
+    { key: 'booking',    label: '2027 예약 화면',   path: 'tools/booking/' },
+    { key: 'insurance',  label: '보험코드매칭',     path: 'tools/insurance/' },
+    { key: 'library',    label: '가입 서류 자료실', path: 'tools/library/' },
+    { key: 'imgtoolkit', label: '이미지 툴킷',      path: 'tools/imgtoolkit/' },
+    { key: 'weather',    label: '리조트 날씨',      path: 'tools/weather/' }
+    /* register(등록소) · inquiry(문의) 는 뺐다 — 둘 다 통합 업무 허브로 보내는
+       리다이렉트만 남은 주소라 허브에 카드가 없다. 카드가 없는 줄을 권한 화면에
+       띄우면 「이건 어디를 여는 거지」가 된다. 두 주소의 data-section 도 함께
+       뗐으니 옛 즐겨찾기로 들어와도 그대로 넘어간다. */
     /* 권한 관리(admin/users/)는 여기 없다 — **마스터 전용**이다.
        섹션으로 두면 위임받은 사람이 스스로를 마스터로 올릴 수 있고,
        마스터가 섹션을 전부 꺼도 되돌릴 문이 사라진다. */
@@ -69,14 +75,14 @@
      owner·admin 도 예외가 아니다 — 전 섹션이 기본으로 들어가고, 거기서 뺄 수 있다.
      (16_sections_for_all.sql 이전에는 역할로 무조건 통과했는데, 그러면 마스터가
       자기 섹션을 정할 수가 없었다) */
-  var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking', 'register',
-                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather'];
+  var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking',
+                  'insurance', 'library', 'imgtoolkit', 'weather'];
   var DEFAULT_AREAS = {
     owner:  { areas: ALL_KEYS.slice(), read: [] },
     admin:  { areas: ALL_KEYS.slice(), read: [] },
-    manage: { areas: ['sales', 'manage', 'dashboard', 'booking', 'register', 'inquiry',
+    manage: { areas: ['sales', 'manage', 'dashboard', 'booking',
                       'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
-    sales:  { areas: ['sales', 'dashboard', 'booking', 'register', 'inquiry',
+    sales:  { areas: ['sales', 'dashboard', 'booking',
                       'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
     air:    { areas: [], read: ['air', 'dashboard', 'booking', 'weather', 'library'] }
   };
