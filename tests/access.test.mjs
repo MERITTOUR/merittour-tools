@@ -583,3 +583,58 @@ test('비밀번호 — 영문·숫자는 필수, 특수문자는 권장', () => 
   assert.equal(strong.strong, true);
   assert.equal(strong.reason, '');
 });
+
+/* ══ 자동 로그인 ═══════════════════════════════════════════════ */
+
+function sessStore() {
+  const m = new Map();
+  return { getItem: k => (m.has(k) ? m.get(k) : null),
+           setItem: (k, v) => m.set(k, String(v)),
+           removeItem: k => m.delete(k), _dump: () => Object.fromEntries(m) };
+}
+
+test('자동 로그인 — 기본은 켜짐, 세션은 localStorage 에', async () => {
+  reset(); AUTH._dep.session = sessStore();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  assert.equal(AUTH.autoLogin(), true);
+  await AUTH.login('a@b.c', 'pw');
+  assert.ok(AUTH._dep.storage._dump()['mt-auth-session'], 'localStorage 에 있어야 한다');
+  assert.equal(AUTH._dep.session._dump()['mt-auth-session'], undefined);
+});
+
+test('자동 로그인 끄면 — 브라우저를 닫으면 사라지는 곳에 둔다', async () => {
+  reset(); AUTH._dep.session = sessStore();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw', false, false);
+  assert.equal(AUTH.autoLogin(), false);
+  assert.ok(AUTH._dep.session._dump()['mt-auth-session'], 'sessionStorage 에 있어야 한다');
+  assert.equal(AUTH._dep.storage._dump()['mt-auth-session'], undefined,
+    'localStorage 에 남아 있으면 끈 의미가 없다');
+  assert.ok(await AUTH.token(), '그래도 지금 세션은 살아 있어야 한다');
+});
+
+test('자동 로그인을 끄면 이미 남아 있던 세션도 옮겨진다', async () => {
+  reset(); AUTH._dep.session = sessStore();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw');                 // 켜진 상태로 로그인
+  AUTH.setAutoLogin(false);                        // 나중에 끔
+  assert.equal(AUTH._dep.storage._dump()['mt-auth-session'], undefined);
+  assert.ok(AUTH._dep.session._dump()['mt-auth-session']);
+  assert.ok(AUTH.session(), '세션 자체는 끊기지 않는다');
+});
+
+test('로그아웃하면 두 곳 모두 지운다', async () => {
+  reset(); AUTH._dep.session = sessStore();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  route('/auth/v1/logout', 200, null);
+  await AUTH.login('a@b.c', 'pw', true, false);
+  await AUTH.logout();
+  assert.equal(AUTH.session(), null);
+  assert.equal(AUTH._dep.storage._dump()['mt-auth-session'], undefined);
+  assert.equal(AUTH._dep.session._dump()['mt-auth-session'], undefined);
+  assert.equal(AUTH.rememberedEmail(), 'a@b.c', '아이디 저장은 별개다');
+});

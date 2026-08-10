@@ -48,8 +48,10 @@
   .foot{margin-top:22px;font-size:11px;color:var(--ink3);line-height:1.6}
   /* 계정 신청으로 오가는 줄 — 버튼이지만 문장 안에 있어 링크처럼 보이게 한다 */
   .alt{margin:16px 0 0;font-size:12.5px;color:var(--ink2);text-align:center}
-  .keep{display:flex;align-items:center;gap:7px;margin:-4px 0 14px;
+  .keeps{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:-4px 0 4px}
+  .keep{display:flex;align-items:center;gap:7px;
     font-size:12.5px;color:var(--ink2);cursor:pointer;user-select:none}
+  .keep-why{margin:0 0 12px;font-size:11.5px;line-height:1.6;color:var(--ink3);min-height:1em}
   .keep input{width:15px;height:15px;margin:0;accent-color:#2E5A88;cursor:pointer}
   .pw-hint{margin:7px 0 0;font-size:11.5px;line-height:1.6;color:var(--ink3)}
   .pw-hint.ok{color:#2F7A55}
@@ -80,7 +82,11 @@
         <label for="pw">비밀번호</label>
         <input type="password" id="pw" name="password" autocomplete="current-password" required>
       </div>
-      <label class="keep"><input type="checkbox" id="keep-id"> 아이디 저장</label>
+      <div class="keeps">
+        <label class="keep"><input type="checkbox" id="keep-id"> 아이디 저장</label>
+        <label class="keep"><input type="checkbox" id="keep-login"> 자동 로그인</label>
+      </div>
+      <p class="keep-why" id="keep-why"></p>
       <button class="go" type="submit" id="btn-login">로그인</button>
     </form>
     <p class="alt">계정이 없으신가요? <button type="button" class="linkish" id="btn-ask">계정 신청하기</button></p>
@@ -239,7 +245,7 @@
     clearMsg();
     var btn = $('btn-login');
     btn.disabled = true; btn.textContent = '확인 중…';
-    MT_AUTH.login($('email').value, $('pw').value, $('keep-id').checked)
+    MT_AUTH.login($('email').value, $('pw').value, $('keep-id').checked, $('keep-login').checked)
       .then(afterLogin)
       .catch(function (err) { say(err && err.message ? err.message : '로그인에 실패했습니다.'); })
       .then(function () { btn.disabled = false; btn.textContent = '로그인'; });
@@ -249,11 +255,22 @@
   (function () {
     var saved = MT_AUTH.rememberedEmail();
     if (saved) { $('email').value = saved; $('keep-id').checked = true; $('pw').focus(); }
+    $('keep-login').checked = MT_AUTH.autoLogin();
+    whyAuto();
     /* 왜 로그인 화면이 다시 떴는지 말해 준다. 안 그러면 「방금 로그인했는데?」가 된다. */
     if (MT_AUTH.takeExpiredNotice()) {
       say('로그인한 지 ' + MT_AUTH.SESSION_MAX_DAYS + '일이 지나 다시 로그인이 필요합니다.', 'warn');
     }
   })();
+
+  /* 자동 로그인이 무엇을 뜻하는지 그 자리에서 적어 준다 — 공용 PC 에서
+     끄고 쓸 사람이 알아야 하는데, 체크박스 이름만으로는 안 읽힌다. */
+  function whyAuto() {
+    $('keep-why').textContent = $('keep-login').checked
+      ? '이 브라우저에서는 ' + MT_AUTH.SESSION_MAX_DAYS + '일 동안 다시 로그인하지 않습니다.'
+      : '브라우저를 닫으면 로그아웃됩니다. 공용 PC 에서는 꺼 두세요.';
+  }
+  $('keep-login').addEventListener('change', whyAuto);
 
   /* 비밀번호를 치는 동안 규칙을 알려 준다. 저장을 눌러서야 알면 두 번 친다. */
   $('pw1').addEventListener('input', function () {

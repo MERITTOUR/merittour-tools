@@ -26,6 +26,7 @@
   var ME_KEY       = 'mt-auth-me';        // {id,email,name,role,active,at}
   var REMEMBER_KEY = 'mt-auth-remember';  // 아이디 저장 — 이메일만. 비밀번호는 절대 두지 않는다
   var EXPIRED_KEY  = 'mt-auth-expired';   // 30일이 지나 끊었다는 표시(로그인 화면이 이유를 말해 준다)
+  var AUTO_KEY     = 'mt-auth-auto';      // 자동 로그인 on/off
   var ME_TTL_MS    = 5 * 60 * 1000;       // 역할 캐시 5분 — 승급/정지가 오래 안 먹으면 곤란하다
   var REFRESH_PAD  = 60;                  // 만료 60초 전이면 미리 갱신
 
@@ -99,7 +100,10 @@
              : (typeof globalThis !== 'undefined' && globalThis.MT_SB) ? globalThis.MT_SB
              : { URL: '', ANON_KEY: '', ready: function () { return false; } },
     now:     function () { return Date.now(); },
-    go:      function (url) { if (typeof location !== 'undefined') location.href = url; }
+    go:      function (url) { if (typeof location !== 'undefined') location.href = url; },
+    /* 자동 로그인을 끄면 여기에 세션을 둔다 — 브라우저를 닫으면 사라진다.
+       공용 PC 에서 앞사람 계정이 그대로 남는 것을 막는 유일한 방법이다. */
+    session: (typeof sessionStorage !== 'undefined') ? sessionStorage : memStore()
   };
   function memStore() {
     var m = {};
@@ -173,10 +177,40 @@
     });
   }
 
-  /* ── 세션 ────────────────────────────────────────────────────── */
+  /* ── 세션 ──────────────────────────────────────────────────────
+     자동 로그인이 켜져 있으면 localStorage(브라우저를 닫아도 남는다),
+     꺼져 있으면 sessionStorage(닫으면 사라진다). 읽을 때는 양쪽을 다 본다 —
+     설정을 바꾼 직후에도 지금 세션이 끊기지 않아야 한다. */
+  function autoLogin() {
+    var v = dep.storage.getItem(AUTO_KEY);
+    return v === null || v === undefined ? true : v === '1';   // 기본은 켜짐
+  }
+  function setAutoLogin(on) {
+    try { dep.storage.setItem(AUTO_KEY, on ? '1' : '0'); } catch (e) {}
+    var cur = readSession();
+    if (cur) writeSession(cur);       // 지금 세션을 새 저장소로 옮긴다
+  }
+  function readSession() {
+    var a = readJSON(SESSION_KEY);
+    if (a) return a;
+    try {
+      var raw = dep.session.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function writeSession(rec) {
+    /* 어느 쪽에 쓰든 반대쪽은 반드시 지운다. 남겨 두면 자동 로그인을 꺼도
+       예전 것이 살아 있어 브라우저를 닫았다 열면 그대로 들어가진다. */
+    try { dep.session.removeItem(SESSION_KEY); } catch (e) {}
+    writeJSON(SESSION_KEY, null);
+    if (!rec) return;
+    if (autoLogin()) writeJSON(SESSION_KEY, rec);
+    else { try { dep.session.setItem(SESSION_KEY, JSON.stringify(rec)); } catch (e) {} }
+  }
+
   function saveSession(s, startedAt) {
-    if (!s || !s.access_token) { writeJSON(SESSION_KEY, null); return null; }
-    var prev = readJSON(SESSION_KEY);
+    if (!s || !s.access_token) { writeSession(null); return null; }
+    var prev = readSession();
     var rec = {
       access_token:  s.access_token,
       refresh_token: s.refresh_token || '',
@@ -187,16 +221,16 @@
       signed_in_at: startedAt || (prev && prev.signed_in_at) || dep.now(),
       user: s.user || null
     };
-    writeJSON(SESSION_KEY, rec);
+    writeSession(rec);
     return rec;
   }
-  function session() { return readJSON(SESSION_KEY); }
+  function session() { return readSession(); }
 
   /* 30일이 지났나. signed_in_at 이 없는 예전 세션은 지금 로그인한 것으로 본다
      (있던 사람을 배포하자마자 튕겨 내지 않는다 — 다음 30일부터 적용된다). */
   function tooOld(s) {
     if (!s) return false;
-    if (!s.signed_in_at) { s.signed_in_at = dep.now(); writeJSON(SESSION_KEY, s); return false; }
+    if (!s.signed_in_at) { s.signed_in_at = dep.now(); writeSession(s); return false; }
     return (dep.now() - s.signed_in_at) >= SESSION_MAX_MS;
   }
 
@@ -284,8 +318,9 @@
     }).catch(function () { logoutLocal(); return null; });
   }
 
-  function login(email, password, remember) {
+  function login(email, password, remember, auto) {
     var mail = String(email || '').trim();
+    if (auto !== undefined) setAutoLogin(!!auto);   // 세션을 저장하기 **전에** 정한다
     return req('/auth/v1/token?grant_type=password', {
       method: 'POST', body: { email: mail, password: String(password || '') }
     }).then(function (j) {
@@ -351,7 +386,7 @@
     });
   }
 
-  function logoutLocal() { writeJSON(SESSION_KEY, null); writeJSON(ME_KEY, null); }
+  function logoutLocal() { writeSession(null); writeJSON(ME_KEY, null); }
   function logout() {
     var s = session();
     logoutLocal();
@@ -609,6 +644,8 @@
     rank: rank,
     SESSION_MAX_DAYS: SESSION_MAX_DAYS,
     rememberedEmail: rememberedEmail,
+    autoLogin: autoLogin,
+    setAutoLogin: setAutoLogin,
     setRemembered: setRemembered,
     takeExpiredNotice: takeExpiredNotice,
     passwordCheck: passwordCheck,
