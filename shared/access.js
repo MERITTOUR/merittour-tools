@@ -57,7 +57,10 @@
     { key: 'insurance',  label: '보험',        path: 'tools/insurance/' },
     { key: 'library',    label: '자료실',      path: 'tools/library/' },
     { key: 'imgtoolkit', label: '이미지 도구', path: 'tools/imgtoolkit/' },
-    { key: 'weather',    label: '날씨',        path: 'tools/weather/' }
+    { key: 'weather',    label: '날씨',        path: 'tools/weather/' },
+    /* 권한 관리 화면. **조회만** 위임된다 — 변경은 owner 고정이다.
+       변경까지 위임하면 받은 사람이 스스로를 owner 로 올릴 수 있다. */
+    { key: 'users',      label: '권한 관리 (보기)', path: 'admin/users/' }
   ];
   var SECTION_KEYS = SECTIONS.map(function (s) { return s.key; });
 
@@ -67,7 +70,7 @@
      (16_sections_for_all.sql 이전에는 역할로 무조건 통과했는데, 그러면 마스터가
       자기 섹션을 정할 수가 없었다) */
   var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking', 'register',
-                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather'];
+                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather', 'users'];
   var DEFAULT_AREAS = {
     owner:  { areas: ALL_KEYS.slice(), read: [] },
     admin:  { areas: ALL_KEYS.slice(), read: [] },
