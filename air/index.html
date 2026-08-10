@@ -97,6 +97,24 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     </a>
   </div>
 
+
+  <!-- 허브끼리 오가는 길. 예전에는 관리자 허브에만 있어서, 두 팀 권한을 가진
+       사람도 허브를 옮기려면 주소를 직접 쳐야 했다. 권한 없는 허브는
+       guard.js 가 data-section 을 보고 감춘다(제목까지 같이 사라진다). -->
+  <div class="section-title" data-group=".mt-hub-link">다른 허브</div>
+  <div class="tool-grid">
+    <a href="../sales/" class="tool-card mt-hub-link" data-section="sales">
+      <div class="tool-card-title">영업 허브</div>
+      <div class="tool-card-desc">영업 도구 모음 — 통합 업무 허브 · 이미지 툴킷 · 자료실</div>
+      <div class="tool-card-meta"><span class="badge">/sales/</span></div>
+    </a>
+    <a href="../manage/" class="tool-card mt-hub-link" data-section="manage">
+      <div class="tool-card-title">관리 허브</div>
+      <div class="tool-card-desc">관리팀 화면</div>
+      <div class="tool-card-meta"><span class="badge">/manage/</span></div>
+    </a>
+  </div>
+
   <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
 </div>
 

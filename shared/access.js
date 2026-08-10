@@ -384,7 +384,8 @@
   /* 초대받은 사람이 비밀번호를 정한다 */
   function setPassword(password) {
     return token().then(function (t) {
-      if (!t) throw new Error('로그인 정보가 만료되었습니다. 초대 메일의 링크를 다시 눌러 주세요.');
+      // 초대 링크로 왔을 수도, 로그인한 채 배지 메뉴에서 왔을 수도 있다.
+      if (!t) throw new Error('로그인 정보가 만료되었습니다. 다시 로그인한 뒤 바꿔 주세요.');
       return req('/auth/v1/user', { method: 'PUT', token: t, body: { password: String(password || '') } });
     });
   }

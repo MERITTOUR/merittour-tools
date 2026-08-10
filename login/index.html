@@ -93,11 +93,12 @@
   </div>
 
   <!-- 가입 요청 — 로그인 전이라 anon 으로 보낸다(15_access_requests.sql).
-       여기서 계정이 만들어지는 것이 아니다. 마스터가 확인하고 발급한다. -->
+       여기서 계정이 만들어지는 것이 아니다. 마스터가 확인하고 발급한다.
+       메일은 가지 않는다 — 마스터가 아이디와 첫 비밀번호를 따로 알려 준다. -->
   <div id="view-ask" class="hide">
     <h1>가입 요청</h1>
     <p class="sub">계정이 없으시면 아래로 요청을 보내세요.<br>
-      마스터(관리자) 확인 후 계정이 발급됩니다.</p>
+      마스터(관리자) 확인 후 <b>아이디와 첫 비밀번호를 따로 알려 드립니다.</b></p>
     <form id="form-ask">
       <div class="field">
         <label for="ask-name">이름</label>
@@ -284,7 +285,7 @@
 
   /* ── 계정 신청 ──────────────────────────────────────────────── */
   /* 로그인 화면에서 여기로 올 때 아이디를 이미 적었다면 그대로 옮겨 준다 —
-     두 번 치게 하면 오타로 엉뚱한 주소에 초대가 간다. */
+     두 번 치게 하면 오타로 엉뚱한 주소에 계정이 만들어진다. */
   $('btn-ask').addEventListener('click', function () {
     clearMsg();
     if ($('email').value && !$('ask-email').value) $('ask-email').value = $('email').value;
@@ -303,7 +304,8 @@
       email: $('ask-email').value
     }).then(function (r) {
       show('view-login');
-      say('요청을 보냈습니다. 마스터(관리자) 확인 후 ' + r.email + ' 로 계정이 발급됩니다.', 'ok');
+      say('요청을 보냈습니다. 마스터(관리자) 확인 후 ' + r.email + ' 로 계정이 만들어지면 '
+        + '아이디와 첫 비밀번호를 따로 알려 드립니다. (메일은 가지 않습니다)', 'ok');
     }).catch(function (err) {
       // 이미 접수된 건은 실패가 아니다 — 다시 누르게 만들지 않는다.
       if (err && err.duplicate) { show('view-login'); say(err.message, 'warn'); return; }

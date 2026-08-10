@@ -6,26 +6,27 @@
 ## 저장소 개요
 - 메리트투어(한국 골프 투어 여행사) 사내 자동화 도구함. GitHub Pages로 배포.
 - 계정 `cmc338111-crypto`, 저장소 `merittour-tools` (public), 기본 브랜치 `main`.
-- 진입점: `/sales/` (영업 도구 허브). 루트 `index.html`은 `/sales/`로 리다이렉트.
+- 진입점: 루트 `index.html` 이 계정의 섹션 권한을 보고 `sales` → `manage` → `air` 중 처음 열리는 허브로 보낸다.
 - 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library. (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
   - `golfweather`: 골프 라운딩 적합도(Open-Meteo 키리스). **로그인 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML.
     - **이건 `weather`(리조트 날씨)의 대체 수단이다.** 리조트 날씨는 외부 사이트 `golfweather.info` 로 나가므로 그 사이트가 죽으면 같이 죽는다. golfweather 는 외부에 기대지 않고 직접 계산한다.
     - **영업 허브 카드로 두지 않는다.** 평소에는 자리만 차지하고, 정작 필요한 순간(외부 사이트가 안 열릴 때)에는 허브를 뒤지게 된다. 링크는 **리조트 날씨 안**에 「golfweather.info 가 안 열리나요?」로 붙여 뒀다 — 찾는 자리에 있어야 한다.
-- 그 외 디렉토리: admin, air, manage, sales, assets, cards, shared, supabase.
+- 그 외 디렉토리: admin/users(권한 관리), air, manage, sales, assets, cards, shared, supabase.
+  - **관리자 허브(`admin/index.html`)는 없앴다.** 권한 관리로 가는 통로일 뿐이라 한 단계가 헛돌았다. 있던 내용은 옮겼다 — 직원 명함·고객 가이드 → 영업 허브 「참고 자료」, 부서별 진입점 → 세 허브의 「다른 허브」, 시스템 관리 안내 → `admin/users/` 아래 설명, 최근 작업·다음 할 일 → `docs/changelog.md`.
 
 ## 페이지 진입은 로그인으로 막는다 (`shared/guard.js`)
 - 모든 진입점 `index.html`은 `<head>`에서 본문보다 먼저 **한 줄**을 부른다. 깊이만 맞추면 된다.
-  - sales·admin·air·manage: `<script src="../shared/guard.js" data-section="sales"></script>`
+  - sales·air·manage: `<script src="../shared/guard.js" data-section="sales"></script>`
   - tools/* (2단계): `<script src="../../shared/guard.js" data-section="booking"></script>`
   - tools/library/archive (3단계): `<script src="../../../shared/guard.js" data-section="library"></script>`
   - 예외 3곳: 루트 `index.html`(권한에 맞는 허브로 보냄) · `login/`(무한 루프) · `tools/golfweather/`(손님 공개).
-  - `data-section` 을 빼면 로그인·승인만 확인한다. `admin/`·`admin/users/` 가 그렇다(역할로만 연다).
+  - `data-section` 을 빼면 로그인·승인만 확인한다. `admin/users/` 가 그렇다(역할로만 연다).
 - **의존 스크립트는 guard.js 가 스스로 부른다**(`supabase-config.js`·`access.js`). 페이지마다 세 줄을 맞춰 넣게 하면 어느 한 장에서 순서가 틀어져도 조용히 안 막힌다 — 한 줄이라야 빠뜨릴 자리가 없다.
 - **확인이 끝날 때까지 본문을 그리지 않는다**(`body{visibility:hidden}`). 잠깐이라도 보이면 권한 없는 사람이 화면을 읽고, 로그인 화면으로 튕기는 깜빡임도 생긴다. `display:none`이 아니라 `visibility`인 이유는 레이아웃이 0이 되면 폭을 재서 그리는 표들이 잘못된 크기로 뜨기 때문이다.
 - **실패해도 하얀 화면으로 두지 않는다.** 세션 없음 → 로그인 화면(`?next=` 로 돌아올 곳). 승인 전 → 이유 + [다른 계정으로 로그인]. 오류·설정 없음 → 이유 + [다시 시도]. 4초 넘으면 「확인하는 중」. 빈 화면이면 사람은 「고장」이라고만 알고 손쓸 데가 없다.
 - **`?next=` 는 상대경로로 넘긴다.** 절대주소를 넘기면 로그인 화면의 열린-리다이렉트 방지에 걸려 늘 `/sales/`로 가버린다. 오리진을 정규식으로 떼지 말고 `new URL().pathname`을 쓸 것(`file://`로 열어 보는 경우가 있다).
 - **문 앞에서 보는 것은 역할이 아니라 섹션이다**(`data-section`). 역할로 걸면 초대 기본값이 `air`라 신규 직원이 전부 막힌다. 역할은 섹션 권한의 **기본값**만 정하고, 누가 무엇을 여는지는 owner 가 계정마다 정한다.
-- **루트(`index.html`)는 각자 볼 수 있는 허브로 보낸다.** 예전처럼 모두를 `/sales/`로 보내면 영업 허브 권한이 없는 사람이 문 앞에서 막힌다. owner·admin → `admin/`, 그 밖에는 `sales` → `manage` → `air` 중 처음 열리는 곳. 그래서 루트에는 `meta refresh`를 쓰지 않는다(권한을 확인하기 전에 튀어 버린다).
+- **루트(`index.html`)는 각자 볼 수 있는 허브로 보낸다.** 예전처럼 모두를 `/sales/`로 보내면 영업 허브 권한이 없는 사람이 문 앞에서 막힌다. `sales` → `manage` → `air` 중 처음 열리는 곳으로 보낸다(마스터도 예외 없이 남들과 같은 일하는 화면에서 시작한다). 그래서 루트에는 `meta refresh`를 쓰지 않는다(권한을 확인하기 전에 튀어 버린다).
 - **허브에서 볼 수 없는 카드는 감춘다.** 링크에 `data-section`을 적어 두면 `guard.js`가 지운다. 눌러 들어갔다가 막히는 것보다 안 보이는 편이 문의가 적다.
 - 표시명은 **계정에서 온다**(`app_users.name`, 없으면 이메일 아이디). `MT_USER.get()`·`user()`·`role()`·`logout()`. 예전 gate.js의 `set()`/`prompt()`(자유 입력 이름 바꾸기)는 두지 않는다 — 각자 PC에서 고치면 「누가 올렸는지」가 사람마다 달라진다. 바꿀 곳은 `admin/users/` 하나다.
 - **화면마다 나갈 길을 둔다.** 실제로 `admin/users/` 에 돌아갈 링크가 없어 주소를 직접 쳐야 했다. 새 화면을 만들 때 로그인·권한만 보지 말고 **여기서 어디로 나가나**를 함께 확인할 것.
@@ -44,25 +45,28 @@
 - 역할 5단계: `owner` > `admin` > `manage` / `sales` > `air`(읽기). **owner 는 무엇을 물어도 통과**한다(`can()`과 서버 `mt_has_role()`이 같은 규칙 — 안 그러면 화면엔 보이는데 저장이 막힌다).
   - **화면에 보이는 이름은 마스터 / 관리팀 / 영업팀 / 항공팀** 넷이다(`admin/users/` 의 `ROLE_LABEL`·`ROLE_PICK`). 안쪽 값(`owner`·`manage`·`sales`·`air`)은 **RLS 정책 54곳에 문자열로 박혀 있어 바꿀 수 없다** — 이름만 우리 말로 바꿔 쓴다. 화면에 `owner`·`air` 같은 영문 값을 그대로 내보내지 말 것.
   - `admin` 은 새로 주지 않는다(마스터와 거의 같다). 이미 `admin` 인 계정이 있으면 **그 줄에서만** 선택지에 남는다 — 목록에서 빼 버리면 저장할 때 값이 바뀐다.
-- 계정은 콘솔에서 초대 → `app_users` 에 `air`·비활성으로 자동 생성 → **owner 가 `admin/users/` 에서 승인·역할·섹션 지정**.
+- 계정은 **콘솔에서 직접 만든다**(초대 아님) → `app_users` 에 자동 생성 → 신청함에 정해 둔 권한이 있으면 그대로 입혀지고, 없으면 `air`·비활성으로 남아 **owner 가 `admin/users/` 에서 승인·역할·섹션 지정**.
 - **섹션 권한**(`14_app_user_sections.sql`) — `app_users.areas`(읽기+쓰기) / `read_areas`(읽기만). 섹션 목록의 단일 출처는 `shared/access.js` 의 `SECTIONS` 이고, **마이그레이션의 키와 반드시 같아야 한다**(한쪽만 고치면 화면엔 보이는데 서버가 막는다). 판정은 화면 `canArea`/`canReadArea` 와 서버 `mt_has_area`/`mt_can_read_area` 가 같은 규칙 — **역할 우회는 없다**(`16_sections_for_all.sql`). owner 도 목록에 있어야 열린다. 14 는 owner·admin 을 무조건 통과시켰는데, 그러면 **마스터가 자기 섹션을 정할 수 없었다**.
   - **쓸 수 있으면 볼 수 있다.** `areas` 에 있으면 `read_areas` 에 또 안 적어도 된다.
   - **권한 관리(`admin/users/`)는 마스터 전용이다.** `SECTIONS` 에 넣지 않는다 — 섹션으로 두면 위임받은 사람이 스스로를 마스터로 올릴 수 있고, 마스터가 섹션을 전부 꺼도 되돌릴 문이 사라진다. 「보기만 위임」도 두지 않는다(한번 넣었다가 되돌렸다).
   - **역할을 바꾸면 그 역할의 기본 섹션을 채워 준다**(`defaultsFor`). 안 채우면 `sales`로 올려도 섹션이 비어 아무 화면도 안 열린다 — 「승인했는데 왜 안 되지」가 된다. 채운 뒤 바로 저장하지 말고 무엇이 바뀌었는지 알리고 조정할 틈을 줄 것.
   - **본인이 자기 `areas` 를 못 채우게 `au_update_self` 가 두 컬럼을 고정한다.** 안 그러면 승인제가 뚫린다.
-  - **`admin/`·`admin/users/` 에 `data-section` 을 붙이지 말 것.** 이 두 화면이 역할로만 열리기 때문에 섹션을 전부 꺼도 되돌릴 수 있다. 붙이는 순간 마스터가 자기 손으로 잠긴다.
+  - **`admin/users/` 에 `data-section` 을 붙이지 말 것.** 이 화면이 역할로만 열리기 때문에 섹션을 전부 꺼도 되돌릴 수 있다. 붙이는 순간 마스터가 자기 손으로 잠긴다.
   - **판정 규칙을 바꿀 때는 데이터를 먼저 채우고 코드를 나중에 배포한다.** 16 을 코드 먼저 내보냈다가 `areas` 가 비어 있던 owner 가 모든 허브에서 막혔다. 화면 판정이 서버와 같은 규칙이라 데이터가 비면 코드만으로 막힌다.
   - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것 ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
-- **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 보고 **Supabase 콘솔 → Authentication → Users → Invite user** 로 초대(메일 발송) → 신청자가 링크에서 비밀번호 설정 → `app_users` 에 air·비활성 → owner 가 승인·섹션 지정.
-  - **초대 메일을 코드에서 보내지 않는다.** 보내려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
+- **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 역할·섹션을 정하고 → **Supabase 콘솔 → Authentication → Users → Add user → Create new user** 로 직접 생성(이메일 + 첫 비밀번호 + **Auto Confirm User**) → 만들어지는 순간 정해 둔 권한이 입혀진다 → 아이디·첫 비밀번호를 **본인에게 따로 알려 준다**.
+  - **초대 메일(Invite user)은 쓰지 않는다.** Supabase 기본 SMTP 는 팀 멤버 주소로만 가고 시간당 제한이 있어 실제로 오지 않았다. 커스텀 SMTP 를 붙이면 초대 방식으로 돌아갈 수 있으므로 **로그인 화면의 초대·재설정 링크 처리 코드는 지우지 않았다**.
+  - **첫 비밀번호를 바꿀 길을 반드시 남긴다.** 메일이 없으면 재설정 링크도 없다. 오른쪽 위 이름 배지 → 「비밀번호 변경」(`guard.js` 의 `changePassword`)이 그 자리다. 판정은 로그인 화면과 같은 `MT_AUTH.passwordCheck` 하나를 쓴다.
+  - **계정을 코드에서 만들지 않는다.** 만들려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
+  - 신청 상태 값은 `pending`·`invited`·`rejected`·`joined` 그대로다. 화면에 보이는 말만 「발급」으로 바꿨다 — 값을 바꾸면 표의 check 제약과 `mt_apply_access_request()` 가 함께 깨진다.
   - ⚠ **13 의 「anon 노출 0」 원칙에 대한 유일한 예외**다. 로그인 전 폼이라 anon 말고는 방법이 없다. 대신 **insert 만** 열고 select·update·delete 는 주지 않는다. `tests/sql-anon.test.mjs` 가 이 조건까지 검사한다 — 다른 표를 열거나 insert 밖의 권한이 붙으면 깨진다. **테스트를 느슨하게 풀어서 통과시키지 말 것.**
   - 같은 주소의 대기 신청은 부분 unique 인덱스로 하나만. 두 번 눌러도 줄이 늘지 않고, 화면은 「이미 접수되었습니다」로 안내한다(실패로 보이면 계속 다시 누른다).
 - **`app_users.email` 은 `auth.users` 와 트리거로 맞춘다**(15). 04 의 트리거는 가입 시점에 한 번 복사할 뿐이라, 콘솔에서 로그인 이메일을 바꾸면 계정 관리 화면이 계속 옛 주소를 보여 줬다.
 - **본인 역할 변경·본인 정지·마지막 활성 owner 내리기는 막는다.** 잠기면 아무도 계정을 못 고친다. 막을 때는 버튼만 끄지 말고 이유를 그 줄에 적을 것.
 - **RLS 로 막히면 PostgREST 는 오류가 아니라 0행을 준다.** 0행을 성공으로 보면 조용히 안 저장된다 — `updateUser` 처럼 0행을 권한 안내로 바꿀 것.
 - 접속 설정은 `shared/supabase-config.js`(URL + anon key). anon 키는 코드에 둬도 되지만 **`service_role` 키는 절대 넣지 않는다**.
-- 초대 메일이 열리려면 콘솔 → Authentication → URL Configuration 의 **Site URL** 이 `https://merittour.github.io/merittour-tools/login/` 여야 한다(기본값 localhost 면 「사이트에 연결할 수 없음」).
+- 나중에 초대 메일을 쓰게 되면 콘솔 → Authentication → URL Configuration 의 **Site URL** 이 `https://merittour.github.io/merittour-tools/login/` 여야 한다(기본값 localhost 면 「사이트에 연결할 수 없음」).
 
 ## 엠클릭 통합 업로드 (서버 공유)
 - `tools/register/` 에서 한 사람이 올리면 `data_registry` 에 출발월(`period`)별로 저장되고, 다른 직원은 파일 없이 쓴다.

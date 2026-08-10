@@ -160,7 +160,9 @@
     return String(u.email || '').split('@')[0];
   }
 
-  var ROLE_KO = { owner: '대표', admin: '관리자', manage: '관리', sales: '영업', air: '항공(읽기)' };
+  /* 화면에 보이는 역할 이름. admin/users/ 의 ROLE_LABEL 과 같은 말을 써야 한다 —
+     한쪽만 고치면 같은 사람이 화면마다 다른 직함으로 보인다. */
+  var ROLE_KO = { owner: '마스터', admin: '관리자', manage: '관리팀', sales: '영업팀', air: '항공팀 (읽기)' };
 
   function refreshHeader() {
     var name = displayName(CURRENT);
@@ -227,18 +229,28 @@
       + escHtml(ROLE_KO[CURRENT && CURRENT.role] || (CURRENT && CURRENT.role) || '') + '</div>';
     m.appendChild(who);
 
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.setAttribute('role', 'menuitem');
-    b.textContent = '로그아웃';
-    b.style.cssText =
-      'display:block;width:100%;text-align:left;padding:9px 12px;border:none;' +
-      'background:none;border-radius:7px;font-size:13.5px;font-weight:600;' +
-      'font-family:inherit;cursor:pointer;color:#C0392B;';
-    b.onmouseenter = function () { b.style.background = '#F2F5F9'; };
-    b.onmouseleave = function () { b.style.background = 'none'; };
-    b.addEventListener('click', function (e) { e.stopPropagation(); closeMenu(); doLogout(); });
-    m.appendChild(b);
+    /* 메뉴 한 줄 만들기 — 로그아웃만 빨간색이다. */
+    function item(text, danger, fn) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'menuitem');
+      b.textContent = text;
+      b.style.cssText =
+        'display:block;width:100%;text-align:left;padding:9px 12px;border:none;' +
+        'background:none;border-radius:7px;font-size:13.5px;font-weight:600;' +
+        'font-family:inherit;cursor:pointer;color:' + (danger ? '#C0392B' : '#353C48') + ';';
+      b.onmouseenter = function () { b.style.background = '#F2F5F9'; };
+      b.onmouseleave = function () { b.style.background = 'none'; };
+      b.addEventListener('click', function (e) { e.stopPropagation(); closeMenu(); fn(); });
+      m.appendChild(b);
+      return b;
+    }
+
+    /* 계정은 마스터가 콘솔에서 만들고 첫 비밀번호를 알려 준다(초대 메일이
+       Supabase 기본 SMTP 로는 오지 않는다). 그러면 받은 사람이 그 비밀번호를
+       바꿀 자리가 있어야 한다 — 메일 링크 없이 바꾸는 길은 여기뿐이다. */
+    item('비밀번호 변경', false, changePassword);
+    item('로그아웃', true, doLogout);
 
     document.body.appendChild(m);
     badge.setAttribute('aria-expanded', 'true');
@@ -248,6 +260,28 @@
       window.addEventListener('resize', closeMenu);
       window.addEventListener('scroll', closeMenu, true);
     }, 0);
+  }
+
+  /* 비밀번호 변경 — 로그인된 세션 토큰으로 바로 바꾼다(메일 왕복이 없다).
+     규칙은 로그인 화면과 같은 MT_AUTH.passwordCheck 하나를 쓴다. 두 군데서
+     따로 판정하면 여기서는 되는 비밀번호가 저기서는 안 되는 일이 생긴다. */
+  function changePassword() {
+    var A = window.MT_AUTH;
+    if (!A || typeof A.setPassword !== 'function') { window.alert('비밀번호 변경을 쓸 수 없습니다.'); return; }
+    var pw = window.prompt('새 비밀번호를 입력해 주세요.\n(8자 이상 · 영문과 숫자를 섞어 주세요. 특수문자를 넣으시면 더 안전합니다)');
+    if (pw === null) return;                       // 취소
+    // passwordCheck 는 사유를 reason 에 담아 준다(로그인 화면과 같은 판정).
+    var chk = A.passwordCheck ? A.passwordCheck(pw) : { ok: String(pw).length >= 8, reason: '8자 이상으로 정해 주세요.' };
+    if (!chk.ok) { window.alert(chk.reason || '비밀번호가 규칙에 맞지 않습니다.'); return; }
+    if (window.prompt('확인을 위해 한 번 더 입력해 주세요.') !== pw) {
+      window.alert('두 번 입력하신 비밀번호가 다릅니다. 다시 해 주세요.');
+      return;
+    }
+    A.setPassword(pw).then(function () {
+      window.alert('비밀번호를 바꿨습니다. 다음 로그인부터 새 비밀번호를 쓰시면 됩니다.');
+    }).catch(function (e) {
+      window.alert((e && e.message) ? e.message : '비밀번호를 바꾸지 못했습니다.');
+    });
   }
 
   function doLogout() {
@@ -266,7 +300,8 @@
     get: function () { return displayName(CURRENT); },
     user: function () { return CURRENT; },
     role: function () { return CURRENT ? CURRENT.role : ''; },
-    logout: doLogout
+    logout: doLogout,
+    changePassword: changePassword
   };
 
   /* ── 의존 스크립트 로드 ─────────────────────────────────────── */
