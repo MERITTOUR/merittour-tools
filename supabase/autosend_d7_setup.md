@@ -8,15 +8,21 @@
 ---
 
 ## 1. DB 테이블 만들기
-Supabase 콘솔 → SQL Editor → `supabase/reservations_setup.sql` 실행.
-- `reservations` (예약 데이터, anon 업서트 허용)
-- `notice_sent` (발송 로그, 서버 전용)
+Supabase 콘솔 → SQL Editor → `supabase/reservations_setup.sql` 실행(표만 만든다).
+- `reservations` (예약 데이터)
+- `notice_sent` (발송 로그, 서버 전용 — 정책 없음 → service_role 만)
+
+정책·권한은 `migrations/12_reservations_auth.sql`(로그인 사용자에게 열기) →
+동작 확인 → `migrations/13_lock_anon.sql`(anon 닫기) 순서로 건다.
+**순서를 뒤집으면 아래 2번 동기화가 조용히 멎어 D-7 알림톡이 낡은 자료로 나간다.**
 
 ## 2. 대시보드에서 데이터 올리기
-⑦ 확정서 생성 → 🔗 연동 설정 → **[↻ Supabase 동기화]**
-- 분석된 **확정·정산** 팀이 `reservations` 에 upsert 된다.
+자료를 불러오면 `analyze()` 끝에서 **자동으로** 동기화된다.
+손으로 확인·재시도하려면 ⑦ 확정서 생성 → **[↻ 지금 동기화]**.
+- 분석된 **확정·정산** 팀이 `reservations` 에 upsert 된다(로그인한 사람의 토큰으로).
 - 출발일·연락처·출발편/귀국편·PNR·여정이 함께 올라간다(자동발송이 이 값을 사용).
-- 새 예약/변경이 생기면 다시 눌러 최신화. (※ 자동 동기화 아님 — 버튼 방식)
+- 성공하면 「N팀 동기화됨」, 실패하면 **빨간 「동기화 실패」** 가 뜬다.
+  자동 실행일 때도 삼키지 않는다 — 예전에는 조용히 건너뛰어 아무도 몰랐다.
 
 ## 3. cron Edge Function 배포
 ```bash
@@ -29,7 +35,12 @@ supabase secrets set \
   ALIGO_TEST_MODE=N
 ```
 > `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` 는 Edge Function에 기본 제공된다.
-> `CRON_SECRET` 은 cron 외 호출을 막는 용도(아래 스케줄 헤더와 동일하게).
+> 이 함수는 pg_cron 이 JWT 없이 부르므로 `--no-verify-jwt` 가 맞다. 대신
+> **`CRON_SECRET` 이 필수다.**
+>
+> ⚠ 예전 코드는 `if (secret && …)` 라 **시크릿을 안 넣으면 검사를 통째로 건너뛰었다** —
+> 주소만 알면 누구나 전 고객에게 D-7 알림톡을 쏠 수 있었다. 지금은 시크릿이 없으면
+> 500 으로 막는다. 즉 **안 넣으면 자동발송이 아예 안 나간다.**
 
 ## 4. 매일 스케줄 등록
 SQL Editor → `supabase/cron_d7_schedule.sql` 에서 `<프로젝트>`·`<CRON_SECRET>` 교체 후 실행.
