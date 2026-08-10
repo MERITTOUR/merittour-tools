@@ -15,15 +15,18 @@
 
 ## 페이지 진입은 로그인으로 막는다 (`shared/guard.js`)
 - 모든 진입점 `index.html`은 `<head>`에서 본문보다 먼저 **한 줄**을 부른다. 깊이만 맞추면 된다.
-  - sales·admin·air·manage: `<script src="../shared/guard.js"></script>`
-  - tools/* (2단계): `<script src="../../shared/guard.js"></script>`
-  - tools/library/archive (3단계): `<script src="../../../shared/guard.js"></script>`
-  - 예외 3곳: 루트 `index.html`(즉시 sales로 리다이렉트) · `login/`(무한 루프) · `tools/golfweather/`(손님 공개).
+  - sales·admin·air·manage: `<script src="../shared/guard.js" data-section="sales"></script>`
+  - tools/* (2단계): `<script src="../../shared/guard.js" data-section="booking"></script>`
+  - tools/library/archive (3단계): `<script src="../../../shared/guard.js" data-section="library"></script>`
+  - 예외 3곳: 루트 `index.html`(권한에 맞는 허브로 보냄) · `login/`(무한 루프) · `tools/golfweather/`(손님 공개).
+  - `data-section` 을 빼면 로그인·승인만 확인한다. `admin/`·`admin/users/` 가 그렇다(역할로만 연다).
 - **의존 스크립트는 guard.js 가 스스로 부른다**(`supabase-config.js`·`access.js`). 페이지마다 세 줄을 맞춰 넣게 하면 어느 한 장에서 순서가 틀어져도 조용히 안 막힌다 — 한 줄이라야 빠뜨릴 자리가 없다.
 - **확인이 끝날 때까지 본문을 그리지 않는다**(`body{visibility:hidden}`). 잠깐이라도 보이면 권한 없는 사람이 화면을 읽고, 로그인 화면으로 튕기는 깜빡임도 생긴다. `display:none`이 아니라 `visibility`인 이유는 레이아웃이 0이 되면 폭을 재서 그리는 표들이 잘못된 크기로 뜨기 때문이다.
 - **실패해도 하얀 화면으로 두지 않는다.** 세션 없음 → 로그인 화면(`?next=` 로 돌아올 곳). 승인 전 → 이유 + [다른 계정으로 로그인]. 오류·설정 없음 → 이유 + [다시 시도]. 4초 넘으면 「확인하는 중」. 빈 화면이면 사람은 「고장」이라고만 알고 손쓸 데가 없다.
 - **`?next=` 는 상대경로로 넘긴다.** 절대주소를 넘기면 로그인 화면의 열린-리다이렉트 방지에 걸려 늘 `/sales/`로 가버린다. 오리진을 정규식으로 떼지 말고 `new URL().pathname`을 쓸 것(`file://`로 열어 보는 경우가 있다).
-- **문 앞에서는 역할을 보지 않는다.** 초대 기본 역할이 `air`이고 루트가 모두를 `/sales/`로 보내므로, 허브마다 역할을 걸면 신규 직원이 전부 문 앞에서 막힌다. 역할 차이는 서버 RLS와 `admin/users/`(`require(['admin'])`)가 본다.
+- **문 앞에서 보는 것은 역할이 아니라 섹션이다**(`data-section`). 역할로 걸면 초대 기본값이 `air`라 신규 직원이 전부 막힌다. 역할은 섹션 권한의 **기본값**만 정하고, 누가 무엇을 여는지는 owner 가 계정마다 정한다.
+- **루트(`index.html`)는 각자 볼 수 있는 허브로 보낸다.** 예전처럼 모두를 `/sales/`로 보내면 영업 허브 권한이 없는 사람이 문 앞에서 막힌다. owner·admin → `admin/`, 그 밖에는 `sales` → `manage` → `air` 중 처음 열리는 곳. 그래서 루트에는 `meta refresh`를 쓰지 않는다(권한을 확인하기 전에 튀어 버린다).
+- **허브에서 볼 수 없는 카드는 감춘다.** 링크에 `data-section`을 적어 두면 `guard.js`가 지운다. 눌러 들어갔다가 막히는 것보다 안 보이는 편이 문의가 적다.
 - 표시명은 **계정에서 온다**(`app_users.name`, 없으면 이메일 아이디). `MT_USER.get()`·`user()`·`role()`·`logout()`. 예전 gate.js의 `set()`/`prompt()`(자유 입력 이름 바꾸기)는 두지 않는다 — 각자 PC에서 고치면 「누가 올렸는지」가 사람마다 달라진다. 바꿀 곳은 `admin/users/` 하나다.
 - 헤더 배지 메뉴에 **이메일과 역할을 적는다.** 공용 PC에서 앞사람 계정으로 남아 있는 것을 알아챌 자리가 거기밖에 없다.
 
@@ -35,7 +38,13 @@
 ## 로그인·역할 (Supabase)
 - 진입은 `shared/guard.js`(로그인)가 막고, 실제 권한은 Supabase Auth + RLS다. 공용 비밀번호 게이트는 없앴다(위 절).
 - 역할 5단계: `owner` > `admin` > `manage` / `sales` > `air`(읽기). **owner 는 무엇을 물어도 통과**한다(`can()`과 서버 `mt_has_role()`이 같은 규칙 — 안 그러면 화면엔 보이는데 저장이 막힌다).
-- 계정은 콘솔에서 초대 → `app_users` 에 `air`·비활성으로 자동 생성 → **owner 가 `admin/users/` 에서 승인·역할 지정**.
+- 계정은 콘솔에서 초대 → `app_users` 에 `air`·비활성으로 자동 생성 → **owner 가 `admin/users/` 에서 승인·역할·섹션 지정**.
+- **섹션 권한**(`14_app_user_sections.sql`) — `app_users.areas`(읽기+쓰기) / `read_areas`(읽기만). 섹션 목록의 단일 출처는 `shared/access.js` 의 `SECTIONS` 이고, **마이그레이션의 키와 반드시 같아야 한다**(한쪽만 고치면 화면엔 보이는데 서버가 막는다). 판정은 화면 `canArea`/`canReadArea` 와 서버 `mt_has_area`/`mt_can_read_area` 가 같은 규칙 — **owner·admin 은 목록과 무관하게 전부 통과**하고, 나머지는 목록에 있어야 한다.
+  - **쓸 수 있으면 볼 수 있다.** `areas` 에 있으면 `read_areas` 에 또 안 적어도 된다.
+  - **관리자 화면은 섹션으로 두지 않는다.** 역할로만 연다 — 섹션으로 두면 owner 가 실수로 계정 관리 권한을 나눠 줄 수 있다.
+  - **역할을 바꾸면 그 역할의 기본 섹션을 채워 준다**(`defaultsFor`). 안 채우면 `sales`로 올려도 섹션이 비어 아무 화면도 안 열린다 — 「승인했는데 왜 안 되지」가 된다. 채운 뒤 바로 저장하지 말고 무엇이 바뀌었는지 알리고 조정할 틈을 줄 것.
+  - **본인이 자기 `areas` 를 못 채우게 `au_update_self` 가 두 컬럼을 고정한다.** 안 그러면 승인제가 뚫린다.
+  - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것(우회는 owner·admin 하나로 통일) ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
 - **본인 역할 변경·본인 정지·마지막 활성 owner 내리기는 막는다.** 잠기면 아무도 계정을 못 고친다. 막을 때는 버튼만 끄지 말고 이유를 그 줄에 적을 것.
 - **RLS 로 막히면 PostgREST 는 오류가 아니라 0행을 준다.** 0행을 성공으로 보면 조용히 안 저장된다 — `updateUser` 처럼 0행을 권한 안내로 바꿀 것.
