@@ -303,6 +303,28 @@
       var key = cards[i].getAttribute('data-section');
       if (key && !window.MT_AUTH.canReadArea(u, key)) cards[i].style.display = 'none';
     }
+    /* 역할로 감추는 카드 — 계정 관리처럼 섹션이 아니라 역할로만 여는 화면에 쓴다.
+       data-role="owner,admin" 처럼 적는다. */
+    var rc = document.querySelectorAll('a[data-role]');
+    for (var j = 0; j < rc.length; j++) {
+      var roles = String(rc[j].getAttribute('data-role') || '').split(',');
+      var ok = false;
+      for (var k = 0; k < roles.length; k++) {
+        if (roles[k].trim() === u.role) { ok = true; break; }
+      }
+      if (!ok) rc[j].style.display = 'none';
+    }
+    /* 묶음 제목만 남는 것을 막는다 — 카드가 하나도 안 보이면 제목도 감춘다. */
+    var titles = document.querySelectorAll('[data-group]');
+    for (var t = 0; t < titles.length; t++) {
+      var sel = titles[t].getAttribute('data-group');
+      var kids = document.querySelectorAll(sel);
+      var any = false;
+      for (var q = 0; q < kids.length; q++) {
+        if (kids[q].style.display !== 'none') { any = true; break; }
+      }
+      if (!any) titles[t].style.display = 'none';
+    }
   }
 
   /* 확인이 오래 걸려도 하얀 화면으로 두지 않는다. */
