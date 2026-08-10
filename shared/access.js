@@ -4,7 +4,8 @@
    Supabase Auth 를 REST 로 직접 쓴다. SDK 를 CDN 에서 더 받지 않는다
    (확정서 쪽도 이미 REST 직접 호출이고, 의존을 늘릴 이유가 없다).
 
-   역할 5단계 — owner > admin > manage / sales > air   (04_user_access.sql)
+   역할 — owner(마스터) 위에, manage·sales·air(관리팀·영업팀·항공팀)는 같은 층
+   (04_user_access.sql · 18_air_same_as_others.sql). admin 은 예전 값이라 남겨만 둔다.
 
    페이지에서 쓰는 법 (<head> 에서 supabase-config.js 다음에):
      <script src="../shared/supabase-config.js"></script>
@@ -84,7 +85,11 @@
                       'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
     sales:  { areas: ['sales', 'dashboard', 'booking',
                       'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
-    air:    { areas: [], read: ['air', 'dashboard', 'booking', 'weather', 'library'] }
+    /* 항공팀도 영업·관리와 같은 층이다(18_air_same_as_others.sql).
+       예전에는 read 로만 채워 「읽기 전용」이었는데, 서버 쓰기 정책에서도
+       빠져 있어 화면에는 버튼이 보이는데 저장만 0행이 됐다. */
+    air:    { areas: ['sales', 'air', 'dashboard', 'booking',
+                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] }
   };
 
   function defaultsFor(role) {

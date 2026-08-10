@@ -162,7 +162,7 @@
 
   /* 화면에 보이는 역할 이름. admin/users/ 의 ROLE_LABEL 과 같은 말을 써야 한다 —
      한쪽만 고치면 같은 사람이 화면마다 다른 직함으로 보인다. */
-  var ROLE_KO = { owner: '마스터', admin: '관리자', manage: '관리팀', sales: '영업팀', air: '항공팀 (읽기)' };
+  var ROLE_KO = { owner: '마스터', admin: '관리자', manage: '관리팀', sales: '영업팀', air: '항공팀' };
 
   function refreshHeader() {
     var name = displayName(CURRENT);
