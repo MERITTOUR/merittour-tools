@@ -339,12 +339,26 @@ test('guardChange — 자기 발등을 못 찍게 한다', () => {
 const SEC_U = (over = {}) =>
   ({ id: 'u1', email: 'a@b.c', role: 'sales', active: true, areas: [], read_areas: [], ...over });
 
-test('섹션 — owner·admin 은 목록이 비어 있어도 전부 통과한다', () => {
+test('섹션 — 역할 우회는 없다. owner 도 목록에 있어야 열린다', () => {
+  /* 16_sections_for_all.sql 과 같은 규칙. 마스터가 자기 섹션을 정할 수 있어야
+     해서 우회를 없앴다. 잠기지 않는 이유는 계정 관리 화면이 섹션이 아니라
+     역할로 열리기 때문이다(guard.js 에 data-section 이 없다). */
   for (const role of ['owner', 'admin']) {
-    const u = SEC_U({ role });
-    assert.equal(AUTH.canArea(u, 'booking'), true);
-    assert.equal(AUTH.canReadArea(u, 'booking'), true);
-    assert.equal(AUTH.areaLevel(u, 'booking'), 'write');
+    const empty = SEC_U({ role });
+    assert.equal(AUTH.canReadArea(empty, 'booking'), false);
+    assert.equal(AUTH.areaLevel(empty, 'booking'), 'none');
+
+    const given = SEC_U({ role, areas: ['booking'] });
+    assert.equal(AUTH.canArea(given, 'booking'), true);
+    assert.equal(AUTH.areaLevel(given, 'booking'), 'write');
+  }
+});
+
+test('역할 기본값 — owner·admin 은 전 섹션이 채워진다', () => {
+  for (const role of ['owner', 'admin']) {
+    const d = AUTH.defaultsFor(role);
+    assert.deepEqual(d.areas.slice().sort(), AUTH.SECTION_KEYS.slice().sort());
+    assert.deepEqual(d.read_areas, []);
   }
 });
 
@@ -367,7 +381,7 @@ test('섹션 — 목록에 없으면 없음', () => {
   assert.equal(AUTH.areaLevel(u, 'register'), 'none');
 });
 
-test('섹션 — 정지된 계정은 owner 라도 전부 막힌다', () => {
+test('섹션 — 정지된 계정은 목록이 있어도 전부 막힌다', () => {
   const u = SEC_U({ role: 'owner', active: false, areas: ['booking'] });
   assert.equal(AUTH.canArea(u, 'booking'), false);
   assert.equal(AUTH.canReadArea(u, 'booking'), false);
@@ -385,8 +399,9 @@ test('defaultsFor — 역할 기본값은 복사본이라 원본이 안 더러�
   assert.ok(a.areas.includes('booking'));
   a.areas.push('없는키');
   assert.ok(!AUTH.defaultsFor('sales').areas.includes('없는키'));
-  // owner·admin 은 함수가 무조건 통과시키므로 비워 둔다
-  assert.deepEqual(AUTH.defaultsFor('admin'), { areas: [], read_areas: [] });
+  const o = AUTH.defaultsFor('owner');
+  o.areas.length = 0;
+  assert.ok(AUTH.defaultsFor('owner').areas.length > 0);
 });
 
 test('계정 저장 — 섹션도 함께 보내고, 없는 키는 걸러진다', async () => {
@@ -486,4 +501,85 @@ test('신청 처리 — RLS 로 막히면 0행이 온다. 성공한 척하면 �
   route('/rest/v1/access_requests', 200, []);
   await assert.rejects(() => AUTH.resolveRequest('r1','rejected'),
     err => err.forbidden === true && /owner · admin/.test(err.message));
+});
+
+/* ══ 아이디 저장 · 30일 리셋 · 비밀번호 규칙 ═══════════════════ */
+
+test('아이디 저장 — 이메일만 남기고 비밀번호는 어디에도 없다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw1234!!', true);
+  assert.equal(AUTH.rememberedEmail(), 'a@b.c');
+  const dump = JSON.stringify(AUTH._dep.storage._dump());
+  assert.ok(!dump.includes('pw1234'), '저장소 어디에도 비밀번호가 없어야 한다');
+});
+
+test('아이디 저장 — 체크를 풀면 지운다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw', true);
+  await AUTH.login('a@b.c', 'pw', false);
+  assert.equal(AUTH.rememberedEmail(), '');
+});
+
+test('로그아웃해도 저장한 아이디는 남는다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  route('/auth/v1/logout', 200, null);
+  await AUTH.login('a@b.c', 'pw', true);
+  await AUTH.logout();
+  assert.equal(AUTH.rememberedEmail(), 'a@b.c');
+  assert.equal(AUTH.session(), null);
+});
+
+const DAY = 24 * 60 * 60 * 1000;
+
+test('30일이 지나면 토큰이 멀쩡해도 끊는다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw');
+  now += 29 * DAY;
+  assert.ok(await AUTH.token(), '29일째는 아직 살아 있어야 한다');
+  now += 2 * DAY;                       // 31일째
+  assert.equal(await AUTH.token(), null);
+  assert.equal(AUTH.session(), null);
+  assert.equal(AUTH.takeExpiredNotice(), true);   // 왜 끊겼는지 남긴다
+  assert.equal(AUTH.takeExpiredNotice(), false);  // 한 번 읽으면 지운다
+});
+
+test('30일은 마지막 로그인 기준 — refresh 로 갱신해도 늘어나지 않는다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c', 'pw');
+  for (let d = 0; d < 20; d++) {        // 매일 쓰면서 토큰을 갱신해도
+    now += 1.5 * DAY;
+    routes.length = 0;
+    route('/auth/v1/token', 200, { access_token:'T'+d, refresh_token:'R', expires_at: SEC()+3600 });
+    await AUTH.token();
+  }
+  assert.equal(await AUTH.token(), null, '30일이 지나면 끊겨야 한다');
+});
+
+test('비밀번호 — 영문·숫자는 필수, 특수문자는 권장', () => {
+  assert.equal(AUTH.passwordCheck('abc123').ok, false);        // 8자 미만
+  assert.match(AUTH.passwordCheck('abc123').reason, /8자/);
+  assert.equal(AUTH.passwordCheck('abcdefgh').ok, false);      // 숫자 없음
+  assert.match(AUTH.passwordCheck('abcdefgh').reason, /숫자/);
+  assert.equal(AUTH.passwordCheck('12345678').ok, false);      // 영문 없음
+  assert.match(AUTH.passwordCheck('12345678').reason, /영문/);
+
+  const plain = AUTH.passwordCheck('abcd1234');
+  assert.equal(plain.ok, true);                                // 통과는 시키되
+  assert.equal(plain.strong, false);
+  assert.match(plain.reason, /특수문자/);                       // 권한다
+
+  const strong = AUTH.passwordCheck('abcd1234!');
+  assert.equal(strong.ok, true);
+  assert.equal(strong.strong, true);
+  assert.equal(strong.reason, '');
 });
