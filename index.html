@@ -51,7 +51,9 @@ body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#EEF2F8;color:#1E
     clearTimeout(slow);
     if (!u) { go('login'); return; }
     if (!u.active) { go('login'); return; }   // 로그인 화면이 승인 대기 안내를 한다
-    if (u.role === 'owner' || u.role === 'admin') { go('admin'); return; }
+    /* 예전에는 owner·admin 을 admin/ 으로 보냈다. 관리자 허브는 권한 관리로
+       가는 통로일 뿐이라 한 단계가 헛돌았다 — 권한 관리는 허브 카드로 간다.
+       마스터도 남들과 같은 일하는 화면에서 시작한다. */
     for (var i = 0; i < HUBS.length; i++) {
       if (MT_AUTH.canReadArea(u, HUBS[i])) { go(HUBS[i]); return; }
     }

@@ -89,30 +89,29 @@
       <p class="keep-why" id="keep-why"></p>
       <button class="go" type="submit" id="btn-login">로그인</button>
     </form>
-    <p class="alt">계정이 없으신가요? <button type="button" class="linkish" id="btn-ask">계정 신청하기</button></p>
+    <p class="alt">계정이 없으신가요? <button type="button" class="linkish" id="btn-ask">가입 요청</button></p>
   </div>
 
-  <!-- 계정 신청 — 로그인 전이라 anon 으로 보낸다(15_access_requests.sql) -->
+  <!-- 가입 요청 — 로그인 전이라 anon 으로 보낸다(15_access_requests.sql).
+       여기서 계정이 만들어지는 것이 아니다. 마스터가 확인하고 발급한다. -->
   <div id="view-ask" class="hide">
-    <h1>계정 신청</h1>
-    <p class="sub">관리자가 확인하면 <b>적어 주신 주소로 초대 메일</b>이 갑니다.<br>
-      메일의 링크에서 비밀번호를 정하시면 됩니다.</p>
+    <h1>가입 요청</h1>
+    <p class="sub">계정이 없으시면 아래로 요청을 보내세요.<br>
+      마스터(관리자) 확인 후 계정이 발급됩니다.</p>
     <form id="form-ask">
       <div class="field">
         <label for="ask-name">이름</label>
-        <input type="text" id="ask-name" autocomplete="name" required maxlength="40">
+        <input type="text" id="ask-name" autocomplete="name" required maxlength="40"
+               placeholder="이름">
       </div>
       <div class="field">
-        <label for="ask-email">이메일 <span style="font-weight:600;color:var(--ink3)">(초대 메일을 받으실 주소)</span></label>
-        <input type="email" id="ask-email" autocomplete="email" required maxlength="120">
+        <label for="ask-email">이메일</label>
+        <input type="email" id="ask-email" autocomplete="email" required maxlength="120"
+               placeholder="이메일(계정으로 사용할 주소)">
       </div>
-      <div class="field">
-        <label for="ask-dept">부서</label>
-        <input type="text" id="ask-dept" required maxlength="40" placeholder="영업">
-      </div>
-      <button class="go" type="submit" id="btn-ask-send">신청하기</button>
+      <button class="go" type="submit" id="btn-ask-send">요청 보내기</button>
     </form>
-    <p class="alt"><button type="button" class="linkish" id="btn-ask-back">로그인으로 돌아가기</button></p>
+    <p class="alt"><button type="button" class="linkish" id="btn-ask-back">← 로그인으로</button></p>
   </div>
 
   <!-- 초대 링크로 들어온 경우: 비밀번호 설정 -->
@@ -301,16 +300,15 @@
     btn.disabled = true; btn.textContent = '보내는 중…';
     MT_AUTH.requestAccess({
       name:  $('ask-name').value,
-      email: $('ask-email').value,
-      dept:  $('ask-dept').value
+      email: $('ask-email').value
     }).then(function (r) {
       show('view-login');
-      say('신청이 접수되었습니다. 관리자가 확인하면 ' + r.email + ' 로 초대 메일이 갑니다.', 'ok');
+      say('요청을 보냈습니다. 마스터(관리자) 확인 후 ' + r.email + ' 로 계정이 발급됩니다.', 'ok');
     }).catch(function (err) {
       // 이미 접수된 건은 실패가 아니다 — 다시 누르게 만들지 않는다.
       if (err && err.duplicate) { show('view-login'); say(err.message, 'warn'); return; }
-      say(err && err.message ? err.message : '신청을 보내지 못했습니다.');
-    }).then(function () { btn.disabled = false; btn.textContent = '신청하기'; });
+      say(err && err.message ? err.message : '요청을 보내지 못했습니다.');
+    }).then(function () { btn.disabled = false; btn.textContent = '요청 보내기'; });
   });
 
   /* ── 비밀번호 설정 ──────────────────────────────────────────── */

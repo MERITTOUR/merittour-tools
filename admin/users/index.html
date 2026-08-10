@@ -135,8 +135,7 @@
   <div class="topbar hide" id="topbar">
     <span class="who">로그인: <b id="me-name"></b> <span id="me-role"></span></span>
     <span class="sp"></span>
-    <a class="btn-link" href="../">← 관리자 화면</a>
-    <a class="btn-link" href="../../">도구함 홈</a>
+    <a class="btn-link" href="../../sales/">← 도구 화면</a>
     <button type="button" id="btn-reload">새로고침</button>
     <button type="button" id="btn-logout">로그아웃</button>
   </div>
@@ -394,9 +393,11 @@
     $('reqs').innerHTML =
       '<div class="grp"><div class="grp-h">계정 신청<span class="n wait">' + wait.length + '</span></div>'
       + wait.map(reqCard).join('')
-      + '<p class="rq-how">초대 메일은 <b>Supabase 콘솔 → Authentication → Users → Invite user</b> 에서 보냅니다. '
-      + '보낸 뒤 <b>[초대함]</b>을 눌러 두면 목록에서 사라집니다. 초대받은 분이 비밀번호를 정하면 '
-      + '아래 <b>승인 대기</b>에 나타납니다.</p></div>';
+      + '<p class="rq-how"><b>①</b> 역할과 섹션을 정하고 → <b>②</b> [이메일 복사] → '
+      + '<b>③</b> <b>Supabase 콘솔 → Authentication → Users → Invite user</b> 로 초대 메일 발송 → '
+      + '<b>④</b> [초대함] 클릭.<br>'
+      + '초대받은 분이 비밀번호를 정하면 <b>여기서 정해 둔 권한이 그대로 적용되어 바로 쓸 수 있습니다.</b> '
+      + '역할을 「정하지 않음」으로 두면 예전처럼 <b>승인 대기</b>로 들어와 따로 승인해야 합니다.</p></div>';
     wait.forEach(bindReq);
   }
 
@@ -423,12 +424,53 @@
         + (r.created_at ? '<span class="u-mail">' + esc(fmtDate(r.created_at)) + ' 신청</span>' : '')
       + '</div>'
       + (r.note ? '<p class="rq-note">' + esc(r.note) + '</p>' : '')
-      + '<div class="rq-row">'
+      + '<div class="u-row">'
+        + '<label for="rr-' + esc(r.id) + '">역할</label>'
+        + '<select id="rr-' + esc(r.id) + '" class="rq-role">'
+          + '<option value="">정하지 않음 (나중에 승인)</option>'
+          + ['owner','admin','manage','sales','air'].map(function (k) {
+              return '<option value="' + k + '"' + (r.grant_role === k ? ' selected' : '') + '>'
+                   + esc(ROLE_LABEL[k]) + '</option>';
+            }).join('')
+        + '</select>'
+      + '</div>'
+      + reqSecBlock(r)
+      + '<div class="rq-row" style="margin-top:9px">'
         + '<button type="button" class="rq-copy">이메일 복사</button>'
         + '<button type="button" class="pri rq-done">초대함</button>'
         + '<button type="button" class="danger rq-no">반려</button>'
         + '<span class="u-why" style="display:inline;margin:0"></span>'
       + '</div></div>';
+  }
+
+  /* 신청 단계에서 정해 두는 섹션. 계정 카드와 같은 모양이라 눈에 익는다. */
+  function reqSecBlock(r) {
+    var lvl = function (k) {
+      if ((r.grant_areas || []).indexOf(k) >= 0) return 'write';
+      if ((r.grant_read_areas || []).indexOf(k) >= 0) return 'read';
+      return 'none';
+    };
+    var w = 0, rd = 0;
+    MT_AUTH.SECTIONS.forEach(function (x) {
+      var l = lvl(x.key); if (l === 'write') w++; else if (l === 'read') rd++;
+    });
+    var grid = MT_AUTH.SECTIONS.map(function (x) {
+      var id = 'rs-' + r.id + '-' + x.key, cur = lvl(x.key);
+      return '<div class="s-row"><label for="' + esc(id) + '">' + esc(x.label) + '</label>'
+           + '<select id="' + esc(id) + '" class="rq-sec" data-key="' + esc(x.key) + '">'
+           + LEVELS.map(function (p) {
+               return '<option value="' + p[0] + '"' + (cur === p[0] ? ' selected' : '') + '>'
+                    + esc(p[1]) + '</option>';
+             }).join('')
+           + '</select></div>';
+    }).join('');
+    return '<details class="u-sec"' + ((w || rd) ? ' open' : '') + '><summary>섹션 권한 '
+         + '<span class="s-sum">' + (w || rd ? '읽기+쓰기 ' + w + ' · 읽기 ' + rd : '아직 정하지 않음')
+         + '</span><span class="s-open">눌러서 변경</span></summary>'
+         + '<div class="s-grid">' + grid + '</div>'
+         + '<p class="s-note">여기서 정해 두면 <b>본인이 비밀번호를 정하는 순간 그대로 적용</b>되고 '
+         + '바로 쓸 수 있습니다. 역할을 「정하지 않음」으로 두면 예전처럼 승인 대기로 들어옵니다.</p>'
+         + '</details>';
   }
 
   function bindReq(r) {
@@ -446,10 +488,45 @@
         note(r.email);   // 클립보드가 막힌 환경에서는 눈으로 읽어 옮긴다
       }
     });
+    /* 역할을 고르면 그 역할의 기본 섹션을 채운다 — 계정 카드와 같은 동작. */
+    var role = el.querySelector('.rq-role');
+    var secs = [].slice.call(el.querySelectorAll('.rq-sec'));
+    role.addEventListener('change', function () {
+      if (!role.value) { note('역할을 정하지 않으면 승인 대기로 들어옵니다.'); return; }
+      var d = MT_AUTH.defaultsFor(role.value);
+      secs.forEach(function (s) {
+        var k = s.dataset.key;
+        s.value = d.areas.indexOf(k) >= 0 ? 'write'
+                : d.read_areas.indexOf(k) >= 0 ? 'read' : 'none';
+      });
+      var det = el.querySelector('.u-sec'); if (det) det.open = true;
+      note('「' + ROLE_LABEL[role.value] + '」 기본 섹션을 채웠습니다. 초대 전에 조정하실 수 있습니다.');
+    });
+
+    function pick() {
+      var a = [], rd = [];
+      secs.forEach(function (s) {
+        if (s.value === 'write') a.push(s.dataset.key);
+        else if (s.value === 'read') rd.push(s.dataset.key);
+      });
+      return { role: role.value || null, areas: a, read_areas: rd };
+    }
+
     function resolve(status, label) {
       clearMsg(); btns.forEach(function (b) { b.disabled = true; });
-      MT_AUTH.resolveRequest(r.id, status)
-        .then(function () { say(r.name + ' 님의 신청을 ' + label + ' 처리했습니다.', 'ok'); return load(); })
+      /* 초대 표시는 권한을 먼저 저장하고 나서 한다 — 순서가 바뀌면 그 사이에
+         가입한 사람에게 빈 권한이 입혀진다. */
+      var first = status === 'invited'
+        ? MT_AUTH.setRequestGrant(r.id, pick())
+        : Promise.resolve(null);
+      first.then(function () { return MT_AUTH.resolveRequest(r.id, status); })
+        .then(function () {
+          say(r.name + ' 님의 신청을 ' + label + ' 처리했습니다.'
+              + (status === 'invited' && role.value
+                  ? ' 비밀번호를 정하면 ' + ROLE_LABEL[role.value] + ' 권한으로 바로 쓸 수 있습니다.'
+                  : ''), 'ok');
+          return load();
+        })
         .catch(function (e) {
           btns.forEach(function (b) { b.disabled = false; });
           note(e && e.message ? e.message : '저장에 실패했습니다.', true);
