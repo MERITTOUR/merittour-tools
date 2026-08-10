@@ -148,9 +148,10 @@
   <div class="foot">
     <b>자료 권한과 섹션은 다른 층입니다.</b> <b>자료 권한</b>은 서버에서 <b>무엇을 저장·삭제할 수 있나</b>(자료 등록·리조트 마스터·예약·확정서)를 정하고,
     <b>섹션</b>은 <b>어느 화면을 여나</b>를 정합니다. 둘 다 있어야 실제로 일이 됩니다.<br>
-    <b>자료 권한</b> — owner 슈퍼 마스터(계정 승인·권한 변경) · admin 관리자(마스터 저장·업로드 자료 삭제) ·
-    manage 관리 · sales 영업(자료 업로드·수정) · air 항공(읽기 전용)<br>
-    계정을 바꿀 수 있는 것은 <b>owner</b> 뿐입니다. admin 은 목록만 보실 수 있습니다.
+    <b>자료 권한</b> — <b>마스터</b>(계정 승인·권한 변경, 전부 가능) · <b>관리팀</b> · <b>영업팀</b>(자료 등록·수정) ·
+    <b>항공팀</b>(읽기 전용). <b>권한 관리 화면은 마스터만</b> 열 수 있습니다.<br>
+    이 화면 자체는 섹션으로 나눠 줄 수 없습니다 — 맡기면 받은 사람이 스스로를 마스터로 올릴 수 있고,
+    마스터가 섹션을 전부 꺼도 되돌릴 문이 사라집니다.
   </div>
 </div>
 
@@ -159,10 +160,18 @@
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var LOGIN = '../../login/?next=' + encodeURIComponent('../admin/users/');
+  /* 화면에 보이는 이름. 안쪽 값(owner·admin·manage·sales·air)은 RLS 정책
+     54곳에 문자열로 박혀 있어 바꿀 수 없다 — 이름만 우리 말로 바꾼다. */
   var ROLE_LABEL = {
-    owner: 'owner · 슈퍼 마스터', admin: 'admin · 관리자', manage: 'manage · 관리',
-    sales: 'sales · 영업', air: 'air · 항공(읽기)'
+    owner:  '마스터',
+    admin:  '관리자',
+    manage: '관리팀',
+    sales:  '영업팀',
+    air:    '항공팀 (읽기)'
   };
+  /* 고를 수 있는 것은 넷. admin 은 마스터와 거의 같아 새로 주지 않는다.
+     이미 admin 인 계정이 있으면 그 줄에서만 보인다. */
+  var ROLE_PICK = ['owner', 'manage', 'sales', 'air'];
   var rows = [], me = null, canEdit = false;
 
   function say(text, kind) {
@@ -207,8 +216,11 @@
   function card(u) {
     var isMe = me && String(u.id) === String(me.id);
     var cls = 'u' + (u.active ? '' : ' wait') + (isMe ? ' me' : '');
-    var opts = ['owner', 'admin', 'manage', 'sales', 'air'].map(function (r) {
-      return '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + esc(ROLE_LABEL[r]) + '</option>';
+    var pick = ROLE_PICK.slice();
+    if (pick.indexOf(u.role) < 0) pick.push(u.role);   // 이미 admin 이면 그 줄에만 남긴다
+    var opts = pick.map(function (r) {
+      return '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>'
+           + esc(ROLE_LABEL[r] || r) + '</option>';
     }).join('');
     var dis = canEdit ? '' : ' disabled';
     return '<div class="' + cls + '" data-id="' + esc(u.id) + '">'
@@ -422,7 +434,7 @@
         + '<span class="rq-name">' + esc(r.name) + '</span>'
         + '<span class="u-mail">' + esc(r.email) + '</span>'
         + (r.dept ? '<span class="pill wait">' + esc(r.dept) + '</span>' : '')
-        + (rec ? '<span class="u-mail">권장 역할 <b>' + esc(rec) + '</b></span>' : '')
+        + (rec ? '<span class="u-mail">권장 역할 <b>' + esc(ROLE_LABEL[rec] || rec) + '</b></span>' : '')
         + (r.created_at ? '<span class="u-mail">' + esc(fmtDate(r.created_at)) + ' 신청</span>' : '')
       + '</div>'
       + (r.note ? '<p class="rq-note">' + esc(r.note) + '</p>' : '')
@@ -430,7 +442,7 @@
         + '<label for="rr-' + esc(r.id) + '">역할</label>'
         + '<select id="rr-' + esc(r.id) + '" class="rq-role">'
           + '<option value="">정하지 않음 (나중에 승인)</option>'
-          + ['owner','admin','manage','sales','air'].map(function (k) {
+          + ROLE_PICK.map(function (k) {
               return '<option value="' + k + '"' + (r.grant_role === k ? ' selected' : '') + '>'
                    + esc(ROLE_LABEL[k]) + '</option>';
             }).join('')
@@ -566,31 +578,29 @@
     return;
   }
 
-  /* 열리는 조건 = owner·admin 역할  또는  「권한 관리」 섹션(보기).
-     섹션으로 위임해도 **바꾸는 것은 owner 뿐**이다(아래 canEdit).
-     이 화면이 역할로도 열리는 덕분에 섹션을 전부 꺼도 잠기지 않는다. */
+  /* **마스터 전용.** 섹션으로 열지 않는다 — 위임받은 사람이 스스로를 마스터로
+     올릴 수 있고, 마스터가 섹션을 전부 꺼도 되돌릴 문이 사라진다.
+     역할로만 열리는 덕분에 섹션을 전부 꺼도 여기로 돌아올 수 있다. */
   MT_AUTH.require([], { loginUrl: LOGIN, onDeny: function (res) {
     if (res.reason === 'no-session') { location.href = LOGIN; return; }
     if (res.reason === 'pending') {
-      say('계정이 아직 승인되지 않았습니다. 첫 계정이라면 Supabase SQL Editor 에서 본인을 owner 로 올려 주세요.', 'warn');
+      say('계정이 아직 승인되지 않았습니다. 첫 계정이라면 Supabase SQL Editor 에서 본인을 마스터(role = owner)로 올려 주세요.', 'warn');
     } else if (res.reason === 'forbidden') {
-      say('이 화면은 owner · admin 만 볼 수 있습니다.', 'warn');
+      say('권한 관리는 마스터만 열 수 있습니다.', 'warn');
     } else {
       say(res.message || '확인에 실패했습니다.');
     }
   }}).then(function (res) {
     if (!res.ok) return;
     me = res.user;
-    if (!MT_AUTH.can(me, ['admin']) && !MT_AUTH.canReadArea(me, 'users')) {
-      say('이 화면을 볼 권한이 없습니다. owner 에게 요청해 주세요.', 'warn');
+    if (me.role !== 'owner') {
+      say('권한 관리는 마스터만 열 수 있습니다.', 'warn');
       return;
     }
-    canEdit = me.role === 'owner';
+    canEdit = true;
     $('topbar').classList.remove('hide');
     $('me-name').textContent = me.name || me.email;
-    $('me-role').textContent = '(' + me.role + ')';
-    if (!canEdit) say('목록만 보실 수 있습니다. 계정을 바꾸는 것은 owner 뿐입니다 — '
-                    + '바꾸는 것까지 맡기면 받은 사람이 스스로를 owner 로 올릴 수 있습니다.', 'warn');
+    $('me-role').textContent = '(' + (ROLE_LABEL[me.role] || me.role) + ')';
     return load();
   });
 

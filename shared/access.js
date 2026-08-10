@@ -57,10 +57,10 @@
     { key: 'insurance',  label: '보험',        path: 'tools/insurance/' },
     { key: 'library',    label: '자료실',      path: 'tools/library/' },
     { key: 'imgtoolkit', label: '이미지 도구', path: 'tools/imgtoolkit/' },
-    { key: 'weather',    label: '날씨',        path: 'tools/weather/' },
-    /* 권한 관리 화면. **조회만** 위임된다 — 변경은 owner 고정이다.
-       변경까지 위임하면 받은 사람이 스스로를 owner 로 올릴 수 있다. */
-    { key: 'users',      label: '권한 관리 (보기)', path: 'admin/users/' }
+    { key: 'weather',    label: '날씨',        path: 'tools/weather/' }
+    /* 권한 관리(admin/users/)는 여기 없다 — **마스터 전용**이다.
+       섹션으로 두면 위임받은 사람이 스스로를 마스터로 올릴 수 있고,
+       마스터가 섹션을 전부 꺼도 되돌릴 문이 사라진다. */
   ];
   var SECTION_KEYS = SECTIONS.map(function (s) { return s.key; });
 
@@ -70,7 +70,7 @@
      (16_sections_for_all.sql 이전에는 역할로 무조건 통과했는데, 그러면 마스터가
       자기 섹션을 정할 수가 없었다) */
   var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking', 'register',
-                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather', 'users'];
+                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather'];
   var DEFAULT_AREAS = {
     owner:  { areas: ALL_KEYS.slice(), read: [] },
     admin:  { areas: ALL_KEYS.slice(), read: [] },
@@ -460,7 +460,7 @@
     }).then(function (rows) {
       // RLS 로 막히면 오류가 아니라 0행이 돌아온다. 조용히 성공한 척하면 안 된다.
       if (!rows || !rows.length) {
-        var e = new Error('저장되지 않았습니다. 계정을 바꾸려면 owner 권한이 필요합니다.');
+        var e = new Error('저장되지 않았습니다. 계정을 바꾸려면 마스터 권한이 필요합니다.');
         e.forbidden = true;
         throw e;
       }
@@ -537,7 +537,7 @@
       });
     }).then(function (rows) {
       if (!rows || !rows.length) {
-        var e = new Error('저장되지 않았습니다. 신청 처리는 owner · admin 만 가능합니다.');
+        var e = new Error('저장되지 않았습니다. 신청 처리는 마스터 권한이 필요합니다.');
         e.forbidden = true;
         throw e;
       }
@@ -564,7 +564,7 @@
     }).then(function (rows) {
       // RLS 로 막히면 오류가 아니라 0행이 온다(updateUser 와 같은 함정).
       if (!rows || !rows.length) {
-        var e = new Error('저장되지 않았습니다. 신청 처리는 owner · admin 만 가능합니다.');
+        var e = new Error('저장되지 않았습니다. 신청 처리는 마스터 권한이 필요합니다.');
         e.forbidden = true;
         throw e;
       }
@@ -580,7 +580,7 @@
       active: patch.active !== undefined ? !!patch.active : !!target.active
     };
     if (String(target.id) === String(meId)) {
-      if (next.role !== target.role)     return '본인의 역할은 바꿀 수 없습니다. 다른 owner 에게 부탁하세요.';
+      if (next.role !== target.role)     return '본인의 역할은 바꿀 수 없습니다. 다른 마스터에게 부탁하세요.';
       if (!next.active && target.active) return '본인 계정은 정지할 수 없습니다.';
     }
     var owners = (all || []).filter(function (u) {
@@ -589,7 +589,7 @@
     var wasOwner = target.active && target.role === 'owner';
     var stillOwner = next.active && next.role === 'owner';
     if (wasOwner && !stillOwner && !owners.length) {
-      return '마지막 owner 입니다. 다른 분을 owner 로 올린 뒤에 바꿔 주세요.';
+      return '마지막 마스터입니다. 다른 분을 마스터로 올린 뒤에 바꿔 주세요.';
     }
     return null;
   }
@@ -642,7 +642,7 @@
       // 무엇을 요청해야 하는지 알 수 없다.
       if (opts.area && !canReadArea(u, opts.area)) {
         return deny('no-area', '「' + labelOf(opts.area) + '」 화면을 볼 권한이 없습니다. '
-                             + 'owner 에게 요청해 주세요.', u);
+                             + '마스터에게 요청해 주세요.', u);
       }
       return { ok: true, user: u };
     }).catch(function (e) {

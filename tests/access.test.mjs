@@ -298,7 +298,7 @@ test('계정 저장 — RLS 로 막히면 0행이 온다. 성공한 척하면 �
   route('/rest/v1/app_users', 200, []);
   await AUTH.login('a@b.c', 'pw');
   await assert.rejects(() => AUTH.updateUser('u2', { active: true }),
-    err => err.forbidden === true && /owner 권한/.test(err.message));
+    err => err.forbidden === true && /마스터 권한/.test(err.message));
 });
 
 test('계정 저장 — 없는 역할은 보내지 않는다', async () => {
@@ -318,12 +318,13 @@ test('guardChange — 자기 발등을 못 찍게 한다', () => {
   assert.equal(AUTH.guardChange([meOwner, other], meOwner, { name: '새이름' }, 'me'), null, '이름은 바꿔도 된다');
 
   // 마지막 owner — 그 사람 말고 활성 owner 가 없을 때만 막는다
-  assert.match(AUTH.guardChange([other, sales], other, { role: 'sales' }, 'x'), /마지막 owner/);
-  assert.match(AUTH.guardChange([other, sales], other, { active: false }, 'x'), /마지막 owner/);
+  // (화면에 보이는 이름은 「마스터」다. 안쪽 값 owner 와 문구가 다른 것이 정상)
+  assert.match(AUTH.guardChange([other, sales], other, { role: 'sales' }, 'x'), /마지막 마스터/);
+  assert.match(AUTH.guardChange([other, sales], other, { active: false }, 'x'), /마지막 마스터/);
   assert.equal(AUTH.guardChange([meOwner, other, sales], other, { role: 'sales' }, 'x'), null,
     '다른 활성 owner 가 남아 있으면 막지 않는다');
   assert.match(AUTH.guardChange([{ id: 'o3', role: 'owner', active: false }, other], other, { role: 'sales' }, 'x'),
-    /마지막 owner/, '정지된 owner 는 남은 owner 로 세지 않는다');
+    /마지막 마스터/, '정지된 owner 는 남은 owner 로 세지 않는다');
   assert.equal(AUTH.guardChange([meOwner, other, sales], other, { role: 'admin' }, 'me'), null,
     'owner 가 둘이면 한 명은 내릴 수 있다');
   assert.equal(AUTH.guardChange([meOwner, sales], sales, { role: 'admin' }, 'me'), null,
@@ -500,7 +501,7 @@ test('신청 처리 — RLS 로 막히면 0행이 온다. 성공한 척하면 �
   routes.length = 0;
   route('/rest/v1/access_requests', 200, []);
   await assert.rejects(() => AUTH.resolveRequest('r1','rejected'),
-    err => err.forbidden === true && /owner · admin/.test(err.message));
+    err => err.forbidden === true && /마스터 권한/.test(err.message));
 });
 
 /* ══ 아이디 저장 · 30일 리셋 · 비밀번호 규칙 ═══════════════════ */
