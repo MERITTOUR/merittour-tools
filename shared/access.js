@@ -22,10 +22,20 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var SESSION_KEY = 'mt-auth-session';   // {access_token, refresh_token, expires_at, user}
-  var ME_KEY      = 'mt-auth-me';        // {id,email,name,role,active,at}
-  var ME_TTL_MS   = 5 * 60 * 1000;       // 역할 캐시 5분 — 승급/정지가 오래 안 먹으면 곤란하다
-  var REFRESH_PAD = 60;                  // 만료 60초 전이면 미리 갱신
+  var SESSION_KEY  = 'mt-auth-session';   // {access_token, refresh_token, expires_at, signed_in_at, user}
+  var ME_KEY       = 'mt-auth-me';        // {id,email,name,role,active,at}
+  var REMEMBER_KEY = 'mt-auth-remember';  // 아이디 저장 — 이메일만. 비밀번호는 절대 두지 않는다
+  var EXPIRED_KEY  = 'mt-auth-expired';   // 30일이 지나 끊었다는 표시(로그인 화면이 이유를 말해 준다)
+  var AUTO_KEY     = 'mt-auth-auto';      // 자동 로그인 on/off
+  var ME_TTL_MS    = 5 * 60 * 1000;       // 역할 캐시 5분 — 승급/정지가 오래 안 먹으면 곤란하다
+  var REFRESH_PAD  = 60;                  // 만료 60초 전이면 미리 갱신
+
+  /* 로그인 유효기간. Supabase refresh token 은 그냥 두면 계속 갱신돼 사실상
+     영구 로그인이 된다. 공용 PC 에 남은 세션이 몇 달씩 살아 있는 것을 막는다.
+     기준은 **마지막 로그인 시각**이지 마지막 사용 시각이 아니다 — 매일 쓰는
+     사람도 30일마다 한 번은 비밀번호를 다시 넣는다. */
+  var SESSION_MAX_DAYS = 30;
+  var SESSION_MAX_MS   = SESSION_MAX_DAYS * 24 * 60 * 60 * 1000;
 
   var ROLES = ['owner', 'admin', 'manage', 'sales', 'air'];
 
@@ -51,12 +61,16 @@
   ];
   var SECTION_KEYS = SECTIONS.map(function (s) { return s.key; });
 
-  /* 역할을 고르면 채워 넣을 기본값. owner·admin 은 전부 통과하므로 비워 둔다
-     (채워 두면 나중에 「admin 인데 비었네」 하고 잘못 손대게 된다).
-     여기서 정한 값은 출발점일 뿐이고, 계정마다 admin/users/ 에서 더하고 뺀다. */
+  /* 역할을 고르면 채워 넣을 기본값. 역할은 **출발점만** 정하고, 실제로 누가
+     무엇을 여는지는 계정마다 admin/users/ 에서 더하고 뺀다.
+     owner·admin 도 예외가 아니다 — 전 섹션이 기본으로 들어가고, 거기서 뺄 수 있다.
+     (16_sections_for_all.sql 이전에는 역할로 무조건 통과했는데, 그러면 마스터가
+      자기 섹션을 정할 수가 없었다) */
+  var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking', 'register',
+                  'inquiry', 'insurance', 'library', 'imgtoolkit', 'weather'];
   var DEFAULT_AREAS = {
-    owner:  { areas: [], read: [] },
-    admin:  { areas: [], read: [] },
+    owner:  { areas: ALL_KEYS.slice(), read: [] },
+    admin:  { areas: ALL_KEYS.slice(), read: [] },
     manage: { areas: ['sales', 'manage', 'dashboard', 'booking', 'register', 'inquiry',
                       'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
     sales:  { areas: ['sales', 'dashboard', 'booking', 'register', 'inquiry',
@@ -86,7 +100,10 @@
              : (typeof globalThis !== 'undefined' && globalThis.MT_SB) ? globalThis.MT_SB
              : { URL: '', ANON_KEY: '', ready: function () { return false; } },
     now:     function () { return Date.now(); },
-    go:      function (url) { if (typeof location !== 'undefined') location.href = url; }
+    go:      function (url) { if (typeof location !== 'undefined') location.href = url; },
+    /* 자동 로그인을 끄면 여기에 세션을 둔다 — 브라우저를 닫으면 사라진다.
+       공용 PC 에서 앞사람 계정이 그대로 남는 것을 막는 유일한 방법이다. */
+    session: (typeof sessionStorage !== 'undefined') ? sessionStorage : memStore()
   };
   function memStore() {
     var m = {};
@@ -160,20 +177,102 @@
     });
   }
 
-  /* ── 세션 ────────────────────────────────────────────────────── */
-  function saveSession(s) {
-    if (!s || !s.access_token) { writeJSON(SESSION_KEY, null); return null; }
+  /* ── 세션 ──────────────────────────────────────────────────────
+     자동 로그인이 켜져 있으면 localStorage(브라우저를 닫아도 남는다),
+     꺼져 있으면 sessionStorage(닫으면 사라진다). 읽을 때는 양쪽을 다 본다 —
+     설정을 바꾼 직후에도 지금 세션이 끊기지 않아야 한다. */
+  function autoLogin() {
+    var v = dep.storage.getItem(AUTO_KEY);
+    return v === null || v === undefined ? true : v === '1';   // 기본은 켜짐
+  }
+  function setAutoLogin(on) {
+    try { dep.storage.setItem(AUTO_KEY, on ? '1' : '0'); } catch (e) {}
+    var cur = readSession();
+    if (cur) writeSession(cur);       // 지금 세션을 새 저장소로 옮긴다
+  }
+  function readSession() {
+    var a = readJSON(SESSION_KEY);
+    if (a) return a;
+    try {
+      var raw = dep.session.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function writeSession(rec) {
+    /* 어느 쪽에 쓰든 반대쪽은 반드시 지운다. 남겨 두면 자동 로그인을 꺼도
+       예전 것이 살아 있어 브라우저를 닫았다 열면 그대로 들어가진다. */
+    try { dep.session.removeItem(SESSION_KEY); } catch (e) {}
+    writeJSON(SESSION_KEY, null);
+    if (!rec) return;
+    if (autoLogin()) writeJSON(SESSION_KEY, rec);
+    else { try { dep.session.setItem(SESSION_KEY, JSON.stringify(rec)); } catch (e) {} }
+  }
+
+  function saveSession(s, startedAt) {
+    if (!s || !s.access_token) { writeSession(null); return null; }
+    var prev = readSession();
     var rec = {
       access_token:  s.access_token,
       refresh_token: s.refresh_token || '',
       // expires_at 이 오면 그대로, 없으면 expires_in 으로 계산
       expires_at: s.expires_at || Math.floor(dep.now() / 1000) + (Number(s.expires_in) || 3600),
+      /* 로그인한 시각. refresh 로 토큰을 갈아 끼워도 이 값은 그대로 이어받는다 —
+         갱신할 때마다 새로 찍으면 30일이 영원히 오지 않는다. */
+      signed_in_at: startedAt || (prev && prev.signed_in_at) || dep.now(),
       user: s.user || null
     };
-    writeJSON(SESSION_KEY, rec);
+    writeSession(rec);
     return rec;
   }
-  function session() { return readJSON(SESSION_KEY); }
+  function session() { return readSession(); }
+
+  /* 30일이 지났나. signed_in_at 이 없는 예전 세션은 지금 로그인한 것으로 본다
+     (있던 사람을 배포하자마자 튕겨 내지 않는다 — 다음 30일부터 적용된다). */
+  function tooOld(s) {
+    if (!s) return false;
+    if (!s.signed_in_at) { s.signed_in_at = dep.now(); writeSession(s); return false; }
+    return (dep.now() - s.signed_in_at) >= SESSION_MAX_MS;
+  }
+
+  /* ── 아이디 저장 ─────────────────────────────────────────────────
+     이메일만 둔다. 비밀번호는 어떤 형태로도 저장하지 않는다 —
+     공용 PC 에서 앞사람 계정으로 그냥 들어가지는 일이 생긴다. */
+  function rememberedEmail() {
+    var v = dep.storage.getItem(REMEMBER_KEY);
+    return v ? String(v) : '';
+  }
+  function setRemembered(email) {
+    try {
+      if (email) dep.storage.setItem(REMEMBER_KEY, String(email).trim());
+      else dep.storage.removeItem(REMEMBER_KEY);
+    } catch (e) { /* 차단 환경이면 저장되지 않는다 — 기능만 못 쓸 뿐 */ }
+  }
+
+  /* 30일이 지나 끊겼는지. 로그인 화면이 한 번 읽고 지운다. */
+  function takeExpiredNotice() {
+    var v = dep.storage.getItem(EXPIRED_KEY);
+    if (v) { try { dep.storage.removeItem(EXPIRED_KEY); } catch (e) {} }
+    return !!v;
+  }
+
+  /* ── 비밀번호 규칙 ───────────────────────────────────────────────
+     8자 이상 + 영문 + 숫자는 **필수**, 특수문자는 **권장**.
+     특수문자를 필수로 걸면 현장에서 「!」 하나 붙인 비밀번호만 늘어난다.
+     막지 말고 권하는 쪽이 실제로 더 강한 비밀번호가 된다. */
+  function passwordCheck(pw) {
+    pw = String(pw || '');
+    var hasAlpha  = /[A-Za-z]/.test(pw);
+    var hasDigit  = /[0-9]/.test(pw);
+    var hasSymbol = /[^A-Za-z0-9]/.test(pw);
+    if (pw.length < 8)  return { ok: false, strong: false, reason: '8자 이상으로 정해 주세요.' };
+    if (!hasAlpha)      return { ok: false, strong: false, reason: '영문을 하나 이상 넣어 주세요.' };
+    if (!hasDigit)      return { ok: false, strong: false, reason: '숫자를 하나 이상 넣어 주세요.' };
+    return {
+      ok: true,
+      strong: hasSymbol,
+      reason: hasSymbol ? '' : '특수문자(!@#$ 등)를 넣으시면 더 안전합니다. 없어도 저장은 됩니다.'
+    };
+  }
 
   /* 내 사용자 id. 로그인 응답의 user.id 를 먼저 쓰고, 없으면 access token 의 sub 를 읽는다.
      서명을 검증하는 것이 아니라 「내가 누구인지」를 알아내는 용도다 — 진짜 검증은 서버가 한다.
@@ -202,6 +301,13 @@
   function token() {
     var s = session();
     if (!s) return Promise.resolve(null);
+    /* 30일이 지났으면 토큰이 멀쩡해도 끊는다. 왜 끊겼는지 남겨 두지 않으면
+       로그인 화면이 그냥 다시 떠서 「방금 로그인했는데?」가 된다. */
+    if (tooOld(s)) {
+      logoutLocal();
+      try { dep.storage.setItem(EXPIRED_KEY, '1'); } catch (e) {}
+      return Promise.resolve(null);
+    }
     if (!expired(s)) return Promise.resolve(s.access_token);
     if (!s.refresh_token) { logoutLocal(); return Promise.resolve(null); }
     return req('/auth/v1/token?grant_type=refresh_token', {
@@ -212,12 +318,15 @@
     }).catch(function () { logoutLocal(); return null; });
   }
 
-  function login(email, password) {
+  function login(email, password, remember, auto) {
+    var mail = String(email || '').trim();
+    if (auto !== undefined) setAutoLogin(!!auto);   // 세션을 저장하기 **전에** 정한다
     return req('/auth/v1/token?grant_type=password', {
-      method: 'POST', body: { email: String(email || '').trim(), password: String(password || '') }
+      method: 'POST', body: { email: mail, password: String(password || '') }
     }).then(function (j) {
-      saveSession(j);
+      saveSession(j, dep.now());        // 여기서부터 30일을 센다
       writeJSON(ME_KEY, null);          // 역할 캐시는 새로 받는다
+      if (remember !== undefined) setRemembered(remember ? mail : null);
       return me(true);
     });
   }
@@ -233,7 +342,7 @@
       if (i > 0) p[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1));
     });
     if (!p.access_token) return null;
-    saveSession(p);
+    saveSession(p, dep.now());        // 초대·재설정으로 들어온 것도 새 로그인이다
     writeJSON(ME_KEY, null);
     return { type: p.type || '', email: (p.email || '') };
   }
@@ -244,7 +353,7 @@
     return req('/auth/v1/verify', {
       method: 'POST', body: { type: String(type || ''), token_hash: String(tokenHash || '') }
     }).then(function (j) {
-      saveSession(j);
+      saveSession(j, dep.now());
       writeJSON(ME_KEY, null);
       return { type: String(type || '') };
     });
@@ -277,7 +386,7 @@
     });
   }
 
-  function logoutLocal() { writeJSON(SESSION_KEY, null); writeJSON(ME_KEY, null); }
+  function logoutLocal() { writeSession(null); writeJSON(ME_KEY, null); }
   function logout() {
     var s = session();
     logoutLocal();
@@ -457,17 +566,16 @@
 
   /* ── 섹션 판정 ───────────────────────────────────────────────────
      서버(mt_has_area / mt_can_read_area)와 **같은 규칙**이어야 한다.
-     owner·admin 은 전부 통과, 그 밖에는 목록에 있어야 한다. */
+     역할 우회는 없다 — 누구든 목록에 있어야 열린다(16_sections_for_all.sql).
+     계정 관리 화면만은 섹션이 아니라 역할로 열려, 전부 꺼도 되돌릴 수 있다. */
   function canArea(user, key) {
     if (!user || !user.active) return false;
-    if (user.role === 'owner' || user.role === 'admin') return true;
     if (!key) return true;
     return (user.areas || []).indexOf(String(key)) >= 0;
   }
   /* 쓸 수 있으면 볼 수 있다 — areas 를 read_areas 에 또 적지 않아도 되게. */
   function canReadArea(user, key) {
     if (!user || !user.active) return false;
-    if (user.role === 'owner' || user.role === 'admin') return true;
     if (!key) return true;
     return (user.areas || []).indexOf(String(key)) >= 0
         || (user.read_areas || []).indexOf(String(key)) >= 0;
@@ -534,6 +642,13 @@
     me: me,
     can: can,
     rank: rank,
+    SESSION_MAX_DAYS: SESSION_MAX_DAYS,
+    rememberedEmail: rememberedEmail,
+    autoLogin: autoLogin,
+    setAutoLogin: setAutoLogin,
+    setRemembered: setRemembered,
+    takeExpiredNotice: takeExpiredNotice,
+    passwordCheck: passwordCheck,
     listUsers: listUsers,
     updateUser: updateUser,
     requestAccess: requestAccess,
