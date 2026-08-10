@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MERITTOUR · 문서 번역</title>
 <script src="../../shared/gate.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
 <link rel="stylesheet" href="../../shared/core.css">
 <meta name="robots" content="noindex, nofollow" />
 <style>
@@ -64,13 +66,6 @@
     <div class="sub">일본·영문 계약서·정산서를 한국어로 — 사내 전용 번역(외부 무료 사이트 업로드 대체). 이미지·스캔 PDF 모두 OCR+번역.</div>
   </header>
 
-  <details class="cfg card">
-    <summary>🔗 연동 설정 — 최초 1회만 입력하면 이 PC에 저장됩니다</summary>
-    <label class="fld" style="width:100%">번역 Edge Function URL
-      <input class="txt" id="cfgUrl" placeholder="https://xxxx.supabase.co/functions/v1/translate">
-    </label>
-    <div class="meta">관리자가 <code>supabase functions deploy translate</code>로 배포한 함수 주소입니다. API 키는 서버 secret에만 있고 여기엔 들어가지 않습니다.</div>
-  </details>
 
   <div class="card">
     <h2>1 · 문서 올리기</h2>
@@ -120,20 +115,34 @@
 </div>
 
 <script>
-const CFG_KEY = 'mt_translate_cfg';
-let cfg = {};
-try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) {}
+/* 주소는 코드에 있다. 예전에는 PC 마다 넣는 칸이었는데, 안 채운 PC 에서는
+   조용히 안 되고 채운 PC 마다 다른 주소를 가리킬 수 있었다.
+   평문으로 올려도 되는 이유는 함수가 로그인 토큰을 검사하기 때문이다
+   (requireUser). 검사 없이 주소만 올리면 인증 없는 LLM 프록시가 된다. */
+const TRANSLATE_URL = (typeof MT_SB !== 'undefined' && MT_SB.URL)
+  ? String(MT_SB.URL).replace(/\/+$/, '') + '/functions/v1/translate' : '';
+
+try { localStorage.removeItem('mt_translate_cfg'); } catch(e) {}
 
 const $ = (id) => document.getElementById(id);
-const cfgUrl = $('cfgUrl'), fileInput = $('file'), drop = $('drop'),
+const fileInput = $('file'), drop = $('drop'),
       runBtn = $('run'), statusEl = $('status'), preview = $('preview'),
       resultEl = $('result'), resultMeta = $('resultMeta'), copyBtn = $('copy');
 
-cfgUrl.value = cfg.url || '';
-cfgUrl.addEventListener('change', () => {
-  cfg.url = cfgUrl.value.trim();
-  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
-});
+/* 로그인 토큰으로만 부른다. 토큰이 없으면 보내지 않는다 —
+   조용히 anon 으로 흘러가면 인증 없이 LLM 을 쓰는 것과 같다. */
+function translateHeaders() {
+  const tk = (typeof MT_AUTH !== 'undefined' && MT_AUTH.token)
+    ? MT_AUTH.token() : Promise.resolve(null);
+  return tk.then((t) => {
+    if (!t) throw new Error('로그인이 필요합니다. 로그인 후 다시 시도해 주세요.');
+    return {
+      'Content-Type': 'application/json',
+      'apikey': (typeof MT_SB !== 'undefined' && MT_SB.ANON_KEY) || '',
+      'Authorization': 'Bearer ' + t,
+    };
+  });
+}
 
 let current = null; // { data, mediaType, name }
 
@@ -183,8 +192,8 @@ drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) loadFile(e.dat
 
 runBtn.addEventListener('click', async () => {
   if (!current) return;
-  const url = (cfg.url || cfgUrl.value || '').trim();
-  if (!url) { setStatus('먼저 [연동 설정]에서 Edge Function URL을 입력하세요.', 'err'); return; }
+  const url = TRANSLATE_URL;
+  if (!url) { setStatus('Supabase 접속 설정이 비어 있습니다. 관리자에게 알려 주세요.', 'err'); return; }
 
   runBtn.disabled = true; copyBtn.disabled = true;
   resultEl.className = 'result empty'; resultEl.textContent = '번역 중… (스캔 문서는 30초~1분 걸릴 수 있습니다)';
@@ -194,7 +203,7 @@ runBtn.addEventListener('click', async () => {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await translateHeaders(),
       body: JSON.stringify({
         data: current.data,
         mediaType: current.mediaType,
@@ -218,7 +227,9 @@ runBtn.addEventListener('click', async () => {
       resultMeta.textContent = (j.model || '') + ' · 입력 ' + (u.input_tokens||0) + ' · 출력 ' + (u.output_tokens||0) + ' 토큰';
     }
   } catch (e) {
-    setStatus('네트워크 오류: ' + (e.message || e), 'err');
+    /* 로그인 문제를 「네트워크 오류」로 적으면 엉뚱한 곳을 보게 된다. */
+    const m = (e && e.message) || String(e);
+    setStatus(/로그인/.test(m) ? m : '네트워크 오류: ' + m, 'err');
   } finally {
     runBtn.disabled = false;
   }
