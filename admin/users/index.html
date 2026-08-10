@@ -400,12 +400,18 @@
     wait.forEach(bindReq);
   }
 
+  /* 신청자가 고른 담당 업무 → 권장 역할. 옆에 적어 두면 owner 가 초대 후
+     승인할 때 무엇을 고를지 다시 생각하지 않아도 된다. 강제는 아니다. */
+  var DEPT_ROLE = { '영업': 'sales', '항공': 'air', '관리': 'manage' };
+
   function reqCard(r) {
+    var rec = DEPT_ROLE[r.dept];
     return '<div class="rq" data-rq="' + esc(r.id) + '">'
       + '<div class="rq-top">'
         + '<span class="rq-name">' + esc(r.name) + '</span>'
         + '<span class="u-mail">' + esc(r.email) + '</span>'
         + (r.dept ? '<span class="pill wait">' + esc(r.dept) + '</span>' : '')
+        + (rec ? '<span class="u-mail">권장 역할 <b>' + esc(rec) + '</b></span>' : '')
         + (r.created_at ? '<span class="u-mail">' + esc(fmtDate(r.created_at)) + ' 신청</span>' : '')
       + '</div>'
       + (r.note ? '<p class="rq-note">' + esc(r.note) + '</p>' : '')
