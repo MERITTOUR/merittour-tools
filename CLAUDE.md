@@ -46,6 +46,11 @@
   - **본인이 자기 `areas` 를 못 채우게 `au_update_self` 가 두 컬럼을 고정한다.** 안 그러면 승인제가 뚫린다.
   - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것(우회는 owner·admin 하나로 통일) ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
+- **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 보고 **Supabase 콘솔 → Authentication → Users → Invite user** 로 초대(메일 발송) → 신청자가 링크에서 비밀번호 설정 → `app_users` 에 air·비활성 → owner 가 승인·섹션 지정.
+  - **초대 메일을 코드에서 보내지 않는다.** 보내려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
+  - ⚠ **13 의 「anon 노출 0」 원칙에 대한 유일한 예외**다. 로그인 전 폼이라 anon 말고는 방법이 없다. 대신 **insert 만** 열고 select·update·delete 는 주지 않는다. `tests/sql-anon.test.mjs` 가 이 조건까지 검사한다 — 다른 표를 열거나 insert 밖의 권한이 붙으면 깨진다. **테스트를 느슨하게 풀어서 통과시키지 말 것.**
+  - 같은 주소의 대기 신청은 부분 unique 인덱스로 하나만. 두 번 눌러도 줄이 늘지 않고, 화면은 「이미 접수되었습니다」로 안내한다(실패로 보이면 계속 다시 누른다).
+- **`app_users.email` 은 `auth.users` 와 트리거로 맞춘다**(15). 04 의 트리거는 가입 시점에 한 번 복사할 뿐이라, 콘솔에서 로그인 이메일을 바꾸면 계정 관리 화면이 계속 옛 주소를 보여 줬다.
 - **본인 역할 변경·본인 정지·마지막 활성 owner 내리기는 막는다.** 잠기면 아무도 계정을 못 고친다. 막을 때는 버튼만 끄지 말고 이유를 그 줄에 적을 것.
 - **RLS 로 막히면 PostgREST 는 오류가 아니라 0행을 준다.** 0행을 성공으로 보면 조용히 안 저장된다 — `updateUser` 처럼 0행을 권한 안내로 바꿀 것.
 - 접속 설정은 `shared/supabase-config.js`(URL + anon key). anon 키는 코드에 둬도 되지만 **`service_role` 키는 절대 넣지 않는다**.

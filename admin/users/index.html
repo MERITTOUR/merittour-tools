@@ -92,6 +92,16 @@
   .s-row select{padding:5px 8px;font-size:12.5px;flex:none;width:104px}
   .s-note{font-size:12px;color:var(--text3);line-height:1.6;margin:2px 0 0}
 
+  /* ── 계정 신청함 ── */
+  .rq{border:1px solid #EFD9A8;background:#FFFCF5;border-radius:12px;padding:12px 15px}
+  .rq+.rq{margin-top:8px}
+  .rq-top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+  .rq-name{font-size:15px;font-weight:800;color:var(--navy)}
+  .rq-note{font-size:12.5px;color:var(--text2);line-height:1.6;margin:0 0 9px}
+  .rq-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .rq-how{font-size:12px;color:var(--text3);line-height:1.6;margin:9px 0 0}
+  .rq-how b{color:var(--text2)}
+
   .foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);
     font-size:12px;color:var(--text3);line-height:1.7}
   .foot b{color:var(--text2)}
@@ -125,6 +135,7 @@
 
   <div class="msg" id="msg"></div>
 
+  <div id="reqs"></div>
   <div id="list"></div>
 
   <div class="foot">
@@ -352,10 +363,83 @@
     refresh();
   }
 
+  /* ── 계정 신청함 ────────────────────────────────────────────── */
+  /* 초대 메일 자체는 Supabase 콘솔에서 보낸다. 여기서 보내려면 service_role
+     키가 필요한데 그건 공개 저장소 코드에 둘 수 없다. 대신 주소를 한 번에
+     복사할 수 있게 해서 콘솔에 붙여 넣는 수고만 남긴다. */
+  var reqs = [];
+
+  function renderReqs() {
+    var wait = reqs.filter(function (r) { return r.status === 'pending'; });
+    if (!wait.length) { $('reqs').innerHTML = ''; return; }
+    $('reqs').innerHTML =
+      '<div class="grp"><div class="grp-h">계정 신청<span class="n wait">' + wait.length + '</span></div>'
+      + wait.map(reqCard).join('')
+      + '<p class="rq-how">초대 메일은 <b>Supabase 콘솔 → Authentication → Users → Invite user</b> 에서 보냅니다. '
+      + '보낸 뒤 <b>[초대함]</b>을 눌러 두면 목록에서 사라집니다. 초대받은 분이 비밀번호를 정하면 '
+      + '아래 <b>승인 대기</b>에 나타납니다.</p></div>';
+    wait.forEach(bindReq);
+  }
+
+  function reqCard(r) {
+    return '<div class="rq" data-rq="' + esc(r.id) + '">'
+      + '<div class="rq-top">'
+        + '<span class="rq-name">' + esc(r.name) + '</span>'
+        + '<span class="u-mail">' + esc(r.email) + '</span>'
+        + (r.dept ? '<span class="pill wait">' + esc(r.dept) + '</span>' : '')
+        + (r.created_at ? '<span class="u-mail">' + esc(fmtDate(r.created_at)) + ' 신청</span>' : '')
+      + '</div>'
+      + (r.note ? '<p class="rq-note">' + esc(r.note) + '</p>' : '')
+      + '<div class="rq-row">'
+        + '<button type="button" class="rq-copy">이메일 복사</button>'
+        + '<button type="button" class="pri rq-done">초대함</button>'
+        + '<button type="button" class="danger rq-no">반려</button>'
+        + '<span class="u-why" style="display:inline;margin:0"></span>'
+      + '</div></div>';
+  }
+
+  function bindReq(r) {
+    var el = document.querySelector('.rq[data-rq="' + CSS.escape(String(r.id)) + '"]');
+    if (!el) return;
+    var why = el.querySelector('.u-why');
+    var btns = [].slice.call(el.querySelectorAll('button'));
+    function note(t, bad) { why.className = 'u-why on' + (bad ? ' bad' : ''); why.textContent = t; }
+
+    el.querySelector('.rq-copy').addEventListener('click', function () {
+      var done = function () { note('복사했습니다 — 콘솔 Invite user 에 붙여 넣으세요.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(r.email).then(done, function () { note(r.email); });
+      } else {
+        note(r.email);   // 클립보드가 막힌 환경에서는 눈으로 읽어 옮긴다
+      }
+    });
+    function resolve(status, label) {
+      clearMsg(); btns.forEach(function (b) { b.disabled = true; });
+      MT_AUTH.resolveRequest(r.id, status)
+        .then(function () { say(r.name + ' 님의 신청을 ' + label + ' 처리했습니다.', 'ok'); return load(); })
+        .catch(function (e) {
+          btns.forEach(function (b) { b.disabled = false; });
+          note(e && e.message ? e.message : '저장에 실패했습니다.', true);
+        });
+    }
+    el.querySelector('.rq-done').addEventListener('click', function () { resolve('invited', '초대'); });
+    el.querySelector('.rq-no').addEventListener('click', function () {
+      if (!window.confirm(r.name + ' 님의 신청을 반려하시겠습니까?')) return;
+      resolve('rejected', '반려');
+    });
+  }
+
   /* ── 불러오기 ───────────────────────────────────────────────── */
   function load() {
-    return MT_AUTH.listUsers().then(function (list) {
-      rows = list;
+    return Promise.all([
+      MT_AUTH.listUsers(),
+      // 신청함은 15 를 아직 적용 안 한 프로젝트에서는 없다. 없다고 계정 목록까지
+      // 못 보면 곤란하니 조용히 빈 목록으로 둔다.
+      MT_AUTH.listRequests().catch(function () { return []; })
+    ]).then(function (r) {
+      rows = r[0];
+      reqs = r[1];
+      renderReqs();
       render();
     }).catch(function (e) {
       $('list').innerHTML = '';
