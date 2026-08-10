@@ -371,7 +371,7 @@
         card('열 수 없는 화면입니다',
           '<b>' + escHtml(displayName(u)) + '</b> 님에게는<br>'
           + '<b>' + escHtml(label) + '</b> 화면 권한이 없습니다.<br>'
-          + 'owner 에게 요청해 주세요.',
+          + '마스터에게 요청해 주세요.',
           [{ label: '내 화면으로', primary: true, fn: function () { location.replace(BASE); } },
            { label: '다른 계정으로 로그인', fn: doLogout }]);
         return;

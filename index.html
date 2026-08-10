@@ -28,7 +28,7 @@ body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#EEF2F8;color:#1E
   <p id="say">MERITTOUR 사내 도구함으로 이동합니다…</p>
   <p class="why" id="why"></p>
   <p class="links" id="links">
-    <a href="./sales/">영업</a><a href="./manage/">관리</a><a href="./air/">항공</a><a href="./admin/">관리자</a><a href="./login/">로그인</a>
+    <a href="./sales/">영업</a><a href="./manage/">관리</a><a href="./air/">항공</a><a href="./admin/users/">권한 관리</a><a href="./login/">로그인</a>
   </p>
 </div>
 <script>
@@ -57,7 +57,13 @@ body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#EEF2F8;color:#1E
     for (var i = 0; i < HUBS.length; i++) {
       if (MT_AUTH.canReadArea(u, HUBS[i])) { go(HUBS[i]); return; }
     }
-    stuck('계정에 열 수 있는 허브가 없습니다. owner 에게 섹션 권한을 요청해 주세요.');
+    /* 마스터가 자기 섹션을 전부 꺼 놓으면 여기로 온다. 「마스터에게 요청하라」고
+       하면 본인이 본인에게 요청하는 꼴이라, 되돌릴 문을 바로 열어 준다. */
+    if (u.role === 'owner') {
+      stuck('열 수 있는 허브가 없습니다. 권한 관리에서 본인 섹션을 다시 켜 주세요.');
+      return;
+    }
+    stuck('계정에 열 수 있는 허브가 없습니다. 마스터에게 섹션 권한을 요청해 주세요.');
   }).catch(function () { clearTimeout(slow); go('sales'); });
 })();
 </script>
