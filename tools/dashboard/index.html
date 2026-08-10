@@ -839,8 +839,8 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     </div>
 
     <div class="note" style="margin-top:14px">
-      <b>왜 바뀌었나</b> · 예전에는 각자 엠클릭에서 파일을 받아 올렸습니다. 이제 <b>한 사람이 한 번 올리면</b> 모두가 같은 자료를 씁니다 —
-      사람마다 다른 시점의 파일을 보고 다른 숫자를 말하는 일이 없어집니다. 호텔 블록표도 함께 올라오면 자동으로 채워집니다.
+      <b>쓰는 법</b> · 위에서 볼 달을 켜면 그 달 자료로 바로 분석합니다. 파일을 따로 받지 않으셔도 됩니다.<br>
+      찾는 달이 없으면 아래 <b>＋ 새 자료 올리기</b>로 올리시면 됩니다. 호텔 블록표를 함께 올리면 요금 달력의 예약 가능여부까지 채워집니다.
     </div>
 
     <div style="margin-top:16px" id="reg-up">
@@ -1162,13 +1162,13 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
         <label>출발년월</label>
         <input type="month" class="blk-month-input" id="blk-month" value="2026-05" onchange="blkRender()">
         <button class="btn-sm" onclick="blkClear()" style="color:var(--red);border-color:var(--red)">붙여넣기 지우기</button>
-        <button class="btn-sm" onclick="vcalRegisterMonth()" style="border-color:var(--accent);color:var(--accent)" title="현재 붙여넣은 달을 요금 달력의 가능여부 계산용으로 누적 등록(여러 달 등록하면 월말 출발 연박도 계산됨). 새로고침 시 초기화.">📅 요금달력에 이 달 등록</button>
+        <button class="btn-sm" onclick="vcalRegisterMonth()" style="border-color:var(--accent);color:var(--accent)" title="붙여넣은 표를 서버에 등록합니다. 월말 출발 연박까지 보시려면 앞뒤 달도 등록해 주세요."​>📅 요금달력에 이 달 등록</button>
         <span class="muted" id="blk-paste-meta" style="font-size:11px"></span>
       </div>
       <div class="blk-toolbar" id="vcal-reg-bar" style="margin-top:-4px;display:none">
         <label style="color:var(--accent2)">요금달력 등록월</label>
         <div class="blk-chips" id="vcal-reg-chips"></div>
-        <span class="muted" style="font-size:10px">여러 달 등록 시 월말 출발 연박 구간도 끊김 없이 계산됩니다 · 새로고침하면 초기화</span>
+        <span class="muted" style="font-size:10px">월말 출발 연박까지 보시려면 앞뒤 달도 등록해 주세요 · × 를 누르면 서버에서 내려갑니다</span>
       </div>
       <textarea class="paste-area" id="blk-paste" placeholder="여기에 엠클릭 호텔별 예약현황 표를 붙여넣으세요 (Ctrl+V)&#10;&#10;호텔명 ⇥ 룸타입 ⇥ 1(금) ⇥ 2(토) ⇥ … ⇥ 합계&#10;간지호텔 ⇥ 트윈 ⇥ 15 ⇥ 15 ⇥ …"></textarea>
     </div>
@@ -1877,7 +1877,7 @@ function regSaveUpload(){
       regRebuild();                       // 올린 달을 포함해 다시 합친다
       // 목록을 먼저 새로 받고 나서 알린다 — regLoadList 가 안내를 지우기 때문이다
       return regLoadList().then(()=>{
-        regSay(`<b>${MT.escHtml(sc.period)}</b> 을 서버에 올렸습니다. 이제 다른 직원도 같은 자료를 씁니다.`,'ok');
+        regSay(`<b>${MT.escHtml(sc.period)}</b> 을 올렸습니다. 위 목록에서 그 달을 켜시면 바로 분석됩니다.`,'ok');
       });
     })
     .catch(e=>{
@@ -2023,14 +2023,18 @@ function regRebuild(){
 function regApplyBlocks(on){
   // 서버가 원본이다. 지난번에 남은 사본을 먼저 비우지 않으면, 서버에서 지워지거나
   // 줄어든 달이 옛 값으로 살아남아 잔여가 실제보다 많게 나온다.
-  vcalBlocks={};
+  vcalBlocks={}; vcalMeta={};
   let any=false;
   on.forEach(p=>{
     const d=regCache[p];
     if(!d || !d.blockRaw) return;
     const rows=blkParse(d.blockRaw);
     if(!rows) return;                       // 형식을 못 알아보면 조용히 넘긴다
-    vcalBlocks[d.blockMonth||p]=rows;
+    const ym=d.blockMonth||p;
+    vcalBlocks[ym]=rows;
+    // 서버가 적어 준 「누가 · 언제」를 그대로 옮긴다(없으면 칩에 안 적는다)
+    const mt=d.meta||{};
+    if(mt.blockBy || mt.blockAt) vcalMeta[ym]={ by:mt.blockBy||'', at:mt.blockAt||null };
     any=true;
   });
   if(any) vcalSaveMonths();
@@ -2065,8 +2069,10 @@ function regLoadEdgeBlocks(){
       if(!b || !b.blockRaw) return null;
       const rows=blkParse(b.blockRaw);
       if(!rows) return null;
-      vcalBlocks[b.blockMonth||ym]=rows;
-      return b.blockMonth||ym;
+      const k=b.blockMonth||ym;
+      vcalBlocks[k]=rows;
+      if(b.blockBy || b.blockAt) vcalMeta[k]={ by:b.blockBy||'', at:b.blockAt||null };
+      return k;
     }).catch(()=>null)
   )).then(got=>{
     const added=got.filter(Boolean);
@@ -3907,7 +3913,8 @@ function vcalSpec(resortName, nights, origin, ym){
    판정: 0실=마감, 1실=임박, 2실 이상=여유.
    여러 달을 등록(vcalBlocks)해두면 월말 출발 연박 구간도 끊김 없이 계산. */
 const VCAL_REM_OK=2;          // 여유 기준(실)
-let vcalBlocks={};            // { 'YYYY-MM': rows[] } 누적 — localStorage에 보관(BLK_MONTH_KEEP개월)
+let vcalBlocks={};            // { 'YYYY-MM': rows[] } 누적 — 원본은 서버(data_registry), localStorage 는 첫 화면용 캐시
+let vcalMeta={};              // { 'YYYY-MM': {by, at} } 누가 언제 올린 표인지(서버 block_by · block_at)
 /* 블록 데이터 존재: 누적 등록분 또는 현재 붙여넣기 어느 쪽이든 */
 function vcalHasBlock(){
   if(Object.keys(vcalBlocks).length) return true;
@@ -3967,7 +3974,15 @@ function vcalAvailLine(av){
   if(av.status==='tight')return `<div class="vcal-avline vcal-avline-tight">🟠 임박 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
   return `<div class="vcal-avline vcal-avline-ok">🟢 예약 가능 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
 }
-/* ── 요금달력 등록월 누적 관리 ── */
+/* ── 요금달력 등록월 누적 관리 ──
+   예전에는 localStorage 에만 넣었다. 그런데 자료를 불러올 때 regApplyBlocks() 가
+   「서버가 원본이다」며 vcalBlocks 를 통째로 비우고 서버 것으로 다시 채운다.
+   그래서 등록해 둔 달이 **새로고침하면 사라졌다** — 내 PC 에만 있던 값이라
+   비워지는 쪽이 맞았고, 옆자리 직원에게는 처음부터 보이지도 않았다.
+
+   이제 등록은 서버(data_registry.block_*)에 쓴다. 새로고침해도 남고, 전 직원이
+   같은 것을 본다. 누가 언제 올렸는지는 서버가 block_by · block_at 에 이미
+   적고 있어 그대로 화면에 보여 주면 된다. */
 function vcalRegisterMonth(){
   if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows){
     alert('먼저 호텔 블록 표를 붙여넣어 주세요.'); return;
@@ -3978,18 +3993,62 @@ function vcalRegisterMonth(){
   if(input===null) return;                       // 취소
   const ym=input.trim();
   if(!/^\d{4}-\d{2}$/.test(ym)){ alert('YYYY-MM 형식으로 입력해주세요. (예: 2026-07)'); return; }
+
   const dup=!!vcalBlocks[ym];
-  vcalBlocks[ym]=blkParsed.rows.slice();          // 스냅샷 복사
-  vcalSaveMonths();
-  renderVcalRegBar();
-  if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
-  alert(`${ym} 블록을 요금 달력에 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n월말~월초 연박 가능여부를 보려면 인접한 달도 등록해주세요.\n보관 기간 ${BLK_MONTH_KEEP}개월.`);
+  const me=(typeof MT_USER!=='undefined' && MT_USER.get && MT_USER.get()) || '';
+  const raw=(document.getElementById('blk-paste')||{}).value||'';
+  const rows=blkParsed.rows.slice();
+
+  const btn=document.querySelector('button[onclick="vcalRegisterMonth()"]');
+  if(btn){ btn.disabled=true; btn.textContent='등록 중…'; }
+  const done=()=>{ if(btn){ btn.disabled=false; btn.textContent='📅 요금달력에 이 달 등록'; } };
+
+  // blockBy 만 넘긴다 — uploaderName 을 주면 그 달 예약 자료를 올린 사람 이름을 덮어쓴다
+  MT_STORE.save(ym, { blockRows:[], blockRaw:raw, blockMonth:ym, blockBy:me })
+    .then(()=>{
+      vcalBlocks[ym]=rows;
+      vcalMeta[ym]={ by:me, at:new Date().toISOString() };
+      vcalSaveMonths();
+      // 등록소 캐시에도 반영 — 안 하면 다음 regApplyBlocks() 가 옛 값으로 되돌린다
+      const was=regCache[ym]||null;
+      regCache[ym]=Object.assign({}, was, { blockRaw:raw, blockMonth:ym });
+      renderVcalRegBar();
+      if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
+      done();
+      const off=(typeof regMonths==='function' && regMonths().indexOf(ym)<0);
+      alert(`${ym} 블록을 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n\n`
+          + (off ? `「자료 불러오기」에서 ${ym} 도 켜 주세요.\n` : '')
+          + `월말 출발 연박까지 보시려면 앞뒤 달 표도 같은 방법으로 등록해 주세요.`);
+    })
+    .catch(e=>{
+      done();
+      alert('등록하지 못했습니다.\n'+((e&&e.message)||'')
+          + '\n\n다시 눌러 주세요. 계속 안 되면 관리자에게 말씀해 주세요.');
+    });
 }
+/* 등록 해제 = 서버의 그 달 블록표를 지우는 것이다. 전 직원이 같이 쓰는 값이라
+   한 번 묻는다. 화면에서만 지우면 새로고침에 되살아나 「× 가 안 먹는다」가 된다. */
 function vcalUnregisterMonth(ym){
-  delete vcalBlocks[ym];
-  vcalSaveMonths();
-  renderVcalRegBar();
-  if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
+  const m=vcalMeta[ym]||{};
+  if(!confirm(`${ym} 블록표를 내리시겠습니까?\n`
+            + (m.by?`등록 ${m.by}${m.at?' · '+vcalWhen(m.at):''}\n`:'')
+            + `\n다른 담당자 화면에서도 사라집니다. 다시 쓰시려면 표를 붙여넣고 다시 등록하시면 됩니다.`)) return;
+  MT_STORE.save(ym, { blockRows:null, blockRaw:'', blockMonth:ym })
+    .then(()=>{
+      delete vcalBlocks[ym]; delete vcalMeta[ym];
+      if(regCache[ym]){ regCache[ym].blockRaw=''; }
+      vcalSaveMonths();
+      renderVcalRegBar();
+      if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
+    })
+    .catch(e=>alert('내리지 못했습니다.\n'+((e&&e.message)||'')));
+}
+/* 「2026-07-14 15:20」 정도면 된다 — 초까지는 필요 없다. */
+function vcalWhen(iso){
+  if(!iso) return '';
+  const d=new Date(iso); if(isNaN(d)) return '';
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function renderVcalRegBar(){
   const bar=document.getElementById('vcal-reg-bar'); if(!bar) return;
@@ -3997,9 +4056,16 @@ function renderVcalRegBar(){
   if(!ms.length){ bar.style.display='none'; }
   else {
     bar.style.display='flex';
-    document.getElementById('vcal-reg-chips').innerHTML=ms.map(ym=>
-      `<span class="blk-chip blk-chip-on" style="cursor:default">${ym} ✓ <span style="cursor:pointer;color:var(--red);font-weight:700;margin-left:4px" onclick="vcalUnregisterMonth('${ym}')" title="등록 해제">×</span></span>`
-    ).join('');
+    // 누가 언제 올린 표인지 칩에 적는다. 이게 없으면 「이 잔여가 언제 것인지」를
+    // 매번 사람에게 물어보게 된다 — 오래된 표는 잔여가 실제보다 많게 나온다.
+    document.getElementById('vcal-reg-chips').innerHTML=ms.map(ym=>{
+      const m=vcalMeta[ym]||{};
+      const who=[m.by||'', m.at?vcalWhen(m.at):''].filter(Boolean).join(' · ');
+      return `<span class="blk-chip blk-chip-on" style="cursor:default" title="${MT.escHtml(who?'등록 '+who:'등록 정보 없음')}">`
+           + `${ym} ✓`
+           + (who?` <span style="font-weight:400;opacity:.75;font-size:10px;margin-left:2px">${MT.escHtml(who)}</span>`:'')
+           + ` <span style="cursor:pointer;color:var(--red);font-weight:700;margin-left:4px" onclick="vcalUnregisterMonth('${ym}')" title="등록 해제 — 서버에서도 지워집니다">×</span></span>`;
+    }).join('');
   }
   // 현황 표가 떠 있으면 월 전환 네비도 갱신
   if(typeof blkParsed!=='undefined' && blkParsed && typeof blkRenderMonthNav==='function') blkRenderMonthNav();
@@ -5036,7 +5102,7 @@ function masterSayErr(e){
    단일 행에서 거의 매번 충돌한다. */
 function saveResortMaster(){
   if(masterLoadFailed){
-    showToast('저장본을 읽지 못해 저장을 막았습니다. 새로고침해 주세요.','error');
+    showToast('저장하지 못했습니다. 새로고침한 뒤 다시 저장해 주세요.','error');
     return;
   }
   if(masterMode==='unseed'){
@@ -5129,7 +5195,7 @@ function exportMaster(){
 function importMaster(input){
   if(masterMode==='on'){
     if(input) input.value='';
-    alert('마스터는 이제 서버에 하나만 있습니다.\n파일로 되돌리면 전 직원 값이 한꺼번에 바뀌므로 막았습니다.\n\n되돌리려면 관리자에게 문의해 주세요(서버 스냅샷으로 복구합니다).');
+    alert('파일로는 되돌릴 수 없습니다.\n\n되돌리셔야 하면 관리자에게 말씀해 주세요. 서버 스냅샷에서 복구해 드립니다.');
     return;
   }
   const file=input.files&&input.files[0];

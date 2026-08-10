@@ -125,6 +125,26 @@ test('save — 블록표를 올리면 등록자·시각·대상월이 함께 기
   assert.ok(b.block_at, 'block_at 이 있어야 언제 올린 표인지 알 수 있다');
 });
 
+test('save — 블록표만 올릴 때는 그 달 자료 등록자 이름을 덮어쓰지 않는다', async () => {
+  reset();
+  route('/data_registry?on_conflict=period', 201, [{}], 'POST');
+  // 요금 달력의 「이 달 등록」이 이렇게 부른다 — 블록표만 바꾸고 예약 자료는 그대로다.
+  await STORE.save('2026-07', { blockRows: [], blockRaw: 'x', blockMonth: '2026-07', blockBy: '이항공' });
+  const b = calls[0].body[0];
+  assert.equal(b.block_by, '이항공', '블록표를 올린 사람은 block_by 에 남는다');
+  assert.ok(!('uploader_name' in b),
+    'uploader_name 을 같이 보내면 그 달 예약 자료를 올린 사람 이름이 지워진다');
+  assert.ok(!('res_json' in b) && !('ilhaeng_json' in b),
+    '예약 원본을 같이 보내면 업서트가 그 달 자료를 비운다');
+});
+
+test('save — blockBy 가 없으면 예전처럼 uploaderName 을 쓴다', async () => {
+  reset();
+  route('/data_registry?on_conflict=period', 201, [{}], 'POST');
+  await STORE.save('2026-07', { blockRows: [], blockRaw: 'x', uploaderName: '김대웅' });
+  assert.equal(calls[0].body[0].block_by, '김대웅');
+});
+
 test('save — 블록표를 안 주면 블록 컬럼을 아예 건드리지 않는다', async () => {
   reset();
   route('/data_registry?on_conflict=period', 201, [{}], 'POST');

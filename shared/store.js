@@ -154,7 +154,11 @@
       body.block_rows  = payload.blockRows;
       body.block_raw   = payload.blockRaw || '';
       body.block_month = payload.blockMonth || period;
-      body.block_by    = payload.uploaderName || '';
+      /* blockBy 를 따로 받는다. 블록표만 올리는 자리(요금 달력의 「이 달 등록」)에서
+         uploaderName 을 쓰면 그 달 예약 자료를 올린 사람 이름까지 덮어쓴다 —
+         uploader_name 은 「그 달 자료를 올린 사람」이고 block_by 는 「블록표를 올린
+         사람」이라 서로 다른 사람일 수 있다. */
+      body.block_by    = payload.blockBy || payload.uploaderName || '';
       body.block_at    = new Date().toISOString();
     }
 
