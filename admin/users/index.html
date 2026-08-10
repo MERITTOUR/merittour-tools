@@ -400,12 +400,20 @@
     wait.forEach(bindReq);
   }
 
-  /* 신청자가 고른 담당 업무 → 권장 역할. 옆에 적어 두면 owner 가 초대 후
-     승인할 때 무엇을 고를지 다시 생각하지 않아도 된다. 강제는 아니다. */
-  var DEPT_ROLE = { '영업': 'sales', '항공': 'air', '관리': 'manage' };
+  /* 적어 낸 부서 → 권장 역할. 자유 입력이라 「영업팀」·「항공부」처럼 와도
+     알아보게 포함 여부로 본다. 못 알아보면 그냥 안 적는다 — 틀린 추천을
+     띄우느니 없는 편이 낫다. 강제도 아니고 owner 가 다르게 정할 수 있다. */
+  var DEPT_ROLE = [['영업', 'sales'], ['항공', 'air'], ['관리', 'manage']];
+  function recRole(dept) {
+    var d = String(dept || '');
+    for (var i = 0; i < DEPT_ROLE.length; i++) {
+      if (d.indexOf(DEPT_ROLE[i][0]) >= 0) return DEPT_ROLE[i][1];
+    }
+    return '';
+  }
 
   function reqCard(r) {
-    var rec = DEPT_ROLE[r.dept];
+    var rec = recRole(r.dept);
     return '<div class="rq" data-rq="' + esc(r.id) + '">'
       + '<div class="rq-top">'
         + '<span class="rq-name">' + esc(r.name) + '</span>'
