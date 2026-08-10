@@ -500,15 +500,52 @@
   function listRequests() {
     return token().then(function (t) {
       if (!t) throw new Error('로그인이 필요합니다.');
-      return req('/rest/v1/access_requests?select=id,email,name,dept,note,status,created_at'
+      return req('/rest/v1/access_requests?select=id,email,name,dept,note,status,created_at,'
+               + 'grant_role,grant_areas,grant_read_areas'
                + '&order=status.asc,created_at.desc&limit=200', { token: t });
-    }).then(function (rows) { return rows || []; });
+    }).then(function (rows) {
+      return (rows || []).map(function (r) {
+        // 17 을 아직 적용하지 않은 프로젝트에서는 세 칸이 없이 온다.
+        if (!Array.isArray(r.grant_areas))      r.grant_areas = [];
+        if (!Array.isArray(r.grant_read_areas)) r.grant_read_areas = [];
+        return r;
+      });
+    });
+  }
+
+  /* 초대하면서 권한을 미리 정해 둔다(17_request_grants.sql).
+     본인이 비밀번호를 정하는 순간 이 값이 그대로 입혀지고 바로 쓸 수 있다.
+     역할을 비워 두면 예전대로 air·비활성으로 생성되고 나중에 승인해야 한다. */
+  function setRequestGrant(id, grant) {
+    grant = grant || {};
+    var role = grant.role ? String(grant.role) : null;
+    if (role && ROLES.indexOf(role) < 0) {
+      return Promise.reject(new Error('역할 값이 올바르지 않습니다.'));
+    }
+    return token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return req('/rest/v1/access_requests?id=eq.' + encodeURIComponent(String(id)), {
+        method: 'PATCH', token: t, prefer: 'return=representation',
+        body: {
+          grant_role:       role,
+          grant_areas:      cleanAreas(grant.areas),
+          grant_read_areas: cleanAreas(grant.read_areas)
+        }
+      });
+    }).then(function (rows) {
+      if (!rows || !rows.length) {
+        var e = new Error('저장되지 않았습니다. 신청 처리는 owner · admin 만 가능합니다.');
+        e.forbidden = true;
+        throw e;
+      }
+      return rows[0];
+    });
   }
 
   /* 처리 표시. 초대 메일 자체는 Supabase 콘솔에서 보낸다 —
      여기서 보내려면 service_role 키가 필요한데 그건 코드에 둘 수 없다. */
   function resolveRequest(id, status) {
-    if (['invited', 'rejected', 'pending'].indexOf(status) < 0) {
+    if (['invited', 'rejected', 'pending', 'joined'].indexOf(status) < 0) {
       return Promise.reject(new Error('상태 값이 올바르지 않습니다.'));
     }
     return token().then(function (t) {
@@ -653,6 +690,7 @@
     updateUser: updateUser,
     requestAccess: requestAccess,
     listRequests: listRequests,
+    setRequestGrant: setRequestGrant,
     resolveRequest: resolveRequest,
     guardChange: guardChange,
     require: require_,
