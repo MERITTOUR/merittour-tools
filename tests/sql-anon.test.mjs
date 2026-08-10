@@ -31,23 +31,53 @@ function stripSqlComments(s) {
 const sqlFiles = walk(SB).filter(f => f.endsWith('.sql'));
 const LOCK = path.join(SB, 'migrations', '13_lock_anon.sql');
 
-test('anon 을 여는 정책이 남아 있지 않다', () => {
+/* 단 하나의 예외 — 계정 신청함(15_access_requests.sql).
+ * 로그인 전 화면에서 쓰는 폼이라 anon 말고는 방법이 없다. 대신 **써넣기만**
+ * 허용한다. 아래 세 테스트가 그 조건까지 함께 지킨다 —
+ * 예외 표가 늘어나거나, insert 밖의 권한이 붙으면 그대로 깨진다. */
+const ANON_OK_TABLE = 'access_requests';
+
+test('anon 을 여는 정책은 계정 신청함 insert 하나뿐이다', () => {
   for (const f of sqlFiles) {
     if (f === LOCK) continue;                       // 닫는 파일은 anon 을 언급해도 된다
     const sql = stripSqlComments(fs.readFileSync(f, 'utf8'));
-    const bad = [...sql.matchAll(/create\s+policy[\s\S]{0,400}?to\s+anon\b/gi)];
-    assert.strictEqual(bad.length, 0,
-      `${path.relative(SB, f)} 가 anon 정책을 만든다 — 13_lock_anon.sql 이 닫은 것을 되돌린다`);
+    for (const m of sql.matchAll(/create\s+policy\s+(\w+)\s+on\s+public\.(\w+)\s+for\s+(\w+)\s+to\s+([^\n]+)/gi)) {
+      const [, name, table, action, roles] = m;
+      if (!/\banon\b/.test(roles)) continue;
+      assert.strictEqual(table, ANON_OK_TABLE,
+        `${path.relative(SB, f)}: 정책 ${name} 이 public.${table} 을 anon 에 연다 — 허용된 예외는 ${ANON_OK_TABLE} 뿐이다`);
+      assert.strictEqual(action.toLowerCase(), 'insert',
+        `${path.relative(SB, f)}: 정책 ${name} 이 anon 에 ${action} 을 준다 — 신청함은 써넣기만 열 수 있다`);
+    }
   }
 });
 
-test('anon 에 테이블 권한을 주는 grant 가 남아 있지 않다', () => {
+test('anon grant 는 계정 신청함 insert 하나뿐이다', () => {
   for (const f of sqlFiles) {
     if (f === LOCK) continue;
     const sql = stripSqlComments(fs.readFileSync(f, 'utf8'));
-    const bad = [...sql.matchAll(/grant[\s\S]{0,200}?\bto\s+[^;]*\banon\b/gi)];
-    assert.strictEqual(bad.length, 0,
-      `${path.relative(SB, f)} 가 anon 에 grant 한다`);
+    for (const m of sql.matchAll(/grant\s+([\s\S]{0,120}?)\s+on\s+(?:table\s+)?public\.(\w+)\s+to\s+([^;]+);/gi)) {
+      const [, privs, table, roles] = m;
+      if (!/\banon\b/.test(roles)) continue;
+      assert.strictEqual(table, ANON_OK_TABLE,
+        `${path.relative(SB, f)}: public.${table} 을 anon 에 grant 한다 — 허용된 예외는 ${ANON_OK_TABLE} 뿐이다`);
+      assert.ok(/^insert$/i.test(privs.trim()),
+        `${path.relative(SB, f)}: anon 에 「${privs.trim()}」 를 준다 — 신청함은 insert 만이다`);
+    }
+  }
+});
+
+test('계정 신청함은 anon 에게 읽기를 주지 않는다', () => {
+  /* 써넣기만 열어 둔 표라, 읽기가 붙으면 신청자 이름·이메일이 anon 키로 새어 나간다.
+     anon 키는 public 저장소에 원문으로 있다. */
+  const f = path.join(SB, 'migrations', '15_access_requests.sql');
+  if (!fs.existsSync(f)) return;
+  const sql = stripSqlComments(fs.readFileSync(f, 'utf8'));
+  assert.match(sql, /revoke\s+all\s+on\s+public\.access_requests\s+from\s+anon/i,
+    '15 가 anon 권한을 먼저 걷어내지 않는다');
+  for (const m of sql.matchAll(/create\s+policy\s+(\w+)[\s\S]{0,200}?for\s+(select|update|delete)\s+to\s+([^\n]+)/gi)) {
+    assert.ok(!/\banon\b/.test(m[3]),
+      `정책 ${m[1]} 이 anon 에 ${m[2]} 을 준다 — 신청함은 써넣기만이다`);
   }
 });
 

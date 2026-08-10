@@ -356,6 +356,73 @@
     });
   }
 
+  /* ── 계정 신청 (로그인 전) ──────────────────────────────────────
+     로그인하지 않은 사람이 쓰므로 토큰 없이 anon 키로 보낸다. 서버는
+     insert 만 허용하고 형식·길이도 with check 로 막는다(15_access_requests.sql).
+     여기 검사는 사람에게 먼저 알려 주기 위한 것이지 방어선이 아니다. */
+  function requestAccess(input) {
+    input = input || {};
+    var email = String(input.email || '').trim();
+    var name  = String(input.name  || '').trim();
+    var dept  = String(input.dept  || '').trim();
+    var note  = String(input.note  || '').trim();
+    if (!name) return Promise.reject(new Error('이름을 적어 주세요.'));
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(email)) {
+      return Promise.reject(new Error('회사 이메일 주소를 정확히 적어 주세요.'));
+    }
+    return req('/rest/v1/access_requests', {
+      method: 'POST',
+      body: { email: email, name: name, dept: dept || null, note: note || null },
+      prefer: 'return=minimal'
+    }).then(function () { return { ok: true, email: email }; },
+      function (e) {
+        /* 같은 주소로 이미 대기 중이면 unique 인덱스가 409 를 준다.
+           「실패했습니다」로 두면 다시 누르게 되고, 눌러도 계속 실패한다. */
+        if (e && (e.status === 409 || /duplicate|unique/i.test(e.message || ''))) {
+          var d = new Error('이미 신청이 접수되어 있습니다. 관리자 확인을 기다려 주세요.');
+          d.duplicate = true;
+          throw d;
+        }
+        throw e;
+      });
+  }
+
+  /* 신청 목록 — owner·admin 만 읽힌다(RLS). 대기 중을 먼저 준다. */
+  function listRequests() {
+    return token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return req('/rest/v1/access_requests?select=id,email,name,dept,note,status,created_at'
+               + '&order=status.asc,created_at.desc&limit=200', { token: t });
+    }).then(function (rows) { return rows || []; });
+  }
+
+  /* 처리 표시. 초대 메일 자체는 Supabase 콘솔에서 보낸다 —
+     여기서 보내려면 service_role 키가 필요한데 그건 코드에 둘 수 없다. */
+  function resolveRequest(id, status) {
+    if (['invited', 'rejected', 'pending'].indexOf(status) < 0) {
+      return Promise.reject(new Error('상태 값이 올바르지 않습니다.'));
+    }
+    return token().then(function (t) {
+      if (!t) throw new Error('로그인이 필요합니다.');
+      return req('/rest/v1/access_requests?id=eq.' + encodeURIComponent(String(id)), {
+        method: 'PATCH', token: t, prefer: 'return=representation',
+        body: {
+          status: status,
+          handled_at: status === 'pending' ? null : new Date(dep.now()).toISOString(),
+          handled_by: status === 'pending' ? null : (uid() || null)
+        }
+      });
+    }).then(function (rows) {
+      // RLS 로 막히면 오류가 아니라 0행이 온다(updateUser 와 같은 함정).
+      if (!rows || !rows.length) {
+        var e = new Error('저장되지 않았습니다. 신청 처리는 owner · admin 만 가능합니다.');
+        e.forbidden = true;
+        throw e;
+      }
+      return rows[0];
+    });
+  }
+
   /* 자기 발등 찍기 방지 — 화면에서 미리 막고 이유를 말해 준다.
      owner 가 스스로를 내리거나 마지막 owner 를 없애면 아무도 계정을 못 고친다. */
   function guardChange(all, target, patch, meId) {
@@ -469,6 +536,9 @@
     rank: rank,
     listUsers: listUsers,
     updateUser: updateUser,
+    requestAccess: requestAccess,
+    listRequests: listRequests,
+    resolveRequest: resolveRequest,
     guardChange: guardChange,
     require: require_,
     adoptHash: adoptHash,

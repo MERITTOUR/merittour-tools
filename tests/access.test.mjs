@@ -431,3 +431,59 @@ test('me — 14 를 아직 적용 안 한 프로젝트에서도 터지지 않는
   assert.deepEqual(u.read_areas, []);
   assert.equal(AUTH.areaLevel(u, 'booking'), 'none');
 });
+
+/* ══ 계정 신청 ═════════════════════════════════════════════════ */
+
+test('계정 신청 — 로그인 없이 anon 키로 보낸다', async () => {
+  reset();
+  route('/rest/v1/access_requests', 201, null);
+  const r = await AUTH.requestAccess({ name:'홍길동', email:'hong@merittour.co.kr', dept:'영업' });
+  assert.equal(r.ok, true);
+  const c = calls.at(-1);
+  assert.equal(c.method, 'POST');
+  assert.equal(c.auth, 'Bearer anon-key');            // 세션 토큰이 아니라 anon
+  assert.equal(c.body.email, 'hong@merittour.co.kr');
+  assert.equal(c.body.name, '홍길동');
+  assert.equal(c.body.note, null);                    // 빈 값은 null 로
+});
+
+test('계정 신청 — 이름·이메일 형식은 보내기 전에 막는다', async () => {
+  reset();
+  await assert.rejects(() => AUTH.requestAccess({ name:'', email:'a@b.co' }), /이름/);
+  await assert.rejects(() => AUTH.requestAccess({ name:'홍', email:'notmail' }), /이메일/);
+  assert.equal(calls.length, 0);                      // 요청 자체가 안 나간다
+});
+
+test('계정 신청 — 이미 접수된 주소는 「실패」가 아니라 안내로', async () => {
+  reset();
+  route('/rest/v1/access_requests', 409, { message: 'duplicate key value' });
+  await assert.rejects(() => AUTH.requestAccess({ name:'홍', email:'a@b.co' }),
+    err => err.duplicate === true && /이미 신청/.test(err.message));
+});
+
+test('신청 처리 — 상태 값을 검사하고 처리 시각·처리자를 남긴다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c','pw');
+  await assert.rejects(() => AUTH.resolveRequest('r1','뭔가'), /상태 값/);
+  routes.length = 0;
+  route('/rest/v1/access_requests', 200, [{ id:'r1', status:'invited' }]);
+  await AUTH.resolveRequest('r1', 'invited');
+  const c = calls.at(-1);
+  assert.equal(c.method, 'PATCH');
+  assert.equal(c.body.status, 'invited');
+  assert.equal(c.body.handled_by, 'u1');
+  assert.ok(c.body.handled_at);
+});
+
+test('신청 처리 — RLS 로 막히면 0행이 온다. 성공한 척하면 안 된다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token:'T', refresh_token:'R', expires_at: SEC()+3600, user:{id:'u1'} });
+  route('/rest/v1/app_users', 200, [USER]);
+  await AUTH.login('a@b.c','pw');
+  routes.length = 0;
+  route('/rest/v1/access_requests', 200, []);
+  await assert.rejects(() => AUTH.resolveRequest('r1','rejected'),
+    err => err.forbidden === true && /owner · admin/.test(err.message));
+});

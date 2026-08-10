@@ -46,6 +46,11 @@
   .msg.warn{background:var(--amber-dim);color:var(--amber);border:1px solid #F0DCB0}
   .msg.ok{background:var(--green-dim);color:var(--green);border:1px solid #B7E2CB}
   .foot{margin-top:22px;font-size:11px;color:var(--ink3);line-height:1.6}
+  /* 계정 신청으로 오가는 줄 — 버튼이지만 문장 안에 있어 링크처럼 보이게 한다 */
+  .alt{margin:16px 0 0;font-size:12.5px;color:var(--ink2);text-align:center}
+  .linkish{background:none;border:0;padding:0;font:inherit;font-weight:700;
+    color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .linkish:hover{color:#2E5A88}
   .foot b{color:var(--ink2)}
   .hide{display:none}
 </style>
@@ -58,7 +63,7 @@
   <!-- 로그인 -->
   <div id="view-login">
     <h1>로그인</h1>
-    <p class="sub">사내 계정으로 로그인해 주세요.<br>계정 발급·승인은 관리자에게 문의해 주세요.</p>
+    <p class="sub">사내 계정으로 로그인해 주세요.</p>
     <form id="form-login" autocomplete="on">
       <div class="field">
         <label for="email">이메일</label>
@@ -70,6 +75,34 @@
       </div>
       <button class="go" type="submit" id="btn-login">로그인</button>
     </form>
+    <p class="alt">계정이 없으신가요? <button type="button" class="linkish" id="btn-ask">계정 신청하기</button></p>
+  </div>
+
+  <!-- 계정 신청 — 로그인 전이라 anon 으로 보낸다(15_access_requests.sql) -->
+  <div id="view-ask" class="hide">
+    <h1>계정 신청</h1>
+    <p class="sub">관리자가 확인하면 <b>적어 주신 주소로 초대 메일</b>이 갑니다.<br>
+      메일의 링크에서 비밀번호를 정하시면 됩니다.</p>
+    <form id="form-ask">
+      <div class="field">
+        <label for="ask-name">이름</label>
+        <input type="text" id="ask-name" autocomplete="name" required maxlength="40">
+      </div>
+      <div class="field">
+        <label for="ask-email">이메일 <span style="font-weight:600;color:var(--ink3)">(초대 메일을 받으실 주소)</span></label>
+        <input type="email" id="ask-email" autocomplete="email" required maxlength="120">
+      </div>
+      <div class="field">
+        <label for="ask-dept">부서 <span style="font-weight:600;color:var(--ink3)">(선택)</span></label>
+        <input type="text" id="ask-dept" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="ask-note">하시는 일 <span style="font-weight:600;color:var(--ink3)">(선택 · 권한을 정하는 데 씁니다)</span></label>
+        <input type="text" id="ask-note" maxlength="300">
+      </div>
+      <button class="go" type="submit" id="btn-ask-send">신청하기</button>
+    </form>
+    <p class="alt"><button type="button" class="linkish" id="btn-ask-back">로그인으로 돌아가기</button></p>
   </div>
 
   <!-- 초대 링크로 들어온 경우: 비밀번호 설정 -->
@@ -114,7 +147,7 @@
   var NEXT_DEFAULT = '../sales/';
 
   function show(id) {
-    ['view-login', 'view-invite', 'view-pending'].forEach(function (v) {
+    ['view-login', 'view-invite', 'view-pending', 'view-ask'].forEach(function (v) {
       $(v).classList.toggle('hide', v !== id);
     });
   }
@@ -205,6 +238,37 @@
       .then(afterLogin)
       .catch(function (err) { say(err && err.message ? err.message : '로그인에 실패했습니다.'); })
       .then(function () { btn.disabled = false; btn.textContent = '로그인'; });
+  });
+
+  /* ── 계정 신청 ──────────────────────────────────────────────── */
+  /* 로그인 화면에서 여기로 올 때 아이디를 이미 적었다면 그대로 옮겨 준다 —
+     두 번 치게 하면 오타로 엉뚱한 주소에 초대가 간다. */
+  $('btn-ask').addEventListener('click', function () {
+    clearMsg();
+    if ($('email').value && !$('ask-email').value) $('ask-email').value = $('email').value;
+    show('view-ask');
+    $('ask-name').focus();
+  });
+  $('btn-ask-back').addEventListener('click', function () { clearMsg(); show('view-login'); });
+
+  $('form-ask').addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var btn = $('btn-ask-send');
+    btn.disabled = true; btn.textContent = '보내는 중…';
+    MT_AUTH.requestAccess({
+      name:  $('ask-name').value,
+      email: $('ask-email').value,
+      dept:  $('ask-dept').value,
+      note:  $('ask-note').value
+    }).then(function (r) {
+      show('view-login');
+      say('신청이 접수되었습니다. 관리자가 확인하면 ' + r.email + ' 로 초대 메일이 갑니다.', 'ok');
+    }).catch(function (err) {
+      // 이미 접수된 건은 실패가 아니다 — 다시 누르게 만들지 않는다.
+      if (err && err.duplicate) { show('view-login'); say(err.message, 'warn'); return; }
+      say(err && err.message ? err.message : '신청을 보내지 못했습니다.');
+    }).then(function () { btn.disabled = false; btn.textContent = '신청하기'; });
   });
 
   /* ── 비밀번호 설정 ──────────────────────────────────────────── */
