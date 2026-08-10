@@ -198,6 +198,36 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       <div class="tool-card-desc">메리트투어 공식 홈페이지(merittour.co.kr) 예약 페이지</div>
       <div class="tool-card-meta"><span class="badge team guest">손님용</span></div>
     </a>
+    <!-- 아래 둘은 관리자 허브(admin/index.html)에만 있던 것을 옮겨 왔다.
+         그 허브는 권한 관리로 가는 통로일 뿐이라 없앴다. -->
+    <a href="https://merittour.github.io/guide/" target="_blank" class="tool-card">
+      <div class="tool-card-title">고객 가이드 페이지</div>
+      <div class="tool-card-desc">카카오톡 링크용 손님 안내 페이지 (리조트별 상세 정보)</div>
+      <div class="tool-card-meta"><span class="badge team guest">손님용</span></div>
+    </a>
+    <a href="https://github.com/MERITTOUR/merittour-tools/tree/main/cards" target="_blank" class="tool-card">
+      <div class="tool-card-title">직원 명함</div>
+      <div class="tool-card-desc">15명 명함 PNG. 본인 이름 클릭 → Raw 또는 Download 로 저장</div>
+      <div class="tool-card-meta"><span class="badge team">자료실</span></div>
+    </a>
+  </div>
+
+
+  <!-- 허브끼리 오가는 길. 예전에는 관리자 허브에만 있어서, 두 팀 권한을 가진
+       사람도 허브를 옮기려면 주소를 직접 쳐야 했다. 권한 없는 허브는
+       guard.js 가 data-section 을 보고 감춘다(제목까지 같이 사라진다). -->
+  <div class="section-title" data-group=".mt-hub-link">다른 허브</div>
+  <div class="tool-grid">
+    <a href="../manage/" class="tool-card mt-hub-link" data-section="manage">
+      <div class="tool-card-title">관리 허브</div>
+      <div class="tool-card-desc">관리팀 화면</div>
+      <div class="tool-card-meta"><span class="badge">/manage/</span></div>
+    </a>
+    <a href="../air/" class="tool-card mt-hub-link" data-section="air">
+      <div class="tool-card-title">항공 허브</div>
+      <div class="tool-card-desc">항공팀 화면</div>
+      <div class="tool-card-meta"><span class="badge">/air/</span></div>
+    </a>
   </div>
 
   <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
