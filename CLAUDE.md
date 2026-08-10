@@ -7,24 +7,33 @@
 - 메리트투어(한국 골프 투어 여행사) 사내 자동화 도구함. GitHub Pages로 배포.
 - 계정 `cmc338111-crypto`, 저장소 `merittour-tools` (public), 기본 브랜치 `main`.
 - 진입점: `/sales/` (영업 도구 허브). 루트 `index.html`은 `/sales/`로 리다이렉트.
-- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library. (inquiry 폴더는 폐지됐으나 잔존)
-  - `golfweather`: 골프 라운딩 적합도(Open-Meteo 키리스). **게이트 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML.
+- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library. (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
+  - `golfweather`: 골프 라운딩 적합도(Open-Meteo 키리스). **로그인 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML.
     - **이건 `weather`(리조트 날씨)의 대체 수단이다.** 리조트 날씨는 외부 사이트 `golfweather.info` 로 나가므로 그 사이트가 죽으면 같이 죽는다. golfweather 는 외부에 기대지 않고 직접 계산한다.
     - **영업 허브 카드로 두지 않는다.** 평소에는 자리만 차지하고, 정작 필요한 순간(외부 사이트가 안 열릴 때)에는 허브를 뒤지게 된다. 링크는 **리조트 날씨 안**에 「golfweather.info 가 안 열리나요?」로 붙여 뒀다 — 찾는 자리에 있어야 한다.
 - 그 외 디렉토리: admin, air, manage, sales, assets, cards, shared, supabase.
 
-## 접근 게이트 (중요)
-- 모든 진입점 `index.html`은 `<head>`에서 본문보다 먼저 `shared/gate.js`를 부른다.
-  - sales·admin·air·manage: `<script src="../shared/gate.js"></script>`
-  - tools/* (2단계): `<script src="../../shared/gate.js"></script>`
-  - tools/library/archive (3단계): `<script src="../../../shared/gate.js"></script>`
-  - 루트 index.html: 게이트 없음(즉시 sales로 리다이렉트되므로).
-- 비밀번호 **9800** (gate.js에 SHA-256 해시로 보관, 원문 비노출). 이름(2글자 이상) + 비번 입력.
-- 통과 기록은 localStorage + 30일 슬라이딩 만료(탭/창 닫아도 유지, 접속 시마다 30일 연장, 30일 미접속 시에만 재입력). 이름도 localStorage(유지). 비번 변경 시 해시 불일치로 기존 기록 자동 무효화.
-- 새 도구·페이지를 추가하면 반드시 게이트 로드 줄을 깊이에 맞게 넣을 것.
+## 페이지 진입은 로그인으로 막는다 (`shared/guard.js`)
+- 모든 진입점 `index.html`은 `<head>`에서 본문보다 먼저 **한 줄**을 부른다. 깊이만 맞추면 된다.
+  - sales·admin·air·manage: `<script src="../shared/guard.js"></script>`
+  - tools/* (2단계): `<script src="../../shared/guard.js"></script>`
+  - tools/library/archive (3단계): `<script src="../../../shared/guard.js"></script>`
+  - 예외 3곳: 루트 `index.html`(즉시 sales로 리다이렉트) · `login/`(무한 루프) · `tools/golfweather/`(손님 공개).
+- **의존 스크립트는 guard.js 가 스스로 부른다**(`supabase-config.js`·`access.js`). 페이지마다 세 줄을 맞춰 넣게 하면 어느 한 장에서 순서가 틀어져도 조용히 안 막힌다 — 한 줄이라야 빠뜨릴 자리가 없다.
+- **확인이 끝날 때까지 본문을 그리지 않는다**(`body{visibility:hidden}`). 잠깐이라도 보이면 권한 없는 사람이 화면을 읽고, 로그인 화면으로 튕기는 깜빡임도 생긴다. `display:none`이 아니라 `visibility`인 이유는 레이아웃이 0이 되면 폭을 재서 그리는 표들이 잘못된 크기로 뜨기 때문이다.
+- **실패해도 하얀 화면으로 두지 않는다.** 세션 없음 → 로그인 화면(`?next=` 로 돌아올 곳). 승인 전 → 이유 + [다른 계정으로 로그인]. 오류·설정 없음 → 이유 + [다시 시도]. 4초 넘으면 「확인하는 중」. 빈 화면이면 사람은 「고장」이라고만 알고 손쓸 데가 없다.
+- **`?next=` 는 상대경로로 넘긴다.** 절대주소를 넘기면 로그인 화면의 열린-리다이렉트 방지에 걸려 늘 `/sales/`로 가버린다. 오리진을 정규식으로 떼지 말고 `new URL().pathname`을 쓸 것(`file://`로 열어 보는 경우가 있다).
+- **문 앞에서는 역할을 보지 않는다.** 초대 기본 역할이 `air`이고 루트가 모두를 `/sales/`로 보내므로, 허브마다 역할을 걸면 신규 직원이 전부 문 앞에서 막힌다. 역할 차이는 서버 RLS와 `admin/users/`(`require(['admin'])`)가 본다.
+- 표시명은 **계정에서 온다**(`app_users.name`, 없으면 이메일 아이디). `MT_USER.get()`·`user()`·`role()`·`logout()`. 예전 gate.js의 `set()`/`prompt()`(자유 입력 이름 바꾸기)는 두지 않는다 — 각자 PC에서 고치면 「누가 올렸는지」가 사람마다 달라진다. 바꿀 곳은 `admin/users/` 하나다.
+- 헤더 배지 메뉴에 **이메일과 역할을 적는다.** 공용 PC에서 앞사람 계정으로 남아 있는 것을 알아챌 자리가 거기밖에 없다.
+
+### 왜 공용 비밀번호 게이트를 없앴나
+- 예전에는 `shared/gate.js`가 비밀번호 **9800**(SHA-256 해시) + 자유 입력 이름을 받았다.
+- 비밀번호 하나를 전 직원이 나눠 쓰면 ① 누가 들어왔는지 알 수 없고, ② 퇴사자를 막을 방법이 없고, ③ 한 번 새면 되돌릴 길이 비번 교체뿐이다. 이름도 자유 입력이라 gate.js 스스로 「진위 보장 X」라고 적어 두었다.
+- 계정을 다 나눠 준 뒤에는 게이트가 지키는 것이 없었다. 오히려 **계정이 있는 사람도 9800을 따로 알아야** 도구에 들어가는 걸림돌만 남았다(로그인 화면에는 게이트가 없어서 로그인은 되는데 그다음이 막혔다).
 
 ## 로그인·역할 (Supabase)
-- 게이트(비번 9800)는 **가림막**이고, 실제 권한은 Supabase Auth + RLS다. 둘 다 유지한다.
+- 진입은 `shared/guard.js`(로그인)가 막고, 실제 권한은 Supabase Auth + RLS다. 공용 비밀번호 게이트는 없앴다(위 절).
 - 역할 5단계: `owner` > `admin` > `manage` / `sales` > `air`(읽기). **owner 는 무엇을 물어도 통과**한다(`can()`과 서버 `mt_has_role()`이 같은 규칙 — 안 그러면 화면엔 보이는데 저장이 막힌다).
 - 계정은 콘솔에서 초대 → `app_users` 에 `air`·비활성으로 자동 생성 → **owner 가 `admin/users/` 에서 승인·역할 지정**.
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
@@ -56,7 +65,7 @@
 - **단일 HTML 파일 바이브 코딩.** 외부 라이브러리는 CDN(cdnjs)에서 로드. 로고는 인라인 SVG.
 - **설계 먼저 제안 → 확인 → 구현.** 구조·디자인 변경은 먼저 제안하고 확인받은 뒤 구현.
 - 데이터 저장은 localStorage. 키 네임스페이스: `mt_notify_*`, `mt_settle_*`, `mt_doc_*`, `mt_edit_*`, `mt_agency_*`.
-- 라이트 모드 고정.
+- **라이트 모드 고정.** `@media (prefers-color-scheme:dark)` 분기를 넣지 말 것 — 같은 화면이 기기 설정에 따라 다른 색으로 갈려 보여 「어느 쪽이 맞느냐」를 되묻게 된다(2027 안내 리다이렉트 두 장이 실제로 그랬다).
 
 ## 검증 (납품 전 필수)
 1. **JS 문법 검사**: 인라인 `<script>`를 추출해 `new Function(code)`로 파싱 오류 확인.
@@ -226,8 +235,7 @@
 - 안 채운 PC 는 확정서 링크가 안 열리는 것으로 끝나지 않았다 — `analyze()` 끝의 자동 동기화가 **조용히 건너뛰어져 D-7 알림톡이 낡은 자료로 나갔다.**
 - **동기화 실패를 삼키지 않는다.** 자동 실행(silent)일 때도 화면에 남기고, 무엇이 걸린 일인지(D-7 자동발송) 함께 적는다.
 - 입금계좌·문의전화는 `commonMaster.docAcct`(서버 마스터)다. **손님 문서에 찍히는 값**이라 PC 마다 다르면 안 된다 — 안 넣은 PC 에서 뽑은 확정서는 계좌가 「별도 안내드립니다」로, 문의 전화는 **빈칸**으로 나갔다.
-- `tools/translate` 의 주소도 이제 코드에 있다(`MT_SB.URL + '/functions/v1/translate'`). 오래 미뤄 뒀던 이유는 함수가 `--no-verify-jwt` 로 떠 있어 **인증 없는 LLM 프록시 주소를 public 저장소에 평문으로 올리는 셈**이었기 때문이다. 함수에 `requireUser`(로그인 토큰 검증)를 붙였고 페이지도 토큰으로 부르게 바꿔서 그 조건이 풀렸다.
-  - **함수의 토큰 검증과 페이지의 토큰 전송은 한 쌍이다.** 함수만 조이면 번역이 401 로 죽고, 페이지만 고치면 아무것도 막지 않는다. 한쪽만 배포하지 말 것.
+- `tools/translate`(문서 번역)와 `functions/translate` 는 **폐지했다** — 안 쓰기로 함. 저장소·영업 허브·Edge Function 모두에서 지웠다. Supabase 콘솔의 함수도 함께 삭제할 것(코드에서 지워도 서버에 떠 있으면 주소만 알면 계속 불린다).
 
 ## 손님 데이터 경로는 로그인 토큰으로
 - 확정서 저장(Storage)·예약 동기화(`reservations`)·알림톡 발송은 **로그인한 사람의 토큰**으로 나간다(`docAuthHeaders`). 토큰이 없으면 **보내지 않는다** — 조용히 anon 으로 흘러가면 안 된다.
@@ -236,7 +244,7 @@
 
 ## Edge Function 은 fail-closed
 - `cron-d7-alimtalk` 는 `if (secret && …)` 라 **`CRON_SECRET` 을 안 넣으면 검사를 통째로 건너뛰었다.** 주소만 알면 누구나 전 고객에게 D-7 알림톡을 쏠 수 있었다 — 이제 시크릿이 없으면 **막는다**.
-- `send-alimtalk`·`translate` 는 검사가 아예 없었다. 로그인 토큰을 받아 `/auth/v1/user` 로 직접 확인한다. **환경변수가 비어 있으면 막는다** — 설정을 빠뜨렸을 때 열리는 쪽으로 기울면 안 된다.
+- `send-alimtalk` 은 검사가 아예 없었다(폐지한 `translate` 도 같았다). 로그인 토큰을 받아 `/auth/v1/user` 로 직접 확인한다. **환경변수가 비어 있으면 막는다** — 설정을 빠뜨렸을 때 열리는 쪽으로 기울면 안 된다.
 - 새 함수를 만들 때도 같은 규칙: 인증 정보가 없으면 통과가 아니라 거절이다.
 
 ## 협업

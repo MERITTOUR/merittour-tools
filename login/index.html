@@ -9,51 +9,56 @@
 <script src="../shared/access.js"></script>
 <style>
   :root{
-    --bg:#EEF2F8; --surface:#fff; --navy:#1a2332; --accent:#2E5A88; --accent2:#4A7BB0;
-    --text:#22303F; --text2:#5A6A7A; --text3:#8A97A6; --border:#D8E0EA; --border2:#C3CEDB;
-    --red:#C0392B; --red-dim:#FDECEA; --amber:#B7791F; --amber-dim:#FEF6E7;
+    /* 게이트 화면과 같은 팔레트를 쓴다. 들어오는 문이 두 번 바뀌면
+       같은 회사 화면으로 안 보인다. */
+    --bg:#F7F8FA; --surface:#fff; --ink:#353C48; --ink2:#5A6472; --ink3:#97A0AE;
+    --line:#E3E5EA; --line2:#CDD1D8;
+    --red:#DC2626; --red-dim:#FEE2E2; --amber:#B7791F; --amber-dim:#FEF6E7;
     --green:#1E7A4C; --green-dim:#E7F6EE;
-    --sans:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    --sans:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Pretendard','Malgun Gothic',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;
     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-    width:100%;max-width:400px;padding:34px 30px;box-shadow:0 2px 20px rgba(26,35,50,.06)}
-  .brand{display:flex;align-items:center;gap:9px;margin:0 0 4px;
-    font-size:12.5px;font-weight:800;letter-spacing:.04em;color:var(--text2)}
-  .brand .mark{width:22px;height:22px;border-radius:50%;flex:none;
-    background:radial-gradient(circle at 34% 30%,var(--accent2),var(--navy))}
-  h1{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;color:var(--navy)}
-  .sub{font-size:13.5px;color:var(--text2);margin:0 0 22px;line-height:1.6}
-  label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin:0 0 5px}
-  input{width:100%;padding:11px 13px;border:1px solid var(--border2);border-radius:9px;
-    font-size:15px;font-family:inherit;background:#fff;color:var(--text)}
-  input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,90,136,.12)}
-  .field+.field{margin-top:13px}
-  button.go{width:100%;margin-top:20px;padding:12px;border:none;border-radius:9px;
-    background:var(--accent);color:#fff;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer}
-  button.go:hover{background:var(--navy)}
-  button.go:disabled{opacity:.5;cursor:not-allowed}
-  .msg{margin-top:16px;font-size:13.5px;line-height:1.6;border-radius:9px;padding:11px 13px;display:none}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    width:100%;max-width:380px;padding:36px 32px 30px;box-shadow:0 8px 28px rgba(26,35,50,.12);
+    text-align:center}
+  .logo{height:24px;width:auto;display:block;margin:0 auto 8px}
+  .brand-sub{font-size:11px;color:var(--ink3);letter-spacing:.08em;
+    font-family:var(--mono);margin-bottom:24px}
+  h1{font-size:16px;font-weight:700;margin:0 0 8px;color:var(--ink)}
+  .sub{font-size:13px;color:var(--ink2);margin:0 0 20px;line-height:1.7}
+  label{display:block;text-align:left;font-size:13px;font-weight:700;color:var(--ink2);margin:14px 0 7px}
+  form .field:first-child label{margin-top:0}
+  input{width:100%;font-size:17px;padding:12px 14px;border:1px solid var(--line2);
+    border-radius:8px;background:#fff;color:#2A2F39;font-family:inherit;transition:border-color .15s}
+  input:focus{outline:none;border-color:var(--ink)}
+  button.go{width:100%;margin-top:18px;font-size:15px;font-weight:700;font-family:inherit;
+    padding:13px;border:none;border-radius:8px;cursor:pointer;
+    background:var(--ink);color:#fff;transition:background-color .15s}
+  button.go:hover{background:#2A2F39}
+  button.go:disabled{opacity:.5;cursor:default}
+  .msg{margin-top:16px;font-size:12.5px;line-height:1.7;border-radius:8px;padding:11px 13px;
+    display:none;text-align:left}
   .msg.on{display:block}
   .msg.err{background:var(--red-dim);color:var(--red);border:1px solid #F5C6C0}
   .msg.warn{background:var(--amber-dim);color:var(--amber);border:1px solid #F0DCB0}
   .msg.ok{background:var(--green-dim);color:var(--green);border:1px solid #B7E2CB}
-  .foot{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
-    font-size:12px;color:var(--text3);line-height:1.7}
-  .foot b{color:var(--text2)}
+  .foot{margin-top:22px;font-size:11px;color:var(--ink3);line-height:1.6}
+  .foot b{color:var(--ink2)}
   .hide{display:none}
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="brand"><span class="mark" aria-hidden="true"></span> MERITTOUR 사내 도구함</div>
+  <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539.49 67.31"><g><g><polygon points="146.69 51.4 146.54 51.4 134.83 9.89 118.23 9.89 118.23 58.23 127.38 58.23 127.07 13.73 127.22 13.73 140.89 58.23 151.87 58.23 165.61 13.45 165.77 13.45 165.46 58.23 174.92 58.23 174.92 9.89 158.63 9.89 146.69 51.4" fill="#373f4a"/><polygon points="196.74 35.48 214.89 35.48 214.89 31.07 196.74 31.07 196.74 14.38 217.38 14.38 217.38 9.89 187.05 9.89 187.05 58.23 218.94 58.23 218.94 53.74 196.74 53.74 196.74 35.48" fill="#373f4a"/><rect x="277.51" y="9.89" width="9.7" height="48.33" fill="#373f4a"/><polygon points="296.11 14.47 311.12 14.47 311.12 58.23 320.81 58.23 320.81 14.47 335.9 14.47 335.9 9.89 296.11 9.89 296.11 14.47" fill="#373f4a"/><polygon points="343.94 14.5 358.95 14.5 358.95 58.23 368.65 58.23 368.65 14.5 383.74 14.5 383.74 9.89 343.94 9.89 343.94 14.5" fill="#373f4a"/><path d="M434.24,15.86a26.37,26.37,0,0,0-8.84-5.25,28.41,28.41,0,0,0-10.48-1.85,27.81,27.81,0,0,0-10.4,1.88A26.51,26.51,0,0,0,395.69,16a24.24,24.24,0,0,0-5.83,8.1,24.86,24.86,0,0,0-2.07,10.2,23.92,23.92,0,0,0,3.56,13,24.44,24.44,0,0,0,9.89,8.85,28.57,28.57,0,0,0,13.68,3.19,28,28,0,0,0,10.48-1.88,27.07,27.07,0,0,0,8.84-5.26,23.57,23.57,0,0,0,5.82-8,24.55,24.55,0,0,0,2.08-10.16,24.55,24.55,0,0,0-2.08-10.16A24.12,24.12,0,0,0,434.24,15.86ZM429.67,44.7a16.86,16.86,0,0,1-6.22,6.9,14.88,14.88,0,0,1-8.53,2.47,14.54,14.54,0,0,1-8.45-2.51,17,17,0,0,1-6.21-7.06A23.36,23.36,0,0,1,398,34.06a23.27,23.27,0,0,1,2.23-10.48,17,17,0,0,1,6.21-7A14.68,14.68,0,0,1,415,14.05a14.17,14.17,0,0,1,8.41,2.55,17.59,17.59,0,0,1,6.22,7.14,23.51,23.51,0,0,1,2.26,10.56A22.93,22.93,0,0,1,429.67,44.7Z" fill="#373f4a"/><path d="M481.23,43.93a10.81,10.81,0,0,1-2.51,7.36c-1.66,1.92-4.4,2.88-8.2,2.88s-6.48-1-8.18-3a11.12,11.12,0,0,1-2.54-7.46V9.89h-9.69V41.67A18.24,18.24,0,0,0,452.42,51a15.4,15.4,0,0,0,6.84,6.18,25.62,25.62,0,0,0,11.26,2.2,24.89,24.89,0,0,0,11.25-2.27,15.82,15.82,0,0,0,6.85-6.29,18.52,18.52,0,0,0,2.3-9.35V9.89h-9.69Z" fill="#373f4a"/><path d="M257.1,37.12a15.52,15.52,0,0,0,6.84-4.94,12.39,12.39,0,0,0,2.46-7.72,12.78,12.78,0,0,0-2.35-7.67,15.12,15.12,0,0,0-6.6-5.08,25.07,25.07,0,0,0-9.89-1.82h-18V58.23h9.7v-44H247c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.32,8.93a8.25,8.25,0,0,1-2.32,5A10.28,10.28,0,0,1,250,32.32a25.34,25.34,0,0,1-6.29.74h-3.6L253.91,53h0l.44.62a12,12,0,0,0,3.14,3,13.5,13.5,0,0,0,2.6,1,41.48,41.48,0,0,0,8.05.67h.68L253.88,38.06A22.35,22.35,0,0,0,257.1,37.12Z" fill="#373f4a"/><path d="M84.43,0s-25-.23-42.24,18.8a17.14,17.14,0,0,0-1.73,2.37v-.06c-7,9.81-8,18.06-8,21.41,0,8.74,2.3,12.21,2.3,12.21,0-1.56.08-3.06.15-4.44a40.71,40.71,0,0,1,3.77-14.21q1.11-2,2.26-3.8c.22-.33.45-.66.62-.94,14.07-21,32.4-19.09,32.4-19.09s3,19-4.06,32.94S45.54,67.31,45.54,67.31H47C63.37,66,72.61,54,73.37,52.91,89.74,30,84.43,0,84.43,0Z" fill="#373f4a"/><path d="M15.38,45.19c-7-14-4.06-32.94-4.06-32.94S23.5,11,35.62,21.89a29.79,29.79,0,0,1,4.51-6.06C23.15-.19.82,0,.82,0S-4.49,30,11.88,52.91c.76,1,10,13.13,26.43,14.4h1.41S22.44,59.16,15.38,45.19Z" fill="#373f4a"/><path d="M527.76,37.12a15.4,15.4,0,0,0,6.84-4.94,12.34,12.34,0,0,0,2.47-7.72,12.85,12.85,0,0,0-2.35-7.67,15.15,15.15,0,0,0-6.61-5.08,25,25,0,0,0-9.89-1.82h-18V58.23h9.7v-44h7.74c2.76,0,5,.23,6.78,1.6s3.85,3.35,3.31,8.93a8.24,8.24,0,0,1-2.31,5,10.28,10.28,0,0,1-4.77,2.56,25.42,25.42,0,0,1-6.3.74H510.8L524.58,53h0l.43.62a12.05,12.05,0,0,0,3.15,3,13.5,13.5,0,0,0,2.6,1,41.42,41.42,0,0,0,8,.67h.68L524.55,38.06A22.21,22.21,0,0,0,527.76,37.12Z" fill="#373f4a"/></g></g></svg>
+  <div class="brand-sub">INTERNAL TOOLS</div>
 
   <!-- 로그인 -->
   <div id="view-login">
     <h1>로그인</h1>
-    <p class="sub">등록된 이메일로 로그인해 주세요.<br>계정은 관리자가 발급합니다.</p>
+    <p class="sub">사내 계정으로 로그인해 주세요.<br>계정 발급·승인은 관리자에게 문의해 주세요.</p>
     <form id="form-login" autocomplete="on">
       <div class="field">
         <label for="email">이메일</label>
@@ -73,7 +78,7 @@
     <p class="sub">초대받으신 계정의 비밀번호를 정해 주세요.<br>다음부터는 이 비밀번호로 로그인하시면 됩니다.</p>
     <form id="form-invite">
       <div class="field">
-        <label for="pw1">새 비밀번호 <span style="font-weight:600;color:var(--text3)">(8자 이상)</span></label>
+        <label for="pw1">새 비밀번호 <span style="font-weight:600;color:var(--ink3)">(8자 이상)</span></label>
         <input type="password" id="pw1" autocomplete="new-password" required minlength="8">
       </div>
       <div class="field">
@@ -92,14 +97,13 @@
       계정은 만들어졌지만 아직 <b>사용 승인이 나지 않았습니다.</b><br>
       관리자에게 승인을 요청해 주세요.
     </div>
-    <button class="go" type="button" id="btn-logout" style="background:var(--text3)">다른 계정으로 로그인</button>
+    <button class="go" type="button" id="btn-logout" style="background:var(--ink3)">다른 계정으로 로그인</button>
   </div>
 
   <div class="msg" id="msg"></div>
 
   <div class="foot" id="foot">
-    로그인은 <b>사내 데이터 공유(엠클릭 통합 업로드)</b>에 쓰입니다.<br>
-    계정 발급·승인은 관리자에게 문의해 주세요.
+    사내 직원 전용 도구함입니다.
   </div>
 </div>
 
