@@ -34,11 +34,6 @@
   input{width:100%;font-size:17px;padding:12px 14px;border:1px solid var(--line2);
     border-radius:8px;background:#fff;color:#2A2F39;font-family:inherit;transition:border-color .15s}
   input:focus{outline:none;border-color:var(--ink)}
-  /* 담당 업무 고르기 — 입력칸과 같은 모양으로 둔다. 안 고르면 흐리게 보인다. */
-  .field select{width:100%;font-size:17px;padding:12px 14px;border:1px solid var(--line2);
-    border-radius:8px;background:#fff;color:#2A2F39;font-family:inherit;transition:border-color .15s}
-  .field select:focus{outline:none;border-color:var(--ink)}
-  .field select:invalid{color:var(--ink3)}
   button.go{width:100%;margin-top:18px;font-size:15px;font-weight:700;font-family:inherit;
     padding:13px;border:none;border-radius:8px;cursor:pointer;
     background:var(--ink);color:#fff;transition:background-color .15s}
@@ -112,13 +107,8 @@
         <input type="email" id="ask-email" autocomplete="email" required maxlength="120">
       </div>
       <div class="field">
-        <label for="ask-dept">담당 업무</label>
-        <select id="ask-dept" required>
-          <option value="" selected disabled>선택해 주세요</option>
-          <option value="영업">영업 — 예약 · 상품 · 고객</option>
-          <option value="항공">항공 — 항공 일정 · 발권</option>
-          <option value="관리">관리 — 리조트 · 자료 관리</option>
-        </select>
+        <label for="ask-dept">부서</label>
+        <input type="text" id="ask-dept" required maxlength="40" placeholder="영업">
       </div>
       <button class="go" type="submit" id="btn-ask-send">신청하기</button>
     </form>
