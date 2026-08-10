@@ -42,12 +42,14 @@
 - 진입은 `shared/guard.js`(로그인)가 막고, 실제 권한은 Supabase Auth + RLS다. 공용 비밀번호 게이트는 없앴다(위 절).
 - 역할 5단계: `owner` > `admin` > `manage` / `sales` > `air`(읽기). **owner 는 무엇을 물어도 통과**한다(`can()`과 서버 `mt_has_role()`이 같은 규칙 — 안 그러면 화면엔 보이는데 저장이 막힌다).
 - 계정은 콘솔에서 초대 → `app_users` 에 `air`·비활성으로 자동 생성 → **owner 가 `admin/users/` 에서 승인·역할·섹션 지정**.
-- **섹션 권한**(`14_app_user_sections.sql`) — `app_users.areas`(읽기+쓰기) / `read_areas`(읽기만). 섹션 목록의 단일 출처는 `shared/access.js` 의 `SECTIONS` 이고, **마이그레이션의 키와 반드시 같아야 한다**(한쪽만 고치면 화면엔 보이는데 서버가 막는다). 판정은 화면 `canArea`/`canReadArea` 와 서버 `mt_has_area`/`mt_can_read_area` 가 같은 규칙 — **owner·admin 은 목록과 무관하게 전부 통과**하고, 나머지는 목록에 있어야 한다.
+- **섹션 권한**(`14_app_user_sections.sql`) — `app_users.areas`(읽기+쓰기) / `read_areas`(읽기만). 섹션 목록의 단일 출처는 `shared/access.js` 의 `SECTIONS` 이고, **마이그레이션의 키와 반드시 같아야 한다**(한쪽만 고치면 화면엔 보이는데 서버가 막는다). 판정은 화면 `canArea`/`canReadArea` 와 서버 `mt_has_area`/`mt_can_read_area` 가 같은 규칙 — **역할 우회는 없다**(`16_sections_for_all.sql`). owner 도 목록에 있어야 열린다. 14 는 owner·admin 을 무조건 통과시켰는데, 그러면 **마스터가 자기 섹션을 정할 수 없었다**.
   - **쓸 수 있으면 볼 수 있다.** `areas` 에 있으면 `read_areas` 에 또 안 적어도 된다.
   - **관리자 화면은 섹션으로 두지 않는다.** 역할로만 연다 — 섹션으로 두면 owner 가 실수로 계정 관리 권한을 나눠 줄 수 있다.
   - **역할을 바꾸면 그 역할의 기본 섹션을 채워 준다**(`defaultsFor`). 안 채우면 `sales`로 올려도 섹션이 비어 아무 화면도 안 열린다 — 「승인했는데 왜 안 되지」가 된다. 채운 뒤 바로 저장하지 말고 무엇이 바뀌었는지 알리고 조정할 틈을 줄 것.
   - **본인이 자기 `areas` 를 못 채우게 `au_update_self` 가 두 컬럼을 고정한다.** 안 그러면 승인제가 뚫린다.
-  - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것(우회는 owner·admin 하나로 통일) ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
+  - **`admin/`·`admin/users/` 에 `data-section` 을 붙이지 말 것.** 이 두 화면이 역할로만 열리기 때문에 섹션을 전부 꺼도 되돌릴 수 있다. 붙이는 순간 마스터가 자기 손으로 잠긴다.
+  - **판정 규칙을 바꿀 때는 데이터를 먼저 채우고 코드를 나중에 배포한다.** 16 을 코드 먼저 내보냈다가 `areas` 가 비어 있던 owner 가 모든 허브에서 막혔다. 화면 판정이 서버와 같은 규칙이라 데이터가 비면 코드만으로 막힌다.
+  - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것 ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
 - **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 보고 **Supabase 콘솔 → Authentication → Users → Invite user** 로 초대(메일 발송) → 신청자가 링크에서 비밀번호 설정 → `app_users` 에 air·비활성 → owner 가 승인·섹션 지정.
   - **초대 메일을 코드에서 보내지 않는다.** 보내려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
