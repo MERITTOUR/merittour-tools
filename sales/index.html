@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MERITTOUR · SALES</title>
-<script src="../shared/gate.js"></script>
+<script src="../shared/guard.js"></script>
 <link rel="stylesheet" href="../shared/core.css">
 <meta name="robots" content="noindex, nofollow" />
 <style>
@@ -119,14 +119,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <span class="badge team">영업</span>
       </div>
     </a>
-    <a href="../tools/translate/" class="tool-card">
-      <div class="tool-card-title">문서 번역</div>
-      <div class="tool-card-desc">일본·영문 계약서·정산서를 한국어로 — 사내 전용 번역. 이미지·스캔 PDF OCR+번역 (외부 무료 사이트 업로드 대체)</div>
-      <div class="tool-card-meta">
-        <span class="badge ver">MVP</span>
-        <span class="badge team">영업</span>
-      </div>
-    </a>
   </div>
 
   <div class="section-title">2027 우선예약</div>
@@ -203,6 +195,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
 <!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 <script> 가 주석 처리돼 로드되지 않았고
      auth.js 의 CONFIG.ENABLED 도 false 라 이중으로 죽어 있었다.
-     실제 로그인은 Supabase Auth(shared/access.js)와 게이트(shared/gate.js)가 한다. -->
+     실제 로그인은 Supabase Auth(shared/access.js)와 로그인 문지기(shared/guard.js)가 한다. -->
 </body>
 </html>

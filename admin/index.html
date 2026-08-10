@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MERITTOUR · ADMIN</title>
-<script src="../shared/gate.js"></script>
+<script src="../shared/guard.js"></script>
 <link rel="stylesheet" href="../shared/core.css">
 <meta name="robots" content="noindex, nofollow" />
 <style>
@@ -200,6 +200,6 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
 <!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 <script> 가 주석 처리돼 로드되지 않았고
      auth.js 의 CONFIG.ENABLED 도 false 라 이중으로 죽어 있었다.
-     실제 로그인은 Supabase Auth(shared/access.js)와 게이트(shared/gate.js)가 한다. -->
+     실제 로그인은 Supabase Auth(shared/access.js)와 로그인 문지기(shared/guard.js)가 한다. -->
 </body>
 </html>
