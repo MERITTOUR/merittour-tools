@@ -29,6 +29,55 @@
 
   var ROLES = ['owner', 'admin', 'manage', 'sales', 'air'];
 
+  /* ── 섹션 ────────────────────────────────────────────────────────
+     계정마다 「어느 화면을 볼 수 있는지 / 쓸 수 있는지」의 단위.
+     키는 14_app_user_sections.sql 의 값과 **반드시 같아야** 한다. 한쪽만
+     고치면 화면에서는 보이는데 서버가 막는(또는 그 반대) 어긋남이 생긴다.
+
+     admin(관리자 화면)은 여기 없다 — 역할로만 연다. 섹션으로 두면 owner 가
+     실수로 staff 에게 계정 관리 권한을 줄 수 있다. */
+  var SECTIONS = [
+    { key: 'sales',      label: '영업 허브',   path: 'sales/' },
+    { key: 'manage',     label: '관리 허브',   path: 'manage/' },
+    { key: 'air',        label: '항공 허브',   path: 'air/' },
+    { key: 'dashboard',  label: '대시보드',    path: 'tools/dashboard/' },
+    { key: 'booking',    label: '예약',        path: 'tools/booking/' },
+    { key: 'register',   label: '등록소',      path: 'tools/register/' },
+    { key: 'inquiry',    label: '문의',        path: 'tools/inquiry/' },
+    { key: 'insurance',  label: '보험',        path: 'tools/insurance/' },
+    { key: 'library',    label: '자료실',      path: 'tools/library/' },
+    { key: 'imgtoolkit', label: '이미지 도구', path: 'tools/imgtoolkit/' },
+    { key: 'weather',    label: '날씨',        path: 'tools/weather/' }
+  ];
+  var SECTION_KEYS = SECTIONS.map(function (s) { return s.key; });
+
+  /* 역할을 고르면 채워 넣을 기본값. owner·admin 은 전부 통과하므로 비워 둔다
+     (채워 두면 나중에 「admin 인데 비었네」 하고 잘못 손대게 된다).
+     여기서 정한 값은 출발점일 뿐이고, 계정마다 admin/users/ 에서 더하고 뺀다. */
+  var DEFAULT_AREAS = {
+    owner:  { areas: [], read: [] },
+    admin:  { areas: [], read: [] },
+    manage: { areas: ['sales', 'manage', 'dashboard', 'booking', 'register', 'inquiry',
+                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
+    sales:  { areas: ['sales', 'dashboard', 'booking', 'register', 'inquiry',
+                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
+    air:    { areas: [], read: ['air', 'dashboard', 'booking', 'weather', 'library'] }
+  };
+
+  function defaultsFor(role) {
+    var d = DEFAULT_AREAS[role] || { areas: [], read: [] };
+    return { areas: d.areas.slice(), read_areas: d.read.slice() };
+  }
+  function cleanAreas(list) {
+    var seen = {}, out = [];
+    (list || []).forEach(function (k) {
+      k = String(k || '');
+      if (SECTION_KEYS.indexOf(k) < 0 || seen[k]) return;   // 없는 키는 버린다
+      seen[k] = 1; out.push(k);
+    });
+    return out;
+  }
+
   /* 주입 가능한 의존 — 브라우저에서는 기본값, 테스트에서는 갈아 끼운다 */
   var dep = {
     fetch:   (typeof fetch === 'function') ? fetch.bind(null) : null,
@@ -250,10 +299,14 @@
       var id = uid();
       return req('/rest/v1/app_users?'
                  + (id ? 'id=eq.' + encodeURIComponent(id) + '&' : '')
-                 + 'select=id,email,name,role,active&limit=1', { token: t })
+                 + 'select=id,email,name,role,active,areas,read_areas&limit=1', { token: t })
         .then(function (rows) {
           var u = (rows && rows[0]) || null;
           if (!u) return null;                     // 아직 app_users 에 행이 없다(트리거 전)
+          // 14 를 아직 적용하지 않은 프로젝트에서는 두 컬럼이 없이 온다. 없으면
+          // 빈 배열로 둔다 — undefined 로 두면 아래 indexOf 가 터진다.
+          if (!Array.isArray(u.areas))      u.areas = [];
+          if (!Array.isArray(u.read_areas)) u.read_areas = [];
           u.at = dep.now();
           writeJSON(ME_KEY, u);
           return u;
@@ -266,7 +319,7 @@
   function listUsers() {
     return token().then(function (t) {
       if (!t) throw new Error('로그인이 필요합니다.');
-      return req('/rest/v1/app_users?select=id,email,name,role,active,created_at,updated_at'
+      return req('/rest/v1/app_users?select=id,email,name,role,active,areas,read_areas,created_at,updated_at'
                + '&order=active.asc,created_at.desc', { token: t });
     }).then(function (rows) { return rows || []; });
   }
@@ -279,6 +332,10 @@
     if (patch.role   !== undefined) body.role   = String(patch.role || '');
     if (patch.active !== undefined) body.active = !!patch.active;
     if (patch.name   !== undefined) body.name   = String(patch.name || '');
+    // 없는 섹션 키는 보내기 전에 버린다. 서버가 막아 주지 않는 값이라
+    // 오타가 그대로 저장되면 「분명 켰는데 안 열린다」가 된다.
+    if (patch.areas      !== undefined) body.areas      = cleanAreas(patch.areas);
+    if (patch.read_areas !== undefined) body.read_areas = cleanAreas(patch.read_areas);
     if (!Object.keys(body).length) return Promise.resolve(null);
     if (body.role !== undefined && ROLES.indexOf(body.role) < 0) {
       return Promise.reject(new Error('역할 값이 올바르지 않습니다.'));
@@ -331,6 +388,30 @@
     return roles.indexOf(user.role) >= 0;
   }
 
+  /* ── 섹션 판정 ───────────────────────────────────────────────────
+     서버(mt_has_area / mt_can_read_area)와 **같은 규칙**이어야 한다.
+     owner·admin 은 전부 통과, 그 밖에는 목록에 있어야 한다. */
+  function canArea(user, key) {
+    if (!user || !user.active) return false;
+    if (user.role === 'owner' || user.role === 'admin') return true;
+    if (!key) return true;
+    return (user.areas || []).indexOf(String(key)) >= 0;
+  }
+  /* 쓸 수 있으면 볼 수 있다 — areas 를 read_areas 에 또 적지 않아도 되게. */
+  function canReadArea(user, key) {
+    if (!user || !user.active) return false;
+    if (user.role === 'owner' || user.role === 'admin') return true;
+    if (!key) return true;
+    return (user.areas || []).indexOf(String(key)) >= 0
+        || (user.read_areas || []).indexOf(String(key)) >= 0;
+  }
+  /* 화면에서 쓰는 3단계 값 — 없음 / 읽기 / 읽기+쓰기 */
+  function areaLevel(user, key) {
+    if (canArea(user, key)) return 'write';
+    if (canReadArea(user, key)) return 'read';
+    return 'none';
+  }
+
   /* ── 페이지 진입 가드 ────────────────────────────────────────── */
   /* 통과하면 사용자 객체를 준다. 못 하면 사유를 담은 객체를 준다.
      화면 전환(리다이렉트·안내)은 opts.onDeny 가 없을 때만 기본 동작으로 한다. */
@@ -341,6 +422,13 @@
       if (!u) return deny('no-session', '로그인이 필요합니다.');
       if (!u.active) return deny('pending', '계정이 아직 승인되지 않았습니다. 관리자에게 문의해 주세요.', u);
       if (!can(u, roles)) return deny('forbidden', '이 화면을 볼 권한이 없습니다.', u);
+      // 섹션 권한. 역할을 통과해도 이 화면이 안 열릴 수 있다 — 그때는 무엇이
+      // 막혔는지 이름으로 말해 준다. 「권한이 없습니다」만 뜨면 누구에게
+      // 무엇을 요청해야 하는지 알 수 없다.
+      if (opts.area && !canReadArea(u, opts.area)) {
+        return deny('no-area', '「' + labelOf(opts.area) + '」 화면을 볼 권한이 없습니다. '
+                             + 'owner 에게 요청해 주세요.', u);
+      }
       return { ok: true, user: u };
     }).catch(function (e) {
       return deny('error', e && e.message ? e.message : '확인에 실패했습니다.');
@@ -354,9 +442,23 @@
     }
   }
 
+  function labelOf(key) {
+    for (var i = 0; i < SECTIONS.length; i++) if (SECTIONS[i].key === key) return SECTIONS[i].label;
+    return String(key || '');
+  }
+
   return {
     uid: uid,
     ROLES: ROLES,
+    SECTIONS: SECTIONS,
+    SECTION_KEYS: SECTION_KEYS,
+    DEFAULT_AREAS: DEFAULT_AREAS,
+    defaultsFor: defaultsFor,
+    cleanAreas: cleanAreas,
+    labelOf: labelOf,
+    canArea: canArea,
+    canReadArea: canReadArea,
+    areaLevel: areaLevel,
     configured: cfgReady,
     login: login,
     logout: logout,

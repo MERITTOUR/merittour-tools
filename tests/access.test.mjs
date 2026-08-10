@@ -330,3 +330,104 @@ test('guardChange — 자기 발등을 못 찍게 한다', () => {
     'owner 가 아닌 사람은 자유롭게 바꾼다');
   assert.equal(AUTH.guardChange([meOwner, sales], sales, { active: false }, 'me'), null);
 });
+
+/* ══ 섹션 권한 ══════════════════════════════════════════════════
+   서버(14_app_user_sections.sql 의 mt_has_area / mt_can_read_area)와
+   같은 규칙이어야 한다. 어긋나면 화면에서는 보이는데 저장이 막히거나,
+   막혀야 할 화면이 열린다. */
+
+const SEC_U = (over = {}) =>
+  ({ id: 'u1', email: 'a@b.c', role: 'sales', active: true, areas: [], read_areas: [], ...over });
+
+test('섹션 — owner·admin 은 목록이 비어 있어도 전부 통과한다', () => {
+  for (const role of ['owner', 'admin']) {
+    const u = SEC_U({ role });
+    assert.equal(AUTH.canArea(u, 'booking'), true);
+    assert.equal(AUTH.canReadArea(u, 'booking'), true);
+    assert.equal(AUTH.areaLevel(u, 'booking'), 'write');
+  }
+});
+
+test('섹션 — 쓸 수 있으면 볼 수 있다 (read_areas 에 또 안 적어도 된다)', () => {
+  const u = SEC_U({ areas: ['booking'] });
+  assert.equal(AUTH.canArea(u, 'booking'), true);
+  assert.equal(AUTH.canReadArea(u, 'booking'), true);
+  assert.equal(AUTH.areaLevel(u, 'booking'), 'write');
+});
+
+test('섹션 — 읽기만 준 곳은 쓰기가 막힌다', () => {
+  const u = SEC_U({ read_areas: ['dashboard'] });
+  assert.equal(AUTH.canArea(u, 'dashboard'), false);
+  assert.equal(AUTH.canReadArea(u, 'dashboard'), true);
+  assert.equal(AUTH.areaLevel(u, 'dashboard'), 'read');
+});
+
+test('섹션 — 목록에 없으면 없음', () => {
+  const u = SEC_U({ areas: ['booking'], read_areas: ['dashboard'] });
+  assert.equal(AUTH.areaLevel(u, 'register'), 'none');
+});
+
+test('섹션 — 정지된 계정은 owner 라도 전부 막힌다', () => {
+  const u = SEC_U({ role: 'owner', active: false, areas: ['booking'] });
+  assert.equal(AUTH.canArea(u, 'booking'), false);
+  assert.equal(AUTH.canReadArea(u, 'booking'), false);
+  assert.equal(AUTH.areaLevel(u, 'booking'), 'none');
+});
+
+test('cleanAreas — 없는 키는 버리고 중복은 하나로', () => {
+  assert.deepEqual(AUTH.cleanAreas(['booking', 'booking', '없는키', '', 'weather']),
+                   ['booking', 'weather']);
+  assert.deepEqual(AUTH.cleanAreas(null), []);
+});
+
+test('defaultsFor — 역할 기본값은 복사본이라 원본이 안 더러워진다', () => {
+  const a = AUTH.defaultsFor('sales');
+  assert.ok(a.areas.includes('booking'));
+  a.areas.push('없는키');
+  assert.ok(!AUTH.defaultsFor('sales').areas.includes('없는키'));
+  // owner·admin 은 함수가 무조건 통과시키므로 비워 둔다
+  assert.deepEqual(AUTH.defaultsFor('admin'), { areas: [], read_areas: [] });
+});
+
+test('계정 저장 — 섹션도 함께 보내고, 없는 키는 걸러진다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token: 'T', refresh_token: 'R', expires_at: SEC() + 3600, user: { id: 'u1' } });
+  await AUTH.login('a@b.c', 'pw').catch(() => {});
+  routes.length = 0;
+  route('/rest/v1/app_users', 200, [{ id: 'u2', role: 'sales', active: true }]);
+  await AUTH.updateUser('u2', { areas: ['booking', '없는키'], read_areas: ['weather'] });
+  const patch = calls.find(c => c.method === 'PATCH');
+  assert.deepEqual(patch.body.areas, ['booking']);
+  assert.deepEqual(patch.body.read_areas, ['weather']);
+});
+
+test('require — 섹션 권한이 없으면 무엇이 막혔는지 이름으로 알려 준다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token: 'T', refresh_token: 'R', expires_at: SEC() + 3600, user: { id: 'u1' } });
+  route('/rest/v1/app_users', 200, [{ ...SEC_U(), areas: ['weather'] }]);
+  await AUTH.login('a@b.c', 'pw');
+  const res = await AUTH.require([], { area: 'booking', onDeny: () => {} });
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, 'no-area');
+  assert.match(res.message, /예약/);        // 키가 아니라 사람이 읽는 이름으로
+  assert.deepEqual(gone, []);               // 리다이렉트하지 않는다
+});
+
+test('require — 섹션 권한이 있으면 통과한다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token: 'T', refresh_token: 'R', expires_at: SEC() + 3600, user: { id: 'u1' } });
+  route('/rest/v1/app_users', 200, [{ ...SEC_U(), areas: ['booking'] }]);
+  await AUTH.login('a@b.c', 'pw');
+  const res = await AUTH.require([], { area: 'booking' });
+  assert.equal(res.ok, true);
+});
+
+test('me — 14 를 아직 적용 안 한 프로젝트에서도 터지지 않는다', async () => {
+  reset();
+  route('/auth/v1/token', 200, { access_token: 'T', refresh_token: 'R', expires_at: SEC() + 3600, user: { id: 'u1' } });
+  route('/rest/v1/app_users', 200, [{ id: 'u1', email: 'a@b.c', role: 'sales', active: true }]);
+  const u = await AUTH.login('a@b.c', 'pw');
+  assert.deepEqual(u.areas, []);
+  assert.deepEqual(u.read_areas, []);
+  assert.equal(AUTH.areaLevel(u, 'booking'), 'none');
+});

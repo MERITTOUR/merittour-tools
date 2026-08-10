@@ -4,18 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MERITTOUR 사내 도구함</title>
-<meta http-equiv="refresh" content="0; url=./sales/">
-<script>location.replace('./sales/');</script>
+<!-- 예전에는 여기서 모두를 ./sales/ 로 보냈다. 섹션 권한이 생긴 뒤로는
+     그러면 영업 허브 권한이 없는 사람(예: 항공)이 문 앞에서 막힌다.
+     각자 볼 수 있는 허브로 보낸다. meta refresh 를 쓰지 않는 이유도 이것 —
+     권한을 확인하기 전에 먼저 튀어 버린다. -->
+<script src="./shared/supabase-config.js"></script>
+<script src="./shared/access.js"></script>
 <style>
-body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#EEF2F8;color:#1E2A45;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.box{text-align:center}
+body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#EEF2F8;color:#1E2A45;
+  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.box{text-align:center;max-width:420px}
+.box p{margin:0 0 10px;line-height:1.7}
 .box a{color:#2E5A88;font-weight:700}
+.links{display:none;margin-top:14px;font-size:14px}
+.links.on{display:block}
+.links a{display:inline-block;margin:4px 7px}
+.why{display:none;font-size:13.5px;color:#5A6472;line-height:1.7}
+.why.on{display:block}
 </style>
 </head>
 <body>
 <div class="box">
-  <p>MERITTOUR 사내 도구함으로 이동합니다…</p>
-  <p>자동 이동되지 않으면 <a href="./sales/">여기를 클릭</a>하세요.</p>
+  <p id="say">MERITTOUR 사내 도구함으로 이동합니다…</p>
+  <p class="why" id="why"></p>
+  <p class="links" id="links">
+    <a href="./sales/">영업</a><a href="./manage/">관리</a><a href="./air/">항공</a><a href="./admin/">관리자</a><a href="./login/">로그인</a>
+  </p>
 </div>
+<script>
+(function () {
+  'use strict';
+  var HUBS = ['sales', 'manage', 'air'];     // 우선순위 — 위에서부터 열리는 곳으로 보낸다
+  function go(p) { location.replace('./' + p + '/'); }
+  function stuck(msg) {
+    document.getElementById('say').textContent = '이동할 화면을 찾지 못했습니다.';
+    var w = document.getElementById('why');
+    w.textContent = msg; w.className = 'why on';
+    document.getElementById('links').className = 'links on';
+  }
+  /* 확인이 길어지면 링크라도 보여 준다 — 하얀 화면으로 두지 않는다. */
+  var slow = setTimeout(function () { document.getElementById('links').className = 'links on'; }, 4000);
+
+  if (!window.MT_AUTH || !MT_AUTH.configured()) { clearTimeout(slow); go('sales'); return; }
+
+  MT_AUTH.me().then(function (u) {
+    clearTimeout(slow);
+    if (!u) { go('login'); return; }
+    if (!u.active) { go('login'); return; }   // 로그인 화면이 승인 대기 안내를 한다
+    if (u.role === 'owner' || u.role === 'admin') { go('admin'); return; }
+    for (var i = 0; i < HUBS.length; i++) {
+      if (MT_AUTH.canReadArea(u, HUBS[i])) { go(HUBS[i]); return; }
+    }
+    stuck('계정에 열 수 있는 허브가 없습니다. owner 에게 섹션 권한을 요청해 주세요.');
+  }).catch(function () { clearTimeout(slow); go('sales'); });
+})();
+</script>
 </body>
 </html>
