@@ -6410,7 +6410,7 @@ document.addEventListener('DOMContentLoaded',function(){
    ② 호텔 블록 — 붙여넣은 표(또는 올라와 있는 달)를 보는 화면
 ════════════════════════════════════════════════════════════ */
 /* master·pools·alias 키는 선언만 있고 읽지도 쓰지도 않아 뺐다(보유의 단일 출처는 리조트 마스터다). */
-const BLK_STORE={over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths'};
+const BLK_STORE={over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths',sel:'mt_notify_blkSel'};
 const BLK_MONTH_KEEP=3;   // 등록월 보관 개월 수(지난 달 자동 정리)
 
 /* 기본 보유 마스터 (블록 대시보드 실데이터에서 추출) — 호텔|룸타입 → 보유 */
@@ -6424,7 +6424,10 @@ let blkMode='real';  // 실물 고정 (통합 토글 제거)
 let blkHotelFilter=new Set();
 let blkDepPoolSel=new Set(); // 출발조회 선택 풀
 let blkDepInited=false;      // 출발조회 칩 최초 기본 전체 적용 여부 (이후 사용자 선택 존중)
-let blkSpan=1;               // 1=이 달만, 2=다음 달까지 이어보기(인접 2개월)
+/* ② 에 이어서 볼 달들. 예전에는 「이 달만 / 다음 달까지」 두 가지뿐이라
+   8·10월처럼 건너뛰거나 석 달을 붙여 보는 것이 안 됐다. 이제 누른 달을
+   그대로 이어 붙인다(붙지 않은 달끼리도 된다 — 사이에 경계선이 선다). */
+let blkSel=new Set();
 
 /* 리조트 마스터에서 호텔 블록 데이터 재생성 — 보유/별칭/임의배정/풀 단일 출처 */
 function blkSyncFromResort(){
@@ -6458,6 +6461,7 @@ function blkLoad(){
   });
   blkOver=migrated;
   vcalLoadMonths();
+  blkLoadSel();          // 지난번에 보던 달들을 그대로 되살린다
 }
 /* ── 등록월 영속화 (예전엔 휘발성이라 새로고침하면 월 경계 계산이 매번 끊겼다) ── */
 function vcalSaveMonths(){
@@ -6866,13 +6870,12 @@ function prevYm(ym){
   const d=new Date(y, m-2, 1);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
-/* 화면에 표시할 월 목록. 이어보기라도 다음 달이 등록돼 있지 않으면 이 달만. */
+/* 화면에 표시할 월 목록 = 켜 둔 달 중 실제로 볼 것이 있는 달.
+   blkParsed.month 는 그중 첫 달이고, 그 달 행만 붙여넣기 원본일 수 있다. */
 function blkViewMonths(){
   if(!blkParsed) return [];
-  const m=blkParsed.month;
-  if(blkSpan!==2) return [m];
-  const nx=nextYm(m);
-  return vcalRowsForMonth(nx) ? [m, nx] : [m];
+  const ms=[...blkSel].filter(ym => ym===blkParsed.month || vcalRowsForMonth(ym)).sort();
+  return ms.length ? ms : [blkParsed.month];
 }
 /* 표시 대상 rows — 각 행에 ym을 붙인다 (달마다 day가 01부터 다시 시작하므로) */
 function blkViewRows(){
@@ -6967,6 +6970,9 @@ function blkRender(){
     blkShowRegistered();        // 붙이던 중이라도 올라와 있는 달은 계속 보인다
     return;
   }
+  // 붙여넣는 중에는 그 달만 본다 — 방금 붙인 표를 확인하는 자리라 다른 달이 섞이면 헷갈린다.
+  // 올리고 나면 칸이 비고, ② 는 다시 켜 둔 달들을 이어서 보여 준다.
+  blkSel=new Set([month]);
   blkParsed={rows, days:blkDays(month,rows), month};
   blkRenderAll();
   const sum=blkSumCheck(text, rows);
@@ -6978,19 +6984,19 @@ function blkRender(){
 /* 서버에 올라와 있는 달 중 하나를 ② 에 띄운다. 하나도 없으면 안내 카드만 남긴다. */
 function blkShowRegistered(){
   const ms=(typeof vcalBlocks!=='undefined') ? Object.keys(vcalBlocks).sort() : [];
-  // 보던 달이 아직 올라와 있으면 그대로 둔다 — 지울 때마다 달이 튀면 어디를 보고 있었는지 잃는다
-  const keep=(blkParsed && ms.indexOf(blkParsed.month)>=0) ? blkParsed.month : '';
-  const ym=keep || ((regBlkFocus && vcalBlocks[regBlkFocus]) ? regBlkFocus : ms[ms.length-1]);
-  if(!ym){
-    blkParsed=null;
+  if(!ms.length){
+    blkParsed=null; blkSel=new Set();
     document.getElementById('blk-status-result').style.display='none';
     document.getElementById('blk-unmapped-card').style.display='none';
     blkEmptyNote();
     if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
     return;
   }
-  blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
-  blkRenderAll();
+  // 켜 둔 달 중 아직 올라와 있는 것을 그대로 이어 본다 — 지울 때마다 달이 튀면
+  // 어디를 보고 있었는지 잃는다. 남은 것이 없으면 마지막에 손댄 달 하나로 시작한다.
+  let want=[...blkSel].filter(ym=>ms.indexOf(ym)>=0);
+  if(!want.length) want=[(regBlkFocus && vcalBlocks[regBlkFocus]) ? regBlkFocus : ms[ms.length-1]];
+  blkPickMonths(want);
 }
 /* blkParsed가 세팅된 상태에서 현황·시뮬·출발조회 등 일괄 렌더 (붙여넣기/등록월 로드 공용) */
 function blkRenderAll(){
@@ -7012,49 +7018,67 @@ function blkRenderAll(){
   if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();  // 블록 갱신 시 달력 가능여부 반영
 }
 
-/* ── 등록월 전환 네비 (현황 표를 등록해둔 달끼리 좌우 전환) ── */
+/* ── 보는 달 고르기 (여러 달을 켜면 그대로 이어 붙여 본다) ── */
 function blkRenderMonthNav(){
   const nav=document.getElementById('blk-monthnav'); if(!nav) return;
   const ms=(typeof vcalBlocks!=='undefined')?Object.keys(vcalBlocks).sort():[];
-  // 등록월이 2개 미만이면 전환 의미 없음 → 숨김
-  if(ms.length<2){ nav.style.display='none'; blkSpan=1; return; }
-  nav.style.display='flex';
   const cur=blkParsed?blkParsed.month:'';
-  const idx=ms.indexOf(cur);
-  const prev=idx>0?ms[idx-1]:'';
-  const next=(idx>=0&&idx<ms.length-1)?ms[idx+1]:'';
-  const mlabel=ym=>{ const m=parseInt(ym.split('-')[1]); return m+'월'; };
-  let html=`<span style="font-size:12px;font-weight:700;color:var(--accent2)">등록월 전환</span>
-    <button class="btn-sm" onclick="blkLoadMonth('${prev}')" ${prev?'':'disabled'} style="${prev?'':'opacity:.4;cursor:not-allowed'}">‹</button>`;
-  html+=ms.map(ym=>`<button class="btn-sm" onclick="blkLoadMonth('${ym}')" style="${ym===cur?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${mlabel(ym)}</button>`).join('');
-  html+=`<button class="btn-sm" onclick="blkLoadMonth('${next}')" ${next?'':'disabled'} style="${next?'':'opacity:.4;cursor:not-allowed'}">›</button>`;
-  // 이어보기 — 다음 달이 등록돼 있을 때만
-  const nx=cur?nextYm(cur):'';
-  const canSpan=!!(nx && vcalBlocks[nx]);
+  const all=ms.slice();
+  if(cur && all.indexOf(cur)<0) all.push(cur);          // 아직 안 올린 붙여넣기 원본
+  all.sort();
+  // 볼 수 있는 달이 하나뿐이면 고를 것이 없다
+  if(all.length<2){ nav.style.display='none'; return; }
+  nav.style.display='flex';
+  const on=new Set(blkViewMonths());
   const nl=ym=>parseInt(String(ym).split('-')[1]);
-  html+=`<span style="width:1px;height:18px;background:var(--border2);margin:0 4px"></span>
-    <span style="font-size:12px;font-weight:700;color:var(--accent2)">표시 기간</span>
-    <button class="btn-sm" onclick="blkSetSpan(1)" style="${blkSpan===1?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${cur?nl(cur)+'월':'이 달'}만</button>
-    <button class="btn-sm" onclick="blkSetSpan(2)" ${canSpan?'':'disabled'}
-      style="${!canSpan?'opacity:.4;cursor:not-allowed':(blkSpan===2?'background:var(--accent);color:#fff;border-color:var(--accent)':'')}"
-      title="${canSpan?'다음 달까지 이어서 봅니다':'다음 달('+(nx||'')+')이 등록되지 않았습니다'}">${cur&&nx?`${nl(cur)}~${nl(nx)}월`:'이어보기'} 이어보기</button>`;
-  if(idx<0) html+=`<span class="muted" style="font-size:11px;margin-left:6px">※ 지금 보는 ${cur||'표'}는 미등록 상태입니다(붙여넣기 원본)</span>`;
+  const yr=ym=>String(ym).slice(0,4);
+  // 해가 넘어가면 「12월 · 1월」이 어느 해인지 헷갈린다 — 해가 둘 이상이면 연도를 붙인다
+  const multiYear=new Set(all.map(yr)).size>1;
+  let html=`<span style="font-size:12px;font-weight:700;color:var(--accent2)">보는 달</span>`;
+  html+=all.map(ym=>{
+    const sel=on.has(ym), unreg=(ms.indexOf(ym)<0);
+    return `<button class="btn-sm" onclick="blkToggleMonth('${ym}')"
+      title="${sel?'누르면 뺍니다':'누르면 이어서 봅니다'}${unreg?' (아직 안 올린 붙여넣기 원본)':''}"
+      style="${sel?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${sel?'✓ ':''}${multiYear?yr(ym)+'.':''}${nl(ym)}월${unreg?'*':''}</button>`;
+  }).join('');
+  html+=`<button class="btn-sm" onclick="blkPickMonths(${JSON.stringify(all).replace(/"/g,'&quot;')})"
+      title="올라와 있는 달을 전부 이어서 봅니다">전체</button>`;
+  const view=blkViewMonths();
+  if(view.length>1){
+    // 가운데가 빈 채로 붙여 보면 표가 이어진 것처럼 보이는데 실제로는 건너뛴 것이다
+    const gap=[]; for(let i=1;i<view.length;i++){ let p=view[i-1]; while(nextYm(p)!==view[i]){ p=nextYm(p); gap.push(p); if(gap.length>24) break; } }
+    html+=`<span class="muted" style="font-size:11px;margin-left:6px">${view.length}개 달을 이어서 봅니다`
+        + (gap.length?` · <b style="color:var(--amber)">${gap.map(g=>nl(g)+'월').join('·')}은 건너뜁니다</b>`:'')+`</span>`;
+  }
+  if(ms.indexOf(cur)<0) html+=`<span class="muted" style="font-size:11px;margin-left:6px">※ *는 아직 안 올린 붙여넣기 원본입니다</span>`;
   nav.innerHTML=html;
 }
-/* 표시 기간 전환 (1=이 달만, 2=다음 달까지 인접 2개월) */
-function blkSetSpan(n){
-  blkSpan=(n===2)?2:1;
-  if(blkParsed) blkRenderAll();
+/* 한 달을 켜거나 끈다. 마지막 한 달은 끄지 않는다 — 끄면 볼 것이 없어진다. */
+function blkToggleMonth(ym){
+  if(!ym) return;
+  const s=new Set(blkViewMonths());
+  if(s.has(ym)){ if(s.size<=1) return; s.delete(ym); } else s.add(ym);
+  blkPickMonths([...s]);
 }
-/* 등록해둔 달을 현재 현황 표로 로드 (그 달 기준으로 합계·필터·출발조회까지 전환) */
-function blkLoadMonth(ym){
-  if(!ym || typeof vcalBlocks==='undefined' || !vcalBlocks[ym]) return;
-  if(blkSpan===2 && !vcalBlocks[nextYm(ym)]) blkSpan=1;   // 다음 달이 없으면 이어보기 해제
-  blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
-  // 「출발년월」은 이제 올릴 표의 달이다 — 보는 달을 바꿨다고 올릴 달까지 바꾸면 안 된다.
-  // (파일명 등은 blkParsed.month 를 쓴다)
+/* 켤 달들을 정한다. 첫 달이 표의 기준(blkParsed)이 된다. */
+function blkPickMonths(list){
+  const paste=(blkParsed && (typeof vcalBlocks==='undefined' || !vcalBlocks[blkParsed.month])) ? blkParsed : null;
+  const avail=(list||[]).filter(ym => (paste && ym===paste.month) || (typeof vcalBlocks!=='undefined' && vcalBlocks[ym]));
+  if(!avail.length) return;
+  avail.sort();
+  blkSel=new Set(avail);
+  blkSaveSel();
+  const first=avail[0];
+  // 첫 달이 붙여넣은 표면 그 행을 그대로 쓰고, 아니면 올라와 있는 표에서 가져온다
+  if(!(blkParsed && blkParsed.month===first)){
+    const rows=(vcalBlocks[first]||[]).slice();
+    blkParsed={rows, days:blkDays(first,rows), month:first};
+  }
   blkRenderAll();
-  // 현황 표로 스크롤 위치 유지(상단 고정)
+}
+function blkSaveSel(){ try{ localStorage.setItem(BLK_STORE.sel, JSON.stringify([...blkSel])); }catch(e){} }
+function blkLoadSel(){
+  try{ const a=JSON.parse(localStorage.getItem(BLK_STORE.sel)||'[]'); if(Array.isArray(a)) blkSel=new Set(a); }catch(e){}
 }
 
 /* 「보유미등록」 자리에서 바로 마스터와 연결하는 컨트롤.
