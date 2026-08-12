@@ -10,6 +10,16 @@
 <script src="../../shared/guard.js" data-section="booking"></script>
 <style>
   /* ============================================================
+     v15 — 특별회원을 우선예약에서 제외 (2026-08 운영 확정)
+          · v13.36 의 「3차에서만 2회」를 폐기한다. 어느 차수에도 배정하지 않고,
+            자유예약부터 일반 고객과 같은 조건으로 예약한다.
+          · MEMBER_GRADES.special.defaultQuota = round1·2·3 모두 0
+          · specialKim.priorityQuota 도 전부 0 · 3차 eligibility 에서 특별회원 제거
+          · 게이트: 차수마다 따로 막지 않고 **우선예약 기간 전체**를 한 번에 끊는다.
+            차수별로 막으면 pre-open·between 에서 「미리 준비하기」로 통과해
+            Step 4 까지 갔다가 막혔다 — 올 차수가 없는 회원에게 준비하라 할 이유가 없다.
+          · 같은 규칙이 merittour.github.io 의 /reserve/ · /reserve/spec/ FR-5.2 ·
+            /2027/ §02 에 함께 있다. 한쪽만 고치지 말 것.
      v14 — 아소 야마나미: 호텔 단일 접수로 전환 (2027 예약 방식)
           · 객실 타입(트윈/컴팩트 트윈/싱글룸) 선택 제거 → 「호텔 객실」 하나로만 접수
           · 방 재고(150실) 기준: 만실이면 그 날짜 예약 마감(캘린더 클릭 불가)
@@ -1658,7 +1668,7 @@
         <option value="designated">지정회원 (김영희 · 홍길동 그룹)</option>
         <option value="multi2">회원권 2개 (박정민 · 다이아+골드 = 6명)</option>
         <option value="multi3">회원권 3개 (이정훈 · 다이아+다이아II+골드 = 10명)</option>
-        <option value="specialKim">특별회원 (최영수 · 3차만 2회 · 2명)</option>
+        <option value="specialKim">특별회원 (최영수 · 우선예약 대상 아님 · 2명)</option>
         <option value="problem">문제플래그 회원 (권혁진)</option>
       </select>
       <br/>
@@ -2156,15 +2166,17 @@ const MEMBER_GRADES = {
   },
   special: {
     label: '특별회원',
-    defaultQuota: { round1: 0, round2: 0, round3: 2 },
-    description: '15년+ 된 옛 회원권 · 3차에서만 우선예약 가능 (본인+동반 1명)'
+    // 2026-08 변경 — 우선예약 대상에서 제외. 어느 차수에도 배정하지 않는다.
+    // (이전 규칙 = 3차에서만 2회. 되돌리지 말 것)
+    defaultQuota: { round1: 0, round2: 0, round3: 0 },
+    description: '15년+ 된 옛 회원권 · 우선예약 대상 아님 → 자유예약부터 일반 고객과 같은 조건 (본인+동반 1명)'
   }
 };
 
 const PRIORITY_ROUNDS = [
   { id: 1, start: '2026-09-08T10:00:00', end: '2026-09-09T10:00:00', quota: 1, label: '1차 우선예약', eligibility: '정회원' },
   { id: 2, start: '2026-09-10T10:00:00', end: '2026-09-11T10:00:00', quota: 2, label: '2차 우선예약', eligibility: '정회원 (1차 이월)', carryFrom: 1 },
-  { id: 3, start: '2026-09-12T10:00:00', end: '2026-09-13T10:00:00', quota: 2, label: '3차 우선예약', eligibility: '정회원·특별회원 (2차 이월)', carryFrom: 2 }
+  { id: 3, start: '2026-09-12T10:00:00', end: '2026-09-13T10:00:00', quota: 2, label: '3차 우선예약', eligibility: '정회원 (2차 이월)', carryFrom: 2 }
 ];
 const REALTIME_START = '2026-09-13T10:00:00';
 
@@ -2670,7 +2682,7 @@ const LOGIN_USERS = {
     ],
     problemFlags: []
   },
-  // v13.36 — 특별회원 (15년+ 옛 저가 회원권, 3차에서만 2회 우선예약 가능)
+  // 특별회원 (15년+ 옛 저가 회원권) — 우선예약 대상이 아니다(2026-08 변경).
   //          정회원의 일종이라 memberGrade는 '회원권', membershipType은 '특별회원권'
   //          maxPeople = 2 (본인+동반 1명)
   specialKim: {
@@ -2682,7 +2694,7 @@ const LOGIN_USERS = {
     grade: 'special',      // v13.36 — MEMBER_GRADES 키
     memberships: [
       { type: '특별회원권', maxPeople: 2,
-        priorityQuota: { round1: { total: 0, used: 0 }, round2: { total: 0, used: 0 }, round3: { total: 2, used: 0 } } }
+        priorityQuota: { round1: { total: 0, used: 0 }, round2: { total: 0, used: 0 }, round3: { total: 0, used: 0 } } }
     ],
     problemFlags: []
   }
@@ -2865,6 +2877,30 @@ function renderGate() {
   phaseEl.className = 'gate-phase';
   cta.className = 'gate-cta';
 
+  /* 특별회원은 우선예약 대상이 아니다(2026-08 변경 · 이전 규칙 「3차만 2회」는 폐기).
+     차수마다 따로 막으면 pre-open·between 에서는 「미리 준비하기」로 통과해
+     Step 4 까지 갔다가 막힌다 — 올 차수가 없는 회원에게 준비하라고 할 이유가 없다.
+     자유예약 기간이 아니면 여기서 한 번에 끊는다. */
+  if ((LOGIN_USER.grade || 'normal') === 'special' && phase.type !== 'free') {
+    phaseEl.textContent = '우선예약 대상 아님';
+    titleEl.textContent = '특별회원권은 우선예약 대상이 아닙니다';
+    subEl.textContent = `자유예약 ${fmtDateKo(REALTIME_START)}부터 예약하실 수 있습니다`;
+    bodyEl.innerHTML = `
+      <div style="padding:14px 16px;background:#FEF3C7;border:2px solid #FBBF24;border-radius:10px;color:#92400E;font-weight:700;text-align:left;">
+        <div style="font-size:15px;margin-bottom:6px;">ⓘ 특별회원권은 우선예약 차수에 참여하지 않습니다</div>
+        <div style="font-size:14px;font-weight:500;line-height:1.5;">
+          <strong>자유예약 기간</strong>부터 일반 고객과 같은 조건으로 예약하실 수 있습니다.<br/>
+          ${fmtDateKo(REALTIME_START)} 정각 시작 · 잔여 객실에 한해 <strong>횟수 제한 없이</strong>
+        </div>
+      </div>
+    `;
+    cta.classList.add('disabled');
+    cta.disabled = true;
+    cta.textContent = '자유예약부터 가능';
+    renderGateRounds(phase);
+    return;
+  }
+
   if (phase.type === 'pre-open') {
     const p = diffParts(phase.round.start);
     const totalSec = p.d * 86400 + p.h * 3600 + p.m * 60 + p.s;
@@ -2890,41 +2926,21 @@ function renderGate() {
     const p = diffParts(phase.round.end);
     const q = LOGIN_USER.priorityQuota ? LOGIN_USER.priorityQuota[`round${phase.round.id}`] : { total: 0, used: 0 };
     const leftInRound = Math.max(0, q.total - q.used);
-    // v13.36 — 특별회원이 1차/2차에 진입한 경우 (total=0): "소진"이 아니라 "아직 시작 안 함"
-    const grade = LOGIN_USER.grade || 'normal';
-    const isSpecialNotYetEligible = grade === 'special' && q.total === 0;
+    // 특별회원은 위에서 이미 끊었다 — 여기 오는 것은 차수에 참여하는 회원뿐이다
     phaseEl.textContent = `${phase.round.label} 진행중 · LIVE`;
     phaseEl.classList.add('live');
     titleEl.textContent = `지금 ${phase.round.label}이 열렸습니다`;
     subEl.textContent = `${phase.round.eligibility} · ${fmtDateKo(phase.round.start)}~${fmtDateKo(phase.round.end)}`;
-    if (isSpecialNotYetEligible) {
-      // 특별회원 안내: 3차에 시작
-      const round3 = PRIORITY_ROUNDS.find(r => r.id === 3);
-      const round3Quota = LOGIN_USER.priorityQuota.round3;
-      bodyEl.innerHTML = `
-        <div style="padding:14px 16px;background:#FEF3C7;border:2px solid #FBBF24;border-radius:10px;color:#92400E;font-weight:700;text-align:left;">
-          <div style="font-size:15px;margin-bottom:6px;">ⓘ 특별회원은 ${phase.round.label}에 참여할 수 없습니다</div>
-          <div style="font-size:14px;font-weight:500;line-height:1.5;">
-            <strong>3차 우선예약</strong>부터 예약 가능합니다.<br/>
-            ${fmtDateKo(round3.start)} 정각에 시작 · <strong>${round3Quota.total}회</strong> 사용 가능
-          </div>
-        </div>
-      `;
+    bodyEl.innerHTML = `
+      <div class="gate-quota">이번 차수 사용 가능 <strong>${leftInRound}회</strong> <span style="color:var(--muted);font-weight:600;font-size:13px;">(남은 시간 ${String(p.h).padStart(2,'0')}:${String(p.m).padStart(2,'0')}:${String(p.s).padStart(2,'0')})</span></div>
+    `;
+    if (leftInRound > 0) {
+      cta.disabled = false;
+      cta.textContent = '다음으로';
+    } else {
       cta.classList.add('disabled');
       cta.disabled = true;
-      cta.textContent = '3차에서 시작 가능';
-    } else {
-      bodyEl.innerHTML = `
-        <div class="gate-quota">이번 차수 사용 가능 <strong>${leftInRound}회</strong> <span style="color:var(--muted);font-weight:600;font-size:13px;">(남은 시간 ${String(p.h).padStart(2,'0')}:${String(p.m).padStart(2,'0')}:${String(p.s).padStart(2,'0')})</span></div>
-      `;
-      if (leftInRound > 0) {
-        cta.disabled = false;
-        cta.textContent = '다음으로';
-      } else {
-        cta.classList.add('disabled');
-        cta.disabled = true;
-        cta.textContent = '이번 차수 사용 횟수 소진';
-      }
+      cta.textContent = '이번 차수 사용 횟수 소진';
     }
   } else if (phase.type === 'between') {
     phaseEl.textContent = '다음 차수 대기중';
