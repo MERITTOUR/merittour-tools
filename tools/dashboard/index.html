@@ -1902,7 +1902,9 @@ function regSaveUpload(){
                 updatedAt:new Date().toISOString(),
                 resFiles:resCount||1, ilhaengFiles:ilhaengCount||1 }
       };
-      regBlkFocus=sc.period;
+      regBlkFocus=b.has ? b.month : sc.period;
+      // 블록표까지 올렸으면 붙여넣기 칸을 비운다 — 다음 달 표를 붙일 자리로 되돌린다
+      if(b.has) blkClearInput(`✓ ${b.month} 블록표까지 올렸습니다.`);
       regRebuild();                       // 올린 달을 포함해 다시 합친다
       // 목록을 먼저 새로 받고 나서 알린다 — regLoadList 가 안내를 지우기 때문이다
       return regLoadList().then(()=>{
@@ -2068,21 +2070,10 @@ function regApplyBlocks(on){
   });
   if(any) vcalSaveMonths();
 
-  // 붙여넣기 칸에는 한 달치만 보여 준다 — 마지막에 켠 달.
-  const has=p=>regCache[p] && regCache[p].blockRaw;
-  const focus=(regBlkFocus && on.indexOf(regBlkFocus)>=0 && has(regBlkFocus))
-              ? regBlkFocus : on.filter(has).pop();
-  if(focus){
-    const ta=document.getElementById('blk-paste'), mi=document.getElementById('blk-month');
-    const raw=regCache[focus].blockRaw;
-    if(ta){ ta.value=raw; ta.classList.add('filled'); }
-    // 올릴 때 확정한 달이 정답이다. 표에서 읽은 달은 「어디서 온 값인지」 표시용으로만 쓴다.
-    if(mi) mi.value=regCache[focus].blockMonth||focus;
-    blkMonthAuto=blkMonthFromPaste(raw);
-    if(typeof blkMonthSrc==='function') blkMonthSrc();
-    try{ blkRender(); }catch(e){}
-  }
-  if(typeof blkEmptyNote==='function') blkEmptyNote();
+  /* 붙여넣기 칸에 서버 값을 되써 넣지 않는다 — 그 칸은 「넣는 곳」이지 「보관하는 곳」이
+     아니다. 되써 넣으면 올린 뒤에도 칸이 계속 차 있어 다음 달 표를 붙이려면 매번 지워야
+     하고, 지우면 ② 가 통째로 비어 버린다. ② 는 위 vcalBlocks(올라와 있는 달)에서 그린다. */
+  if(typeof blkRender==='function'){ try{ blkRender(); }catch(e){} }
   if(typeof renderVcalRegBar==='function') renderVcalRegBar();
   if(typeof blkRenderMonthNav==='function') blkRenderMonthNav();
 }
@@ -4064,7 +4055,10 @@ function vcalRegisterMonth(){
       renderVcalRegBar();
       if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
       done();
-      if(typeof regUpRefresh==='function') regUpRefresh();
+      // 올렸으면 칸을 비운다 — 다음 달 표를 붙이려고 매번 「지우기」를 누르지 않게.
+      // ② 는 방금 올린 달을 vcalBlocks 에서 그대로 이어 그린다.
+      regBlkFocus=ym;
+      blkClearInput(`✓ ${ym} 올렸습니다 — 다음 달 표를 붙여넣으시면 됩니다.`);
       const off=(typeof regMonths==='function' && regMonths().indexOf(ym)<0);
       alert(`${ym} 블록표를 ${dup?'갱신':'등록'}했습니다. (올라와 있는 달 ${Object.keys(vcalBlocks).length}개)\n\n`
           + (off ? `위 「등록된 자료」에서 ${ym} 도 켜 주세요.\n` : '')
@@ -6887,51 +6881,77 @@ document.getElementById('blk-paste').addEventListener('input',function(){
   if(typeof regUpRefresh==='function') regUpRefresh();
 });
 function blkClear(){
-  document.getElementById('blk-paste').value='';
-  document.getElementById('blk-paste').classList.remove('filled');
-  try{ localStorage.removeItem(BLK_STORE.paste); }catch(e){}
-  blkParsed=null; blkMonthAuto='';
+  blkClearInput('');
+}
+/* 붙여넣기 칸만 비운다(올라와 있는 달은 그대로). note 를 주면 칸 옆에 한 줄 남긴다. */
+function blkClearInput(note){
+  const ta=document.getElementById('blk-paste'), mi=document.getElementById('blk-month');
+  if(ta){ ta.value=''; ta.classList.remove('filled'); }
+  // 달도 같이 비운다 — 칸은 비었는데 「2026년 10월」이 남아 있으면 그게 무슨 달인지 알 수 없다
+  if(mi) mi.value='';
+  blkMonthAuto='';
+  try{ localStorage.removeItem(BLK_STORE.paste); localStorage.removeItem(BLK_STORE.month); }catch(e){}
   blkMonthSrc();
-  document.getElementById('blk-status-result').style.display='none';
-  document.getElementById('blk-unmapped-card').style.display='none';
-  document.getElementById('blk-paste-meta').textContent='';
-  blkEmptyNote();
+  blkRender();                       // 올라와 있는 달이 있으면 ② 는 그것을 계속 보여 준다
+  document.getElementById('blk-paste-meta').textContent=note||'';
   if(typeof regUpRefresh==='function') regUpRefresh();
 }
-/* ② 는 보는 화면이다 — 볼 것이 없으면 어디서 넣는지 알려 준다 */
+/* ② 는 보는 화면이다 — 붙인 것도 올라와 있는 것도 없을 때만 어디서 넣는지 알려 준다 */
 function blkEmptyNote(){
   const box=document.getElementById('blk-empty');
   if(box) box.style.display = blkParsed ? 'none' : '';
 }
 
+/* ② 가 그릴 것을 고른다.
+   ① 방금 붙여넣은 표 — 아직 안 올린 것도 바로 본다(즉석 분석).
+   ② 붙인 것이 없으면 **서버에 올라와 있는 달**. 붙여넣기 칸은 「넣는 곳」이지
+      「보관하는 곳」이 아니다. 칸을 비웠다고 올라와 있는 표까지 사라지면 안 된다
+      (실제로 08·09·10 을 올려 두고 칸을 지웠더니 ② 가 통째로 비었다). */
 function blkRender(){
   const text=document.getElementById('blk-paste').value;
   const month=document.getElementById('blk-month').value||'';
+  const meta=document.getElementById('blk-paste-meta');
+
+  if(!text.trim()){ meta.textContent=''; blkShowRegistered(); return; }
+
   const rows=blkParse(text);
   if(!rows || !month){          // 표를 못 알아봤거나 몇 월인지 아직 모른다
+    meta.textContent = !rows
+      ? '⚠ 표를 못 알아봤습니다 — 「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 다시 긁어 주세요.'
+      : '⚠ 몇 월 표인지 정해 주세요.';
+    blkShowRegistered();        // 붙이던 중이라도 올라와 있는 달은 계속 보인다
+    return;
+  }
+  blkParsed={rows, days:blkDays(month,rows), month};
+  blkRenderAll();
+  const sum=blkSumCheck(text, rows);
+  meta.textContent = !rows.length
+    ? '✓ 표 인식 — 이 달은 사용된 객실이 없습니다 (올려 두면 월 경계 연박이 계산됩니다)'
+    : `✓ ${month} · 호텔 ${new Set(rows.map(r=>r.hotel)).size}개 · ${rows.length}개 셀`
+      + (sum ? (sum.ok ? ` · 합계 ${sum.told} 일치` : ` · ⚠ 표 합계 ${sum.told} ≠ 센 값 ${sum.got}`) : '');
+}
+/* 서버에 올라와 있는 달 중 하나를 ② 에 띄운다. 하나도 없으면 안내 카드만 남긴다. */
+function blkShowRegistered(){
+  const ms=(typeof vcalBlocks!=='undefined') ? Object.keys(vcalBlocks).sort() : [];
+  // 보던 달이 아직 올라와 있으면 그대로 둔다 — 지울 때마다 달이 튀면 어디를 보고 있었는지 잃는다
+  const keep=(blkParsed && ms.indexOf(blkParsed.month)>=0) ? blkParsed.month : '';
+  const ym=keep || ((regBlkFocus && vcalBlocks[regBlkFocus]) ? regBlkFocus : ms[ms.length-1]);
+  if(!ym){
     blkParsed=null;
     document.getElementById('blk-status-result').style.display='none';
     document.getElementById('blk-unmapped-card').style.display='none';
-    document.getElementById('blk-paste-meta').textContent =
-      (text.trim() && !rows) ? '⚠ 표를 못 알아봤습니다 — 「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 다시 긁어 주세요.'
-      : (rows && !month) ? '⚠ 몇 월 표인지 정해 주세요.' : '';
     blkEmptyNote();
     if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
     return;
   }
-  blkParsed={rows, days:blkDays(month,rows), month};
+  blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
   blkRenderAll();
 }
 /* blkParsed가 세팅된 상태에서 현황·시뮬·출발조회 등 일괄 렌더 (붙여넣기/등록월 로드 공용) */
 function blkRenderAll(){
   if(!blkParsed) return;
-  const rows=blkParsed.rows;
-  const hotels=[...new Set(rows.map(r=>r.hotel))];
-  const sum=blkSumCheck(document.getElementById('blk-paste').value, rows);
-  document.getElementById('blk-paste-meta').textContent = !rows.length
-    ? '✓ 표 인식 — 이 달은 사용된 객실이 없습니다 (올려 두면 월 경계 연박이 계산됩니다)'
-    : `✓ ${blkParsed.month} · 호텔 ${hotels.length}개 · ${rows.length}개 셀`
-      + (sum ? (sum.ok ? ` · 합계 ${sum.told} 일치` : ` · ⚠ 표 합계 ${sum.told} ≠ 센 값 ${sum.got}`) : '');
+  // 붙여넣기 칸 옆 안내(blk-paste-meta)는 **붙인 것에 대한 답**이라 여기서 쓰지 않는다.
+  // 올라와 있는 달을 그릴 때도 여기를 지나가는데, 칸은 비어 있는데 「✓ 인식」이 뜬다.
   document.getElementById('blk-status-result').style.display='block';
   blkEmptyNote();
   blkRenderMonthNav();
@@ -6986,8 +7006,8 @@ function blkLoadMonth(ym){
   if(!ym || typeof vcalBlocks==='undefined' || !vcalBlocks[ym]) return;
   if(blkSpan===2 && !vcalBlocks[nextYm(ym)]) blkSpan=1;   // 다음 달이 없으면 이어보기 해제
   blkParsed={rows:vcalBlocks[ym].slice(), days:blkDays(ym,vcalBlocks[ym]), month:ym};
-  // 출발년월 셀렉터도 동기화(엑셀·PNG 파일명 등에서 사용)
-  const msel=document.getElementById('blk-month'); if(msel) msel.value=ym;
+  // 「출발년월」은 이제 올릴 표의 달이다 — 보는 달을 바꿨다고 올릴 달까지 바꾸면 안 된다.
+  // (파일명 등은 blkParsed.month 를 쓴다)
   blkRenderAll();
   // 현황 표로 스크롤 위치 유지(상단 고정)
 }
