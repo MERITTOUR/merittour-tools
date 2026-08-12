@@ -1973,7 +1973,8 @@ function regLoadList(){
    영원히 살아남아 없는 손님이 명단에 남는다.
 ════════════════════════════════════════════════════════════ */
 const regCache={};        // period → {resRows, ilhaengRows, blockRaw, blockMonth, meta}
-let regDupSeqs=[];        // 두 달에 걸쳐 보이는 예약(일정이 옮겨진 것)
+let regDupSeqs=[];        // 출발일이 달라진 예약 = 실제로 일정이 옮겨진 것
+let regOverlapN=0;        // 두 등록분에 다 들어 있는 예약 수(여러 달을 함께 올리면 정상)
 let regBlkFocus='';       // 붙여넣기 칸에 되보여 줄 달
 let regEdgeNote='';       // 앞뒤 달 블록표를 더 받았을 때의 안내
 let regBusy=false;
@@ -2004,7 +2005,11 @@ function regEnsure(periods){
    같은 예약(eventSeq)이 두 달에 보일 수 있다 — 일정이 다른 달로 옮겨졌는데
    옛 달을 아직 다시 안 올렸을 때다. 최근에 올라온 달을 이기게 하되,
    겹쳤다는 사실은 화면에 적는다. 조용히 하나를 버리면 팀 수가 왜 안 맞는지
-   아무도 못 찾는다. */
+   아무도 못 찾는다.
+
+   ※ 다만 겹침 자체는 사고가 아니다 — 예약리스트는 보통 8·9월을 함께 받아
+   올리므로 같은 예약이 두 등록분에 다 들어 있는 것이 정상이다. 실제로 알려야
+   하는 것은 **출발일이 달라진 것**뿐이라 둘을 갈라서 센다. */
 /* 화면에 합쳐져 있는 달 = 받아 둔 달 전부. 고르는 개념이 없다. */
 function regMonths(){ return Object.keys(regCache).sort(); }
 
@@ -2017,32 +2022,67 @@ function regRebuild(){
     regRenderChips();
     return;
   }
-  const owner={}, dup={};
+  const upAt=p=>String((regCache[p].meta&&regCache[p].meta.updatedAt)||'');
+  const live=r=>!r['cancCd'] && MT.LIVE_STATUS.indexOf(String(r['구분']||'').trim())>=0;
+
+  /* 예약리스트 한 파일은 한 달치가 아니다 — 보통 8·9월을 함께 받아 올린다.
+     그래서 같은 예약이 두 등록분에 다 들어 있는 것은 **정상**이고, 그 자체는
+     알릴 일이 아니다. 알릴 것은 **출발일이 달라진 것** 하나뿐이다.
+     예전에는 둘을 한 덩어리로 묶고 「일정이 옮겨졌다」로 단정해, 그냥 겹친
+     500건까지 사고처럼 띄웠다. */
+  const owner={}, seen={};
   on.forEach(p=>{
-    const at=String((regCache[p].meta&&regCache[p].meta.updatedAt)||'');
+    const at=upAt(p);
     (regCache[p].resRows||[]).forEach(r=>{
       const seq=String(r['eventSeq']||'').trim(); if(!seq) return;
-      const cur=owner[seq];
-      if(cur===undefined){ owner[seq]=p; return; }
-      dup[seq]=1;
-      const curAt=String((regCache[cur].meta&&regCache[cur].meta.updatedAt)||'');
-      if(at>curAt) owner[seq]=p;
+      const dep=MT.normalizeDate(r['출발일자'])||'';
+      const s=seen[seq] || (seen[seq]={deps:new Set(), pers:new Set(), live:false});
+      if(dep) s.deps.add(dep);
+      s.pers.add(p);
+      if(live(r)) s.live=true;
+      // 겹치면 나중에 올린 것이 이긴다 — 최근 파일이 최신이다
+      if(owner[seq]===undefined || at>upAt(owner[seq])) owner[seq]=p;
     });
   });
-  const res=[], ilh=[];
+
+  /* 일행 명단의 임자는 따로 정한다.
+     예약리스트에서 진 달이 명단은 갖고 있을 수 있다 — 일행별예약은 한 파일이
+     한 달치라, 예약리스트만 보고 버리면 그 팀 명단이 통째로 사라져
+     「명단 없음(일행별예약 미연동)」이 된다. 명단이 실제로 있는 파일 중
+     가장 나중에 올린 것을 쓴다. */
+  const ilhOwner={};
+  on.forEach(p=>{
+    const at=upAt(p), has=new Set();
+    (regCache[p].ilhaengRows||[]).forEach(r=>{
+      const seq=String(r['eventSeq']||'').trim(); if(seq) has.add(seq);
+    });
+    has.forEach(seq=>{
+      if(ilhOwner[seq]===undefined || at>upAt(ilhOwner[seq])) ilhOwner[seq]=p;
+    });
+  });
+
+  const res=[], ilh=[], took=new Set();
   on.forEach(p=>{
     (regCache[p].resRows||[]).forEach(r=>{
       const seq=String(r['eventSeq']||'').trim();
-      if(seq && owner[seq]!==p) return;
+      if(seq){
+        if(owner[seq]!==p) return;
+        // 한 등록분 안에서도 같은 예약이 두 번 올 수 있다(500행 분할분이 겹칠 때)
+        if(took.has(seq)) return;
+        took.add(seq);
+      }
       res.push(r);
     });
     (regCache[p].ilhaengRows||[]).forEach(r=>{
       const seq=String(r['eventSeq']||'').trim();
-      if(seq && owner[seq] && owner[seq]!==p) return;
+      if(seq && ilhOwner[seq] && ilhOwner[seq]!==p) return;
       ilh.push(r);
     });
   });
-  regDupSeqs=Object.keys(dup);
+  // 출발일이 둘 이상인 예약 = 실제로 일정이 옮겨진 것. 취소·비활성 건은 세지 않는다
+  // (칩의 팀 수와 같은 대상을 세야 숫자가 맞는다).
+  regDupSeqs=Object.keys(seen).filter(q=>seen[q].live && seen[q].deps.size>1);
+  regOverlapN=Object.keys(seen).filter(q=>seen[q].live && seen[q].pers.size>1).length;
   resData=res; ilhaengData=ilh;
   regApplyBlocks(on);
   analyze();
@@ -2198,8 +2238,13 @@ function regRenderSummary(){
   box.innerHTML=`등록된 <b>${on.length}개 달</b>이 모두 합쳐져 있습니다 · ${span} · 팀 <b>${k(teams.length)}</b>건 · 인원 <b>${k(pax0())}</b>명`
     + (regEdgeNote ? ` <span class="muted">· ${MT.escHtml(regEdgeNote)}</span>` : '')
     + (missing.length ? `<div class="reg-dup">※ ${MT.escHtml(missing.join(', '))} 은 자료를 받지 못해 빠져 있습니다. <b>새로고침</b>을 눌러 주세요.</div>` : '')
+    // 겹침 자체는 알릴 일이 아니다 — 8·9월을 함께 받아 올리면 당연히 생긴다.
+    // 알릴 것은 출발일이 달라진 것뿐. 겹침은 「한 번만 셌다」는 사실만 조용히 적는다.
+    + (regOverlapN
+        ? `<div class="muted" style="margin-top:6px;font-size:11.5px">여러 달을 함께 올리셔서 예약 <b>${regOverlapN}건</b>이 두 등록분에 겹쳐 있습니다 — <b>최근에 올린 것 하나만</b> 셌습니다.</div>`
+        : '')
     + (regDupSeqs.length
-        ? `<div class="reg-dup">※ 예약 <b>${regDupSeqs.length}건</b>이 두 달에 걸쳐 올라와 있습니다 — 일정이 다른 달로 옮겨졌는데 옛 달을 아직 다시 안 올린 경우입니다. <b>최근에 올라온 달</b> 것으로 셌습니다. (${MT.escHtml(regDupSeqs.slice(0,8).join(', '))}${regDupSeqs.length>8?' 외':''})</div>`
+        ? `<div class="reg-dup">※ 예약 <b>${regDupSeqs.length}건</b>은 <b>출발일이 서로 다릅니다</b> — 일정이 옮겨졌는데 옛 자료를 아직 다시 안 올린 경우입니다. <b>최근에 올린 것</b>으로 셌습니다. (${MT.escHtml(regDupSeqs.slice(0,8).join(', '))}${regDupSeqs.length>8?' 외':''})</div>`
         : '');
 }
 function pax0(){ return teams.reduce((a,t)=>a+(Number(t.pax)||0),0); }
