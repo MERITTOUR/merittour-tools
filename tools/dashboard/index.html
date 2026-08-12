@@ -840,7 +840,7 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
     <div class="note" style="margin-top:14px">
       <b>쓰는 법</b> · 위에서 볼 달을 켜면 그 달 자료로 바로 분석합니다. 파일을 따로 받지 않으셔도 됩니다.<br>
-      찾는 달이 없으면 아래 <b>＋ 새 자료 올리기</b>로 올리시면 됩니다. 호텔 블록표를 함께 올리면 요금 달력의 예약 가능여부까지 채워집니다.
+      찾는 달이 없으면 아래 <b>＋ 새 자료 올리기</b>로 올리시면 됩니다. 엑셀 두 개와 <b>호텔 블록표</b>를 여기서 한 번에 올리시면 됩니다 — 블록표까지 올리면 요금 달력의 예약 가능여부와 ② 호텔 블록 화면이 함께 채워집니다.
     </div>
 
     <div style="margin-top:16px" id="reg-up">
@@ -860,12 +860,26 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
           <div class="upload-meta"><span class="upload-dot empty" id="dot-ilhaeng"></span><span id="meta-ilhaeng">미선택</span></div>
         </div>
       </div>
-      <div style="margin-top:12px">
+      <div style="margin-top:14px">
         <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
           <label style="font-size:12px;font-weight:700;color:var(--text2)">호텔 블록표 <span class="muted" style="font-weight:600">(선택)</span></label>
-          <span class="muted" style="font-size:11.5px">② 호텔 블록에 붙여넣은 표가 함께 올라갑니다 — 아래에서 <b>몇 월 표인지</b>만 확인해 주세요</span>
+          <span class="muted" style="font-size:11.5px">엠클릭 <b>월별 호텔 투숙현황조회</b>를 <b>「출발년월」줄부터 표 맨 아래 합계까지</b> 드래그 → 복사(Ctrl+C) → 아래 칸에 붙여넣기(Ctrl+V)</span>
         </div>
-        <div id="reg-blk" class="note" style="border-left-color:var(--border2)"></div>
+        <textarea class="paste-area" id="blk-paste" placeholder="여기에 엠클릭 월별 호텔 투숙현황조회를 붙여넣으세요 (Ctrl+V)&#10;&#10;출발년월 부터 긁으면 몇 월 표인지도 같이 들어옵니다.&#10;&#10;호텔명 ⇥ 룸타입 ⇥ 1(토) ⇥ 2(일) ⇥ … ⇥ 합계&#10;간지호텔 ⇥ 트윈 ⇥ 13 ⇥ 11 ⇥ …"></textarea>
+        <div class="blk-toolbar" style="margin-top:8px">
+          <label>출발년월</label>
+          <input type="month" class="blk-month-input" id="blk-month" value="">
+          <span class="muted" id="blk-month-src" style="font-size:11px"></span>
+          <button class="btn-sm" onclick="blkClear()" style="color:var(--red);border-color:var(--red)">붙여넣기 지우기</button>
+          <button class="btn-sm" onclick="vcalRegisterMonth()" style="border-color:var(--accent);color:var(--accent)" title="엑셀 파일 없이 이 표만 서버에 올립니다. 월말 출발 연박을 보려면 다음 달 표도 이렇게 올려 주세요.">📅 블록표만 올리기</button>
+          <span class="muted" id="blk-paste-meta" style="font-size:11px"></span>
+        </div>
+        <div class="blk-toolbar" id="vcal-reg-bar" style="margin-top:2px;display:none">
+          <label style="color:var(--accent2)">올라와 있는 달</label>
+          <div class="blk-chips" id="vcal-reg-chips"></div>
+          <span class="muted" style="font-size:10px">월말 출발 연박까지 보시려면 앞뒤 달도 올려 주세요 · × 를 누르면 서버에서 내려갑니다</span>
+        </div>
+        <div id="reg-blk" class="note" style="border-left-color:var(--border2);margin-top:8px"></div>
       </div>
 
       <div id="reg-sum" class="note" style="margin-top:12px"></div>
@@ -1154,23 +1168,14 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
 
   <!-- 블록 현황 -->
   <div class="blk-view active" id="blkv-status">
-    <div class="card">
+    <!-- 붙여넣기 칸은 「자료 불러오기」로 옮겼다. 엑셀 두 개와 블록표는 같은 엠클릭
+         화면에서 한 번에 받아 오는 것인데, 붙여넣는 곳만 여기 있어 매번 왕복했다.
+         여기는 이제 「보는 화면」이다. -->
+    <div class="card" id="blk-empty" style="display:none">
       <div class="card-head">
-        <div><div class="card-title">엠클릭 호텔별 예약현황 붙여넣기</div><div class="card-sub">엠클릭 「호텔별 예약현황」 표를 드래그 → 복사(Ctrl+C) → 아래 칸에 붙여넣기(Ctrl+V). 파일 업로드·저장 없이 즉석 분석합니다.</div></div>
+        <div><div class="card-title">아직 블록표가 없습니다</div><div class="card-sub">「자료 불러오기」에서 엠클릭 <b>월별 호텔 투숙현황조회</b>를 붙여넣으시면 여기에 바로 나옵니다.</div></div>
+        <button class="btn-sm" onclick="gotoSection('upload')" style="border-color:var(--accent);color:var(--accent)">자료 불러오기로 이동 →</button>
       </div>
-      <div class="blk-toolbar">
-        <label>출발년월</label>
-        <input type="month" class="blk-month-input" id="blk-month" value="2026-05" onchange="blkRender()">
-        <button class="btn-sm" onclick="blkClear()" style="color:var(--red);border-color:var(--red)">붙여넣기 지우기</button>
-        <button class="btn-sm" onclick="vcalRegisterMonth()" style="border-color:var(--accent);color:var(--accent)" title="붙여넣은 표를 서버에 등록합니다. 월말 출발 연박까지 보시려면 앞뒤 달도 등록해 주세요."​>📅 요금달력에 이 달 등록</button>
-        <span class="muted" id="blk-paste-meta" style="font-size:11px"></span>
-      </div>
-      <div class="blk-toolbar" id="vcal-reg-bar" style="margin-top:-4px;display:none">
-        <label style="color:var(--accent2)">요금달력 등록월</label>
-        <div class="blk-chips" id="vcal-reg-chips"></div>
-        <span class="muted" style="font-size:10px">월말 출발 연박까지 보시려면 앞뒤 달도 등록해 주세요 · × 를 누르면 서버에서 내려갑니다</span>
-      </div>
-      <textarea class="paste-area" id="blk-paste" placeholder="여기에 엠클릭 호텔별 예약현황 표를 붙여넣으세요 (Ctrl+V)&#10;&#10;호텔명 ⇥ 룸타입 ⇥ 1(금) ⇥ 2(토) ⇥ … ⇥ 합계&#10;간지호텔 ⇥ 트윈 ⇥ 15 ⇥ 15 ⇥ …"></textarea>
     </div>
     <div class="card" id="blk-status-result" style="display:none">
       <div class="card-head">
@@ -1785,14 +1790,19 @@ function regUpScan(){
   return sc.period ? sc : null;
 }
 
-/* 블록표의 달은 추측하지 않는다. 엠클릭 「호텔별 예약현황」은 표 안에 월이 없고
-   (1(토)·2(일)… 일자만) 출발년월은 표 바깥 셀렉터라 복사하면 따라오지 않는다.
-   틀리면 7월 표가 8월 잔여로 들어간다 — 사람이 ② 호텔 블록에서 고른 달을 쓴다. */
+/* 블록표의 달은 추측하지 않는다. 표 안에는 월이 없다(1(토)·2(일)… 일자뿐).
+   다만 「월별 호텔 투숙현황조회」를 조회 조건줄부터 긁으면 출발년월이 앞에 딸려 오므로,
+   그때는 그 값을 채워 준다(blkMonthFromPaste). 딸려 오지 않았으면 사람이 고른다.
+   어느 쪽이든 화면에 「표에서 읽음 / 직접 고름」을 적어 둔다 —
+   틀리면 7월 표가 8월 잔여로 들어가고, 그것은 없는 방을 파는 쪽으로 틀린다. */
+let blkMonthAuto='';        // 표에서 읽어 채운 달(사람이 고친 달과 구분하려고 들고 있는다)
 function regUpBlock(){
   const ta=document.getElementById('blk-paste'), mi=document.getElementById('blk-month');
   const raw=ta ? ta.value.trim() : '';
   const month=(mi && /^\d{4}-\d{2}$/.test(mi.value)) ? mi.value : '';
-  return { raw, month, has: !!raw };
+  const rows=raw ? blkParse(raw) : null;
+  return { raw, month, has: !!raw, rows, sum: raw&&rows ? blkSumCheck(raw, rows) : null,
+           auto: !!(month && month===blkMonthAuto) };
 }
 
 function regUpRefresh(){
@@ -1802,17 +1812,29 @@ function regUpRefresh(){
   const sc=regUpScan(), b=regUpBlock();
 
   if(blkBox){
-    blkBox.innerHTML = !b.has
-      ? '붙여넣은 표가 없습니다 — 블록표는 이번에 올리지 않습니다. <span class="muted">(이미 올라와 있던 표는 그대로 유지됩니다)</span>'
-      : (b.month
-          ? `② 호텔 블록의 표를 <b>${MT.escHtml(b.month)}</b> 표로 함께 올립니다.`
-          : '<b style="color:var(--red)">② 호텔 블록의 「출발년월」을 먼저 맞춰 주세요.</b> 엠클릭 표에는 월이 들어 있지 않아 저희가 알 수 없습니다.');
+    let msg;
+    if(!b.has) msg='붙여넣은 표가 없습니다 — 블록표는 이번에 올리지 않습니다. <span class="muted">(이미 올라와 있던 표는 그대로 유지됩니다)</span>';
+    else if(!b.rows) msg='<b style="color:var(--red)">표를 못 알아봤습니다.</b> 「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 다시 긁어 주세요.';
+    else if(!b.month) msg='<b style="color:var(--red)">몇 월 표인지 정해 주세요.</b> 조회 조건줄부터 긁으시면 출발년월이 같이 들어옵니다.';
+    else {
+      msg=`<b>${MT.escHtml(b.month)}</b> 표로 함께 올립니다`
+        + (b.auto ? ' <span class="muted">(표에서 읽은 달)</span>' : ' <span style="color:var(--amber)">(직접 고르신 달)</span>')
+        + ` · 호텔 ${new Set(b.rows.map(r=>r.hotel)).size}개 · 사용 ${b.rows.reduce((a,r)=>a+r.used,0)}실`;
+      // 표가 스스로 적어 둔 합계와 맞춰 본다 — 덜 긁어 온 표를 그대로 올리는 것을 막는다
+      if(b.sum && !b.sum.ok)
+        msg+=`<div style="margin-top:6px;color:var(--red)"><b>⚠ 표 맨 아래 합계는 ${b.sum.told} 인데 세어 보니 ${b.sum.got} 입니다.</b> 표를 다 긁으셨는지 확인해 주세요.</div>`;
+      else if(!b.sum)
+        msg+=`<div style="margin-top:6px;color:var(--amber)">※ 맨 아래 「합계」 줄이 없습니다 — 표 끝까지 긁으시면 숫자를 대조해 드립니다.</div>`;
+    }
+    blkBox.innerHTML=msg;
   }
 
   if(!sc){
     sumBox.innerHTML = (upRes||upIlh)
       ? `${upRes?'일행별예약':'예약리스트'} 파일이 아직 없습니다.`
-      : '예약리스트와 일행별예약을 올리면 어느 달인지, 몇 팀인지 여기에 보여 드립니다.';
+      : '예약리스트와 일행별예약을 올리면 어느 달인지, 몇 팀인지 여기에 보여 드립니다.'
+      // 앞뒤 달 블록표는 그 달 엑셀이 아직 없는 것이 보통이다 — 그때 쓰는 길을 여기서 알려 준다
+      + (b.has&&b.rows&&b.month ? `<div style="margin-top:7px;color:var(--accent2)">블록표만 올리시려면 위 <b>📅 블록표만 올리기</b>를 누르세요 — 엑셀 파일 없이 <b>${MT.escHtml(b.month)}</b> 표만 올라갑니다.</div>` : '');
     btn.disabled=true; return;
   }
 
@@ -1823,9 +1845,12 @@ function regUpRefresh(){
   if(sc.monthKeys.length>1){
     warn.push(`여러 달이 섞여 있습니다 — ${sc.monthKeys.map(k=>`${k} ${sc.months[k]}팀`).join(' · ')}. <b>${sc.period}</b> 로 등록합니다.`);
   }
-  if(b.has && !b.month) warn.push('블록표가 몇 월 표인지 정해지지 않았습니다.');
+  if(b.has && !b.rows) warn.push('블록표를 못 알아봤습니다 — 이대로는 올릴 수 없습니다.');
+  else if(b.has && !b.month) warn.push('블록표가 몇 월 표인지 정해지지 않았습니다.');
   else if(b.has && b.month!==sc.period)
     warn.push(`블록표는 <b>${MT.escHtml(b.month)}</b> 인데 자료는 <b>${sc.period}</b> 로 등록됩니다. 맞는지 확인해 주세요.`);
+  if(b.sum && !b.sum.ok)
+    warn.push(`블록표 합계가 안 맞습니다 — 표에는 <b>${b.sum.told}</b>, 세어 보니 <b>${b.sum.got}</b>.`);
   d.warnings.forEach(w=>warn.push(w));
 
   const delta=v=>(!before||!v)?'':` <b style="color:${v>0?'var(--green)':'var(--red)'}">(${v>0?'+':''}${v})</b>`;
@@ -1835,14 +1860,18 @@ function regUpRefresh(){
               : ' <span class="muted">· 첫 등록</span>')
     + (warn.length ? `<div style="margin-top:7px;color:var(--amber);line-height:1.7">※ ${warn.join('<br>※ ')}</div>` : '');
 
-  btn.disabled = !!(b.has && !b.month);
+  btn.disabled = !!(b.has && (!b.rows || !b.month));
 }
 
 function regSaveUpload(){
   const sc=regUpScan(); if(!sc) return;
   const b=regUpBlock();
+  if(b.has && !b.rows){
+    regSay('블록표를 못 알아봤습니다. 「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 다시 긁어 주세요.','err');
+    return;
+  }
   if(b.has && !b.month){
-    regSay('블록표가 몇 월 표인지 ② 호텔 블록의 「출발년월」에서 골라 주세요. 추측하면 다른 달 잔여가 틀어집니다.','err');
+    regSay('블록표가 몇 월 표인지 위 「출발년월」에서 골라 주세요. 추측하면 다른 달 잔여가 틀어집니다.','err');
     return;
   }
   const before=regList.filter(p=>p.period===sc.period)[0]||null;
@@ -1943,7 +1972,7 @@ function regLoadList(){
 ════════════════════════════════════════════════════════════ */
 const regCache={};        // period → {resRows, ilhaengRows, blockRaw, blockMonth, meta}
 let regDupSeqs=[];        // 두 달에 걸쳐 보이는 예약(일정이 옮겨진 것)
-let regBlkFocus='';       // ② 호텔 블록 붙여넣기 칸에 보여 줄 달
+let regBlkFocus='';       // 붙여넣기 칸에 되보여 줄 달
 let regEdgeNote='';       // 앞뒤 달 블록표를 더 받았을 때의 안내
 let regBusy=false;
 
@@ -2039,16 +2068,21 @@ function regApplyBlocks(on){
   });
   if(any) vcalSaveMonths();
 
-  // ② 호텔 블록의 붙여넣기 칸은 한 달치만 보여 준다 — 마지막에 켠 달.
+  // 붙여넣기 칸에는 한 달치만 보여 준다 — 마지막에 켠 달.
   const has=p=>regCache[p] && regCache[p].blockRaw;
   const focus=(regBlkFocus && on.indexOf(regBlkFocus)>=0 && has(regBlkFocus))
               ? regBlkFocus : on.filter(has).pop();
   if(focus){
     const ta=document.getElementById('blk-paste'), mi=document.getElementById('blk-month');
-    if(ta){ ta.value=regCache[focus].blockRaw; ta.classList.add('filled'); }
+    const raw=regCache[focus].blockRaw;
+    if(ta){ ta.value=raw; ta.classList.add('filled'); }
+    // 올릴 때 확정한 달이 정답이다. 표에서 읽은 달은 「어디서 온 값인지」 표시용으로만 쓴다.
     if(mi) mi.value=regCache[focus].blockMonth||focus;
+    blkMonthAuto=blkMonthFromPaste(raw);
+    if(typeof blkMonthSrc==='function') blkMonthSrc();
     try{ blkRender(); }catch(e){}
   }
+  if(typeof blkEmptyNote==='function') blkEmptyNote();
   if(typeof renderVcalRegBar==='function') renderVcalRegBar();
   if(typeof blkRenderMonthNav==='function') blkRenderMonthNav();
 }
@@ -3968,7 +4002,7 @@ function vcalAvailBadge(av){
 function vcalAvailLine(av){
   if(!av) return '';
   if(av.assign) return '<div class="vcal-avline vcal-avline-assign">🟦 임의배정형 — 그때그때 객실을 까는 방식이라 블록 잔여 계산 대상이 아닙니다. 현황 탭에서 사용수를 확인하세요.</div>';
-  if(av.spill)  return `<div class="vcal-avline vcal-avline-spill">⬜ 연박 구간이 ${av.spillYm}로 이어지는데 그 달 블록이 등록되지 않았습니다. 호텔 블록 탭에서 ${av.spillYm} 표를 붙여넣고 「요금달력에 이 달 등록」하면 계산됩니다.</div>`;
+  if(av.spill)  return `<div class="vcal-avline vcal-avline-spill">⬜ 연박 구간이 ${av.spillYm}로 이어지는데 그 달 블록이 등록되지 않았습니다. 「자료 불러오기」에서 ${av.spillYm} 표를 붙여넣고 「블록표만 올리기」를 누르면 계산됩니다.</div>`;
   const capT = `정원 ${av.cap}${av.capVaries?' · 기간 예외로 날짜별 정원 다름':''}`;
   if(av.status==='full') return `<div class="vcal-avline vcal-avline-full">🔴 마감 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
   if(av.status==='tight')return `<div class="vcal-avline vcal-avline-tight">🟠 임박 — 연박 구간 최소 잔여 ${av.rem}실 (${capT})</div>`;
@@ -3983,25 +4017,40 @@ function vcalAvailLine(av){
    이제 등록은 서버(data_registry.block_*)에 쓴다. 새로고침해도 남고, 전 직원이
    같은 것을 본다. 누가 언제 올렸는지는 서버가 block_by · block_at 에 이미
    적고 있어 그대로 화면에 보여 주면 된다. */
+/* 엑셀 두 개 없이 블록표만 서버에 올린다.
+   「올리고 열기」는 예약리스트·일행별예약이 다 있어야 켜지는데, 앞뒤 달 블록표는
+   그 달 엑셀이 아직 없는 것이 보통이다 — 월말 출발 연박을 보려면 이 길이 필요하다. */
 function vcalRegisterMonth(){
-  if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows){
-    alert('먼저 호텔 블록 표를 붙여넣어 주세요.'); return;
-  }
-  // 월별호텔수배현황 표는 날짜에 월 표시가 없어 셀렉터가 틀려도 모를 수 있음 → 등록 시 월을 한 번 더 확정
-  const guess=blkParsed.month;
-  const input=prompt(`이 블록 표가 몇 월인지 확인해주세요 (YYYY-MM).\n날짜에 월 표시가 없는 표는 위 「출발년월」이 실제와 다를 수 있습니다.`, guess);
-  if(input===null) return;                       // 취소
-  const ym=input.trim();
-  if(!/^\d{4}-\d{2}$/.test(ym)){ alert('YYYY-MM 형식으로 입력해주세요. (예: 2026-07)'); return; }
-
-  const dup=!!vcalBlocks[ym];
-  const me=(typeof MT_USER!=='undefined' && MT_USER.get && MT_USER.get()) || '';
   const raw=(document.getElementById('blk-paste')||{}).value||'';
+  if(!raw.trim()){ alert('먼저 「자료 불러오기」에서 호텔 블록표를 붙여넣어 주세요.'); return; }
+  if(typeof blkParsed==='undefined' || !blkParsed || !blkParsed.rows){
+    alert('표를 못 알아봤거나 몇 월 표인지 정해지지 않았습니다.\n「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 긁으시고, 출발년월을 맞춰 주세요.');
+    return;
+  }
+  const ym=blkParsed.month;
+  if(!/^\d{4}-\d{2}$/.test(ym)){ alert('출발년월을 골라 주세요.'); return; }
+
+  /* 표에 월이 없어 셀렉터가 틀려도 모를 수 있다 — 올리기 전에 무엇을 올리는지 보여 준다.
+     예전에는 월을 다시 타이핑하게 했는데, 확인이 아니라 요식이 됐다.
+     지금은 「몇 월 · 몇 개 호텔 · 몇 실 · 표의 합계와 맞는가」를 보여 주고 묻는다. */
   const rows=blkParsed.rows.slice();
+  const sum=blkSumCheck(raw, rows);
+  const src=(blkMonthAuto && ym===blkMonthAuto) ? '표에서 읽은 달' : '직접 고르신 달';
+  const dup=!!vcalBlocks[ym];
+  const ok=confirm(
+      `${ym} 블록표를 ${dup?'갱신':'등록'}합니다. (${src})\n\n`
+    + `호텔 ${new Set(rows.map(r=>r.hotel)).size}개 · 사용 ${rows.reduce((a,r)=>a+r.used,0)}실\n`
+    + (sum ? (sum.ok ? `표 맨 아래 합계 ${sum.told} 과 일치합니다.\n`
+                     : `⚠ 표 맨 아래 합계는 ${sum.told} 인데 세어 보니 ${sum.got} 입니다.\n   표를 다 긁으셨는지 확인해 주세요.\n`)
+           : `※ 맨 아래 「합계」 줄이 없어 숫자를 대조하지 못했습니다.\n`)
+    + `\n올릴까요?`);
+  if(!ok) return;
+
+  const me=(typeof MT_USER!=='undefined' && MT_USER.get && MT_USER.get()) || '';
 
   const btn=document.querySelector('button[onclick="vcalRegisterMonth()"]');
   if(btn){ btn.disabled=true; btn.textContent='등록 중…'; }
-  const done=()=>{ if(btn){ btn.disabled=false; btn.textContent='📅 요금달력에 이 달 등록'; } };
+  const done=()=>{ if(btn){ btn.disabled=false; btn.textContent='📅 블록표만 올리기'; } };
 
   // blockBy 만 넘긴다 — uploaderName 을 주면 그 달 예약 자료를 올린 사람 이름을 덮어쓴다
   MT_STORE.save(ym, { blockRows:[], blockRaw:raw, blockMonth:ym, blockBy:me })
@@ -4015,10 +4064,11 @@ function vcalRegisterMonth(){
       renderVcalRegBar();
       if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
       done();
+      if(typeof regUpRefresh==='function') regUpRefresh();
       const off=(typeof regMonths==='function' && regMonths().indexOf(ym)<0);
-      alert(`${ym} 블록을 ${dup?'갱신':'등록'}했습니다. (등록월 ${Object.keys(vcalBlocks).length}개)\n\n`
-          + (off ? `「자료 불러오기」에서 ${ym} 도 켜 주세요.\n` : '')
-          + `월말 출발 연박까지 보시려면 앞뒤 달 표도 같은 방법으로 등록해 주세요.`);
+      alert(`${ym} 블록표를 ${dup?'갱신':'등록'}했습니다. (올라와 있는 달 ${Object.keys(vcalBlocks).length}개)\n\n`
+          + (off ? `위 「등록된 자료」에서 ${ym} 도 켜 주세요.\n` : '')
+          + `월말 출발 연박까지 보시려면 앞뒤 달 표도 같은 방법으로 올려 주세요.`);
     })
     .catch(e=>{
       done();
@@ -4165,7 +4215,7 @@ function renderVcalDetail(dateStr, bookings){
   const ym=vcalMonth;
   let html=`<div class="vcal-detail-head">${dateStr} (${WK[dow]}) · ${vcalResort}</div>
     <div class="vcal-detail-sub">${vcalOrigin} 출발 → ${r.airIn||r.arrCode||'-'}${r.arrCode?' ('+r.arrCode+')':''} · 안내 환율 기준 ${ym}</div>
-    ${!vcalHasBlock()?'<div class="vcal-avline vcal-avline-spill" style="margin:0 0 12px">⬜ 예약 가능여부는 ② 호텔 블록 탭에서 표를 붙여넣고 「요금달력에 이 달 등록」하면 함께 표시됩니다. 여러 달 등록 시 월말 출발 연박도 끊김 없이 계산됩니다(현재 미등록).</div>':''}`;
+    ${!vcalHasBlock()?'<div class="vcal-avline vcal-avline-spill" style="margin:0 0 12px">⬜ 예약 가능여부는 「자료 불러오기」에서 호텔 블록표를 붙여넣으면 함께 표시됩니다. 여러 달을 올려 두면 월말 출발 연박도 끊김 없이 계산됩니다(현재 미등록).</div>':''}`;
 
   dayPats.forEach((p,pi)=>{
     const nights = isFree?(num((document.getElementById('vcal-freenights')||{}).value)||1):p.nights;
@@ -6318,7 +6368,7 @@ document.addEventListener('DOMContentLoaded',function(){
 /* renderResortMaster()는 스크립트 맨 끝, blkLoad() 이후 호출 */
 
 /* ════════════════════════════════════════════════════════════
-   ② 호텔 블록 — 엠클릭 붙여넣기 기반 즉석 분석
+   ② 호텔 블록 — 붙여넣은 표(또는 올라와 있는 달)를 보는 화면
 ════════════════════════════════════════════════════════════ */
 /* master·pools·alias 키는 선언만 있고 읽지도 쓰지도 않아 뺐다(보유의 단일 출처는 리조트 마스터다). */
 const BLK_STORE={over:'mt_notify_blkOver',paste:'mt_notify_blkPaste',month:'mt_notify_blkMonth',months:'mt_notify_blkMonths'};
@@ -6672,16 +6722,30 @@ function blkSpanRemain(pool, y, m, d, nights){
 }
 
 /* ── 붙여넣기 파서 ── */
+/* 표 머리(호텔명 ⇥ 룸타입 ⇥ 1(토) ⇥ …) 줄을 찾는다.
+   엠클릭 「월별 호텔 투숙현황조회」를 위에서부터 긁으면 조회 조건(출발년월·상품구분·
+   거래처 …)이 표 앞에 딸려 온다. 예전에는 첫 줄만 머리로 봐서 그대로 붙이면
+   「표 형식을 못 알아봄」이 됐다 — 사람은 표를 제대로 긁었는데도.
+   날짜 칸이 20개 넘게 있는 줄만 머리로 본다(조회 조건 줄에는 그런 것이 없다). */
+function blkHeaderIdx(lines){
+  for(let i=0;i<lines.length;i++){
+    const n=lines[i].split('\t').filter(h=>/^\d{1,2}\(/.test(h.trim())).length;
+    if(n>=20) return i;
+  }
+  return -1;
+}
 function blkParse(text){
   const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
   if(lines.length<2) return null;
-  const header=lines[0].split('\t');
+  const hi=blkHeaderIdx(lines);
+  if(hi<0) return null;
+  const header=lines[hi].split('\t');
   const dayIdx=[];
-  header.forEach((h,i)=>{ const m=h.match(/^(\d{1,2})\(/); if(m) dayIdx.push({col:i,day:m[1].padStart(2,'0')}); });
+  header.forEach((h,i)=>{ const m=h.trim().match(/^(\d{1,2})\(/); if(m) dayIdx.push({col:i,day:m[1].padStart(2,'0')}); });
   if(!dayIdx.length) return null;
   const ncol=header.length;
   const rows=[]; let curHotel='';
-  for(let li=1;li<lines.length;li++){
+  for(let li=hi+1;li<lines.length;li++){
     const c=lines[li].split('\t');
     const first=(c[0]||'').trim();
     if(first==='합계'||first==='소계') continue;
@@ -6698,6 +6762,44 @@ function blkParse(text){
     });
   }
   return rows;
+}
+
+/* 붙여넣은 글에서 출발년월을 찾는다.
+   조회 화면을 위에서부터 긁으면 「출발년월 … 2026-08」이 표 앞에 딸려 온다.
+   표 안에는 월이 없으므로(1(토)·2(일)… 일자뿐) 여기서 못 찾으면 사람이 골라야 한다.
+   찾더라도 **채워 주기만 한다** — 표만 긁어 오면 월이 안 오고, 틀리면 7월 표가
+   8월 잔여로 들어간다. 마지막 확인은 사람 몫으로 남긴다. */
+function blkMonthFromPaste(text){
+  const lines=String(text||'').replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
+  const hi=blkHeaderIdx(lines);
+  const head=(hi>0?lines.slice(0,hi):[]).join('\n');
+  if(!head) return '';
+  // 2026-08-15 같은 날짜가 2026-08 로 잡히지 않게 뒤에 숫자가 더 오면 버린다
+  const M='(20\\d{2})[-./](0[1-9]|1[0-2])(?![-./]?\\d)';
+  const hit=head.match(new RegExp('출발년월[\\s\\S]{0,60}?'+M)) || head.match(new RegExp(M));
+  return hit ? hit[1]+'-'+hit[2] : '';
+}
+
+/* 표가 스스로 적어 둔 총합(맨 아래 「합계」 줄의 끝 칸)과 우리가 센 합을 맞춰 본다.
+   표를 덜 긁어 왔을 때 조용히 적은 숫자로 넘어가는 것을 막는다 — 사용이 적게 잡히면
+   잔여가 실제보다 많게 나오고, 그것은 없는 방을 파는 쪽으로 틀린다. */
+function blkSumCheck(text, rows){
+  const lines=String(text||'').replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
+  const hi=blkHeaderIdx(lines);
+  if(hi<0 || !rows) return null;
+  let told=null;
+  for(let i=lines.length-1;i>hi;i--){
+    const c=lines[i].split('\t');
+    if((c[0]||'').trim()!=='합계') continue;
+    for(let j=c.length-1;j>=0;j--){
+      const v=parseInt((c[j]||'').trim());
+      if(!isNaN(v)){ told=v; break; }
+    }
+    break;
+  }
+  if(told===null) return null;                       // 합계 줄까지 안 긁어 온 것은 흔하다
+  const got=rows.reduce((a,r)=>a+r.used,0);
+  return { told, got, ok: told===got };
 }
 
 const BLK_WEEKDAY=['일','월','화','수','목','금','토'];
@@ -6749,38 +6851,71 @@ function blkViewDays(){
   return out;
 }
 
-/* 붙여넣기 이벤트 */
+/* 붙여넣기 이벤트 (칸은 「자료 불러오기」에 있다) */
 document.getElementById('blk-month').addEventListener('change',function(){
+  blkMonthAuto='';                   // 사람이 직접 골랐다 — 다음 붙여넣기 전까지 존중한다
+  blkMonthSrc();
   if(typeof regUpRefresh==='function') regUpRefresh();
   // 달만 바꾸고 표를 안 건드리면 저장이 안 돼, 새로고침하면 옛 달로 되돌아가 있었다.
   try{ localStorage.setItem(BLK_STORE.month,this.value); }catch(e){}
+  blkRender();
 });
+/* 표에서 읽은 달인지, 사람이 고른 달인지 한 줄로 알려 준다.
+   자동으로 채워 놓고 아무 말이 없으면, 표만 긁어 와 옛 달이 남아 있는 것과
+   구분이 안 된다 — 7월 표가 8월 잔여로 들어가는 사고가 여기서 난다.
+   (blkMonthAuto 는 regUpBlock 이 먼저 읽으므로 그 위에서 선언한다) */
+function blkMonthSrc(){
+  const el=document.getElementById('blk-month-src'); if(!el) return;
+  const mi=document.getElementById('blk-month');
+  const has=(document.getElementById('blk-paste')||{}).value;
+  if(!has||!has.trim()){ el.textContent=''; el.style.color=''; return; }
+  if(blkMonthAuto && mi.value===blkMonthAuto){ el.textContent='← 표에서 읽었습니다'; el.style.color='var(--green)'; }
+  else if(!mi.value){ el.textContent='← 표에 월이 없습니다. 골라 주세요'; el.style.color='var(--red)'; }
+  else { el.textContent='← 직접 고르신 달입니다'; el.style.color='var(--amber)'; }
+}
 document.getElementById('blk-paste').addEventListener('input',function(){
-  if(typeof regUpRefresh==='function') regUpRefresh();
   const t=this.value.trim();
   if(t){ this.classList.add('filled'); } else { this.classList.remove('filled'); }
-  try{ localStorage.setItem(BLK_STORE.paste,this.value); localStorage.setItem(BLK_STORE.month,document.getElementById('blk-month').value); }catch(e){}
+  // 표 위쪽 조회 조건에 출발년월이 딸려 왔으면 그대로 채운다 — 새 표를 붙였으면 새 달이 맞다
+  const mi=document.getElementById('blk-month');
+  const m=blkMonthFromPaste(this.value);
+  if(m && mi.value!==m){ mi.value=m; }
+  blkMonthAuto=m;
+  blkMonthSrc();
+  try{ localStorage.setItem(BLK_STORE.paste,this.value); localStorage.setItem(BLK_STORE.month,mi.value); }catch(e){}
   blkRender();
+  if(typeof regUpRefresh==='function') regUpRefresh();
 });
 function blkClear(){
   document.getElementById('blk-paste').value='';
   document.getElementById('blk-paste').classList.remove('filled');
   try{ localStorage.removeItem(BLK_STORE.paste); }catch(e){}
-  blkParsed=null;
+  blkParsed=null; blkMonthAuto='';
+  blkMonthSrc();
   document.getElementById('blk-status-result').style.display='none';
   document.getElementById('blk-unmapped-card').style.display='none';
   document.getElementById('blk-paste-meta').textContent='';
+  blkEmptyNote();
+  if(typeof regUpRefresh==='function') regUpRefresh();
+}
+/* ② 는 보는 화면이다 — 볼 것이 없으면 어디서 넣는지 알려 준다 */
+function blkEmptyNote(){
+  const box=document.getElementById('blk-empty');
+  if(box) box.style.display = blkParsed ? 'none' : '';
 }
 
 function blkRender(){
   const text=document.getElementById('blk-paste').value;
-  const month=document.getElementById('blk-month').value||'2026-05';
+  const month=document.getElementById('blk-month').value||'';
   const rows=blkParse(text);
-  if(!rows){                    // 표 형식을 못 알아봄 (사용 0인 달은 빈 배열로 정상 처리)
+  if(!rows || !month){          // 표를 못 알아봤거나 몇 월인지 아직 모른다
     blkParsed=null;
     document.getElementById('blk-status-result').style.display='none';
     document.getElementById('blk-unmapped-card').style.display='none';
-    document.getElementById('blk-paste-meta').textContent='';
+    document.getElementById('blk-paste-meta').textContent =
+      (text.trim() && !rows) ? '⚠ 표를 못 알아봤습니다 — 「호텔명 ⇥ 룸타입 ⇥ 1(토) …」 줄이 들어가게 다시 긁어 주세요.'
+      : (rows && !month) ? '⚠ 몇 월 표인지 정해 주세요.' : '';
+    blkEmptyNote();
     if(verifyView==='calendar' && typeof renderVcal==='function') renderVcal();
     return;
   }
@@ -6792,10 +6927,13 @@ function blkRenderAll(){
   if(!blkParsed) return;
   const rows=blkParsed.rows;
   const hotels=[...new Set(rows.map(r=>r.hotel))];
-  document.getElementById('blk-paste-meta').textContent = rows.length
-    ? `✓ ${hotels.length}개 호텔 · ${rows.length}개 셀 인식`
-    : '✓ 표 인식 — 이 달은 사용된 객실이 없습니다 (등록해두면 월 경계 연박이 계산됩니다)';
+  const sum=blkSumCheck(document.getElementById('blk-paste').value, rows);
+  document.getElementById('blk-paste-meta').textContent = !rows.length
+    ? '✓ 표 인식 — 이 달은 사용된 객실이 없습니다 (올려 두면 월 경계 연박이 계산됩니다)'
+    : `✓ ${blkParsed.month} · 호텔 ${hotels.length}개 · ${rows.length}개 셀`
+      + (sum ? (sum.ok ? ` · 합계 ${sum.told} 일치` : ` · ⚠ 표 합계 ${sum.told} ≠ 센 값 ${sum.got}`) : '');
   document.getElementById('blk-status-result').style.display='block';
+  blkEmptyNote();
   blkRenderMonthNav();
   blkRenderHotelChips();
   blkRenderStatus();
@@ -9840,10 +9978,16 @@ blkLoad();
 renderResortMaster();  // blkMaster 로드 후 호출 (정원 배지 계산)
 (function blkRestore(){
   try{
-    const savedMonth=localStorage.getItem(BLK_STORE.month);
-    if(savedMonth) document.getElementById('blk-month').value=savedMonth;
-    const savedPaste=localStorage.getItem(BLK_STORE.paste);
-    if(savedPaste){ const ta=document.getElementById('blk-paste'); ta.value=savedPaste; ta.classList.add('filled'); blkRender(); }
+    const savedPaste=localStorage.getItem(BLK_STORE.paste)||'';
+    const savedMonth=(localStorage.getItem(BLK_STORE.month)||'').trim();
+    // 표에 월이 들어 있으면 그것이 맞다 — 저장해 둔 달은 지난번에 고른 것이라 옛 달일 수 있다
+    const fromPaste=savedPaste ? blkMonthFromPaste(savedPaste) : '';
+    const mi=document.getElementById('blk-month');
+    if(fromPaste){ mi.value=fromPaste; blkMonthAuto=fromPaste; }
+    else if(/^\d{4}-\d{2}$/.test(savedMonth)) mi.value=savedMonth;
+    if(savedPaste){ const ta=document.getElementById('blk-paste'); ta.value=savedPaste; ta.classList.add('filled'); }
+    blkMonthSrc();
+    blkRender();
   }catch(e){}
 })();
 </script>
