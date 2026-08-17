@@ -367,6 +367,39 @@
     }).then(function () { return { ok: true, n: list.length }; });
   }
 
+  /* ── 현지 전달 완료 표시 (mt_field_note) ────────────────────────
+     행이 있으면 그 팀의 그 종류를 현지에 보냈다는 뜻. 취소는 행 삭제다.
+     ⚠ 표가 아직 없는 환경(마이그레이션 19 미실행)에서도 화면이 죽지 않게
+       조회 실패는 빈 배열로 넘긴다 — 체크만 안 되고 목록은 그대로 나온다. */
+  var FNOTE_COLS = 'event_seq,kind,memo,updated_at,updated_by';
+
+  function loadFieldNotes() {
+    return rest('/mt_field_note?select=' + FNOTE_COLS)
+      .then(function (rows) { return rows || []; })
+      .catch(function () { return []; });
+  }
+  /* 완료로 표시. 같은 (팀, 종류)를 다시 눌러도 한 줄만 남는다. */
+  function markFieldNote(eventSeq, kind, memo) {
+    var seq = String(eventSeq || '').trim();
+    if (!seq || (kind !== 'room' && kind !== 'flight'))
+      return Promise.reject(new Error('전달 표시 대상이 올바르지 않습니다.'));
+    return rest('/mt_field_note?on_conflict=event_seq,kind', {
+      method: 'POST',
+      body: [{ event_seq: seq, kind: kind, memo: memo || null }],
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    }).then(function () { return { ok: true }; });
+  }
+  /* 완료 해제 = 행 삭제 */
+  function clearFieldNote(eventSeq, kind) {
+    var seq = String(eventSeq || '').trim();
+    if (!seq || (kind !== 'room' && kind !== 'flight'))
+      return Promise.reject(new Error('전달 표시 대상이 올바르지 않습니다.'));
+    return rest('/mt_field_note?event_seq=eq.' + encodeURIComponent(seq) +
+                '&kind=eq.' + encodeURIComponent(kind),
+                { method: 'DELETE', prefer: 'return=minimal' })
+      .then(function () { return { ok: true }; });
+  }
+
   /* ── 변경 이력 ───────────────────────────────────────────────────
      누가·언제는 서버 트리거가 박는다(mt_mcl_stamp). 클라이언트가 보낸 이름은
      믿지 않는다 — 게이트 이름은 본인이 타이핑한 자유 문자열이라 진위가 없다.
@@ -462,6 +495,9 @@
     savePaxOverlays: savePaxOverlays,
     loadBlockOverrides: loadBlockOverrides,
     saveBlockOverrides: saveBlockOverrides,
+    loadFieldNotes: loadFieldNotes,
+    markFieldNote: markFieldNote,
+    clearFieldNote: clearFieldNote,
     loadEventOverlays: loadEventOverlays,
     saveEventOverlays: saveEventOverlays,
     deleteEventOverlays: deleteEventOverlays,
