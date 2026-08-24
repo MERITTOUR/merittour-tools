@@ -749,7 +749,7 @@
   <header>
     <span class="tag">MERITTOUR INTERNAL TOOL</span>
     <h1>이미지 통합 툴킷 <span class="ver-badge">v1.2</span></h1>
-    <p>Mclick 권장 용량 가이드 반영 · 실시간 미리보기 · ZIP으로 한 번에 받기</p>
+    <p>Mclick 권장 용량 가이드 반영 · 실시간 미리보기 · <b>ZIP 통째로 넣고 ZIP으로 받기</b></p>
   </header>
 
   <!-- 라이브러리 로딩 실패 배너 (있을 때만 표시) -->
@@ -762,13 +762,14 @@
   </div>
 
   <div id="drop-zone" onclick="document.getElementById('fi').click()">
-    <input type="file" id="fi" multiple accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/svg+xml,image/tiff,application/pdf,.tif,.tiff,.svg,.pdf">
+    <input type="file" id="fi" multiple accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/svg+xml,image/tiff,application/pdf,.tif,.tiff,.svg,.pdf,.zip,application/zip">
     <div class="dz-default">
       <svg class="upload-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0L7.5 12M12 7.5v9"/>
       </svg>
       <div class="main-text">파일을 드래그하거나 클릭하여 선택</div>
-      <div class="sub-text" id="dz-subtext">파일 추가 즉시 자동 변환 · 설정 변경 시 실시간 재계산</div>
+      <div class="sub-text" id="dz-subtext">파일 추가 즉시 자동 변환 · ZIP 을 넣으면 안의 이미지를 풀어서 담습니다</div>
+      <div class="sub-text" id="dz-zip" style="display:none;color:var(--mt-accent,#2563EB);font-weight:700"></div>
       <div class="format-pills">
         <span class="format-pill">JPG</span>
         <span class="format-pill">PNG</span>
@@ -778,6 +779,7 @@
         <span class="format-pill">PDF</span>
         <span class="format-pill">TIFF</span>
         <span class="format-pill">SVG</span>
+        <span class="format-pill" style="border-color:var(--mt-accent,#2563EB);color:var(--mt-accent,#2563EB)">ZIP</span>
       </div>
     </div>
     <div class="dz-success">
@@ -1463,9 +1465,88 @@ function refreshNewNames() {
 }
 
 // ========== 파일 관리 ==========
+/* ════════════════════════════════════════════════════════════
+   ZIP 통째로 넣기
+   사진을 폴더째 받았을 때 낱개로 다시 고르는 것이 번거로워 zip 자체를 받는다.
+   JSZip 은 이미 페이지에 있다(내려받기용) — 읽는 쪽으로도 쓴다.
+════════════════════════════════════════════════════════════ */
+const ZIP_TAKE = /\.(jpe?g|png|webp|bmp|gif|svg|tiff?|pdf)$/i;
+function isZipFile(f) {
+  return /\.zip$/i.test(f.name || '') || /zip/i.test(f.type || '');
+}
+/* 맥이 넣는 메타와 숨김 파일. 조용히 빼면 장수가 안 맞으니 세어서 알려 준다. */
+function zipSkipPath(p) {
+  return p.startsWith('__MACOSX/') || /(^|\/)\._/.test(p) ||
+         /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini)$/i.test(p);
+}
+function zipNote(msg, keep) {
+  const el = document.getElementById('dz-zip');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.display = msg ? '' : 'none';
+  if (window.__zipNoteT) clearTimeout(window.__zipNoteT);
+  if (msg && keep) window.__zipNoteT = setTimeout(() => zipNote(''), 6000);
+}
+
+let zipBusy = false;
+const zipQueue = [];
+/* 여러 개를 한꺼번에 풀지 않는다 — 압축을 동시에 풀면 큰 파일에서 브라우저가 죽는다. */
+async function runZipQueue() {
+  zipBusy = true;
+  while (zipQueue.length) {
+    const f = zipQueue.shift();
+    try { await unpackZip(f); }
+    catch (e) {
+      zipNote('');
+      alert('「' + f.name + '」을 열지 못했습니다.\n' + ((e && e.message) || '') +
+            '\n\n손상된 파일이거나 암호가 걸린 zip 일 수 있습니다.');
+    }
+  }
+  zipBusy = false;
+}
+async function unpackZip(file) {
+  if (!window.JSZip) {
+    alert('ZIP 라이브러리를 불러오지 못했습니다.\n새로고침 후 다시 시도해 주세요.');
+    return;
+  }
+  zipNote('「' + file.name + '」 여는 중…');
+  const zip = await window.JSZip.loadAsync(file);
+  const entries = [];
+  zip.forEach((path, e) => { if (!e.dir) entries.push([path, e]); });
+  const take = entries.filter(([p]) => !zipSkipPath(p) && ZIP_TAKE.test(p));
+  const skipped = entries.length - take.length;
+  if (!take.length) {
+    zipNote('');
+    alert('「' + file.name + '」 안에 변환할 이미지가 없습니다.' +
+          (entries.length ? '\n(' + entries.length + '개 항목을 봤지만 이미지·PDF 가 없습니다)' : ''));
+    return;
+  }
+  /* 한 장씩 꺼낸다. 한꺼번에 풀면 압축 푼 것이 통째로 메모리에 올라간다.
+     이름에 폴더 경로를 그대로 남긴다 — 어느 숙소 사진인지가 경로에 들어 있다. */
+  const out = [];
+  for (let i = 0; i < take.length; i++) {
+    const [path, entry] = take[i];
+    zipNote('「' + file.name + '」 여는 중 ' + (i + 1) + '/' + take.length + ' · ' + path.split('/').pop());
+    const blob = await entry.async('blob');
+    out.push(new File([blob], path, { type: blob.type || '' }));
+    if (i % 5 === 4) await new Promise(r => setTimeout(r, 0));   // 화면이 갱신될 틈
+  }
+  addFiles(out);
+  zipNote('「' + file.name + '」에서 ' + take.length + '개를 넣었습니다' +
+          (skipped ? ' · 이미지가 아닌 ' + skipped + '개는 건너뛰었습니다' : ''), true);
+}
+
 function addFiles(fileObjs) {
   let addedCount = 0;
+  /* zip 은 그대로 목록에 넣지 않는다 — 풀어서 안의 이미지를 넣는다.
+     푸는 것은 비동기라 큐로 보내고, 나머지는 지금 처리한다. */
+  const plain = [];
   for (const f of fileObjs) {
+    if (isZipFile(f)) { zipQueue.push(f); continue; }
+    plain.push(f);
+  }
+  if (zipQueue.length && !zipBusy) runZipQueue();
+  for (const f of plain) {
     const fileType = detectFileType(f);
     if (files.some(x => x.name === f.name && x.size === f.size)) continue;
     files.push({ file: f, type: fileType, name: f.name, size: f.size });
@@ -1505,7 +1586,7 @@ function updateDropzoneSubtext() {
     subtext.textContent = `현재 ${files.length}개 파일 등록됨 · 추가로 드래그하거나 클릭하세요`;
     subtext.classList.add('has-files');
   } else {
-    subtext.textContent = '파일 추가 즉시 자동 변환 · 설정 변경 시 실시간 재계산';
+    subtext.textContent = '파일 추가 즉시 자동 변환 · ZIP 을 넣으면 안의 이미지를 풀어서 담습니다';
     subtext.classList.remove('has-files');
   }
 }
