@@ -1636,7 +1636,7 @@ function parseProduct(name){
     region='구마모토'; golf='야마나미CC';
     if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='쿠주 프라이빗 레지던스'; roomType='트윈'; }
     else if(s.indexOf('소보별장')>=0||s.indexOf('통나무')>=0){ accom='히노키 캐빈'; roomType='별장'; }
-    else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('아소별장')>=0){ accom='프레스티지 하우스'; roomType='별장'; }
+    else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('아소별장')>=0){ accom='아소 프레스티지'; roomType='별장'; }
     else if(s.indexOf('돔하우스')>=0){ accom='돔스테이'; roomType='돔하우스'; }
     else { accom='야마나미 호텔'; roomType=room; }
   }
@@ -3301,7 +3301,7 @@ const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입
 /* 숙소 표시 순서 — 지역별 배치 순서의 단일 출처.
    블록 현황 표·출발 일정 조회·현황 엑셀이 모두 이 순서를 따른다.
    여기 없는 숙소는 뒤로 밀리고 이름순으로 붙는다. */
-const ACCOM_ORDER=['야마나미 호텔','프레스티지 하우스','소보 패밀리','히노키 캐빈','돔스테이','쿠주 프라이빗 레지던스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
+const ACCOM_ORDER=['야마나미 호텔','아소 프레스티지','소보 패밀리','히노키 캐빈','돔스테이','쿠주 프라이빗 레지던스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
 /* ACCOM_ORDER 순위 — 목록에 없으면 맨 뒤 */
 function accomRank(name){
   const i=ACCOM_ORDER.indexOf(name);
@@ -4929,7 +4929,7 @@ const RESORT_DEFAULTS=[
   {key:'yamanami_golf', name:'야마나미 호텔', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':55,'소형트윈':50}, aliases:['아소 야마나미 골프텔','야마나미 골프텔','아소 야마나미 관내별장','관내별장'], assign:false, memo:''},
-  {key:'yamanami_bessou', name:'프레스티지 하우스', region:'구마모토', golf:'야마나미CC', holes:27,
+  {key:'yamanami_bessou', name:'아소 프레스티지', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':1}, aliases:['아소별장'], assign:false, memo:'8인 대형 별장 1동 (구 관내별장 15실은 별장 5동 + 소형트윈으로 분리)'},
   {key:'yamanami_dome', name:'돔스테이', region:'구마모토', golf:'야마나미CC', holes:27,
