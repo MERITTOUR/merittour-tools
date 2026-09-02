@@ -3301,7 +3301,7 @@ const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입
 /* 숙소 표시 순서 — 지역별 배치 순서의 단일 출처.
    블록 현황 표·출발 일정 조회·현황 엑셀이 모두 이 순서를 따른다.
    여기 없는 숙소는 뒤로 밀리고 이름순으로 붙는다. */
-const ACCOM_ORDER=['야마나미 호텔','아소 프레스티지','소보 패밀리','히노키 스테이','돔스테이','쿠주 프라이빗 레지던스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
+const ACCOM_ORDER=['야마나미 호텔','아소 프레스티지','소보 테라스','히노키 스테이','돔스테이','쿠주 프라이빗 레지던스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 골프텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
 /* ACCOM_ORDER 순위 — 목록에 없으면 맨 뒤 */
 function accomRank(name){
   const i=ACCOM_ORDER.indexOf(name);
@@ -4938,7 +4938,7 @@ const RESORT_DEFAULTS=[
   {key:'yamanami_hinoki_cabin', name:'히노키 스테이', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':3}, aliases:['소보별장','통나무집'], assign:false, memo:'편백 2인 별장 · 3동'},
-  {key:'yamanami_hinoki_family', name:'소보 패밀리', region:'구마모토', golf:'야마나미CC', holes:27,
+  {key:'yamanami_hinoki_family', name:'소보 테라스', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:18000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':1}, aliases:['소보5동'], assign:false, memo:'편백 4인 독채 · 1동 (신규)'},
   {key:'kuzu', name:'쿠주 프라이빗 레지던스', region:'구마모토', golf:'야마나미CC', holes:18,
