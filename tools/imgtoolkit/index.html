@@ -539,6 +539,9 @@
     letter-spacing: 0.5px;
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+  .file-row.has-dest { grid-template-columns: 52px 1fr auto auto auto auto; }
+  .row-actions { display:flex; gap:4px; align-items:center; }
+  .row-actions .rm-btn { min-width: 30px; }
   .file-info { min-width: 0; }
   .file-info .name {
     font-size: 13px; font-weight: 500;
@@ -625,6 +628,15 @@
     align-items: center;
     flex-wrap: wrap;
   }
+  .dest-wrap { display:flex; gap:6px; align-items:center; flex:0 0 auto; }
+  .dest-sel { max-width: 190px; padding:5px 8px; font-size:12.5px; border:1px solid var(--border);
+    border-radius:7px; background:var(--bg); color:var(--text-primary); }
+  .dest-apply { padding:5px 9px; font-size:11.5px; white-space:nowrap; border:1px solid var(--border);
+    border-radius:7px; background:var(--bg); color:var(--text-secondary); cursor:pointer; }
+  .dest-apply:hover:not(:disabled) { border-color: var(--border-hover); }
+  .dest-apply:disabled { opacity:.4; cursor:default; }
+  @media (max-width: 720px) { .dest-sel { max-width: 130px; } .dest-apply { display:none; } }
+
   .btn-primary, .btn-secondary {
     display: inline-flex;
     align-items: center;
@@ -1011,11 +1023,35 @@ let seqPad = 3;                 // 프리셋이 2 로 낮추면 01·02 가 된�
    /2027/ 은 폴더 안에서 01 부터 이어져야 사진이 뜨기 때문에, 전체 통번호로 매기면
    두 번째 폴더부터 전부 어긋난다. */
 let folderSeqOn = false;
+/* /2027/ 안내문이 사진을 찾는 폴더. 2027/photos/README.md 의 표와 같아야 한다.
+   지역까지 붙인 값을 쓰는 이유 — hotel·golf·resort·lodge 는 지역마다 되풀이돼서
+   숙소 이름만으로는 나고야 호텔과 야마나미 호텔이 한 폴더로 섞인다. */
+const GUIDE_FOLDERS = [
+  ['구마모토 · 아소 야마나미', [
+    ['kumamoto/prestige', '아소 프레스티지'], ['kumamoto/hinoki-stay', '히노키 스테이'],
+    ['kumamoto/sobo-terrace', '소보 테라스'], ['kumamoto/kuju', '쿠주 프라이빗 레지던스'],
+    ['kumamoto/dome', '돔스테이'], ['kumamoto/hotel', '야마나미 호텔'],
+    ['kumamoto/guernsey', '간지호텔'], ['kumamoto/shizunoyado', '시즈노야도 료칸'],
+    ['kumamoto/golf', '골프장']]],
+  ['나고야 · 포틴힐즈', [['nagoya/hotel', '포틴힐즈CC 호텔'], ['nagoya/caravan', '포틴힐즈CC 카라반'], ['nagoya/golf', '골프장']]],
+  ['벳푸 · 아키바 리조트', [['akiba/resort', '아키바 리조트'], ['akiba/golf', '골프장']]],
+  ['벳푸 · 무츠키 료칸', [['mutsuki/ryokan', '무츠키 료칸'], ['mutsuki/golf', '골프장']]],
+  ['이바라키 · 시로사토', [['ibaraki/lodge', '골프장 내 숙소'], ['ibaraki/golf', '골프장']]],
+  ['나가노 · 스가다이라', [['nagano/onsen-hotel', '스가다이라 고원 온천호텔'], ['nagano/mansion', '스가다이라 맨션'], ['nagano/golf', '골프장']]],
+  ['미야자키 · 국제공항CC', [['miyazaki/lodge', '골프장 숙소'], ['miyazaki/golf', '골프장']]],
+  ['쿠알라룸푸르 · 닐라이스프링스', [['kl/resort', '닐라이스프링스 리조트'], ['kl/golf', '골프장']]],
+];
+/* 지정한 곳이 있으면 그쪽, 없으면 넣을 때의 폴더 경로를 쓴다. */
+function destOf(i) {
+  const f = files[i];
+  if (!f) return '';
+  return f.dest ? f.dest + '/' : folderOf(f.name);
+}
 let seqInFolder = [];
 function folderOf(name) { const i = String(name).lastIndexOf('/'); return i < 0 ? '' : name.slice(0, i + 1); }
 function recomputeFolderSeq() {
   const count = {};
-  seqInFolder = files.map(f => { const d = folderOf(f.name); return (count[d] = (count[d] || 0) + 1); });
+  seqInFolder = files.map((f, i) => { const d = destOf(i); return (count[d] = (count[d] || 0) + 1); });
 }
 
 const PRESETS = {
@@ -1556,7 +1592,7 @@ function buildNewName(originalName, idx, pageNum) {
   if (folderSeqOn) {
     const n = seqInFolder[idx] || (idx + 1);
     const seq = String(n).padStart(seqPad, '0');
-    return folderOf(originalName) + seq + (pageNum !== undefined ? '_p' + pageNum : '') + '.' + ext;
+    return destOf(idx) + seq + (pageNum !== undefined ? '_p' + pageNum : '') + '.' + ext;
   }
   const base = originalName.replace(/\.[^/.]+$/, '');
   const prefix = prefixIn.value.trim();
@@ -1603,7 +1639,7 @@ function applyPresetNaming(cfg) {
   }
   seqLabel.textContent = ` 연번 자동 부여 (${['', '', '01, 02', '_001, _002'][seqPad] || '_001, _002'} ...)`;
   updateRenamePreview();
-  refreshNewNames();
+  if (files.length) { recomputeFolderSeq(); redrawRows(); } else { refreshNewNames(); }
 }
 
 function updateRenamePreview() {
@@ -1833,6 +1869,36 @@ function renderRow(idx, animate) {
   /* 순서가 곧 01·02 번호다. 대표로 앞세울 사진을 원본 이름을 고치지 않고
      여기서 올릴 수 있어야 한다. 같은 폴더 안에서만 움직인다 — 폴더를 넘나들면
      그 사진이 어느 숙소 것인지가 바뀌어 버린다. */
+  /* 숙소 지정 칸. 2027 프리셋일 때만 보인다 — 다른 작업에서는 갈 곳이 없다. */
+  let destWrap = null;
+  if (folderSeqOn) {
+    destWrap = document.createElement('div');
+    destWrap.className = 'dest-wrap';
+    const sel = document.createElement('select');
+    sel.className = 'dest-sel';
+    sel.title = '이 사진이 들어갈 숙소';
+    sel.innerHTML = '<option value="">— 숙소 지정 —</option>' +
+      GUIDE_FOLDERS.map(([g, items]) => '<optgroup label="' + g + '">' +
+        items.map(([v, n]) => '<option value="' + v + '">' + n + '</option>').join('') +
+        '</optgroup>').join('');
+    sel.value = entry.dest || '';
+    sel.onchange = () => { files[idx].dest = sel.value; recomputeFolderSeq(); redrawRows(); };
+
+    /* 한 숙소 사진은 대개 목록에서 붙어 있다. 하나 고르고 아래로 밀면 끝난다 —
+       80장을 하나씩 고르면 그것만으로 일이 된다. */
+    const down = document.createElement('button');
+    down.className = 'dest-apply';
+    down.textContent = '↓ 아래 전부';
+    down.title = '이 아래 사진을 모두 같은 숙소로';
+    down.disabled = !sel.value || idx >= files.length - 1;
+    down.onclick = () => {
+      for (let i = idx; i < files.length; i++) files[i].dest = sel.value;
+      recomputeFolderSeq(); redrawRows();
+    };
+    destWrap.appendChild(sel);
+    destWrap.appendChild(down);
+  }
+
   const upBtn = document.createElement('button');
   upBtn.className = 'rm-btn';
   upBtn.textContent = '↑';
@@ -1853,13 +1919,19 @@ function renderRow(idx, animate) {
   rmBtn.title = '제거';
   rmBtn.onclick = () => removeFile(idx);
 
+  /* 버튼 셋을 한 칸에 모은다. 따로 두면 grid 칸 수를 넘겨 둘째 줄로 밀린다. */
+  const actions = document.createElement('div');
+  actions.className = 'row-actions';
+  actions.appendChild(upBtn);
+  actions.appendChild(downBtn);
+  actions.appendChild(rmBtn);
+
   row.appendChild(thumb);
   row.appendChild(info);
+  if (destWrap) { row.classList.add('has-dest'); row.appendChild(destWrap); }
   row.appendChild(badge);
   row.appendChild(dlBtn);
-  row.appendChild(upBtn);
-  row.appendChild(downBtn);
-  row.appendChild(rmBtn);
+  row.appendChild(actions);
   list.appendChild(row);
 }
 
@@ -1872,7 +1944,7 @@ function resyncDecodeOrder() {
 function canSwap(idx, dir) {
   const j = idx + dir;
   if (j < 0 || j >= files.length) return false;
-  return folderOf(files[idx].name) === folderOf(files[j].name);   // 폴더를 넘지 않는다
+  return destOf(idx) === destOf(j);              // 갈 곳이 다르면 순서를 섞지 않는다
 }
 function moveFile(idx, dir) {
   if (!canSwap(idx, dir)) return;
