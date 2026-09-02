@@ -768,7 +768,10 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0L7.5 12M12 7.5v9"/>
       </svg>
       <div class="main-text">파일을 드래그하거나 클릭하여 선택</div>
-      <div class="sub-text" id="dz-subtext">파일 추가 즉시 자동 변환 · ZIP 을 넣으면 안의 이미지를 풀어서 담습니다</div>
+      <div class="sub-text" id="dz-subtext">파일 추가 즉시 자동 변환 · 폴더·ZIP 을 넣으면 안의 이미지를 꺼내서 담습니다</div>
+      <button type="button" id="btn-folder" class="btn-secondary" style="margin-top:10px"
+              onclick="event.stopPropagation();document.getElementById('fdir').click()">폴더 통째로 선택</button>
+      <input type="file" id="fdir" webkitdirectory directory multiple hidden>
       <div class="sub-text" id="dz-zip" style="display:none;color:var(--mt-accent,#2563EB);font-weight:700"></div>
       <div class="format-pills">
         <span class="format-pill">JPG</span>
@@ -780,6 +783,7 @@
         <span class="format-pill">TIFF</span>
         <span class="format-pill">SVG</span>
         <span class="format-pill" style="border-color:var(--mt-accent,#2563EB);color:var(--mt-accent,#2563EB)">ZIP</span>
+        <span class="format-pill" style="border-color:var(--mt-accent,#2563EB);color:var(--mt-accent,#2563EB)">폴더</span>
       </div>
     </div>
     <div class="dz-success">
@@ -1059,6 +1063,7 @@ let currentToken = 0;
 
 // ========== DOM ==========
 const fi = document.getElementById('fi');
+const fdir = document.getElementById('fdir');
 const dz = document.getElementById('drop-zone');
 const qSlider = document.getElementById('quality');
 const qOut = document.getElementById('quality-out');
@@ -1165,12 +1170,83 @@ prefixIn.addEventListener('input', () => {
 
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
+/* 폴더를 끌어다 놓으면 브라우저는 dataTransfer.files 에 폴더 자체를 0KB 항목 하나로
+   준다(이름만 있는 것). 안으로 들어가려면 webkitGetAsEntry 로 훑어야 한다. */
+function entryToFile(entry) {
+  return new Promise((res, rej) => entry.file(res, rej));
+}
+async function walkEntry(entry, out, depth) {
+  if (depth > 8) return;                       // 이상한 링크로 끝없이 내려가지 않게
+  if (entry.isFile) {
+    const f = await entryToFile(entry);
+    const path = (entry.fullPath || entry.name).replace(/^\//, '');
+    if (zipSkipPath(path)) return;             // 맥이 넣는 __MACOSX·.DS_Store 등
+    /* zip 을 풀 때와 같이 폴더 경로를 이름에 남긴다 — 어느 숙소 사진인지가 경로에 있다. */
+    out.push(new File([f], path, { type: f.type || '' }));
+    return;
+  }
+  if (!entry.isDirectory) return;
+  const reader = entry.createReader();
+  for (;;) {
+    /* readEntries 는 한 번에 100개까지만 준다. 빈 배열이 올 때까지 다시 불러야
+       101번째부터가 빠지지 않는다. */
+    const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+    if (!batch.length) break;
+    for (const e of batch) await walkEntry(e, out, depth + 1);
+  }
+}
+function keepable(f) { return !zipSkipPath(f.name) && (ZIP_TAKE.test(f.name) || isZipFile(f)); }
+
+dz.addEventListener('drop', async e => {
   e.preventDefault();
   dz.classList.remove('drag-over');
-  addFiles(e.dataTransfer.files);
+  /* items·files 는 이 함수가 한 번이라도 await 하면 비어 버린다 — 먼저 붙잡아 둔다. */
+  const entries = [];
+  if (e.dataTransfer.items) {
+    for (const it of e.dataTransfer.items) {
+      const en = it.webkitGetAsEntry && it.webkitGetAsEntry();
+      if (en) entries.push(en);
+    }
+  }
+  const plain = Array.from(e.dataTransfer.files || []);
+  if (!entries.some(en => en.isDirectory)) { addFiles(plain); return; }
+
+  zipNote('폴더를 읽는 중…');
+  const out = [];
+  try { for (const en of entries) await walkEntry(en, out, 0); }
+  catch (err) {
+    zipNote('');
+    alert('폴더를 읽지 못했습니다.\n\n' + zipErrorHint(err));
+    return;
+  }
+  addFolderFiles(out, '폴더');
 });
+
 fi.addEventListener('change', () => addFiles(fi.files));
+fdir.addEventListener('change', () => {
+  /* 폴더 선택은 webkitRelativePath 에 경로가 들어온다 — 그것을 이름으로 삼는다. */
+  const out = Array.from(fdir.files)
+    .map(f => new File([f], f.webkitRelativePath || f.name, { type: f.type || '' }));
+  addFolderFiles(out, '선택한 폴더');
+  fdir.value = '';                              // 같은 폴더를 다시 고를 수 있게
+});
+
+function addFolderFiles(out, what) {
+  const take = out.filter(keepable);
+  const skipped = out.length - take.length;
+  if (!take.length) {
+    zipNote('');
+    alert(what + ' 안에 변환할 이미지가 없습니다.' +
+          (out.length ? '\n(' + out.length + '개 항목을 봤지만 이미지·PDF 가 없습니다)' : ''));
+    return;
+  }
+  /* 이름 순으로 담는다. 폴더를 훑는 순서는 브라우저가 정하는데, 사람은 01·02 순서로
+     들어갈 것을 기대한다 — 순서가 곧 사진 번호가 되므로 어긋나면 티가 크게 난다. */
+  take.sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true }));
+  addFiles(take);
+  zipNote(what + '에서 ' + take.length + '개를 담았습니다' +
+          (skipped ? ' · 이미지가 아닌 ' + skipped + '개는 건너뛰었습니다' : ''), true);
+}
 
 // ========== 파일 유형 감지 ==========
 function detectFileType(file) {
