@@ -1026,6 +1026,28 @@ const FORMAT_MAP = {
 // ========== 상태 ==========
 // files[i]: { file: File, type: 'image'|'pdf'|'heic'|'tiff'|'svg', name: string, size: number }
 // decoded[i]: HTMLCanvasElement[] (페이지/이미지별)
+/* 디코딩한 캔버스는 픽셀 하나에 4바이트를 쓴다 — 6000×4000 원본 한 장이 96MB다.
+   전부 들고 있으면 카메라 원본 70장에 6GB 가 되어 탭이 죽는다. ZIP 자체(수백 MB)보다
+   푼 뒤가 훨씬 무겁다.
+   그래서 최근 것 몇 장만 남기고 나머지는 버린다. 버린 것은 필요할 때 다시 디코딩한다 —
+   느려질 뿐 결과는 같다. 변환 결과(results)는 장당 수백 KB 라 그대로 둔다. */
+const DECODE_KEEP = 6;
+const decodeOrder = [];
+function dropCanvases(list) {
+  /* width 를 0 으로 줄여야 브라우저가 픽셀 메모리를 실제로 놓는다.
+     참조만 끊으면 GC 가 올 때까지 그대로 잡고 있다. */
+  if (list) list.forEach(c => { try { c.width = 0; c.height = 0; } catch (e) {} });
+}
+function rememberDecoded(i) {
+  const at = decodeOrder.indexOf(i);
+  if (at >= 0) decodeOrder.splice(at, 1);
+  decodeOrder.push(i);
+  while (decodeOrder.length > DECODE_KEEP) {
+    const old = decodeOrder.shift();
+    dropCanvases(decoded[old]);
+    decoded[old] = null;
+  }
+}
 // results[i]: Blob[] (페이지/이미지별)
 const files = [];
 const decoded = [];
@@ -1330,8 +1352,10 @@ async function runConversion(needsRedecoding) {
     try {
       // 디코딩 (캐시 사용)
       if (!decoded[i] || needsRedecoding) {
+        if (needsRedecoding) dropCanvases(decoded[i]);
         decoded[i] = await decodeFile(i);
       }
+      rememberDecoded(i);
 
       if (myToken !== currentToken) return;
 
