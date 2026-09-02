@@ -11,9 +11,8 @@
 | `logo-merittour-square-stacked.svg` · `-800.png` | **정사각 · 세로 조합** — 심볼 위, 워드마크 아래 |
 | `logo-merittour-square-horizontal.svg` · `-800.png` | **정사각 · 가로형** — 가로형을 그대로 정사각에 넣은 것 |
 
-| `banner-youtube-white.svg` · `-white.png` | **유튜브 배너** 2048×1152 · 흰 바탕 |
-| `banner-youtube-beige.svg` · `-beige.png` | 유튜브 배너 · 베이지 바탕(`#F6F2E8`) |
-| `banner-youtube-navy.svg` · `-navy.png` | 유튜브 배너 · 네이비 바탕에 흰 로고 |
+| `banner-youtube-{white,beige,navy}.png` · `.svg` | **유튜브 배너** 2048×1152 · 로고 + MEMBERSHIP GOLF RESERVATION CENTER |
+| `banner-youtube-{white,beige,navy}-nogolf.png` · `.svg` | 같은 것, 문구에서 GOLF 를 뺀 판 |
 
 브랜드 색 = `#373f4a`
 
@@ -31,7 +30,16 @@
 그래서 **로고·글자는 가운데 1235 × 338 안에** 넣는다. 여기 있는 배너는 로고를
 740 × 92 로 가운데 놓아 네 크기에서 다 보인다. 밖에 두면 모바일에서 잘린다.
 
-용량 제한 6MB — 지금 파일은 23KB.
+용량 제한 6MB — 지금 파일은 40KB.
+
+**바탕색은 베이지나 네이비를 쓴다.** 흰 바탕은 라이트 테마에서 페이지 배경과
+같은 색이라 배너가 있는지도 모르게 되고, 다크 테마에서는 흰 덩어리로 튄다.
+베이지는 라이트에서 배너로 읽히고 다크에서도 흰색만큼 튀지 않는다.
+네이비는 양쪽에서 다 안정적이다. 실제로 채널 화면을 흉내 내 놓고 비교한 결과다.
+
+**배너 문구는 도형(path)이다.** 폰트로 두면 그 폰트가 없는 PC 에서 다른 글씨체로
+나와 SVG 와 PNG 가 어긋난다. 문구를 고칠 때는 폰트를 넣고 다시 도형으로 만들어야
+한다(Inter SemiBold · 34px · 자간 0.30em).
 
 ## 정사각 자리에 로고 전체를 넣어야 할 때
 
