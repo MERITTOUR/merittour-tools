@@ -1007,6 +1007,16 @@ function checkLibraries() {
 
 // ========== 상수 ==========
 let seqPad = 3;                 // 프리셋이 2 로 낮추면 01·02 가 된다
+/* 폴더별 순번. 여러 숙소 폴더를 한꺼번에 넣어도 폴더마다 01 부터 다시 센다 —
+   /2027/ 은 폴더 안에서 01 부터 이어져야 사진이 뜨기 때문에, 전체 통번호로 매기면
+   두 번째 폴더부터 전부 어긋난다. */
+let folderSeqOn = false;
+let seqInFolder = [];
+function folderOf(name) { const i = String(name).lastIndexOf('/'); return i < 0 ? '' : name.slice(0, i + 1); }
+function recomputeFolderSeq() {
+  const count = {};
+  seqInFolder = files.map(f => { const d = folderOf(f.name); return (count[d] = (count[d] || 0) + 1); });
+}
 
 const PRESETS = {
   original: { mode: 'none' },
@@ -1017,7 +1027,7 @@ const PRESETS = {
   /* /2027/ 안내문 사진 — 파일 이름이 01.webp·02.webp 여야 그 자리에 뜬다.
      번호를 건너뛰면 거기서 끊기므로 사람이 손으로 붙이면 반드시 어긋난다. */
   guide2027:{ mode: 'longest', size: 1800, quality: 82, range: [100, 250],
-              naming: { format: 'webp', pad: 2, prefix: '', keepOriginal: false, seq: true } },
+              naming: { format: 'webp', pad: 2, prefix: '', keepOriginal: false, seq: true, folderSeq: true } },
   custom:   { mode: 'custom' }
 };
 
@@ -1540,6 +1550,14 @@ function getFormat() {
 function buildNewName(originalName, idx, pageNum) {
   const fmt = getFormat();
   const ext = FORMAT_MAP[fmt].ext;
+  /* 폴더별 순번을 쓸 때는 폴더를 그대로 두고 그 안에서만 번호를 매긴다.
+     → 아소프레스티지/01.webp · 히노키스테이/01.webp
+     내려받은 zip 을 풀면 폴더째 나오므로 깃헙에 그대로 올릴 수 있다. */
+  if (folderSeqOn) {
+    const n = seqInFolder[idx] || (idx + 1);
+    const seq = String(n).padStart(seqPad, '0');
+    return folderOf(originalName) + seq + (pageNum !== undefined ? '_p' + pageNum : '') + '.' + ext;
+  }
   const base = originalName.replace(/\.[^/.]+$/, '');
   const prefix = prefixIn.value.trim();
   const seq = useSeq.checked ? String(idx + 1).padStart(seqPad, '0') : '';
@@ -1573,6 +1591,7 @@ function setNaming(n) {
 function applyPresetNaming(cfg) {
   const n = cfg && cfg.naming;
   seqPad = n && n.pad ? n.pad : 3;
+  folderSeqOn = !!(n && n.folderSeq);
   if (n) {
     if (!namingBackup) namingBackup = {
       format: getFormat(), prefix: prefixIn.value,
@@ -1720,6 +1739,7 @@ function addFiles(fileObjs) {
     addedCount++;
   }
   fi.value = '';
+  recomputeFolderSeq();
   updateStats();
   updateRenamePreview();
   updatePdfRowVisibility();
@@ -1826,6 +1846,7 @@ function renderRow(idx, animate) {
 
 function removeFile(idx) {
   files.splice(idx, 1);
+  recomputeFolderSeq();
   decoded.splice(idx, 1);
   results.splice(idx, 1);
   fileList.innerHTML = '';
@@ -1862,6 +1883,9 @@ function downloadSingle(idx) {
 }
 
 function triggerDownload(blob, filename) {
+  /* download 속성에 「/」가 들어가면 브라우저가 경로를 잘라 버려 01.webp 만 남는다.
+     낱개로 받을 때는 어느 폴더 것인지 이름에 남겨 둔다. */
+  filename = String(filename).replace(/\//g, '_');
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
