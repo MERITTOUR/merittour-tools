@@ -11,8 +11,7 @@
 | `logo-merittour-square-stacked.svg` · `-800.png` | **정사각 · 세로 조합** — 심볼 위, 워드마크 아래 |
 | `logo-merittour-square-horizontal.svg` · `-800.png` | **정사각 · 가로형** — 가로형을 그대로 정사각에 넣은 것 |
 
-| `banner-youtube-{white,beige,navy}.png` · `.svg` | **유튜브 배너** 2048×1152 · 로고 + MEMBERSHIP GOLF RESERVATION CENTER |
-| `banner-youtube-{white,beige,navy}-nogolf.png` · `.svg` | 같은 것, 문구에서 GOLF 를 뺀 판 |
+| `banner-youtube-{white,beige,navy}.png` · `.svg` | **유튜브 배너** 2048×1152 · 로고 + Membership Golf Reservation Center |
 
 | `sign-entrance-700x400-light.svg` | **사무실 출입구 간판** 700×400mm · 흰 바탕 (v1.3) |
 | `sign-entrance-700x400-navy.svg` | 같은 간판 · 네이비 바탕(`#393E4D`)에 흰 로고 |
@@ -54,9 +53,15 @@
 베이지는 라이트에서 배너로 읽히고 다크에서도 흰색만큼 튀지 않는다.
 네이비는 양쪽에서 다 안정적이다. 실제로 채널 화면을 흉내 내 놓고 비교한 결과다.
 
-**배너 문구는 도형(path)이다.** 폰트로 두면 그 폰트가 없는 PC 에서 다른 글씨체로
-나와 SVG 와 PNG 가 어긋난다. 문구를 고칠 때는 폰트를 넣고 다시 도형으로 만들어야
-한다(Inter SemiBold · 34px · 자간 0.30em).
+**배너의 로고·문구는 출입구 간판(`sign-entrance-700x400-light.svg`)에서 그대로
+가져온 것이다.** 간판과 배너의 글씨가 달라지면 같은 회사로 안 보인다. 크기 비율과
+사이 간격도 간판 그대로이고(문구 폭 = 로고 폭의 87.6%), 배너에서는 로고와 문구를
+각각 가로 정중앙에 놓았다.
+
+문구를 고칠 일이 생기면 **간판을 먼저 고치고 배너를 다시 뽑는다.** 반대로 하면
+간판이 옛 문구로 남는다. 글자는 도형이라 폰트가 없어도 어디서나 같게 보인다.
+
+배너 네이비 바탕은 간판과 같은 `#393E4D` 다(브랜드 네이비 `#373F4A` 와 다름).
 
 ## 정사각 자리에 로고 전체를 넣어야 할 때
 
