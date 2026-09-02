@@ -856,6 +856,10 @@
           <span class="preset-name">아이콘</span>
           <span class="preset-size">200px · ~10KB</span>
         </div>
+        <div class="preset-chip" data-preset="guide2027">
+          <span class="preset-name">2027 안내문 사진</span>
+          <span class="preset-size">1800px · 01.webp 순번</span>
+        </div>
         <div class="preset-chip" data-preset="custom">
           <span class="preset-name">직접 입력</span>
           <span class="preset-size">최장 변 지정</span>
@@ -908,7 +912,7 @@
         </div>
         <div class="rename-checks">
           <label class="checkbox-row">
-            <input type="checkbox" id="use-seq" checked> 연번 자동 부여 (_001, _002 ...)
+            <input type="checkbox" id="use-seq" checked><span id="seq-label"> 연번 자동 부여 (_001, _002 ...)</span>
           </label>
           <label class="checkbox-row">
             <input type="checkbox" id="drop-original" checked> 원본 파일명 유지
@@ -998,12 +1002,18 @@ function checkLibraries() {
 }
 
 // ========== 상수 ==========
+let seqPad = 3;                 // 프리셋이 2 로 낮추면 01·02 가 된다
+
 const PRESETS = {
   original: { mode: 'none' },
   banner:   { mode: 'longest', size: 1920, quality: 75, range: [200, 300] },
   content:  { mode: 'longest', size: 1200, quality: 80, range: [50, 100] },
   product:  { mode: 'longest', size: 800,  quality: 78, range: [10, 30] },
   icon:     { mode: 'longest', size: 200,  quality: 75, range: [5, 10] },
+  /* /2027/ 안내문 사진 — 파일 이름이 01.webp·02.webp 여야 그 자리에 뜬다.
+     번호를 건너뛰면 거기서 끊기므로 사람이 손으로 붙이면 반드시 어긋난다. */
+  guide2027:{ mode: 'longest', size: 1800, quality: 82, range: [100, 250],
+              naming: { format: 'webp', pad: 2, prefix: '', keepOriginal: false, seq: true } },
   custom:   { mode: 'custom' }
 };
 
@@ -1039,6 +1049,7 @@ const pdfPages = document.getElementById('pdf-pages');
 const pdfSettingRow = document.getElementById('pdf-setting-row');
 const prefixIn = document.getElementById('prefix');
 const useSeq = document.getElementById('use-seq');
+const seqLabel = document.getElementById('seq-label');
 const dropOrig = document.getElementById('drop-original');
 const previewName = document.getElementById('preview-name');
 const fileList = document.getElementById('file-list');
@@ -1096,6 +1107,9 @@ presetGrid.addEventListener('click', e => {
     qOut.textContent = presetCfg.quality;
     updateQualityHint();
   }
+  /* 이름 규칙을 들고 있는 프리셋은 형식·연번까지 맞춰 준다. 크기만 맞고 이름이
+     틀리면 올려 놓고도 사진이 안 뜨는데, 그때는 크기 탓인 줄 알기 쉽다. */
+  applyPresetNaming(presetCfg);
 
   scheduleConversion(false);
 });
@@ -1428,7 +1442,7 @@ function buildNewName(originalName, idx, pageNum) {
   const ext = FORMAT_MAP[fmt].ext;
   const base = originalName.replace(/\.[^/.]+$/, '');
   const prefix = prefixIn.value.trim();
-  const seq = useSeq.checked ? String(idx + 1).padStart(3, '0') : '';
+  const seq = useSeq.checked ? String(idx + 1).padStart(seqPad, '0') : '';
   const keepOrig = dropOrig.checked;
 
   let name = '';
@@ -1441,6 +1455,36 @@ function buildNewName(originalName, idx, pageNum) {
   if (!name) name = 'image_' + String(idx + 1).padStart(3, '0');
 
   return name + '.' + ext;
+}
+
+/* 프리셋이 이름 규칙을 덮어쓰기 전의 설정. 프리셋을 벗어나면 되돌려 준다 —
+   안 되돌리면 2027 사진을 한 번 만든 뒤로 다른 작업의 접두어·원본이름이
+   말없이 꺼져 있다. */
+let namingBackup = null;
+
+function setNaming(n) {
+  const fmtEl = document.querySelector(`input[name="format"][value="${n.format}"]`);
+  if (fmtEl) fmtEl.checked = true;
+  prefixIn.value = n.prefix;
+  dropOrig.checked = n.keepOriginal;
+  useSeq.checked = n.seq;
+}
+
+function applyPresetNaming(cfg) {
+  const n = cfg && cfg.naming;
+  seqPad = n && n.pad ? n.pad : 3;
+  if (n) {
+    if (!namingBackup) namingBackup = {
+      format: getFormat(), prefix: prefixIn.value,
+      keepOriginal: dropOrig.checked, seq: useSeq.checked };
+    setNaming(n);
+  } else if (namingBackup) {
+    setNaming(namingBackup);
+    namingBackup = null;
+  }
+  seqLabel.textContent = ` 연번 자동 부여 (${['', '', '01, 02', '_001, _002'][seqPad] || '_001, _002'} ...)`;
+  updateRenamePreview();
+  refreshNewNames();
 }
 
 function updateRenamePreview() {
