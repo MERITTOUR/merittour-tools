@@ -1830,6 +1830,23 @@ function renderRow(idx, animate) {
   dlBtn.textContent = '저장';
   dlBtn.onclick = () => downloadSingle(idx);
 
+  /* 순서가 곧 01·02 번호다. 대표로 앞세울 사진을 원본 이름을 고치지 않고
+     여기서 올릴 수 있어야 한다. 같은 폴더 안에서만 움직인다 — 폴더를 넘나들면
+     그 사진이 어느 숙소 것인지가 바뀌어 버린다. */
+  const upBtn = document.createElement('button');
+  upBtn.className = 'rm-btn';
+  upBtn.textContent = '↑';
+  upBtn.title = '위로 (번호가 하나 빨라집니다)';
+  upBtn.disabled = !canSwap(idx, -1);
+  upBtn.onclick = () => moveFile(idx, -1);
+
+  const downBtn = document.createElement('button');
+  downBtn.className = 'rm-btn';
+  downBtn.textContent = '↓';
+  downBtn.title = '아래로 (번호가 하나 늦어집니다)';
+  downBtn.disabled = !canSwap(idx, 1);
+  downBtn.onclick = () => moveFile(idx, 1);
+
   const rmBtn = document.createElement('button');
   rmBtn.className = 'rm-btn';
   rmBtn.textContent = '×';
@@ -1840,24 +1857,48 @@ function renderRow(idx, animate) {
   row.appendChild(info);
   row.appendChild(badge);
   row.appendChild(dlBtn);
+  row.appendChild(upBtn);
+  row.appendChild(downBtn);
   row.appendChild(rmBtn);
   list.appendChild(row);
 }
 
+/* 목록이 바뀌면 decoded·results 의 자리도 함께 밀린다. decodeOrder 는 자리 번호를
+   들고 있어서 그대로 두면 엉뚱한 것을 버린다 — 남아 있는 것으로 다시 만든다. */
+function resyncDecodeOrder() {
+  decodeOrder.length = 0;
+  decoded.forEach((d, i) => { if (d) decodeOrder.push(i); });
+}
+function canSwap(idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= files.length) return false;
+  return folderOf(files[idx].name) === folderOf(files[j].name);   // 폴더를 넘지 않는다
+}
+function moveFile(idx, dir) {
+  if (!canSwap(idx, dir)) return;
+  const j = idx + dir;
+  for (const arr of [files, decoded, results]) { const t = arr[idx]; arr[idx] = arr[j]; arr[j] = t; }
+  resyncDecodeOrder();
+  recomputeFolderSeq();
+  redrawRows();
+}
+function redrawRows() {
+  fileList.innerHTML = '';
+  files.forEach((_, i) => { renderRow(i, false); if (results[i]) updateRowResult(i); });
+}
+
 function removeFile(idx) {
   files.splice(idx, 1);
-  recomputeFolderSeq();
   decoded.splice(idx, 1);
   results.splice(idx, 1);
+  resyncDecodeOrder();
+  recomputeFolderSeq();
   fileList.innerHTML = '';
   if (files.length === 0) {
     fileList.innerHTML = '<div class="empty-hint">파일을 추가하면 여기에 표시됩니다</div>';
     btnZip.disabled = true;
   } else {
-    files.forEach((_, i) => {
-      renderRow(i, false);
-      if (results[i]) updateRowResult(i);
-    });
+    redrawRows();
   }
   updateStats();
   updateRenamePreview();
