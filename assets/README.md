@@ -14,7 +14,24 @@
 | `banner-youtube-{white,beige,navy}.png` · `.svg` | **유튜브 배너** 2048×1152 · 로고 + MEMBERSHIP GOLF RESERVATION CENTER |
 | `banner-youtube-{white,beige,navy}-nogolf.png` · `.svg` | 같은 것, 문구에서 GOLF 를 뺀 판 |
 
+| `sign-entrance-700x400-light.svg` | **사무실 출입구 간판** 700×400mm · 흰 바탕 (v1.3) |
+| `sign-entrance-700x400-navy.svg` | 같은 간판 · 네이비 바탕(`#393E4D`)에 흰 로고 |
+| `sign-entrance-700x400-*-preview.png` | 화면 확인용. **인쇄소에는 SVG 를 준다** |
+
 브랜드 색 = `#373f4a`
+
+## 간판 (사무실 출입구)
+
+`700mm × 400mm` · 로고 + `Membership Golf Reservation Center`.
+글자는 모두 도형이라 폰트를 같이 보낼 필요가 없다.
+
+**인쇄소에는 SVG 를 준다.** PNG 는 화면에서 보시라고 넣어 둔 것이고,
+실제 출력은 벡터라야 크기와 상관없이 선이 살아 있다.
+
+- 네이비 판의 바탕은 `#393E4D` 로, 브랜드 네이비 `#373F4A` 와 조금 다르다.
+  간판용으로 일부러 고른 색이면 그대로 두고, 맞출 생각이면 두 파일을 함께 고친다.
+- 로고는 판 정중앙에 있고, 문구는 **중앙에서 약 8mm 오른쪽**에 있다(700mm 기준).
+  가까이서 보면 보이는 정도이니, 신경 쓰이면 `slogan` 그룹의 `translate` 를 옮기면 된다.
 
 ## 유튜브 배너
 
