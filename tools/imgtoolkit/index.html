@@ -1025,21 +1025,23 @@ let seqPad = 3;                 // 프리셋이 2 로 낮추면 01·02 가 된�
 let folderSeqOn = false;
 /* /2027/ 안내문이 사진을 찾는 폴더. 2027/photos/README.md 의 표와 같아야 한다.
    지역까지 붙인 값을 쓰는 이유 — hotel·golf·resort·lodge 는 지역마다 되풀이돼서
-   숙소 이름만으로는 나고야 호텔과 야마나미 호텔이 한 폴더로 섞인다. */
+   숙소 이름만으로는 나고야 호텔과 야마나미 호텔이 한 폴더로 섞인다.
+   골프장은 「골프장」이 아니라 정식 명칭으로 적는다 — 한 지역에 코스가 둘인 곳이
+   있고(아소 야마나미CC·구주고원CC), 「야마나미CC」 단독 표기는 쓰지 않는다. */
 const GUIDE_FOLDERS = [
   ['구마모토 · 아소 야마나미', [
     ['kumamoto/prestige', '아소 프레스티지'], ['kumamoto/hinoki-stay', '히노키 스테이'],
     ['kumamoto/sobo-terrace', '소보 테라스'], ['kumamoto/kuju', '쿠주 프라이빗 레지던스'],
     ['kumamoto/dome', '돔스테이'], ['kumamoto/hotel', '야마나미 호텔'],
     ['kumamoto/guernsey', '간지호텔'], ['kumamoto/shizunoyado', '시즈노야도 료칸'],
-    ['kumamoto/golf', '골프장']]],
-  ['나고야 · 포틴힐즈', [['nagoya/hotel', '포틴힐즈CC 호텔'], ['nagoya/caravan', '포틴힐즈CC 카라반'], ['nagoya/golf', '골프장']]],
-  ['벳푸 · 아키바 리조트', [['akiba/resort', '아키바 리조트'], ['akiba/golf', '골프장']]],
-  ['벳푸 · 무츠키 료칸', [['mutsuki/ryokan', '무츠키 료칸'], ['mutsuki/golf', '골프장']]],
-  ['이바라키 · 시로사토', [['ibaraki/lodge', '골프장 내 숙소'], ['ibaraki/golf', '골프장']]],
-  ['나가노 · 스가다이라', [['nagano/onsen-hotel', '스가다이라 고원 온천호텔'], ['nagano/mansion', '스가다이라 맨션'], ['nagano/golf', '골프장']]],
-  ['미야자키 · 국제공항CC', [['miyazaki/lodge', '골프장 숙소'], ['miyazaki/golf', '골프장']]],
-  ['쿠알라룸푸르 · 닐라이스프링스', [['kl/resort', '닐라이스프링스 리조트'], ['kl/golf', '골프장']]],
+    ['kumamoto/golf', '아소 야마나미CC · 구주고원CC']]],
+  ['나고야 · 포틴힐즈', [['nagoya/hotel', '포틴힐즈CC 호텔'], ['nagoya/caravan', '포틴힐즈CC 카라반'], ['nagoya/golf', '포틴힐즈CC']]],
+  ['벳푸 · 아키바 리조트', [['akiba/resort', '아키바 리조트'], ['akiba/golf', '벳푸CC · 오기야마CC']]],
+  ['벳푸 · 무츠키 료칸', [['mutsuki/ryokan', '무츠키 료칸'], ['mutsuki/golf', '벳푸CC · 오기야마CC']]],
+  ['이바라키 · 시로사토', [['ibaraki/lodge', '골프장 내 숙소'], ['ibaraki/golf', '시로사토CC']]],
+  ['나가노 · 스가다이라', [['nagano/onsen-hotel', '스가다이라 고원 온천호텔'], ['nagano/mansion', '스가다이라 맨션'], ['nagano/golf', '스가다이라 그린CC']]],
+  ['미야자키 · 국제공항CC', [['miyazaki/lodge', '골프장 숙소'], ['miyazaki/golf', '국제공항CC']]],
+  ['쿠알라룸푸르 · 닐라이스프링스', [['kl/resort', '닐라이스프링스 리조트'], ['kl/golf', '닐라이스프링스CC']]],
 ];
 /* 지정한 곳이 있으면 그쪽, 없으면 넣을 때의 폴더 경로를 쓴다. */
 function destOf(i) {
