@@ -289,7 +289,10 @@
 - `notice_sent` 는 서버(service_role) 전용 — 24 에서 anon·authenticated 의 잔여 권한(REFERENCES·TRIGGER·TRUNCATE)까지 회수했다.
   RLS 는 TRUNCATE 를 막지 않는다.
 - **RLS 정책의 `auth.uid()` 는 `(select auth.uid())` 로 쓴다**(25 · 행마다 재평가 방지). 새 정책도 같은 꼴로.
-- 콘솔에서만 되는 것: Authentication → **Leaked password protection** 켜기(권고에 계속 뜬다).
+- **비밀번호 설정은 기본값 그대로 둔다(2026-09 · Min).** 「Prevent use of leaked passwords」는 Pro 플랜 전용이라 무료 플랜에서는
+  못 켠다(보안 권고에 계속 뜨지만 무시). 최소 길이(6)·조합 규칙도 이미 계정을 만든 직원들을 생각해 당분간 그대로 —
+  다시 묻지 말 것. 「Secure password change」·「Require current password when updating」은 켜면 안 된다 — 도구의 비밀번호 변경
+  화면에 그 절차가 없고 Supabase 기본 메일은 오지 않아 직원들이 비밀번호를 못 바꾸게 된다.
 - **Edge Function 은 현재 하나도 배포되어 있지 않다**(`list_edge_functions` 0건). 아래 절의 `cron-d7-alimtalk`·`send-alimtalk` 는
   코드·문서(`supabase/autosend_d7_setup.md`)만 있고 **D-7 알림톡 자동발송은 돌고 있지 않다.** 다시 배포할지, 표(`notice_sent`)와 문서를 접을지 결정 필요.
 
