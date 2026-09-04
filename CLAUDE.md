@@ -277,6 +277,22 @@
 - anon 키는 public 저장소에 원문으로 있다. 정책이 `using(true)` 로 열려 있으면 그 키만으로 브라우저 없이도 손님 예약을 읽고 쓰고 확정서를 내려받을 수 있다.
 - **순서를 지킬 것**: ① 코드를 토큰으로 배선 → ② `12_reservations_auth.sql`(authenticated 열기, anon 유지) → ③ 도는 것 확인 → ④ `13_lock_anon.sql`(anon 닫기). 반대로 하면 자동 동기화가 **조용히** 멎어 D-7 알림톡이 낡은 자료로 나간다.
 
+## Supabase 권한·마이그레이션 현황 (2026-09 검수)
+- 프로젝트에 `schema_migrations` 표가 없어 `list_migrations` 는 비어 있다 — **저장소의 `supabase/migrations/*.sql` 이 이력이다.**
+  `apply_migration` 은 쓰지 않는다(없던 이력표를 절반만 만든다). 실행은 `execute_sql` 로, 파일과 같은 내용을 그대로.
+- 적용된 것: 04~18 · 20~25. **19(현지 전달 메모 · PR #136)만 미머지·미적용** — 살릴지 닫을지 결정 필요.
+- **함수 EXECUTE 잠금(24)** — PostgreSQL 은 새 함수에 PUBLIC EXECUTE 를 줘서 `mt_*` 판정·트리거 함수 20개가 anon 으로 `/rest/v1/rpc/…`
+  호출 가능했다. 트리거·이벤트트리거 함수는 아무도 못 부르게(발화 시 EXECUTE 검사 없음 · auth 트리거 둘만 `supabase_auth_admin` 에 남김),
+  판정 함수는 **authenticated 만**(정책이 질의 역할로 평가되므로 필요). 코드에서 `.rpc()` 를 부르는 곳은 없다.
+  postgres 의 기본 권한도 바꿔 **앞으로 만드는 함수에 PUBLIC EXECUTE 가 붙지 않는다** — 새 함수가 필요하면 `grant execute … to authenticated` 를 명시.
+  보안 권고에 남는 「authenticated 가 SECURITY DEFINER 실행 가능」 경고는 의도한 것이다(정책용).
+- `notice_sent` 는 서버(service_role) 전용 — 24 에서 anon·authenticated 의 잔여 권한(REFERENCES·TRIGGER·TRUNCATE)까지 회수했다.
+  RLS 는 TRUNCATE 를 막지 않는다.
+- **RLS 정책의 `auth.uid()` 는 `(select auth.uid())` 로 쓴다**(25 · 행마다 재평가 방지). 새 정책도 같은 꼴로.
+- 콘솔에서만 되는 것: Authentication → **Leaked password protection** 켜기(권고에 계속 뜬다).
+- **Edge Function 은 현재 하나도 배포되어 있지 않다**(`list_edge_functions` 0건). 아래 절의 `cron-d7-alimtalk`·`send-alimtalk` 는
+  코드·문서(`supabase/autosend_d7_setup.md`)만 있고 **D-7 알림톡 자동발송은 돌고 있지 않다.** 다시 배포할지, 표(`notice_sent`)와 문서를 접을지 결정 필요.
+
 ## Edge Function 은 fail-closed
 - `cron-d7-alimtalk` 는 `if (secret && …)` 라 **`CRON_SECRET` 을 안 넣으면 검사를 통째로 건너뛰었다.** 주소만 알면 누구나 전 고객에게 D-7 알림톡을 쏠 수 있었다 — 이제 시크릿이 없으면 **막는다**.
 - `send-alimtalk` 은 검사가 아예 없었다(폐지한 `translate` 도 같았다). 로그인 토큰을 받아 `/auth/v1/user` 로 직접 확인한다. **환경변수가 비어 있으면 막는다** — 설정을 빠뜨렸을 때 열리는 쪽으로 기울면 안 된다.
