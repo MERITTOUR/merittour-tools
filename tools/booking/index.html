@@ -12,7 +12,7 @@
   /* ============================================================
      v15 — 특별회원을 우선예약에서 제외 (2026-08 운영 확정)
           · v13.36 의 「3차에서만 2회」를 폐기한다. 어느 차수에도 배정하지 않고,
-            자유예약부터 일반 고객과 같은 조건으로 예약한다.
+            상시예약부터 일반 고객과 같은 조건으로 예약한다.
           · MEMBER_GRADES.special.defaultQuota = round1·2·3 모두 0
           · specialKim.priorityQuota 도 전부 0 · 3차 eligibility 에서 특별회원 제거
           · 게이트: 차수마다 따로 막지 않고 **우선예약 기간 전체**를 한 번에 끊는다.
@@ -283,12 +283,12 @@
           · 5분+/1~5분/<1분 색상 단계 변경
           · 확정 버튼 → 처리중 → 90% 성공 / 10% 충돌 (시뮬)
           · 충돌 모달: 다른 객실/다른 날짜 옵션
-          · 자유예약 기간에도 락 동일 적용
-     v10 — 자유예약 기간 추가 · 회원권 복수 보유 모델 (인원·횟수 합산)
+          · 상시예약 기간에도 락 동일 적용
+     v10 — 상시예약 기간 추가 · 회원권 복수 보유 모델 (인원·횟수 합산)
           · v9 기능 모두 유지 (박수×요일 / 별장형 / 자유일정 / 싱글차지 / 공휴일)
-          · Step 0(우선예약 + 자유예약 게이트 통합)
+          · Step 0(우선예약 + 상시예약 게이트 통합)
           · LOGIN_USER.memberships[] 배열 → maxPeople/priorityQuota 자동 합산
-          · phase: pre-open / active / between / free (자유예약)
+          · phase: pre-open / active / between / free (상시예약)
           · 회원 DB 예약가능값 직접 사용 (Step 3 회원권 토글 제거)
           · 3~7박 자유 선택 (무츠키 3/4박 / 스가다이라 패키지 분기)
           · 공지사항 #30000030 기준 최신 요금 (아키바 주중/주말, 무츠키 원화)
@@ -1154,7 +1154,7 @@
   .gate-phase.free { background: var(--ok); color: #fff; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-  /* v10 — 자유예약 게이트 보유 회원권 카드 */
+  /* v10 — 상시예약 게이트 보유 회원권 카드 */
   .free-gate-wrap { margin: 18px 0 8px; }
   .free-membership-list {
     display: flex; flex-direction: column; gap: 10px;
@@ -1659,8 +1659,8 @@
         <option value="2026-09-09T15:00:00">④ 1차↔2차 사이 (9/9 15시)</option>
         <option value="2026-09-10T11:00:00">⑤ 2차 진행중</option>
         <option value="2026-09-12T14:00:00">⑥ 3차 진행중</option>
-        <option value="2026-09-13T10:00:30">⑦ 자유예약 시작 직후</option>
-        <option value="2026-09-20T14:00:00">⑧ 자유예약 일주일 뒤 (9/20)</option>
+        <option value="2026-09-13T10:00:30">⑦ 상시예약 시작 직후</option>
+        <option value="2026-09-20T14:00:00">⑧ 상시예약 일주일 뒤 (9/20)</option>
       </select>
       &nbsp;&nbsp;로그인:
       <select id="devLogin">
@@ -1702,7 +1702,7 @@
         <ul>
           <li>야마나미 · 7박 8일 수요일 · <b>10/6(수) 출발</b> → 10/11 스포츠의 날 포함</li>
           <li>야마나미 · 7박 8일 수요일 · <b>4/28(수) 출발</b> → 골든위크(4/29·5/3~5/5) 포함 ⭐</li>
-          <li>(자유예약 phase에서 5월 골든위크 출발 시 가장 인상적)</li>
+          <li>(상시예약 phase에서 5월 골든위크 출발 시 가장 인상적)</li>
         </ul>
       </div>
     </div>
@@ -2169,7 +2169,7 @@ const MEMBER_GRADES = {
     // 2026-08 변경 — 우선예약 대상에서 제외. 어느 차수에도 배정하지 않는다.
     // (이전 규칙 = 3차에서만 2회. 되돌리지 말 것)
     defaultQuota: { round1: 0, round2: 0, round3: 0 },
-    description: '15년+ 된 옛 회원권 · 우선예약 대상 아님 → 자유예약부터 일반 고객과 같은 조건 (본인+동반 1명)'
+    description: '15년+ 된 옛 회원권 · 우선예약 대상 아님 → 상시예약부터 일반 고객과 같은 조건 (본인+동반 1명)'
   }
 };
 
@@ -2836,8 +2836,8 @@ function renderGate() {
     const titleEl2 = document.getElementById('pageTitle');
     const subEl2 = document.getElementById('pageSub');
     if (phase.type === 'free') {
-      if (label) label.textContent = '자유예약';
-      if (titleEl2) titleEl2.textContent = '2027 EWRC 자유예약';
+      if (label) label.textContent = '상시예약';
+      if (titleEl2) titleEl2.textContent = '2027 EWRC 상시예약';
       if (subEl2) subEl2.textContent = '횟수 제한 없이 자유롭게 예약하실 수 있습니다';
     } else {
       if (label) label.textContent = '우선예약';
@@ -2862,7 +2862,7 @@ function renderGate() {
   const bodyEl = document.getElementById('gateBody');
   const hq = totalQuotaLeft();
 
-  // 헤더 배지 (자유예약 기간엔 숨김)
+  // 헤더 배지 (상시예약 기간엔 숨김)
   const hqEl = document.getElementById('headerQuota');
   if (hq.total > 0 && phase.type !== 'free') {
     hqEl.style.display = 'inline-flex';
@@ -2880,23 +2880,23 @@ function renderGate() {
   /* 특별회원은 우선예약 대상이 아니다(2026-08 변경 · 이전 규칙 「3차만 2회」는 폐기).
      차수마다 따로 막으면 pre-open·between 에서는 「미리 준비하기」로 통과해
      Step 4 까지 갔다가 막힌다 — 올 차수가 없는 회원에게 준비하라고 할 이유가 없다.
-     자유예약 기간이 아니면 여기서 한 번에 끊는다. */
+     상시예약 기간이 아니면 여기서 한 번에 끊는다. */
   if ((LOGIN_USER.grade || 'normal') === 'special' && phase.type !== 'free') {
     phaseEl.textContent = '우선예약 대상 아님';
     titleEl.textContent = '특별회원권은 우선예약 대상이 아닙니다';
-    subEl.textContent = `자유예약 ${fmtDateKo(REALTIME_START)}부터 예약하실 수 있습니다`;
+    subEl.textContent = `상시예약 ${fmtDateKo(REALTIME_START)}부터 예약하실 수 있습니다`;
     bodyEl.innerHTML = `
       <div style="padding:14px 16px;background:#FEF3C7;border:2px solid #FBBF24;border-radius:10px;color:#92400E;font-weight:700;text-align:left;">
         <div style="font-size:15px;margin-bottom:6px;">ⓘ 특별회원권은 우선예약 차수에 참여하지 않습니다</div>
         <div style="font-size:14px;font-weight:500;line-height:1.5;">
-          <strong>자유예약 기간</strong>부터 일반 고객과 같은 조건으로 예약하실 수 있습니다.<br/>
+          <strong>상시예약 기간</strong>부터 일반 고객과 같은 조건으로 예약하실 수 있습니다.<br/>
           ${fmtDateKo(REALTIME_START)} 정각 시작 · 잔여 객실에 한해 <strong>횟수 제한 없이</strong>
         </div>
       </div>
     `;
     cta.classList.add('disabled');
     cta.disabled = true;
-    cta.textContent = '자유예약부터 가능';
+    cta.textContent = '상시예약부터 가능';
     renderGateRounds(phase);
     return;
   }
@@ -2961,10 +2961,10 @@ function renderGate() {
     cta.disabled = false;
     cta.textContent = '미리 준비하기 →';
   } else if (phase.type === 'free') {
-    // v10 — 자유예약 게이트
-    phaseEl.textContent = '자유예약 기간';
+    // v10 — 상시예약 게이트
+    phaseEl.textContent = '상시예약 기간';
     phaseEl.classList.add('free');
-    titleEl.textContent = '자유예약 기간입니다';
+    titleEl.textContent = '상시예약 기간입니다';
     subEl.textContent = '우선예약 기간이 종료되어 횟수 제한 없이 자유롭게 예약하실 수 있습니다';
     // 보유 회원권 카드 + 합산 인원 표시
     const ms = LOGIN_USER.memberships || [];
@@ -2984,7 +2984,7 @@ function renderGate() {
           ${rows}
           ${totalRow}
         </div>
-        <div class="free-info-note">※ 자유예약 기간에는 회원권별 예약 횟수 제한이 적용되지 않습니다. 회원권당 정해진 인원 한도 내에서 자유롭게 예약하세요.</div>
+        <div class="free-info-note">※ 상시예약 기간에는 회원권별 예약 횟수 제한이 적용되지 않습니다. 회원권당 정해진 인원 한도 내에서 자유롭게 예약하세요.</div>
       </div>
     `;
     cta.classList.add('free');
@@ -3014,7 +3014,7 @@ function renderGateRounds(phase) {
   }).join('');
   host.innerHTML = rows + `
     <div class="gate-round-row ${now >= new Date(REALTIME_START) ? 'active' : ''}">
-      <div><span class="phase-dot"></span><strong>자유예약 기간</strong> ${fmtDateKo(REALTIME_START,false)} 10:00 이후</div>
+      <div><span class="phase-dot"></span><strong>상시예약 기간</strong> ${fmtDateKo(REALTIME_START,false)} 10:00 이후</div>
       <div>상시 · 횟수제한 없음</div>
     </div>
   `;
@@ -3368,7 +3368,7 @@ function renderRooms() {
   const resort = RESORTS[state.resort];
   const rooms = buildDefaultRooms(state.resort);
 
-  // 회원 안내 (v10 — 회원권 복수 보유 + 자유예약 phase 반영)
+  // 회원 안내 (v10 — 회원권 복수 보유 + 상시예약 phase 반영)
   // v13.14 — 별장 통째 예약은 회원권 인원 제한 미적용 안내
   const hintEl = document.getElementById('memberHint');
   if (hintEl) {
@@ -3381,7 +3381,7 @@ function renderRooms() {
     if (isWholeRent) {
       // 통째 예약 별장: 회원권 인원 제한 미적용 안내
       const phaseBadge = isFree
-        ? ' <span style="display:inline-block;padding:2px 8px;background:var(--ok);color:#fff;border-radius:8px;font-size:12px;font-weight:800;margin-left:4px;">자유예약 · 횟수제한 없음</span>'
+        ? ' <span style="display:inline-block;padding:2px 8px;background:var(--ok);color:#fff;border-radius:8px;font-size:12px;font-weight:800;margin-left:4px;">상시예약 · 횟수제한 없음</span>'
         : '';
       hintEl.innerHTML = `<span style="display:inline-block;padding:3px 10px;background:#ECFDF5;color:#065F46;border:1px solid #6EE7B7;border-radius:6px;font-weight:800;">⛺ 별장 통째 예약</span> 회원권 인원 제한 미적용 — <strong>${villaCap}명 정원</strong>으로 예약됩니다.${phaseBadge}<br><span style="font-size:13px;color:var(--muted);">별장 전체를 통으로 사용하시는 상품입니다. ${villaCap}명 단위로만 예약 가능합니다 (가족·친구 동반 자유).</span>`;
     } else {
@@ -3391,7 +3391,7 @@ function renderRooms() {
         breakdownHtml = ` <span style="color:var(--muted);font-weight:600;">(${parts})</span>`;
       }
       const phaseBadge = isFree
-        ? ' <span style="display:inline-block;padding:2px 8px;background:var(--ok);color:#fff;border-radius:8px;font-size:12px;font-weight:800;margin-left:4px;">자유예약 · 횟수제한 없음</span>'
+        ? ' <span style="display:inline-block;padding:2px 8px;background:var(--ok);color:#fff;border-radius:8px;font-size:12px;font-weight:800;margin-left:4px;">상시예약 · 횟수제한 없음</span>'
         : '';
       hintEl.innerHTML = `회원권 기준 <strong>${LOGIN_USER.maxPeople}</strong>명까지 예약 가능합니다.${breakdownHtml}${phaseBadge}<br><span style="font-size:13px;color:var(--muted);">같은 회원권의 기명회원·지정회원 간 예약 횟수가 공유됩니다.</span>`;
     }
@@ -4370,8 +4370,8 @@ function goStep(n) {
     // v10 — phase에 따라 타이틀/라벨 동적
     const _ph = getPhase();
     if (_ph.type === 'free') {
-      label.textContent = '자유예약';
-      document.getElementById('pageTitle').textContent = '2027 EWRC 자유예약';
+      label.textContent = '상시예약';
+      document.getElementById('pageTitle').textContent = '2027 EWRC 상시예약';
       document.getElementById('pageSub').textContent = '횟수 제한 없이 자유롭게 예약하실 수 있습니다';
     } else {
       label.textContent = '우선예약';
@@ -4669,11 +4669,11 @@ function renderSummary() {
     memberValueHtml = `${LOGIN_USER.name} (${LOGIN_USER.membershipType} · 예약가능 ${LOGIN_USER.maxPeople}명)`;
   }
   const memberRow = `<div class="summary-row"><span class="k">회원</span><span class="v">${memberValueHtml}</span></div>`;
-  // v10 — 예약 기간 표시 (우선예약/자유예약)
+  // v10 — 예약 기간 표시 (우선예약/상시예약)
   const _phaseNow = getPhase();
   let phaseText = '';
   if (_phaseNow.type === 'active' && _phaseNow.round) phaseText = `${_phaseNow.round.label} 진행중`;
-  else if (_phaseNow.type === 'free') phaseText = '자유예약 기간';
+  else if (_phaseNow.type === 'free') phaseText = '상시예약 기간';
   const phaseRow = phaseText ? `<div class="summary-row"><span class="k">예약 기간</span><span class="v">${phaseText}</span></div>` : '';
   const pkgRow = state.sugadairaPkgCode ? `<div class="summary-row"><span class="k">패키지</span><span class="v">${state.sugadairaPkgCode}</span></div>` : '';
   const scRow = singleCharge > 0 ? `<div class="summary-row"><span class="k">싱글차지</span><span class="v">${singleCharge}실 × ${resort.singleChargeJpy.toLocaleString()}엔/박/인</span></div>` : '';
