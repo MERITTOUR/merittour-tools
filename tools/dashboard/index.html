@@ -4963,10 +4963,10 @@ const RESORT_DEFAULTS=[
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':4}, aliases:[], assign:false, memo:''},
   {key:'shirosato', name:'시로사토CC', region:'이바라키', golf:'시로사토CC', holes:18,
-   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:16000, transfer:12000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'일6박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:['시로사토CC 골프텔'], assign:false, memo:''},
   {key:'fukuroda', name:'후쿠로다노타키CC 호텔', region:'이바라키', golf:'후쿠로다노타키CC', holes:18,
-   stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'월7박', airOut:'인천', airIn:'나리타', arrCode:'NRT', rooms:{'트윈':20}, aliases:[], assign:false, memo:''},
   {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노', golf:'스가다이라 그린CC', holes:18,
    stay:0, transfer:0, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
@@ -5119,7 +5119,9 @@ const ALIAS_MOVED={ yamanami_bessou:['아소 야마나미 관내별장','관내�
 const FIELD_BEFORE_FIX={
   fourteen_golf:{airOut:'김해', stay:0, transfer:6000, depart:'목3박, 일4박, 화7박'},      // 포틴힐즈는 인천·김해 둘 다 출발 가능 · 7박은 2027 블록부터 일→일(2026-09 · Min)
   fourteen_caravan:{airOut:'김해', stay:0, transfer:6000, depart:'목3박, 일4박, 화7박'},   // 체재비 15,000엔 · 송영비 12,000엔
-  yamanami_hinoki_family:{stay:18000}                                                   // 소보 테라스 체재비 18,000 → 15,000 (2026 견적 포함 · 2026-09 · Min)
+  yamanami_hinoki_family:{stay:18000},                                                  // 소보 테라스 체재비 18,000 → 15,000 (2026 견적 포함 · 2026-09 · Min)
+  shirosato:{stay:0, transfer:6000},                                                    // 시로사토 체재비 16,000 · 왕복 송영비 12,000 (2026-09-07 · Min · /2027/ 값)
+  fukuroda:{stay:0}                                                                     // 후쿠로다노타키 체재비 16,000 (2026-09-07 · Min · 송영비는 확정 전이라 그대로)
 };
 function sameRooms(a,b){
   const k=o=>Object.keys(o||{}).sort().map(x=>x+':'+o[x]).join('|');
