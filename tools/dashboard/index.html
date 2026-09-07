@@ -4939,7 +4939,7 @@ const RESORT_DEFAULTS=[
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':3}, aliases:['소보별장','통나무집'], assign:false, memo:'편백 2인 별장 · 3동'},
   {key:'yamanami_hinoki_family', name:'소보 테라스', region:'구마모토', golf:'야마나미CC', holes:27,
-   stay:18000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
+   stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':1}, aliases:['소보5동'], assign:false, memo:'편백 4인 독채 · 1동 (신규)'},
   {key:'kuzu', name:'쿠주 타운하우스', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:14000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
@@ -5118,7 +5118,8 @@ const ALIAS_MOVED={ yamanami_bessou:['아소 야마나미 관내별장','관내�
 
 const FIELD_BEFORE_FIX={
   fourteen_golf:{airOut:'김해', stay:0, transfer:6000, depart:'목3박, 일4박, 화7박'},      // 포틴힐즈는 인천·김해 둘 다 출발 가능 · 7박은 2027 블록부터 일→일(2026-09 · Min)
-  fourteen_caravan:{airOut:'김해', stay:0, transfer:6000, depart:'목3박, 일4박, 화7박'}    // 체재비 15,000엔 · 송영비 12,000엔
+  fourteen_caravan:{airOut:'김해', stay:0, transfer:6000, depart:'목3박, 일4박, 화7박'},   // 체재비 15,000엔 · 송영비 12,000엔
+  yamanami_hinoki_family:{stay:18000}                                                   // 소보 테라스 체재비 18,000 → 15,000 (2026 견적 포함 · 2026-09 · Min)
 };
 function sameRooms(a,b){
   const k=o=>Object.keys(o||{}).sort().map(x=>x+':'+o[x]).join('|');
