@@ -1329,17 +1329,20 @@ th.af-cost-cell{color:#7C3AED;background:rgba(124,58,237,.07)}
     <div class="card-head">
       <div><div class="card-title">현지 전달 점검</div><div class="card-sub">출발 전에 <b>현지로 넘겨야 할 것</b>이 있는 팀입니다. 틀린 값이 아니라 준비해서 보낼 것이라 위 검수와 건수를 섞지 않습니다.</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-sm" id="fld-f-left" onclick="filterField('left')" style="border-color:var(--red);color:var(--red)">남은 것만</button>
         <button class="btn-sm" id="fld-f-all" onclick="filterField('all')">전체</button>
         <button class="btn-sm" id="fld-f-room" onclick="filterField('room')">🛏 방배정</button>
         <button class="btn-sm" id="fld-f-flight" onclick="filterField('flight')">⛳ 조편성</button>
         <button class="btn-sm" id="fld-f-unknown" onclick="filterField('unknown')">판단 보류</button>
+        <button class="btn-sm" onclick="fieldExport()" style="border-color:var(--accent);color:var(--accent)">📊 남은 것 내려받기</button>
       </div>
     </div>
     <div class="sum-grid" id="field-summary"></div>
     <div class="note" style="margin:0.5rem 0 1rem">
       <b>🛏 방배정</b> · 명단이 <b>전원 같은 성별</b>인 팀입니다. 부부·가족처럼 짝이 정해지지 않아 <b>누구와 한 방인지 우리가 정해 현지에 넘겨야</b> 합니다.<br>
       <b>⛳ 조편성</b> · <b>5명 이상</b> 팀입니다. 한 조가 4명이라 첫날 라운딩 조를 나눠 보내야 합니다.<br>
-      <b>판단 보류</b> · 명단이나 성별이 비어 있어 동성 여부를 알 수 없는 팀입니다. 명단이 들어오면 자동으로 위 두 칸으로 옮겨집니다.
+      <b>판단 보류</b> · 명단이나 성별이 비어 있어 동성 여부를 알 수 없는 팀입니다. 명단이 들어오면 자동으로 위 두 칸으로 옮겨집니다.<br>
+      <b>전달 완료</b> · 보냈으면 오른쪽 버튼을 눌러 두세요. <b>전 직원이 같은 표시를 봅니다</b>(서버 저장) — 다른 자리에서 열어도 이미 보낸 팀은 흐리게 나옵니다. 잘못 눌렀으면 다시 눌러 해제합니다.
     </div>
     <div id="field-body"></div>
   </div>
@@ -3863,6 +3866,42 @@ function buildAudit(){
    「검출 0건」이 영영 안 되고 진짜 발권 사고가 그 안에 묻힌다.
 ════════════════════════════════════════════════════════════ */
 let fieldFilter='all';
+/* 현지 전달 완료 표시 — 서버가 원본이다(mt_field_note).
+   개인 PC 에 두면 담당자가 바뀌거나 다른 자리에서 열 때 이미 보낸 팀이
+   다시 「보낼 것」으로 올라온다. 키 = 팀|종류. */
+let fieldDone=new Map();     // 'seq|kind' -> {at, by}
+let fieldBusy=new Set();     // 누르는 중인 것(두 번 눌러 두 줄 나가는 것을 막는다)
+const fnKey=(seq,kind)=>String(seq)+'|'+kind;
+
+function fieldLoad(){
+  if(typeof MT_STORE==='undefined' || !MT_STORE.loadFieldNotes) return Promise.resolve();
+  return MT_STORE.loadFieldNotes().then(rows=>{
+    fieldDone=new Map();
+    (rows||[]).forEach(r=>fieldDone.set(fnKey(r.event_seq,r.kind),
+      { at:r.updated_at||null, by:r.updated_by||'' }));
+    renderFieldNotes();
+  }).catch(()=>{});
+}
+/* 눌러서 완료/해제. 서버가 받은 뒤에 화면을 바꾼다 —
+   먼저 바꿔 놓고 실패하면 보내지도 않은 팀이 보낸 것으로 남는다. */
+function fieldToggle(seq, kind){
+  if(typeof MT_STORE==='undefined' || !MT_STORE.markFieldNote){
+    alert('서버 연결이 없어 전달 표시를 저장할 수 없습니다.'); return;
+  }
+  const k=fnKey(seq,kind);
+  if(fieldBusy.has(k)) return;
+  const on=fieldDone.has(k);
+  fieldBusy.add(k); renderFieldNotes();
+  const p = on ? MT_STORE.clearFieldNote(seq,kind) : MT_STORE.markFieldNote(seq,kind,'');
+  p.then(()=>{
+    if(on) fieldDone.delete(k);
+    else fieldDone.set(k,{ at:new Date().toISOString(),
+      by:(typeof MT_USER!=='undefined' && MT_USER.get && MT_USER.get())||'' });
+  }).catch(e=>{
+    alert('저장하지 못했습니다.\n'+((e&&e.message)||'')+
+      '\n\n표(mt_field_note)가 아직 없으면 마이그레이션 19 를 먼저 실행해 주세요.');
+  }).then(()=>{ fieldBusy.delete(k); renderFieldNotes(); });
+}
 function filterField(f){ fieldFilter=f; renderFieldNotes(); }
 /* 성별 표기가 제각각이라 한 글자로 맞춘다(남/여/M/F/MALE/FEMALE …). 못 읽으면 '' */
 function normGender(v){
@@ -3896,6 +3935,8 @@ function buildFieldNotes(){
       gender: known ? `${male?`남 ${male}`:''}${male&&female?' · ':''}${female?`여 ${female}`:''}`
             : (gs.length ? `일부만 입력 (${gs.length}/${pax})` : '명단 없음'),
       sameSex, needRoom, needFlight, unknown,
+      roomDone: needRoom ? fieldDone.get(fnKey(t.eventSeq,'room')) || null : null,
+      flightDone: needFlight ? fieldDone.get(fnKey(t.eventSeq,'flight')) || null : null,
       roomNote: needRoom ? `2인 1실 ${rooms}실${pax%ROOM_BASE?` · 1명 싱글 발생`:''}` : '',
       flightNote: needFlight ? `${pax}명 → 최소 ${Math.ceil(pax/FLIGHT_CAP)}개 조 (한 조 ${FLIGHT_CAP}명)` : ''
     });
@@ -3907,7 +3948,7 @@ function buildFieldNotes(){
 function renderFieldNotes(){
   const box=document.getElementById('field-body'), sumBox=document.getElementById('field-summary');
   if(!box) return;
-  ['all','room','flight','unknown'].forEach(f=>{ const b=document.getElementById('fld-f-'+f); if(b) b.style.fontWeight=(fieldFilter===f)?'700':'500'; });
+  ['left','all','room','flight','unknown'].forEach(f=>{ const b=document.getElementById('fld-f-'+f); if(b) b.style.fontWeight=(fieldFilter===f)?'700':'500'; });
   if(typeof teams==='undefined' || !teams.length){
     if(sumBox) sumBox.innerHTML='';
     box.innerHTML='<div class="note" style="border-left-color:var(--text3)">자료를 불러오면 현지에 넘길 것이 있는 팀을 여기에 모아 보여 드립니다.</div>';
@@ -3915,20 +3956,34 @@ function renderFieldNotes(){
   }
   const all=buildFieldNotes();
   const nRoom=all.filter(x=>x.needRoom).length, nFlight=all.filter(x=>x.needFlight).length, nUnk=all.filter(x=>x.unknown).length;
+  // 「남은 것」 = 보낼 것이 있는데 아직 완료로 표시되지 않은 종류가 남은 팀
+  const left=x=>(x.needRoom&&!x.roomDone)||(x.needFlight&&!x.flightDone);
+  const nLeft=all.filter(left).length;
   if(sumBox) sumBox.innerHTML=`
-    <div class="sum-box"><div class="sum-label">전달 필요 팀</div><div class="sum-val">${all.filter(x=>x.needRoom||x.needFlight).length}팀</div></div>
-    <div class="sum-box"><div class="sum-label">🛏 방배정(동성팀)</div><div class="sum-val" style="color:var(--accent)">${nRoom}팀</div></div>
-    <div class="sum-box"><div class="sum-label">⛳ 첫날 조편성</div><div class="sum-val" style="color:var(--accent)">${nFlight}팀</div></div>
+    <div class="sum-box"><div class="sum-label">아직 안 보낸 팀</div><div class="sum-val" style="color:${nLeft?'var(--red)':'var(--green)'}">${nLeft}팀</div></div>
+    <div class="sum-box"><div class="sum-label">🛏 방배정(동성팀)</div><div class="sum-val" style="color:var(--accent)">${all.filter(x=>x.needRoom&&!x.roomDone).length} / ${nRoom}팀</div></div>
+    <div class="sum-box"><div class="sum-label">⛳ 첫날 조편성</div><div class="sum-val" style="color:var(--accent)">${all.filter(x=>x.needFlight&&!x.flightDone).length} / ${nFlight}팀</div></div>
     <div class="sum-box"><div class="sum-label">판단 보류(명단 대기)</div><div class="sum-val" style="color:var(--text2)">${nUnk}팀</div></div>`;
   let rows=all;
   if(fieldFilter==='room') rows=all.filter(x=>x.needRoom);
   else if(fieldFilter==='flight') rows=all.filter(x=>x.needFlight);
   else if(fieldFilter==='unknown') rows=all.filter(x=>x.unknown);
+  else if(fieldFilter==='left') rows=all.filter(left);
   if(!rows.length){
-    box.innerHTML='<div class="note" style="border-left-color:var(--green)"><b>현지에 넘길 것이 있는 팀이 없습니다.</b></div>';
+    box.innerHTML='<div class="note" style="border-left-color:var(--green)"><b>'
+      +(fieldFilter==='left'?'남은 전달이 없습니다. 전부 보냈습니다.':'현지에 넘길 것이 있는 팀이 없습니다.')+'</b></div>';
     return;
   }
   const chip=(txt,tone)=>`<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;background:${tone};color:#fff">${txt}</span>`;
+  /* 종류마다 따로 눌러 완료한다. 방배정은 보냈는데 조편성은 안 보낸 팀이 흔하고,
+     팀 단위 한 칸으로 두면 그 상태를 적을 곳이 없다. */
+  const btn=(x,kind,label)=>{
+    const k=fnKey(x.seq,kind), on=fieldDone.get(k), busy=fieldBusy.has(k);
+    const t=on?`${on.by||''}${on.at?' · '+fnWhen(on.at):''}`:'';
+    return `<button class="btn-sm" onclick="fieldToggle('${String(x.seq).replace(/'/g,"\\'")}','${kind}')" ${busy?'disabled':''}
+      title="${on?'누르면 해제합니다'+(t?' ('+t+')':''):'보냈으면 눌러 두세요'}"
+      style="padding:3px 9px;font-size:11.5px;white-space:nowrap;${busy?'opacity:.5;':''}${on?'background:var(--green);border-color:var(--green);color:#fff;font-weight:700;':''}">${on?'✓ ':''}${label}</button>`;
+  };
   const body=rows.map(x=>{
     const what=[
       x.needRoom  ? chip('🛏 방배정','var(--accent)') : '',
@@ -3937,7 +3992,10 @@ function renderFieldNotes(){
     ].filter(Boolean).join(' ');
     const note=[x.roomNote,x.flightNote].filter(Boolean).join('<br>')
       || (x.unknown ? '<span class="muted">명단·성별이 들어오면 자동으로 분류됩니다</span>' : '');
-    return `<tr>
+    const acts=[ x.needRoom?btn(x,'room','방배정'):'', x.needFlight?btn(x,'flight','조편성'):'' ]
+      .filter(Boolean).join(' ') || '<span class="muted" style="font-size:11.5px">—</span>';
+    const rest=left(x);
+    return `<tr${rest?'':' style="opacity:.55"'}>
       <td>${eventNoOf(x.seq)}</td>
       <td><b>${repNameOf(x.seq)||'-'}</b>${agencyBadge(teamOf(x.seq))}</td>
       <td class="center">${x.status||'-'}</td>
@@ -3946,11 +4004,36 @@ function renderFieldNotes(){
       <td>${what}</td>
       <td style="font-size:12px;color:var(--text2);line-height:1.6">${note}</td>
       <td class="center">${x.dep||'-'}</td>
+      <td class="center" style="white-space:nowrap">${acts}</td>
     </tr>`;
   }).join('');
   box.innerHTML=`<div class="tbl-wrap"><table>
-    <thead><tr><th>행사번호</th><th>대표고객</th><th class="center">구분</th><th class="center">인원</th><th class="center">성별</th><th>보낼 것</th><th>기준</th><th class="center">출발일</th></tr></thead>
+    <thead><tr><th>행사번호</th><th>대표고객</th><th class="center">구분</th><th class="center">인원</th><th class="center">성별</th><th>보낼 것</th><th>기준</th><th class="center">출발일</th><th class="center">전달 완료</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
+}
+/* 「8/12 15:20」 정도면 된다 */
+function fnWhen(iso){
+  const d=new Date(iso); if(isNaN(d)) return '';
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+/* 현지에 그대로 붙여 보낼 수 있는 표로 내려받는다. 아직 안 보낸 것만 담는다. */
+function fieldExport(){
+  const all=buildFieldNotes().filter(x=>(x.needRoom&&!x.roomDone)||(x.needFlight&&!x.flightDone));
+  if(!all.length){ alert('남은 전달이 없습니다.'); return; }
+  const rows=[['출발일','행사번호','대표고객','구분','인원','성별','보낼 것','기준']];
+  all.forEach(x=>{
+    if(x.needRoom && !x.roomDone)
+      rows.push([x.dep, eventNoOf(x.seq), repNameOf(x.seq)||'', x.status, x.pax+'명', x.gender, '방배정(동성팀)', x.roomNote]);
+    if(x.needFlight && !x.flightDone)
+      rows.push([x.dep, eventNoOf(x.seq), repNameOf(x.seq)||'', x.status, x.pax+'명', x.gender, '첫날 조편성', x.flightNote]);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:12},{wch:16},{wch:12},{wch:7},{wch:7},{wch:14},{wch:16},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws, '현지 전달');
+  const stamp=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `현지전달_${stamp}.xlsx`);
+  showToast(`현지 전달 목록 ${rows.length-1}줄을 내려받았습니다.`);
 }
 
 function renderAudit(){
@@ -6485,7 +6568,7 @@ const SEC_RENDER={
   golf:     ()=>renderGolf(),
   dinner:   ()=>renderDinner(),
   verify:   ()=>refreshVerifyView(),
-  audit:    ()=>{ renderAudit(); renderFieldNotes(); },
+  audit:    ()=>{ renderAudit(); renderFieldNotes(); fieldLoad(); },
   doc:      ()=>renderDocTeams()
 };
 let secDirty=new Set();
