@@ -5926,7 +5926,7 @@ function renderResortMaster(){
   // 공통 마스터
   document.getElementById('common-master').innerHTML=`
   <div class="cm-box">
-    <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 하나은행 현찰 살 때 <b>최초 고시</b> 환율을 넣되, 기준일은 <b>2026년 출발 = 출국 2달 전</b> / <b>2027년 출발부터 = 3달 전</b> 월 1일자 (예: 2027-06 출발 → 2027-03-01)</span></div>
+    <div class="cm-box-title">📅 월별 환율 <span class="card-sub" style="font-weight:400">— 출국월 기준 적용 환율. 통화 선택(엔 기본). 하나은행 현찰 살 때 <b>최초 고시</b> 환율을 넣되, 기준일은 <b>출국 2달 전 월 1일자</b> — 2026 · 2027 출발 동일 (예: 2027-06 출발 → 2027-04-01)</span></div>
     <div id="monthly-rate-rows"></div>
     <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
       <input class="rm-input" id="mr-month" type="month" style="width:130px;text-align:left;font-family:var(--sans)">
