@@ -1634,13 +1634,13 @@ function parseProduct(name){
 
   if(s.indexOf('야마나미')>=0||up.indexOf('14HILLS')>=0||s.indexOf('돔하우스')>=0||s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('소보별장')>=0||s.indexOf('아소별장')>=0){
     region='구마모토'; golf='야마나미CC';
-    if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='쿠주 타운하우스'; roomType='트윈'; }
+    if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0){ accom='쿠쥬 타운하우스'; roomType='트윈'; }
     else if(s.indexOf('소보별장')>=0||s.indexOf('통나무')>=0){ accom='히노키 스테이'; roomType='별장'; }
     else if(s.indexOf('관내별장')>=0||s.indexOf('별장전용')>=0||s.indexOf('아소별장')>=0){ accom='아소 프레스티지'; roomType='별장'; }
     else if(s.indexOf('돔하우스')>=0){ accom='돔스테이'; roomType='돔하우스'; }
     else { accom='야마나미 호텔'; roomType=room; }
   }
-  else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='쿠주 타운하우스'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
+  else if(s.indexOf('쿠주힐즈')>=0||s.indexOf('구주힐즈')>=0||s.indexOf('久住ヒルズ')>=0){ accom='쿠쥬 타운하우스'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
   else if(s.indexOf('포틴힐즈')>=0){
     region='나고야'; golf='포틴힐즈CC';
     if(s.indexOf('카라반')>=0){ accom='포틴힐즈CC 카라반'; roomType='트윈'; }
@@ -1651,7 +1651,7 @@ function parseProduct(name){
   else if(s.indexOf('무츠키')>=0){ accom='무츠키 료칸'; roomType='트윈'; region='벳푸'; golf='벳푸'; }
   else if(s.indexOf('시로사토')>=0){ accom='시로사토CC'; roomType='트윈'; region='이바라키'; golf='시로사토CC'; }
   else if(s.indexOf('후쿠로다노타키')>=0){ accom='후쿠로다노타키CC 호텔'; roomType='트윈'; region='이바라키'; golf='후쿠로다노타키CC'; }
-  else if(s.indexOf('간지')>=0){ accom='간지호텔'; roomType='트윈'; region='구마모토'; golf='구주고원CC / 야마나미CC'; }
+  else if(s.indexOf('간지')>=0){ accom='간지호텔'; roomType='트윈'; region='구마모토'; golf='쿠쥬코겐CC / 야마나미CC'; }
   else if(s.indexOf('시즈노야도')>=0){ accom='시즈노야도 료칸'; roomType='트윈'; region='구마모토'; golf='야마나미CC'; }
   else if(s.indexOf('스가다이라')>=0){
     region='나가노'; golf='스가다이라 그린CC';
@@ -1670,7 +1670,7 @@ function parseProduct(name){
 function accomTag(accom){
   if(!accom) return '<span class="tag tag-excl">기타</span>';
   let cls='tag-excl';
-  if(accom.indexOf('야마나미')>=0||accom.indexOf('쿠주')>=0) cls='tag-yama';
+  if(accom.indexOf('야마나미')>=0||accom.indexOf('쿠쥬')>=0) cls='tag-yama';
   else if(accom.indexOf('간지')>=0) cls='tag-ganji';
   else if(accom.indexOf('시즈노야도')>=0||accom.indexOf('료칸')>=0) cls='tag-shiz';
   else if(accom.indexOf('포틴힐즈')>=0) cls='tag-kuzu';
@@ -3301,7 +3301,7 @@ const ACCOM_HDR=['No','구분','행사번호','대표고객','숙소','룸타입
 /* 숙소 표시 순서 — 지역별 배치 순서의 단일 출처.
    블록 현황 표·출발 일정 조회·현황 엑셀이 모두 이 순서를 따른다.
    여기 없는 숙소는 뒤로 밀리고 이름순으로 붙는다. */
-const ACCOM_ORDER=['야마나미 호텔','아소 프레스티지','소보 테라스','히노키 스테이','돔스테이','쿠주 타운하우스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 호텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
+const ACCOM_ORDER=['야마나미 호텔','아소 프레스티지','소보 테라스','히노키 스테이','돔스테이','쿠쥬 타운하우스','간지호텔','시즈노야도 료칸','구마모토 시내 상품 호텔','포틴힐즈CC 호텔','포틴힐즈CC 카라반','아키바 리조트','무츠키 료칸','시로사토CC','후쿠로다노타키CC 호텔','스가다이라 고원 온천호텔','스가다이라 맨션','미야자키 상품 호텔','닐라이스프링스 리조트'];
 /* ACCOM_ORDER 순위 — 목록에 없으면 맨 뒤 */
 function accomRank(name){
   const i=ACCOM_ORDER.indexOf(name);
@@ -4941,10 +4941,10 @@ const RESORT_DEFAULTS=[
   {key:'yamanami_hinoki_family', name:'소보 테라스', region:'구마모토', golf:'야마나미CC', holes:27,
    stay:15000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'별장':1}, aliases:['소보5동'], assign:false, memo:'편백 4인 독채 · 1동 (신규)'},
-  {key:'kuzu', name:'쿠주 타운하우스', region:'구마모토', golf:'야마나미CC', holes:18,
+  {key:'kuzu', name:'쿠쥬 타운하우스', region:'구마모토', golf:'야마나미CC', holes:18,
    stay:14000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':10}, aliases:['쿠주힐즈','야마나미 쿠주힐즈','구주힐즈'], assign:false, memo:''},
-  {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/구주고원CC', holes:18,
+   depart:'수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':10}, aliases:['쿠주 타운하우스','쿠주힐즈','야마나미 쿠주힐즈','구주힐즈'], assign:false, memo:''},
+  {key:'ganji', name:'간지호텔', region:'구마모토', golf:'간지호텔/쿠쥬코겐CC', holes:18,
    stay:16000, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'목3박, 일4박, 수7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
   {key:'shizu', name:'시즈노야도 료칸', region:'구마모토', golf:'야마나미CC', holes:18,
