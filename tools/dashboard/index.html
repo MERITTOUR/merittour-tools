@@ -4952,10 +4952,10 @@ const RESORT_DEFAULTS=[
    depart:'목3박, 일4박, 목7박, 일7박', airOut:'인천 / 김해', airIn:'구마모토', arrCode:'KMJ', rooms:{'트윈':7}, aliases:[], assign:false, memo:''},
   {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:15000, transfer:12000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
+   depart:'목3박, 일4박, 일7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':13,'패밀리룸':19}, aliases:['14hills','포틴힐즈CC 골프텔'], assign:false, memo:''},
   {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야', golf:'포틴힐즈CC', holes:18,
    stay:15000, transfer:12000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
-   depart:'일7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
+   depart:'목3박, 일4박, 일7박', airOut:'인천 / 김해', airIn:'나고야', arrCode:'NGO', rooms:{'트윈':6}, aliases:[], assign:false, memo:''},
   {key:'akiba', name:'아키바 리조트', region:'벳푸', golf:'벳푸 아키바', holes:18,
    stay:0, transfer:6000, mgmt:50000, greenWeekday:0, greenWeekend:0, add9h:0, bfast:0, lunch:0, dinner:0,
    depart:'금3박, 월4박', airOut:'인천 / 대구 / 김해', airIn:'오이타', arrCode:'FUK', rooms:{'트윈':15}, aliases:[], assign:false, memo:''},
@@ -5117,9 +5117,10 @@ const ROOMS_BEFORE_RENAME={
 const ALIAS_MOVED={ yamanami_bessou:['아소 야마나미 관내별장','관내별장'] };
 
 const FIELD_BEFORE_FIX={
-  // depart 는 옛 기본값 두 세대(화7박 시절 · 목3박/일4박 시절)를 배열로 — 어느 쪽 그대로인 저장본이든 「일7박」으로 올라간다(2026-09-09 · Min 「3,4박은 삭제」)
-  fourteen_golf:{airOut:'김해', stay:0, transfer:6000, depart:['목3박, 일4박, 화7박','목3박, 일4박, 일7박']},      // 포틴힐즈는 인천·김해 둘 다 출발 가능 · 2027 은 일→일 7박 8일만
-  fourteen_caravan:{airOut:'김해', stay:0, transfer:6000, depart:['목3박, 일4박, 화7박','목3박, 일4박, 일7박']},   // 체재비 15,000엔 · 송영비 12,000엔
+  // depart 는 옛 기본값을 배열로 — 화7박 시절 값과, 2026-09-09~11 에 잠시 기본값이던 「일7박」 그대로인 저장본이 모두 「목3박, 일4박, 일7박」으로 올라간다
+  // (3박·4박은 삭제가 아니라 상시예약 기간부터 판매 · 2026-09-11 · Min — 블록 계산에는 세 패턴이 다 필요하다)
+  fourteen_golf:{airOut:'김해', stay:0, transfer:6000, depart:['목3박, 일4박, 화7박','일7박']},      // 포틴힐즈는 인천·김해 둘 다 출발 가능 · 2027 은 일→일 7박 8일만
+  fourteen_caravan:{airOut:'김해', stay:0, transfer:6000, depart:['목3박, 일4박, 화7박','일7박']},   // 체재비 15,000엔 · 송영비 12,000엔
   yamanami_hinoki_family:{stay:18000},                                                  // 소보 테라스 체재비 18,000 → 15,000 (2026 견적 포함 · 2026-09 · Min)
   shirosato:{stay:0, transfer:6000},                                                    // 시로사토 체재비 16,000 · 왕복 송영비 12,000 (2026-09-07 · Min · /2027/ 값)
   fukuroda:{stay:0, transfer:6000}                                                      // 후쿠로다노타키 체재비 16,000 · 왕복 송영비 12,000 (2026-09-07 · Min)
