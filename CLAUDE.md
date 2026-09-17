@@ -9,7 +9,10 @@
 - 메리트투어(한국 골프 투어 여행사) 사내 자동화 도구함. GitHub Pages로 배포.
 - 계정 `cmc338111-crypto`, 저장소 `merittour-tools` (public), 기본 브랜치 `main`.
 - 진입점: 루트 `index.html` 이 계정의 섹션 권한을 보고 `sales` → `manage` → `air` 중 처음 열리는 허브로 보낸다.
-- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library. (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
+- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library·resortinfo. (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
+  - `library`(가입 서류 자료실): EWRC II · 장기숙박(개인·법인·비회원용) PDF 는 `DOCS` 쌍(원본 양식 + 작성방법본)으로 버튼을 만들고, **회원권 명의개서 서류 `transfer_forms.pdf`(v1.0 · 2026-09-17 · Min 「명의개서 관련 서류도 같이 등록」)**는 작성방법본이 없어 카드 안 단일 버튼이다.
+    5쪽 = 필수준비서류 체크리스트(개인 → 개인 · 법인 → 개인) · 회원권 양도양수 계약서 3부(양도인·양수인·메리트투어 회신용) · 명의개서 신청서. 수수료 330,000원(부가세 포함 · 1구좌 기준)은 KB 계좌가 아니라 **하나은행 109-890042-63604**(양수인 성명으로 입금)라 공통 안내 「입금 계좌」에 따로 적었다.
+    새 서류를 넣을 때는 PDF 를 `tools/library/` 에 두고 카드에 링크만 건다(파일 이름은 영문 `*_forms.pdf`). 검사 = scratchpad `library-smoke.mjs`(guard.js 를 stub 으로 막고 카드·링크·기존 버튼 6개·가로 넘침).
   - `golfweather`: 골프 라운딩 적합도(Open-Meteo 키리스). **로그인 없음**(손님 공개 + 브라우저 스토리지 미사용 스펙). 단일 자립형 HTML.
     - **이건 `weather`(리조트 날씨)의 대체 수단이다.** 리조트 날씨는 외부 사이트 `golfweather.info` 로 나가므로 그 사이트가 죽으면 같이 죽는다. golfweather 는 외부에 기대지 않고 직접 계산한다.
     - **영업 허브 카드로 두지 않는다.** 평소에는 자리만 차지하고, 정작 필요한 순간(외부 사이트가 안 열릴 때)에는 허브를 뒤지게 된다. 링크는 **리조트 날씨 안**에 「golfweather.info 가 안 열리나요?」로 붙여 뒀다 — 찾는 자리에 있어야 한다.
