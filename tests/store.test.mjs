@@ -271,6 +271,14 @@ test('프로젝트 정지(5xx)는 그렇게 읽히는 문구로', async () => {
   await assert.rejects(() => STORE.listPeriods(), /정지 상태일 수 있습니다/);
 });
 
+test('서버가 이유를 준 500 은 그 문구를 그대로 보인다 — 「정지 상태」로 덮지 않는다', async () => {
+  // 2026-09-17 · app_users PATCH 가 정책 무한 재귀(42P17)로 500 이었는데 화면은 「프로젝트 정지」라고 했다.
+  reset();
+  route('/data_registry', 500, { code: '42P17', message: 'infinite recursion detected in policy for relation "app_users"' });
+  await assert.rejects(() => STORE.listPeriods(), /HTTP 500 · infinite recursion detected/);
+  await assert.rejects(() => STORE.listPeriods(), e => e.status === 500 && !/정지 상태/.test(e.message));
+});
+
 test('토큰 만료(401)는 다시 로그인 안내로', async () => {
   reset();
   route('/data_registry', 401, {});

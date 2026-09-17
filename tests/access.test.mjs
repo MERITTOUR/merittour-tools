@@ -100,6 +100,14 @@ test('프로젝트 정지(5xx)는 그렇게 읽히는 문구로', async () => {
   await assert.rejects(() => AUTH.login('a@b.c', 'pw'), /정지 상태일 수 있습니다/);
 });
 
+test('서버가 이유를 준 500 은 그 문구를 그대로 보인다 — 「정지 상태」로 덮지 않는다', async () => {
+  // 2026-09-17 · 정책 무한 재귀(42P17)가 「프로젝트 정지」로 읽혀 원인을 못 찾았다.
+  reset();
+  route('/auth/v1/token?grant_type=password', 500, { message: 'infinite recursion detected in policy for relation "app_users"' });
+  await assert.rejects(() => AUTH.login('a@b.c', 'pw'), /HTTP 500 · infinite recursion detected/);
+  await assert.rejects(() => AUTH.login('a@b.c', 'pw'), e => !/정지 상태/.test(e.message));
+});
+
 test('만료가 가까우면 refresh 로 갱신한다', async () => {
   reset();
   route('/auth/v1/token?grant_type=password', 200, { access_token: 'AT', refresh_token: 'RT', expires_in: 3600 });
