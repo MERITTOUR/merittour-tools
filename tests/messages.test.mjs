@@ -28,23 +28,23 @@ test('copybox — open·close·bytesEucKr 를 내놓고, 불러올 때 DOM 을 �
   assert.equal(w.MT_COPYBOX.bytesEucKr('가a'), 3);
 });
 
-test('2027 발송 문안 — 인사 + 안내문 주소만 · 카카오톡 1,000자 · 문자 2,000바이트 안', () => {
+test('2027 발송 문안 — 알림톡 템플릿 · 고객아이디 치환값 · 치환 뒤 1,000자 안 · 안내문의 날짜·주소', () => {
   const n = load('sales/notice2027.js').MT_NOTICE_2027;
-  const kakao = n.tabs.find(t => t.key === 'kakao');
-  const lms = n.tabs.find(t => t.key === 'lms');
-  assert.ok(kakao && lms, '카카오톡·문자 두 탭');
-  assert.ok(kakao.body.startsWith('[메리트투어] 2027 시즌 골프 패키지 예약 안내\n'), '카카오톡 첫 줄 = 제목');
-  assert.ok(kakao.body.length <= 1000, '카카오톡 ' + kakao.body.length + '자 — 1,000자를 넘는다');
-  assert.ok(bytes(lms.body) <= 2000, '문자 본문 ' + bytes(lms.body) + '바이트 — 2,000바이트를 넘는다');
-  assert.ok(bytes(lms.subject) <= 40, '문자 제목 ' + bytes(lms.subject) + '바이트 — 40바이트를 넘는다');
-  for (const t of [kakao, lms]) {
-    for (const s of ['회원님, 안녕하십니까. 메리트투어입니다.', '지난 2026년 한 해 보내 주신 성원에 깊이 감사드립니다.', '▶ 전 지역 상품·요금·환율·예약 절차 안내문(전문)', 'https://merittour.github.io/2027/']) {
-      assert.ok(t.body.includes(s), t.label + ' 에 「' + s + '」 가 없다');
-    }
-    // 일정·로그인 방법은 안내문에 있다 — 문안에 다시 적지 않는다(두 곳이 어긋난다)
-    assert.ok(!/10월 12일|HONG01012345678/.test(t.body), t.label + ' 에 안내문 내용이 다시 적혀 있다');
-    for (const b of BANNED) assert.ok(!t.body.includes(b), t.label + ' 에 쓰지 않는 말 「' + b + '」');
+  const t = n.tabs.find(x => x.key === 'alimtalk');
+  assert.ok(t, '알림톡 탭');
+  assert.ok(t.body.startsWith('[메리트투어] 2027 시즌 골프 패키지 예약 안내\n'), '첫 줄 = 제목');
+  assert.ok(t.body.includes('· 회원님 아이디: #{고객아이디}'), '고객아이디 치환값이 없다');
+  assert.deepEqual([...n.template.variables], ['#{고객아이디}'], '치환값 목록');
+  // 치환 뒤 길이 — 아이디는 영문 성 + 휴대폰번호(최대 20자 잡음)
+  const filled = t.body.replace(/#\{고객아이디\}/g, 'HONGGILDONG01012345678');
+  assert.ok(filled.length <= 1000, '치환 뒤 ' + filled.length + '자 — 1,000자를 넘는다');
+  assert.ok(bytes(filled) <= 2000, '대체 문자로 갈 때 ' + bytes(filled) + '바이트 — 2,000바이트를 넘는다');
+  for (const s of ['2026년 10월 12일(월) 오전 10시', '2026년 11월 30일(월) 오전 10시', 'www.merittour.co.kr', 'https://merittour.github.io/2027/', '02-365-9800']) {
+    assert.ok(t.body.includes(s), '문안에 「' + s + '」 가 없다');
   }
+  assert.ok(!t.body.includes('HONG01012345678'), '아이디가 치환값인데 예시 아이디가 남아 있다');
+  for (const b of BANNED) assert.ok(!t.body.includes(b), '쓰지 않는 말 「' + b + '」');
+  assert.equal(n.template.buttons[0].url, 'https://merittour.github.io/2027/', '버튼 주소');
 });
 
 test('자료실 — 카드마다 문안 줄이 있고, 문안 데이터(MSG)에 그 키가 있다', () => {
