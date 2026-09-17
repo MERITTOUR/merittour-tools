@@ -149,6 +149,15 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <span class="badge team guest">손님용</span>
       </div>
     </a>
+    <!-- 발송 문안은 sales/notice2027.js 한 곳에 — 카카오톡 · 문자(LMS) 를 같은 문안으로 보낸다 -->
+    <a href="#" class="tool-card" id="card-notice2027">
+      <div class="tool-card-title">2027 예약 안내 발송 문안</div>
+      <div class="tool-card-desc">2026-09-17 전 회원 발송분 — <b>카카오톡 채널 메시지</b>와 <b>대체 문자(LMS)</b>를 같은 문안으로. 누르면 복사 상자가 열립니다.</div>
+      <div class="tool-card-meta">
+        <span class="badge ver">문안</span>
+        <span class="badge team guest">손님용</span>
+      </div>
+    </a>
   </div>
 
   <div class="section-title" data-group=".mt-admin-card">관리 · 마스터</div>
@@ -215,8 +224,24 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
   <div class="footer-tip">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
 </div>
 
-<!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 <script> 가 주석 처리돼 로드되지 않았고
+<!-- 구글 로그인 잔재는 없앴다. 네 파일 모두 script 태그가 주석 처리돼 로드되지 않았고
+     (이 주석에 script 태그를 글자 그대로 적지 않는다 — scripts/check-syntax.mjs 가 다음 닫는 태그까지를 스크립트로 읽는다)
      auth.js 의 CONFIG.ENABLED 도 false 라 이중으로 죽어 있었다.
      실제 로그인은 Supabase Auth(shared/access.js)와 로그인 문지기(shared/guard.js)가 한다. -->
+<script src="../shared/copybox.js"></script>
+<script src="notice2027.js"></script>
+<script>
+  /* 2027 예약 안내 발송 문안 — 카드를 누르면 복사 상자. 문안은 notice2027.js 한 곳에서만 고친다. */
+  (function () {
+    var card = document.getElementById('card-notice2027');
+    if (!card) return;
+    card.addEventListener('click', function (e) {
+      e.preventDefault();
+      var n = window.MT_NOTICE_2027;
+      if (!n || !window.MT_COPYBOX) return;
+      MT_COPYBOX.open({ title: n.title, note: n.note, tabs: n.tabs });
+    });
+  })();
+</script>
 </body>
 </html>
