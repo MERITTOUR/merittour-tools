@@ -1,7 +1,9 @@
-/* 고객 안내 문안 — 카카오톡·메일·문자 문안이 코드 한 자리에서 관리되고, 화면마다 붙어 있는지.
+/* 고객 안내 문안 — 카카오톡·메일 문안이 코드 한 자리에서 관리되고, 화면마다 붙어 있는지.
  *
  * 문안이 화면마다 따로 적히면 누가 보내느냐에 따라 안내가 달라진다(2026-09-17 · Min).
- * 자료실은 tools/library/index.html 의 MSG, 2027 발송 문안은 sales/notice2027.js 가 단일 출처다. */
+ * 자료실은 tools/library/index.html 의 MSG 가 단일 출처다.
+ * 영업 허브의 발송 문안 카드(2027 예약 안내 · 쿠쥬 프라이빗 타운 희망 일정 접수)는 2026-09-17 발송 뒤 지웠다 —
+ * 허브가 지운 파일을 다시 부르지 않는지만 본다. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const bytes = s => [...s].reduce((n, c) => n + (c.charCodeAt(0) <= 0x7f ? 1 : 2), 0);   // 문자 길이 감각(한글 2바이트)
 function load(file) {
   const w = {};
   vm.runInNewContext(read(file), { window: w, navigator: {}, setTimeout, clearTimeout });
@@ -26,43 +27,6 @@ test('copybox — open·close·bytesEucKr 를 내놓고, 불러올 때 DOM 을 �
   assert.equal(typeof w.MT_COPYBOX.close, 'function');
   assert.equal(w.MT_COPYBOX.isOpen(), false);
   assert.equal(w.MT_COPYBOX.bytesEucKr('가a'), 3);
-});
-
-test('2027 발송 문안 — 알림톡 템플릿 · 고객아이디 치환값 · 치환 뒤 1,000자 안 · 안내문의 날짜·주소', () => {
-  const n = load('sales/notice2027.js').MT_NOTICE_2027;
-  const t = n.tabs.find(x => x.key === 'alimtalk');
-  assert.ok(t, '알림톡 탭');
-  assert.ok(t.body.startsWith('[메리트투어] 2027 시즌 골프 패키지 예약 안내\n'), '첫 줄 = 제목');
-  assert.ok(t.body.includes('· 회원님 아이디: #{고객아이디}'), '고객아이디 치환값이 없다');
-  assert.deepEqual([...n.template.variables], ['#{고객아이디}'], '치환값 목록');
-  // 치환 뒤 길이 — 아이디는 영문 성 + 휴대폰번호(최대 20자 잡음)
-  const filled = t.body.replace(/#\{고객아이디\}/g, 'HONGGILDONG01012345678');
-  assert.ok(filled.length <= 1000, '치환 뒤 ' + filled.length + '자 — 1,000자를 넘는다');
-  assert.ok(bytes(filled) <= 2000, '대체 문자로 갈 때 ' + bytes(filled) + '바이트 — 2,000바이트를 넘는다');
-  for (const s of ['2026년 10월 12일(월) 오전 10시', '2026년 11월 30일(월) 오전 10시', 'www.merittour.co.kr', 'https://merittour.github.io/2027/', '02-365-9800']) {
-    assert.ok(t.body.includes(s), '문안에 「' + s + '」 가 없다');
-  }
-  assert.ok(!t.body.includes('HONG01012345678'), '아이디가 치환값인데 예시 아이디가 남아 있다');
-  // 링크가 묻히지 않게 — 안내문 주소는 세부(■ 줄)보다 앞에, 밖에 적는 세부는 오픈 일시·아이디까지만(Min 2026-09-17)
-  assert.ok(t.body.indexOf('https://merittour.github.io/2027/') < t.body.indexOf('■'), '안내문 주소가 세부 내용 뒤에 있다');
-  assert.ok(!/1차|회차|포틴힐즈|개편 작업/.test(t.body), '안내문에 있는 세부(회차·확인 사항·개편)를 밖에 다시 적었다');
-  assert.ok(filled.length <= 500, '치환 뒤 ' + filled.length + '자 — 짧게(500자 안) 유지한다');
-
-  // 예시 판 — 치환값 없이 아이디 규칙 + 예시(손님용 안내문과 같은 가상 번호). 아이디 두 줄 말고는 같은 글이어야 한다.
-  const ex = n.tabs.find(x => x.key === 'example');
-  assert.ok(ex, '예시 판 탭');
-  assert.ok(!ex.body.includes('#{'), '예시 판에 치환값이 남아 있다');
-  assert.ok(ex.body.includes('· 아이디: 대문자 영문 성 + 휴대폰번호 (예: HONG01012345678)'), '예시 판 아이디 규칙·예시');
-  assert.ok(ex.body.includes('예: 01012345678'), '예시 판 비밀번호 예시');
-  assert.ok(!/010-1234-5678|홍길동/.test(ex.body) || true, '예시는 가상 번호만');
-  const strip = s => s.split('\n').filter(l => !l.startsWith('· ')).join('\n');
-  assert.equal(strip(ex.body), strip(t.body), '아이디 두 줄 말고 다른 글자가 있다');
-  // 비밀번호를 바꾼 회원 안내(2026-09-17 · Min) — 두 판 모두
-  for (const x of [t, ex]) assert.ok(x.body.includes('※ 이전에 비밀번호를 변경하신 적이 있으면 변경하신 비밀번호로 로그인하시면 됩니다.'), x.label + ' 에 비밀번호 변경 안내가 없다');
-  assert.ok(ex.body.length <= 500, '예시 판 ' + ex.body.length + '자 — 500자 안');
-  for (const b of BANNED) assert.ok(!ex.body.includes(b), '예시 판에 쓰지 않는 말 「' + b + '」');
-  for (const b of BANNED) assert.ok(!t.body.includes(b), '쓰지 않는 말 「' + b + '」');
-  assert.equal(n.template.buttons[0].url, 'https://merittour.github.io/2027/', '버튼 주소');
 });
 
 test('자료실 — 카드마다 문안 줄이 있고, 문안 데이터(MSG)에 그 키가 있다', () => {
@@ -85,33 +49,12 @@ test('자료실 문안 — 카드에 적힌 계좌·금액과 같은 값을 말�
   for (const b of BANNED) assert.ok(!script.includes(b), '문안에 쓰지 않는 말 「' + b + '」');
 });
 
-test('쿠쥬 프라이빗 타운 2027 희망 일정 접수 문안 — 목요일 기준 · 연 30일 · 최대 4개 · 수요 조사 · 예시 날짜는 목요일', () => {
-  const n = load('sales/notice_longstay2027.js').MT_NOTICE_LONGSTAY_2027;
-  const b = n.tabs[0].body;
-  assert.ok(b.startsWith('[메리트투어] 쿠쥬 프라이빗 타운 2027년 예약 희망 일정 접수\n'), '첫 줄 = 제목');
-  for (const s of ['「쿠쥬 프라이빗 타운」', '출국일과 귀국일은 목요일 기준', '1년에 최대 30일', '최대 4개', '수요 조사', '인천 · 김해 · 대구', '02-365-9800']) {
-    assert.ok(b.includes(s), '문안에 「' + s + '」 가 없다');
-  }
-  assert.ok(b.length <= 1000, b.length + '자 — 1,000자를 넘는다');
-  assert.ok(!/별장숙소|롱스테이|타운하우스|쿠주힐즈/.test(b), '옛 이름·안 쓰는 말이 들어 있다');
-  for (const x of BANNED) assert.ok(!b.includes(x), '쓰지 않는 말 「' + x + '」');
-  // 출국일 예시는 실제 목요일이어야 한다
-  const m = b.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일\(목\) 출국/);
-  assert.ok(m, '출국일 예시(목)가 없다');
-  assert.equal(new Date(+m[1], +m[2] - 1, +m[3]).getDay(), 4, '예시 날짜가 목요일이 아니다');
-  assert.ok(/○○○ \(설문 링크\)/.test(b) && /접수 마감: 2026년 ○월 ○일/.test(b), '채울 자리(설문 링크 · 접수 마감)');
-});
-
-test('영업 허브 — 발송 문안 카드(data-notice)가 복사 상자와 문안 파일을 부른다', () => {
+test('영업 허브 — 지운 발송 문안(파일·카드·복사 상자 호출)을 다시 부르지 않는다', () => {
   const hub = read('sales/index.html');
-  const cards = [...hub.matchAll(/id="(card-[a-z0-9-]+)" data-notice="([A-Z0-9_]+)"/g)].map(m => [m[1], m[2]]);
-  assert.deepEqual(cards, [['card-notice2027', 'MT_NOTICE_2027'], ['card-notice-longstay2027', 'MT_NOTICE_LONGSTAY_2027']]);
-  assert.match(hub, /<script src="\.\.\/shared\/copybox\.js"><\/script>/);
-  assert.match(hub, /<script src="notice2027\.js"><\/script>/);
-  assert.match(hub, /<script src="notice_longstay2027\.js"><\/script>/);
-  assert.match(hub, /querySelectorAll\('a\[data-notice\]'\)/, '카드 클릭이 data-notice 로 묶여 있지 않다');
-  for (const [, g] of cards) {
-    const file = g === 'MT_NOTICE_2027' ? 'sales/notice2027.js' : 'sales/notice_longstay2027.js';
-    assert.ok(load(file)[g], file + ' 이 window.' + g + ' 를 두지 않는다');
+  assert.ok(!/notice2027\.js|notice_longstay2027\.js/.test(hub), '지운 문안 파일을 script 로 부른다');
+  assert.ok(!/data-notice=/.test(hub), '발송 문안 카드가 남아 있다');
+  assert.ok(!/copybox\.js|MT_COPYBOX/.test(hub), '허브에는 복사 상자를 쓰는 곳이 없다');
+  for (const f of ['sales/notice2027.js', 'sales/notice_longstay2027.js']) {
+    assert.ok(!fs.existsSync(path.join(ROOT, f)), f + ' 이 아직 있다');
   }
 });
