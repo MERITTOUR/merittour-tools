@@ -60,8 +60,10 @@
   - **판정 규칙을 바꿀 때는 데이터를 먼저 채우고 코드를 나중에 배포한다.** 16 을 코드 먼저 내보냈다가 `areas` 가 비어 있던 owner 가 모든 허브에서 막혔다. 화면 판정이 서버와 같은 규칙이라 데이터가 비면 코드만으로 막힌다.
   - 사이젠 허브(`user_access`·`has_area`)에서 옮겨 왔지만 **세 가지는 고쳤다** — ① `manager`가 함수마다 다르게 취급되던 것 ② `is_admin()`이 `active`를 안 봐 정지된 관리자도 통과하던 것 ③ 미등록자를 활성 `staff`로 돌려주던 것(승인제가 무력해진다).
 - 첫 owner 만 SQL 한 줄(그 화면 자체가 owner 여야 열린다 — 닭·달걀).
-- **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 역할·섹션을 정하고 → **Supabase 콘솔 → Authentication → Users → Add user → Create new user** 로 직접 생성(이메일 + 첫 비밀번호 + **Auto Confirm User**) → 만들어지는 순간 정해 둔 권한이 입혀진다 → 아이디·첫 비밀번호를 **본인에게 따로 알려 준다**.
-  - **초대 메일(Invite user)은 쓰지 않는다.** Supabase 기본 SMTP 는 팀 멤버 주소로만 가고 시간당 제한이 있어 실제로 오지 않았다. 커스텀 SMTP 를 붙이면 초대 방식으로 돌아갈 수 있으므로 **로그인 화면의 초대·재설정 링크 처리 코드는 지우지 않았다**.
+- **계정 신청**(`15_access_requests.sql`) — 로그인 화면 「계정 신청하기」 → `access_requests` 한 줄 → owner 가 `admin/users/` 신청함에서 역할·섹션을 정하고 → **Supabase 콘솔 → Authentication → Users → Add user → Invite user** 로 초대(2026-09-17 부터) → 만들어지는 순간 정해 둔 권한이 입혀진다 → 받는 분이 메일 링크에서 비밀번호를 직접 정한다(로그인 화면 `view-invite` 「비밀번호 설정」).
+  - **초대 메일(Invite user)을 쓴다(2026-09-17 · Min — 실제로 도착하는 것을 확인 · 「양쪽 다 쓸 수 있다」).** 2026-09 초에는 메일이 안 와서 Create new user 로 돌려 뒀었다(Site URL 이 기본값이던 때). 지금 설정 = Site URL `https://merittour.github.io/merittour-tools/login/` · Redirect URLs `https://merittour.github.io/**` · 「Allow new users to sign up」 OFF · Supabase 기본 메일 서비스(시간당 몇 통 제한 — 한꺼번에 여럿을 초대할 일이 생기면 Authentication → Emails → SMTP Settings 에 회사 메일 계정을 붙인다).
+    초대 링크는 1시간(Email OTP expiration 3600초)이면 만료 — 다시 Invite 한다. 링크 처리 = `shared/access.js` 의 `adoptHash`(`#access_token…&type=invite`)·`verifyTokenHash`(`?token_hash=…&type=invite`).
+    **Create new user(이메일 + 첫 비밀번호 + Auto Confirm User → 아이디·첫 비밀번호를 본인에게 따로 알려 줌)도 그대로 쓸 수 있다** — 메일이 닿지 않는 주소용. 두 방식 모두 `app_users` insert 트리거(`mt_apply_access_request`)가 신청함의 역할·섹션을 입힌다.
   - **첫 비밀번호를 바꿀 길을 반드시 남긴다.** 메일이 없으면 재설정 링크도 없다. 오른쪽 위 이름 배지 → 「비밀번호 변경」(`guard.js` 의 `changePassword`)이 그 자리다. 판정은 로그인 화면과 같은 `MT_AUTH.passwordCheck` 하나를 쓴다.
   - **계정을 코드에서 만들지 않는다.** 만들려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
   - 신청 상태 값은 `pending`·`invited`·`rejected`·`joined` 그대로다. 화면에 보이는 말만 「발급」으로 바꿨다 — 값을 바꾸면 표의 check 제약과 `mt_apply_access_request()` 가 함께 깨진다.
