@@ -61,6 +61,13 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 .dl-sub { font-size: 11px; opacity: 0.8; }
 .dl-btn.broken { opacity: 0.55; cursor: not-allowed; }
 
+/* 보내실 때 문안 — 카카오톡 · 메일 (문안은 아래 MSG 한 곳에서만 관리) */
+.msg-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: -8px 0 18px; }
+.msg-row .msg-lab { font-size: 11px; font-weight: 800; color: var(--mt-text3); letter-spacing: 0.06em; }
+.msg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 20px; border: 1px dashed var(--mt-border2); background: var(--mt-surface); color: var(--mt-text2); font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; }
+.msg-btn:hover { border-style: solid; border-color: var(--mt-accent); color: var(--mt-accent); background: var(--mt-accent-dim); }
+.nm-block .msg-row { margin: 10px 0 0; }
+
 /* 비회원용 서브블록 */
 .nm-block { margin: -2px 0 18px; padding: 13px 15px; background: var(--mt-surface2); border-left: 3px solid var(--mt-point); border-radius: var(--mt-radius); }
 .nm-label { font-size: 12.5px; font-weight: 800; color: var(--mt-brand); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
@@ -126,6 +133,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     EWRC II 회원권 · 장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 서류와 <strong>회원권 명의개서 서류</strong>를 한곳에 모았습니다.
     각 상품의 <strong>원본 양식</strong>과 <strong>작성방법본</strong>을 받아 고객님께 발송하세요.
     장기숙박형은 기존 회원이 아닌 고객을 위한 <strong>비회원용 계약서</strong>(EWRC Ⅱ 입회신청서 포함)를 별도로 제공합니다.
+    보내실 때는 카드마다 있는 <strong>「카카오톡 문안」·「메일 문안」</strong>을 복사해 쓰세요 — 누가 보내도 같은 안내가 나갑니다.
   </p>
 
   <div class="note-bar">
@@ -159,6 +167,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       입금 계좌 <strong class="mono">국민은행 817201-04-109230</strong> (개인 명의).
     </div>
     <div class="dl-row" data-pair="ewrc2"></div>
+    <div class="msg-row" data-msg="ewrc2"></div>
     <div class="req-grid">
       <div>
         <div class="req-block-label">필수 작성 서류</div>
@@ -199,6 +208,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       체류비·송영비는 아소 야마나미 회원가 동일. 입금 <strong class="mono">5,000만원</strong> (개인 명의).
     </div>
     <div class="dl-row" data-pair="longstay_individual"></div>
+    <div class="msg-row" data-msg="longstay_individual"></div>
     <div class="nm-block">
       <div class="nm-label">📋 비회원용 — EWRC Ⅱ 미가입 고객</div>
       <div class="nm-desc">기존 회원(EWRC·다이아·골드)이 아닌 고객은 <b>EWRC Ⅱ 입회신청서가 포함된 비회원용 계약서</b>를 사용하세요. 가입 시 EWRC Ⅱ 회원 자격이 부여되며, <b>연 쿠폰(15만엔)은 EWRC Ⅱ 회원권으로 갈음</b>됩니다(입회금 700만원 면제). 계약서에 '쿠폰 지급' 문구가 없어 분쟁 소지가 없습니다.</div>
@@ -206,6 +216,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <span class="dl-ico">📄</span>
         <span class="dl-body"><span class="dl-label">비회원용 계약서 받기</span><span class="dl-sub">계약서·EWRC Ⅱ 입회신청서·위임장·동의서·송금신청서</span></span>
       </a></div>
+      <div class="msg-row" data-msg="nonmember_individual"></div>
     </div>
     <div class="req-grid">
       <div>
@@ -242,6 +253,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       입금 <strong class="mono">5,000만원</strong> (법인명으로 입금).
     </div>
     <div class="dl-row" data-pair="longstay_corporate"></div>
+    <div class="msg-row" data-msg="longstay_corporate"></div>
     <div class="nm-block">
       <div class="nm-label">📋 비회원용 — EWRC Ⅱ 미가입 법인</div>
       <div class="nm-desc">기존 회원(EWRC·다이아·골드)이 아닌 법인은 <b>EWRC Ⅱ 입회신청서가 포함된 비회원용 계약서</b>를 사용하세요. 가입 시 EWRC Ⅱ 회원 자격이 부여되며, <b>연 쿠폰(15만엔)은 EWRC Ⅱ 회원권으로 갈음</b>됩니다(입회금 700만원 면제). 계약서에 '쿠폰 지급' 문구가 없어 분쟁 소지가 없습니다.</div>
@@ -249,6 +261,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <span class="dl-ico">📄</span>
         <span class="dl-body"><span class="dl-label">비회원용 계약서 받기 (법인)</span><span class="dl-sub">계약서·EWRC Ⅱ 입회신청서·위임장·동의서·송금신청서</span></span>
       </a></div>
+      <div class="msg-row" data-msg="nonmember_corporate"></div>
     </div>
     <div class="req-grid">
       <div>
@@ -294,6 +307,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <span class="dl-body"><span class="dl-label">명의개서 서류 받기</span><span class="dl-sub">필수준비서류 체크리스트 · 양도양수 계약서 3부 · 명의개서 신청서</span></span>
       </a>
     </div>
+    <div class="msg-row" data-msg="transfer"></div>
     <div class="req-grid">
       <div>
         <div class="req-block-label">양도인 (현재 명의자)</div>
@@ -359,6 +373,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 
 <div class="toast" id="toast"></div>
 
+<script src="../../shared/copybox.js"></script>
 <script>
 /* ===== PDF 링크 설정 — 한 곳에서만 관리 =====
    기본: index.html과 같은 폴더(tools/library/)에 PDF를 둔 경우.
@@ -390,6 +405,181 @@ document.querySelectorAll('.dl-row[data-pair]').forEach(row => {
   const set = DOCS[key] || {};
   row.appendChild(btn(set.form,  'primary', '📄', '원본 양식 받기', '입회·계약·동의서·송금신청서'));
   row.appendChild(btn(set.guide, 'outline', '✏️', '작성방법본 받기', '기입 위치·인감날인 표시본'));
+});
+
+/* ===== 보내실 때 문안 — 카카오톡 · 메일 =====
+   서류를 카카오톡·메일로 보낼 때 붙이는 안내. 누가 보내도 같은 말이 나가도록 여기 한 곳에서만 관리한다.
+   카드의 준비물 목록과 같은 내용이어야 한다 — 카드를 고치면 여기도 같이.
+   ○○○ 은 고객 성함·담당자 이름 자리(보내기 전에 채운다). PDF 는 따로 첨부한다(자료실은 로그인해야 열리므로 링크를 보내지 않는다). */
+const CO = {
+  addr: '(04001) 서울특별시 마포구 월드컵북로 15, 엠지엘빌딩 6층 601호 (주)메리트투어',
+  tel:  '02-365-9800 (평일 09:00~18:00)',
+  fax:  '02-365-9801',
+  kb:   '국민은행 817201-04-109230 (예금주 주식회사 메리트투어)',
+  hana: '하나은행 109-890042-63604 (예금주 주식회사 메리트투어)',
+};
+const CDD = [
+  '가까운 KB국민은행에 신분증(주민등록증 또는 운전면허증)을 가지고 방문하셔서 해외송금 고객확인(CDD/EDD) 등록을 해 주세요. 계좌가 없어도 됩니다.',
+  '등록 후 메리트투어로 전화 주시면 송금 절차를 이어 진행합니다.',
+];
+const WRITE_HINT = '작성하실 서류 (작성방법본의 빨간 표시 자리에 인감날인)';
+const ENC_IND = [
+  '개인인감증명서 원본 1부 (최근 1개월 이내 · 금융기관제출용 · 온라인발급 불가)',
+  '여권 사본 1부 (부부의 경우 배우자 여권 사본 1부 동봉)',
+  '신분증 사본 1부 (주민등록증 또는 운전면허증 · 휴대폰 촬영본 불가)',
+];
+const ENC_CORP = [
+  '법인인감증명서 원본 1부 · 법인등기부등본 원본 1부 (각 최근 1개월 이내)',
+  '사업자등록증 사본 1부 · 주주명부 1부 (법인인감날인 · 최근 1개월 이내)',
+  '대표(사내)이사 여권 사본 1부 · 신분증 사본 1부',
+];
+const CDD_CORP = [
+  '가까운 KB국민은행에서 법인 고객확인(CDD/EDD) 등록을 해 주세요. 대표이사·대리인에 따라 지참 서류가 달라 방문 전에 지점에 확인해 주시기 바랍니다.',
+  '등록 후 메리트투어로 전화 주시면 송금 절차를 이어 진행합니다.',
+];
+const LS_WRITE_IND = [
+  '장기숙박형 숙소 이용계약서 2부 — 1부는 보관, 1부는 성명 옆 인감날인 후 보내 주세요',
+  '위임장 — 위임인 옆 인감날인',
+  '개인(신용)정보 수집이용 동의서 — 성명 옆 인감날인',
+  '외화송금신청서 — 하단 신청인란 인감날인 (보내는 분 빨간 네모칸만 기입)',
+];
+const LS_WRITE_CORP = [
+  '장기숙박형 숙소 이용계약서 2부 — 1부는 보관, 1부는 법인인감날인 후 보내 주세요',
+  '위임장 — 위임인 옆 법인인감날인',
+  '개인(신용)정보 수집이용 동의서 — 법인인감날인',
+  '외화송금신청서 — 신청인란 법인인감날인 / 대리인란 대표(사내)이사 서명 (보내는 분 빨간 네모칸만 기입)',
+];
+const MSG = {
+  ewrc2: {
+    name: 'EWRC II 회원권 가입', attach: '원본 양식 · 작성방법본 (PDF 2개)',
+    blocks: [
+      [WRITE_HINT, [
+        '입회신청서 — 성함 옆 인감날인',
+        '위임장 — 위임인 옆 인감날인',
+        '개인정보 수집이용 동의서 — 성명 옆 인감날인',
+        '외화송금신청서 — 하단 신청인란 인감날인 (보내는 분 빨간 네모칸만 기입)',
+        '회원가입계약서 2부 — 1부는 보관, 1부는 성명 옆 인감날인 후 보내 주세요',
+      ]],
+      ['함께 보내실 서류', ENC_IND],
+      ['은행 방문 (해외송금 고객확인)', CDD],
+      ['입금', ['입회금 700만원 → ' + CO.kb, '가입하시는 분 개인 명의로 입금해 주세요']],
+    ],
+  },
+  longstay_individual: {
+    name: '장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 — 개인', attach: '원본 양식 · 작성방법본 (PDF 2개)',
+    blocks: [
+      [WRITE_HINT, LS_WRITE_IND],
+      ['함께 보내실 서류', ENC_IND],
+      ['은행 방문 (해외송금 고객확인)', CDD],
+      ['입금', ['예탁보증금 5,000만원 → ' + CO.kb, '가입하시는 분 개인 명의로 입금해 주세요']],
+    ],
+  },
+  longstay_corporate: {
+    name: '장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 — 법인', attach: '원본 양식 · 작성방법본 (PDF 2개)',
+    blocks: [
+      ['작성하실 서류 (법인인감 날인)', LS_WRITE_CORP],
+      ['함께 보내실 서류 (법인)', ENC_CORP],
+      ['은행 방문 (해외송금 고객확인 · 법인)', CDD_CORP],
+      ['입금', ['예탁보증금 5,000만원 → ' + CO.kb, '법인 명의로 입금해 주세요']],
+    ],
+  },
+  nonmember_individual: {
+    name: '장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 — 개인 (EWRC Ⅱ 신규 가입 포함)',
+    attach: '비회원용 계약서 (PDF 1개 · 계약서 · EWRC Ⅱ 입회신청서 · 위임장 · 동의서 · 송금신청서)',
+    intro: '기존 회원이 아니신 경우 EWRC Ⅱ 입회신청서가 포함된 계약서로 진행되며, 가입 시 EWRC Ⅱ 회원 자격이 함께 부여됩니다(입회금 700만원 면제).',
+    blocks: [
+      [WRITE_HINT, [LS_WRITE_IND[0], 'EWRC Ⅱ 입회신청서 — 성함 옆 인감날인', LS_WRITE_IND[1], LS_WRITE_IND[2], LS_WRITE_IND[3]]],
+      ['함께 보내실 서류', ENC_IND],
+      ['은행 방문 (해외송금 고객확인)', CDD],
+      ['입금', ['예탁보증금 5,000만원 → ' + CO.kb, '가입하시는 분 개인 명의로 입금해 주세요']],
+    ],
+  },
+  nonmember_corporate: {
+    name: '장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 — 법인 (EWRC Ⅱ 신규 가입 포함)',
+    attach: '비회원용 계약서 (PDF 1개 · 계약서 · EWRC Ⅱ 입회신청서 · 위임장 · 동의서 · 송금신청서)',
+    intro: '기존 회원이 아닌 법인은 EWRC Ⅱ 입회신청서가 포함된 계약서로 진행되며, 가입 시 EWRC Ⅱ 회원 자격이 함께 부여됩니다(입회금 700만원 면제).',
+    blocks: [
+      ['작성하실 서류 (법인인감 날인)', [LS_WRITE_CORP[0], 'EWRC Ⅱ 입회신청서 — 법인인감날인', LS_WRITE_CORP[1], LS_WRITE_CORP[2], LS_WRITE_CORP[3]]],
+      ['함께 보내실 서류 (법인)', ENC_CORP],
+      ['은행 방문 (해외송금 고객확인 · 법인)', CDD_CORP],
+      ['입금', ['예탁보증금 5,000만원 → ' + CO.kb, '법인 명의로 입금해 주세요']],
+    ],
+  },
+  transfer: {
+    name: '회원권 명의개서', attach: '명의개서 서류 (PDF 1개 · 필수준비서류 안내 · 양도양수 계약서 3부 · 명의개서 신청서)',
+    blocks: [
+      ['양도인(현재 명의자) 준비 서류', [
+        '명의개서 신청서 — 양도인란 기입 · 인감날인 (법인은 법인인감)',
+        '인감증명서 원본 1부 (최근 1개월 이내 · 법인은 법인인감증명서)',
+        '개인: 신분증 사본 1부 · 회원증 원본',
+        '법인: 법인등기부등본 원본 1부(최근 1개월 이내) · 사업자등록증 사본 1부 · 양도 결의서(이사회 의사록) 사본 1부 · 회원증 원본',
+      ]],
+      ['양수인(새 명의자) 준비 서류', [
+        '명의개서 신청서 — 양수인란 기입 · 인감날인',
+        '인감증명서 원본 1부 (최근 1개월 이내)',
+        '여권 사본 1부 (부부의 경우 배우자 여권 사본 1부 동봉)',
+      ]],
+      ['공통', [
+        '회원권 양도양수 계약서 — 양측 기입 · 인감날인 · 3부 작성 (양도인·양수인 각 1부 보관, 1부 제출)',
+        '명의개서 수수료 330,000원 (부가세 포함 · 회원권 1구좌 기준) → ' + CO.hana,
+        '수수료는 양수인 성함으로 입금해 주시고, 명의개서 완료 후에는 환불되지 않습니다',
+      ]],
+    ],
+    caution: '서류가 하나라도 빠지거나 유효기간(인감증명서·등기부등본 최근 1개월)이 지난 경우 접수되지 않습니다.',
+  },
+};
+
+function msgBlocks(d, bullet){
+  const L = [];
+  d.blocks.forEach(([h, items]) => { L.push('■ ' + h); items.forEach(t => L.push(bullet + t)); L.push(''); });
+  L.push('■ 보내실 곳 (등기우편)'); L.push(bullet + CO.addr); L.push('');
+  if (d.caution) L.push('※ ' + d.caution);
+  return L;
+}
+function buildKakao(d){
+  const L = ['○○○ 고객님, 안녕하십니까. 메리트투어 ○○○입니다.',
+             d.name + ' 서류를 보내드립니다. (첨부: ' + d.attach + ')'];
+  if (d.intro) L.push(d.intro);
+  L.push('');
+  L.push(...msgBlocks(d, '· '));
+  L.push('※ 서류가 도착하면 확인 후 연락드리겠습니다. 궁금하신 점은 언제든 문의 주세요.');
+  L.push('문의: 메리트투어 ' + CO.tel);
+  return L.join('\n');
+}
+function buildMail(d){
+  const L = ['○○○ 고객님, 안녕하십니까.', '메리트투어 ○○○입니다.', '',
+             d.name + ' 서류를 첨부해 드립니다. (첨부: ' + d.attach + ')'];
+  if (d.intro) L.push(d.intro);
+  L.push('');
+  L.push(...msgBlocks(d, '- '));
+  L.push('서류가 도착하면 확인 후 연락드리겠습니다. 궁금하신 점은 언제든 문의 주세요.', '감사합니다.', '',
+         '메리트투어 ○○○ 드림', '전화 ' + CO.tel + ' · 팩스 ' + CO.fax, CO.addr);
+  return { subject: '[메리트투어] ' + d.name + ' 서류 안내', body: L.join('\n') };
+}
+function openMsg(key, ch){
+  const d = MSG[key]; if (!d || !window.MT_COPYBOX) return;
+  const mail = buildMail(d);
+  MT_COPYBOX.open({
+    title: d.name + ' — 보내실 때 문안',
+    note: '○○○ 자리는 고객 성함과 담당자 이름으로 바꿔 보내세요. PDF 는 따로 첨부합니다(자료실 링크는 로그인해야 열려 보내지 않습니다).',
+    tabs: [
+      { key: 'kakao', label: '카카오톡', body: buildKakao(d) },
+      { key: 'mail',  label: '메일', subject: mail.subject, body: mail.body },
+    ],
+    active: ch,
+  });
+}
+document.querySelectorAll('.msg-row[data-msg]').forEach(row => {
+  const key = row.dataset.msg;
+  if (!MSG[key]) return;
+  const lab = document.createElement('span'); lab.className = 'msg-lab'; lab.textContent = '보내실 때 문안';
+  row.appendChild(lab);
+  [['kakao', '💬 카카오톡 문안'], ['mail', '✉️ 메일 문안']].forEach(([ch, label]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'msg-btn';
+    b.dataset.ch = ch; b.textContent = label;
+    b.addEventListener('click', () => openMsg(key, ch));
+    row.appendChild(b);
+  });
 });
 
 let toastTimer;
