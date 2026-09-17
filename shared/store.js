@@ -442,8 +442,77 @@
     return { ok: false, message: '붙여넣은 표는 ' + blockMonth + ' 인데 ' + period + ' 로 등록하려 합니다. 달을 확인해 주세요.' };
   }
 
+  /* ── 리조트 정보 (resort_info · 담당자 입력 시트) ──────────────────
+     리조트마다 한 행. 마스터와 같은 낙관적 잠금 — 같은 리조트를 두 사람이 동시에
+     고칠 수 있어, 조건 없이 덮으면 남의 수정이 조용히 사라진다.
+     서버 스키마: supabase/migrations/31_resort_info.sql */
+
+  var RI_COLS = 'resort_key,data,version,updated_at,updated_by';
+
+  function riRow(r) {
+    return { data: r.data || {}, version: r.version, updatedAt: r.updated_at, updatedBy: r.updated_by || '' };
+  }
+
+  function loadResortInfo() {
+    return rest('/resort_info?select=' + RI_COLS + '&order=resort_key').then(function (rows) {
+      var out = {};
+      (rows || []).forEach(function (r) { out[r.resort_key] = riRow(r); });
+      return out;
+    });
+  }
+
+  function loadResortInfoOne(key) {
+    return rest('/resort_info?resort_key=eq.' + encodeURIComponent(String(key || ''))
+              + '&select=' + RI_COLS + '&limit=1')
+      .then(function (rows) { var r = (rows && rows[0]) || null; return r ? riRow(r) : null; });
+  }
+
+  /* 0행(또는 새로 만들다 기본키가 겹친 409)을 사람 말로 가른다 — saveMaster 와 같은 이유.
+     version 이 그대로인데 0행 = 권한(RLS). 달라져 있으면 = 그 사이 남이 저장했다. */
+  function riConflict(key, version) {
+    return loadResortInfoOne(key).then(function (cur) {
+      var e;
+      if (cur && String(cur.version) === String(version)) {
+        e = new Error('리조트 정보를 저장할 권한이 없습니다. 관리자에게 역할 승인을 요청해 주세요.');
+        e.forbidden = true;
+      } else {
+        e = new Error('그 사이 다른 분이 이 리조트 정보를 저장했습니다.');
+        e.conflict = true;
+        e.current = cur;
+      }
+      throw e;
+    });
+  }
+
+  function saveResortInfo(key, data, version, byName) {
+    key = String(key || '');
+    var v = Number(version) || 0;
+    if (!v) {
+      // 아직 행이 없다 → 새로 만든다. 그 사이 남이 먼저 만들었으면 기본키가 겹쳐 409 가 온다.
+      return rest('/resort_info', {
+        method: 'POST', prefer: 'return=representation',
+        body: { resort_key: key, data: data, version: 1, updated_by: byName || '' }
+      }).then(function (rows) {
+        return { ok: true, version: (rows && rows[0] && rows[0].version) || 1 };
+      }, function (e) {
+        if (e && e.status === 409) return riConflict(key, v);
+        throw e;
+      });
+    }
+    var q = '/resort_info?resort_key=eq.' + encodeURIComponent(key) + '&version=eq.' + encodeURIComponent(String(v));
+    return rest(q, { method: 'PATCH', prefer: 'return=representation',
+                     body: { data: data, version: v + 1, updated_by: byName || '' } })
+      .then(function (rows) {
+        if (rows && rows.length) return { ok: true, version: rows[0].version };
+        return riConflict(key, v);
+      });
+  }
+
   return {
     listPeriods: listPeriods,
+    loadResortInfo: loadResortInfo,
+    loadResortInfoOne: loadResortInfoOne,
+    saveResortInfo: saveResortInfo,
     load: load,
     loadMany: loadMany,
     loadBlock: loadBlock,

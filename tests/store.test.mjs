@@ -331,3 +331,65 @@ test('loadBlock — 그 달이 없거나 표를 안 올렸으면 null', async ()
   route('/data_registry?period=eq.', 200, [{ period: '2026-08', block_raw: null }]);
   assert.equal(await STORE.loadBlock('2026-08'), null, '달은 있는데 표만 없는 경우도 null');
 });
+
+/* ── 리조트 정보 (resort_info · 31) ─────────────────────────────── */
+
+test('리조트 정보 — 목록은 리조트 키로 묶어 준다', async () => {
+  reset();
+  route('/resort_info?select=', 200, [
+    { resort_key: 'akiba', data: { items: { staff: { icn: '홍길동' } } }, version: 3, updated_at: '2026-09-17T01:00:00Z', updated_by: '홍길동' }
+  ]);
+  const m = await STORE.loadResortInfo();
+  assert.equal(m.akiba.version, 3);
+  assert.equal(m.akiba.updatedBy, '홍길동');
+  assert.equal(m.akiba.data.items.staff.icn, '홍길동');
+  assert.equal(calls[0].auth, 'Bearer AT');
+});
+
+test('리조트 정보 — 행이 없으면 새로 만든다 (POST · version 1)', async () => {
+  reset();
+  route('/resort_info', 201, [{ resort_key: 'akiba', version: 1 }], 'POST');
+  const r = await STORE.saveResortInfo('akiba', { items: { airport: '후쿠오카' } }, 0, '홍길동');
+  assert.equal(r.version, 1);
+  assert.equal(calls[0].method, 'POST');
+  assert.equal(calls[0].body.resort_key, 'akiba');
+  assert.equal(calls[0].body.version, 1);
+  assert.equal(calls[0].body.updated_by, '홍길동');
+});
+
+test('리조트 정보 — 행이 있으면 읽은 version 일 때만 PATCH', async () => {
+  reset();
+  route('/resort_info?resort_key=eq.akiba', 200, [{ resort_key: 'akiba', version: 4 }], 'PATCH');
+  const r = await STORE.saveResortInfo('akiba', { items: {} }, 3, '홍길동');
+  assert.equal(r.version, 4);
+  assert.match(calls[0].url, /resort_key=eq\.akiba/);
+  assert.match(calls[0].url, /version=eq\.3/);
+  assert.equal(calls[0].body.version, 4);
+});
+
+test('리조트 정보 — 0행: version 이 달라졌으면 충돌, 그대로면 권한 없음', async () => {
+  reset();
+  route('/resort_info?resort_key=eq.akiba', 200, [], 'PATCH');
+  route('/resort_info?resort_key=eq.akiba', 200, [{ resort_key: 'akiba', data: {}, version: 5, updated_by: '김철수' }], 'GET');
+  await assert.rejects(
+    () => STORE.saveResortInfo('akiba', { items: {} }, 3, '홍길동'),
+    err => err.conflict === true && !err.forbidden && err.current.version === 5 && /다른 분이/.test(err.message)
+  );
+  reset();
+  route('/resort_info?resort_key=eq.akiba', 200, [], 'PATCH');
+  route('/resort_info?resort_key=eq.akiba', 200, [{ resort_key: 'akiba', data: {}, version: 3 }], 'GET');
+  await assert.rejects(
+    () => STORE.saveResortInfo('akiba', { items: {} }, 3, '홍길동'),
+    err => err.forbidden === true && !err.conflict && /권한/.test(err.message)
+  );
+});
+
+test('리조트 정보 — 새로 만들다 기본키가 겹치면(409) 충돌로 알린다', async () => {
+  reset();
+  route('/resort_info', 409, { message: 'duplicate key value violates unique constraint "resort_info_pkey"' }, 'POST');
+  route('/resort_info?resort_key=eq.akiba', 200, [{ resort_key: 'akiba', data: {}, version: 2, updated_by: '김철수' }], 'GET');
+  await assert.rejects(
+    () => STORE.saveResortInfo('akiba', { items: {} }, 0, '홍길동'),
+    err => err.conflict === true && err.current.version === 2
+  );
+});
