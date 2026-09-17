@@ -34,6 +34,7 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
 /* 상품 카드 */
 .doc-card { background: var(--mt-surface); border: 1px solid var(--mt-border); border-left: 3px solid var(--mt-accent); border-radius: var(--mt-radius-lg); padding: 20px 22px; box-shadow: var(--mt-shadow); margin-bottom: 16px; }
 .doc-card.longstay { border-left-color: var(--mt-point); }
+.doc-card.transfer { border-left-color: var(--mt-green-dark); }
 .doc-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
 .doc-card-name { font-size: 17px; font-weight: 800; color: var(--mt-brand); letter-spacing: -0.01em; }
 .doc-card-name .en { font-size: 11px; font-weight: 600; color: var(--mt-text3); font-family: var(--mt-mono); margin-left: 7px; letter-spacing: 0.02em; }
@@ -122,13 +123,14 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
   <!-- 타이틀 -->
   <h1 class="page-title">가입 서류 자료실</h1>
   <p class="page-desc">
-    EWRC II 회원권 · 장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 서류를 한곳에 모았습니다.
+    EWRC II 회원권 · 장기숙박형 숙소(쿠쥬 프라이빗 타운) 가입 서류와 <strong>회원권 명의개서 서류</strong>를 한곳에 모았습니다.
     각 상품의 <strong>원본 양식</strong>과 <strong>작성방법본</strong>을 받아 고객님께 발송하세요.
     장기숙박형은 기존 회원이 아닌 고객을 위한 <strong>비회원용 계약서</strong>(EWRC Ⅱ 입회신청서 포함)를 별도로 제공합니다.
   </p>
 
   <div class="note-bar">
     <strong>내부용 자료입니다.</strong> 양식·약관 버전은 <span class="mono">v1.6</span> 기준이며, 외화송금신청서는 KB국민은행 <span class="mono">26.01 개정</span> 양식입니다.
+    명의개서 서류는 <span class="mono">v1.0</span>(2026-09) 입니다.
     버전이 바뀌면 <span class="mono">tools/library/</span> 폴더의 PDF만 교체하시면 됩니다.
   </div>
 
@@ -270,6 +272,51 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
     </div>
   </div>
 
+  <!-- ============ 회원권 명의개서 ============ -->
+  <div class="section-title">회원권 명의개서</div>
+
+  <div class="doc-card transfer" id="card-transfer">
+    <div class="doc-card-head">
+      <div class="doc-card-name">회원권 명의개서 <span class="en">Membership Transfer · v1.0</span></div>
+      <div class="doc-tags">
+        <span class="tag tag-money">수수료 330,000원 · 부가세 포함</span>
+        <span class="tag tag-target">개인 → 개인 · 법인 → 개인</span>
+      </div>
+    </div>
+    <div class="doc-summary">
+      골드 · 다이아몬드 · 다이아몬드Ⅱ · EWRC이용권 · EWRCⅡ 회원권의 <strong>양도인 → 양수인 명의 변경</strong> (회원권 1구좌 기준).
+      수수료는 <strong class="mono">하나은행 109-890042-63604</strong>(예금주 주식회사 메리트투어)로 <strong>양수인 성명</strong>으로 입금하며, 명의개서 완료 후에는 환불되지 않습니다.
+      서류가 하나라도 빠지거나 유효기간이 지나면 접수되지 않으니, 모두 준비해 <strong>등기우편</strong>으로 보내시도록 안내하세요.
+    </div>
+    <div class="dl-row">
+      <a class="dl-btn primary" href="transfer_forms.pdf" target="_blank" rel="noopener">
+        <span class="dl-ico">📄</span>
+        <span class="dl-body"><span class="dl-label">명의개서 서류 받기</span><span class="dl-sub">필수준비서류 체크리스트 · 양도양수 계약서 3부 · 명의개서 신청서</span></span>
+      </a>
+    </div>
+    <div class="req-grid">
+      <div>
+        <div class="req-block-label">양도인 (현재 명의자)</div>
+        <ul class="req-list">
+          <li>명의개서 신청서 — 양도인란 기입 · <span class="seal">인감날인</span><span class="note">법인은 법인인감날인</span></li>
+          <li class="attach">인감증명서 원본 1부<span class="note">최근 1개월 이내 발급분 · 법인은 법인인감증명서</span></li>
+          <li class="attach">개인 — 신분증 사본 1부 · 회원증 원본</li>
+          <li class="attach">법인 — 법인등기부등본 원본 1부 · 사업자등록증 사본 1부 · 양도 결의서 사본 1부 · 회원증 원본<span class="note">등기부등본은 최근 1개월 이내 · 양도 결의서는 이사회 의사록</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="req-block-label">양수인 (새 명의자) · 공통</div>
+        <ul class="req-list">
+          <li>명의개서 신청서 — 양수인란 기입 · <span class="seal">인감날인</span></li>
+          <li class="attach">인감증명서 원본 1부<span class="note">최근 1개월 이내 발급분</span></li>
+          <li class="attach">여권 사본 1부<span class="note">부부의 경우 배우자 여권 사본 1부 동봉</span></li>
+          <li>회원권 양도양수 계약서 — 양측 기입 · <span class="seal">인감날인</span><span class="note">3부 작성 · 양도인·양수인 각 1부 보관 · 1부는 메리트투어 제출</span></li>
+          <li>명의개서 수수료 330,000원 입금<span class="note">양수인 성명으로 · 하나은행 109-890042-63604</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ 공통 안내 ============ -->
   <div class="section-title">공통 안내</div>
   <div class="common-box">
@@ -285,7 +332,9 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
         <div class="common-item-body">
           <span class="mono">국민은행 817201-04-109230</span><br>
           예금주 주식회사 메리트투어
-          <span class="muted">· EWRC II 입회금 700만원 / 장기숙박 보증금 5,000만원</span>
+          <span class="muted">· EWRC II 입회금 700만원 / 장기숙박 보증금 5,000만원</span><br>
+          <span class="mono">하나은행 109-890042-63604</span>
+          <span class="muted">· 명의개서 수수료 330,000원 · 양수인 성명으로 입금</span>
         </div>
       </div>
       <div>
@@ -335,7 +384,8 @@ function btn(href, cls, ico, label, sub){
   return a;
 }
 
-document.querySelectorAll('.dl-row').forEach(row => {
+/* data-pair 가 있는 줄만 — 명의개서처럼 단일 버튼을 직접 적은 .dl-row 에는 손대지 않는다 */
+document.querySelectorAll('.dl-row[data-pair]').forEach(row => {
   const key = row.dataset.pair;
   const set = DOCS[key] || {};
   row.appendChild(btn(set.form,  'primary', '📄', '원본 양식 받기', '입회·계약·동의서·송금신청서'));
