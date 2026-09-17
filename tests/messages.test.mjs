@@ -43,6 +43,10 @@ test('2027 발송 문안 — 알림톡 템플릿 · 고객아이디 치환값 ·
     assert.ok(t.body.includes(s), '문안에 「' + s + '」 가 없다');
   }
   assert.ok(!t.body.includes('HONG01012345678'), '아이디가 치환값인데 예시 아이디가 남아 있다');
+  // 링크가 묻히지 않게 — 안내문 주소는 세부(■ 줄)보다 앞에, 밖에 적는 세부는 오픈 일시·아이디까지만(Min 2026-09-17)
+  assert.ok(t.body.indexOf('https://merittour.github.io/2027/') < t.body.indexOf('■'), '안내문 주소가 세부 내용 뒤에 있다');
+  assert.ok(!/1차|회차|포틴힐즈|개편 작업/.test(t.body), '안내문에 있는 세부(회차·확인 사항·개편)를 밖에 다시 적었다');
+  assert.ok(filled.length <= 500, '치환 뒤 ' + filled.length + '자 — 짧게(500자 안) 유지한다');
   for (const b of BANNED) assert.ok(!t.body.includes(b), '쓰지 않는 말 「' + b + '」');
   assert.equal(n.template.buttons[0].url, 'https://merittour.github.io/2027/', '버튼 주소');
 });
