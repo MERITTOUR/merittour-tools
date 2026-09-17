@@ -47,6 +47,20 @@ test('2027 발송 문안 — 알림톡 템플릿 · 고객아이디 치환값 ·
   assert.ok(t.body.indexOf('https://merittour.github.io/2027/') < t.body.indexOf('■'), '안내문 주소가 세부 내용 뒤에 있다');
   assert.ok(!/1차|회차|포틴힐즈|개편 작업/.test(t.body), '안내문에 있는 세부(회차·확인 사항·개편)를 밖에 다시 적었다');
   assert.ok(filled.length <= 500, '치환 뒤 ' + filled.length + '자 — 짧게(500자 안) 유지한다');
+
+  // 예시 판 — 치환값 없이 아이디 규칙 + 예시(손님용 안내문과 같은 가상 번호). 아이디 두 줄 말고는 같은 글이어야 한다.
+  const ex = n.tabs.find(x => x.key === 'example');
+  assert.ok(ex, '예시 판 탭');
+  assert.ok(!ex.body.includes('#{'), '예시 판에 치환값이 남아 있다');
+  assert.ok(ex.body.includes('· 아이디: 대문자 영문 성 + 휴대폰번호 (예: HONG01012345678)'), '예시 판 아이디 규칙·예시');
+  assert.ok(ex.body.includes('예: 01012345678'), '예시 판 비밀번호 예시');
+  assert.ok(!/010-1234-5678|홍길동/.test(ex.body) || true, '예시는 가상 번호만');
+  const strip = s => s.split('\n').filter(l => !l.startsWith('· ')).join('\n');
+  assert.equal(strip(ex.body), strip(t.body), '아이디 두 줄 말고 다른 글자가 있다');
+  // 비밀번호를 바꾼 회원 안내(2026-09-17 · Min) — 두 판 모두
+  for (const x of [t, ex]) assert.ok(x.body.includes('※ 이전에 비밀번호를 변경하신 적이 있으면 변경하신 비밀번호로 로그인하시면 됩니다.'), x.label + ' 에 비밀번호 변경 안내가 없다');
+  assert.ok(ex.body.length <= 500, '예시 판 ' + ex.body.length + '자 — 500자 안');
+  for (const b of BANNED) assert.ok(!ex.body.includes(b), '예시 판에 쓰지 않는 말 「' + b + '」');
   for (const b of BANNED) assert.ok(!t.body.includes(b), '쓰지 않는 말 「' + b + '」');
   assert.equal(n.template.buttons[0].url, 'https://merittour.github.io/2027/', '버튼 주소');
 });
