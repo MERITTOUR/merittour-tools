@@ -85,9 +85,33 @@ test('자료실 문안 — 카드에 적힌 계좌·금액과 같은 값을 말�
   for (const b of BANNED) assert.ok(!script.includes(b), '문안에 쓰지 않는 말 「' + b + '」');
 });
 
-test('영업 허브 — 발송 문안 카드가 복사 상자와 notice2027 를 부른다', () => {
+test('쿠쥬 프라이빗 타운 2027 희망 일정 접수 문안 — 목요일 기준 · 연 30일 · 최대 4개 · 수요 조사 · 예시 날짜는 목요일', () => {
+  const n = load('sales/notice_longstay2027.js').MT_NOTICE_LONGSTAY_2027;
+  const b = n.tabs[0].body;
+  assert.ok(b.startsWith('[메리트투어] 쿠쥬 프라이빗 타운 2027년 예약 희망 일정 접수\n'), '첫 줄 = 제목');
+  for (const s of ['「쿠쥬 프라이빗 타운」', '출국일과 귀국일은 목요일 기준', '1년에 최대 30일', '최대 4개', '수요 조사', '인천 · 김해 · 대구', '02-365-9800']) {
+    assert.ok(b.includes(s), '문안에 「' + s + '」 가 없다');
+  }
+  assert.ok(b.length <= 1000, b.length + '자 — 1,000자를 넘는다');
+  assert.ok(!/별장숙소|롱스테이|타운하우스|쿠주힐즈/.test(b), '옛 이름·안 쓰는 말이 들어 있다');
+  for (const x of BANNED) assert.ok(!b.includes(x), '쓰지 않는 말 「' + x + '」');
+  // 출국일 예시는 실제 목요일이어야 한다
+  const m = b.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일\(목\) 출국/);
+  assert.ok(m, '출국일 예시(목)가 없다');
+  assert.equal(new Date(+m[1], +m[2] - 1, +m[3]).getDay(), 4, '예시 날짜가 목요일이 아니다');
+  assert.ok(/○○○ \(설문 링크\)/.test(b) && /접수 마감: 2026년 ○월 ○일/.test(b), '채울 자리(설문 링크 · 접수 마감)');
+});
+
+test('영업 허브 — 발송 문안 카드(data-notice)가 복사 상자와 문안 파일을 부른다', () => {
   const hub = read('sales/index.html');
-  assert.match(hub, /id="card-notice2027"/);
+  const cards = [...hub.matchAll(/id="(card-[a-z0-9-]+)" data-notice="([A-Z0-9_]+)"/g)].map(m => [m[1], m[2]]);
+  assert.deepEqual(cards, [['card-notice2027', 'MT_NOTICE_2027'], ['card-notice-longstay2027', 'MT_NOTICE_LONGSTAY_2027']]);
   assert.match(hub, /<script src="\.\.\/shared\/copybox\.js"><\/script>/);
   assert.match(hub, /<script src="notice2027\.js"><\/script>/);
+  assert.match(hub, /<script src="notice_longstay2027\.js"><\/script>/);
+  assert.match(hub, /querySelectorAll\('a\[data-notice\]'\)/, '카드 클릭이 data-notice 로 묶여 있지 않다');
+  for (const [, g] of cards) {
+    const file = g === 'MT_NOTICE_2027' ? 'sales/notice2027.js' : 'sales/notice_longstay2027.js';
+    assert.ok(load(file)[g], file + ' 이 window.' + g + ' 를 두지 않는다');
+  }
 });
