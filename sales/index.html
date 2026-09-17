@@ -150,9 +150,18 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
       </div>
     </a>
     <!-- 발송 문안은 sales/notice2027.js 한 곳에 — 알리고 알림톡 템플릿(#{고객아이디} 치환) · 대체 문자는 알리고가 같은 내용으로 -->
-    <a href="#" class="tool-card" id="card-notice2027">
+    <a href="#" class="tool-card" id="card-notice2027" data-notice="MT_NOTICE_2027">
       <div class="tool-card-title">2027 예약 안내 발송 문안</div>
       <div class="tool-card-desc">2026-09-17 전 회원 발송분 — 알리고 <b>알림톡 템플릿</b>(치환값 <b>#{고객아이디}</b> · 대체 문자는 알리고가 치환). 누르면 복사 상자가 열립니다.</div>
+      <div class="tool-card-meta">
+        <span class="badge ver">문안</span>
+        <span class="badge team guest">손님용</span>
+      </div>
+    </a>
+    <!-- 장기숙박형 숙소(쿠쥬 프라이빗 타운) 이용권 회원에게만 — 문안은 sales/notice_longstay2027.js -->
+    <a href="#" class="tool-card" id="card-notice-longstay2027" data-notice="MT_NOTICE_LONGSTAY_2027">
+      <div class="tool-card-title">쿠쥬 프라이빗 타운 2027 희망 일정 접수 문안</div>
+      <div class="tool-card-desc">장기숙박형 숙소 이용권 회원에게만 — 목요일 기준 · 연 30일 · 희망 일정 최대 4개 <b>수요 조사</b>. 설문 링크·접수 마감을 채워 보냅니다.</div>
       <div class="tool-card-meta">
         <span class="badge ver">문안</span>
         <span class="badge team guest">손님용</span>
@@ -230,17 +239,19 @@ html, body { font-family: var(--mt-sans); background: var(--mt-bg); color: var(-
      실제 로그인은 Supabase Auth(shared/access.js)와 로그인 문지기(shared/guard.js)가 한다. -->
 <script src="../shared/copybox.js"></script>
 <script src="notice2027.js"></script>
+<script src="notice_longstay2027.js"></script>
 <script>
-  /* 2027 예약 안내 발송 문안 — 카드를 누르면 복사 상자. 문안은 notice2027.js 한 곳에서만 고친다. */
+  /* 발송 문안 카드(data-notice = 문안 파일이 window 에 두는 이름)를 누르면 복사 상자. 문안은 sales/notice*.js 한 곳에서만 고친다. */
   (function () {
-    var card = document.getElementById('card-notice2027');
-    if (!card) return;
-    card.addEventListener('click', function (e) {
-      e.preventDefault();
-      var n = window.MT_NOTICE_2027;
-      if (!n || !window.MT_COPYBOX) return;
-      MT_COPYBOX.open({ title: n.title, note: n.note, tabs: n.tabs });
-    });
+    var cards = document.querySelectorAll('a[data-notice]');
+    for (var i = 0; i < cards.length; i++) (function (card) {
+      card.addEventListener('click', function (e) {
+        e.preventDefault();
+        var n = window[card.getAttribute('data-notice')];
+        if (!n || !window.MT_COPYBOX) return;
+        MT_COPYBOX.open({ title: n.title, note: n.note, tabs: n.tabs });
+      });
+    })(cards[i]);
   })();
 </script>
 </body>
