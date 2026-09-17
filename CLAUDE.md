@@ -67,6 +67,12 @@
   - **초대 메일(Invite user)을 쓴다(2026-09-17 · Min — 실제로 도착하는 것을 확인 · 「양쪽 다 쓸 수 있다」).** 2026-09 초에는 메일이 안 와서 Create new user 로 돌려 뒀었다(Site URL 이 기본값이던 때). 지금 설정 = Site URL `https://merittour.github.io/merittour-tools/login/` · Redirect URLs `https://merittour.github.io/**` · 「Allow new users to sign up」 OFF · Supabase 기본 메일 서비스(시간당 몇 통 제한 — 한꺼번에 여럿을 초대할 일이 생기면 Authentication → Emails → SMTP Settings 에 회사 메일 계정을 붙인다).
     초대 링크는 1시간(Email OTP expiration 3600초)이면 만료 — 다시 Invite 한다. 링크 처리 = `shared/access.js` 의 `adoptHash`(`#access_token…&type=invite`)·`verifyTokenHash`(`?token_hash=…&type=invite`).
     **Create new user(이메일 + 첫 비밀번호 + Auto Confirm User → 아이디·첫 비밀번호를 본인에게 따로 알려 줌)도 그대로 쓸 수 있다** — 메일이 닿지 않는 주소용. 두 방식 모두 `app_users` insert 트리거(`mt_apply_access_request`)가 신청함의 역할·섹션을 입힌다.
+    Invite(계정 생성)가 [발급함]보다 먼저면 그때는 입힐 것이 없다 — 그 경우는 [발급함] 을 누르는 순간 `trg_access_requests_apply_on_invite`(32)가 입힌다. 순서가 어느 쪽이든 결과가 같다.
+  - **`32_app_users_self_policy.sql`(2026-09-17 실행) — 계정 관리의 「승인」·「저장」이 전부 500 이던 것을 고쳤다.** 14 의 `au_update_self` WITH CHECK 가 app_users 를 서브쿼리로 다시 읽어
+    PostgreSQL 이 「infinite recursion detected in policy for relation app_users」(42P17)를 냈다 — UPDATE 는 허용 정책 전부의 식을 한꺼번에 펼치므로 owner 가 `au_write_owner` 로 들어와도 같이 터졌다.
+    16·31 처럼 SQL 로 돌린 UPDATE 는 RLS 를 안 타서 눈에 안 띄었다(2026-09-17 첫 UI 승인 시도에서 드러남). 비교 대상은 이제 SECURITY DEFINER 함수 `mt_self_unchanged(role, active, areas, read_areas)` 가 읽는다.
+    **정책식 안에서 같은 표를 서브쿼리로 읽지 말 것** — 반드시 SECURITY DEFINER 함수를 거친다(`mt_is_owner()`·`mt_is_admin()` 이 그 꼴).
+    화면의 500 문구도 바꿨다(`access.js`·`store.js`): 서버가 오류 문구를 주면 「서버에서 처리하지 못했습니다 (HTTP 500 · …)」로 그대로 보인다 — 「정지 상태」로 덮으면 원인에 못 닿는다. 빈 5xx(게이트웨이·정지)만 종전 문구.
   - **첫 비밀번호를 바꿀 길을 반드시 남긴다.** 메일이 없으면 재설정 링크도 없다. 오른쪽 위 이름 배지 → 「비밀번호 변경」(`guard.js` 의 `changePassword`)이 그 자리다. 판정은 로그인 화면과 같은 `MT_AUTH.passwordCheck` 하나를 쓴다.
   - **계정을 코드에서 만들지 않는다.** 만들려면 `service_role` 키가 필요한데 공개 저장소에 둘 수 없다. 대신 신청함에 [이메일 복사]를 두어 콘솔에 붙여 넣는 수고만 남겼다. 자동화하려면 Edge Function 이 필요하다.
   - 신청 상태 값은 `pending`·`invited`·`rejected`·`joined` 그대로다. 화면에 보이는 말만 「발급」으로 바꿨다 — 값을 바꾸면 표의 check 제약과 `mt_apply_access_request()` 가 함께 깨진다.
@@ -317,7 +323,7 @@
 ## Supabase 권한·마이그레이션 현황 (2026-09 검수)
 - 프로젝트에 `schema_migrations` 표가 없어 `list_migrations` 는 비어 있다 — **저장소의 `supabase/migrations/*.sql` 이 이력이다.**
   `apply_migration` 은 쓰지 않는다(없던 이력표를 절반만 만든다). 실행은 `execute_sql` 로, 파일과 같은 내용을 그대로.
-- 적용된 것: 04~18 · 20~30. **19(현지 전달 메모 · PR #136)만 미머지·미적용** — 살릴지 닫을지 결정 필요.
+- 적용된 것: 04~18 · 20~32(31 리조트 정보 · 32 app_users 정책 재귀 제거는 2026-09-17 실행). **19(현지 전달 메모 · PR #136)만 미머지·미적용** — 살릴지 닫을지 결정 필요.
   26(쿠주 프라이빗 레지던스 → 쿠주힐즈)·27(후쿠로다노타키CC 골프텔 → 호텔)·28(쿠주힐즈 → 쿠주 타운하우스)은 2026-09-04 실행 — `mt_block_override` 가
   비어 있어 0행 옮김. 파일이 이력이므로 그대로 실행해 두었다. 숙소 이름을 바꿀 때는 이렇게 **코드(리조트 마스터 `name`)와
   SQL 을 한 짝**으로. 「골프텔」은 화면 이름에서 쓰지 않는다(2026-09 · Min) — 엠클릭 별칭(`aliases`)의 「○○CC 골프텔」은 그대로.

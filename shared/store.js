@@ -64,7 +64,10 @@
     if (status === 401) e = new Error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
     else if (status === 403 || /permission denied/i.test(msg) || /row-level security/i.test(msg))
       e = new Error('권한이 없습니다. 관리자에게 역할 승인을 요청해 주세요.');
-    else if (status >= 500) e = new Error('서버에 연결할 수 없습니다. Supabase 프로젝트가 정지 상태일 수 있습니다.');
+    // 500 은 「정지 상태」가 아니라 서버가 처리하다 실패한 것이다(정책·트리거 오류 등). 서버가 준 문구를
+    // 그대로 보여야 원인에 닿는다 — 2026-09-17 정책 무한 재귀(42P17)가 「프로젝트 정지」로 읽혔다.
+    else if (status >= 500 && msg) e = new Error('서버에서 처리하지 못했습니다 (HTTP ' + status + ' · ' + msg + '). 잠시 뒤에도 같으면 관리자에게 이 문구를 알려 주세요.');
+    else if (status >= 500) e = new Error('서버에 연결할 수 없습니다. Supabase 프로젝트가 정지 상태일 수 있습니다.');   // 빈 5xx = 게이트웨이·정지
     else e = new Error(msg || ('요청에 실패했습니다. (HTTP ' + status + ')'));
     e.status = status; e.body = body;
     return e;
