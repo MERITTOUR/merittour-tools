@@ -60,7 +60,8 @@
     { key: 'insurance',  label: '보험코드매칭',     path: 'tools/insurance/' },
     { key: 'library',    label: '가입 서류 자료실', path: 'tools/library/' },
     { key: 'imgtoolkit', label: '이미지 툴킷',      path: 'tools/imgtoolkit/' },
-    { key: 'weather',    label: '리조트 날씨',      path: 'tools/weather/' }
+    { key: 'weather',    label: '리조트 날씨',      path: 'tools/weather/' },
+    { key: 'resortinfo', label: '리조트 정보',      path: 'tools/resortinfo/' }
     /* register(등록소) · inquiry(문의) 는 뺐다 — 둘 다 통합 업무 허브로 보내는
        리다이렉트만 남은 주소라 허브에 카드가 없다. 카드가 없는 줄을 권한 화면에
        띄우면 「이건 어디를 여는 거지」가 된다. 두 주소의 data-section 도 함께
@@ -77,19 +78,19 @@
      (16_sections_for_all.sql 이전에는 역할로 무조건 통과했는데, 그러면 마스터가
       자기 섹션을 정할 수가 없었다) */
   var ALL_KEYS = ['sales', 'manage', 'air', 'dashboard', 'booking',
-                  'insurance', 'library', 'imgtoolkit', 'weather'];
+                  'insurance', 'library', 'imgtoolkit', 'weather', 'resortinfo'];
   var DEFAULT_AREAS = {
     owner:  { areas: ALL_KEYS.slice(), read: [] },
     admin:  { areas: ALL_KEYS.slice(), read: [] },
     manage: { areas: ['sales', 'manage', 'dashboard', 'booking',
-                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
+                      'insurance', 'library', 'imgtoolkit', 'weather', 'resortinfo'], read: [] },
     sales:  { areas: ['sales', 'dashboard', 'booking',
-                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] },
+                      'insurance', 'library', 'imgtoolkit', 'weather', 'resortinfo'], read: [] },
     /* 항공팀도 영업·관리와 같은 층이다(18_air_same_as_others.sql).
        예전에는 read 로만 채워 「읽기 전용」이었는데, 서버 쓰기 정책에서도
        빠져 있어 화면에는 버튼이 보이는데 저장만 0행이 됐다. */
     air:    { areas: ['sales', 'air', 'dashboard', 'booking',
-                      'insurance', 'library', 'imgtoolkit', 'weather'], read: [] }
+                      'insurance', 'library', 'imgtoolkit', 'weather', 'resortinfo'], read: [] }
   };
 
   function defaultsFor(role) {

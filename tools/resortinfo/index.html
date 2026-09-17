@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 리조트 정보</title>
+<script src="../../shared/guard.js" data-section="resortinfo"></script>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* ── 리조트 정보 고유 스타일 (색은 core.css 토큰) ── */
+.ri-intro { font-size: 13px; color: var(--mt-text2); margin: 0 0 14px; line-height: 1.65; }
+.ri-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+.ri-side { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 4px; max-height: calc(100vh - 24px); overflow: auto; }
+.ri-region { font-size: 11px; font-weight: 700; color: var(--mt-text3); letter-spacing: .06em; margin: 10px 6px 2px; font-family: var(--mt-mono); }
+.ri-region:first-child { margin-top: 0; }
+.ri-rs { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left;
+  background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px; padding: 8px 10px; cursor: pointer; font: inherit; color: var(--mt-text); }
+.ri-rs:hover { border-color: var(--mt-accent); }
+.ri-rs.on { border-color: var(--mt-accent); background: var(--mt-accent-dim, #EEF1F5); font-weight: 600; }
+.ri-rs .st { font-size: 10px; color: var(--mt-text3); font-family: var(--mt-mono); white-space: nowrap; }
+.ri-rs .st.has { color: var(--mt-green-dark); }
+.ri-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+.ri-head h2 { font-size: 18px; margin: 0; color: var(--mt-brand); }
+.ri-meta { font-size: 11.5px; color: var(--mt-text3); font-family: var(--mt-mono); }
+.ri-origins { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--mt-text2); margin: 0 0 14px; }
+.ri-origins label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.ri-group { margin: 0 0 14px; }
+.ri-group h3 { font-size: 13px; font-weight: 700; color: var(--mt-brand); margin: 0 0 10px; display: flex; align-items: center; gap: 7px; }
+.ri-group h3::before { content: ''; width: 3px; height: 12px; background: var(--mt-point); border-radius: 2px; }
+.ri-field { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--mt-border); }
+.ri-field:first-of-type { border-top: none; }
+.ri-field label.l { font-size: 12.5px; color: var(--mt-text2); padding-top: 7px; line-height: 1.4; }
+.ri-field label.l small { display: block; color: var(--mt-text3); font-size: 11px; font-weight: 400; margin-top: 2px; }
+.ri-field input[type=text], .ri-field input[type=url], .ri-field input[type=date], .ri-field select, .ri-field textarea {
+  width: 100%; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--mt-border); border-radius: 7px; background: var(--mt-surface); color: var(--mt-text); }
+.ri-field textarea { min-height: 38px; resize: vertical; line-height: 1.5; }
+.ri-field input:focus, .ri-field select:focus, .ri-field textarea:focus { outline: none; border-color: var(--mt-accent); box-shadow: 0 0 0 3px rgba(53,60,72,.08); }
+.ri-po { display: grid; gap: 8px; }
+.ri-po .o { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px; align-items: start; }
+.ri-po .o span { font-size: 11.5px; color: var(--mt-text3); font-family: var(--mt-mono); padding-top: 8px; }
+.ri-extra { display: grid; grid-template-columns: 190px minmax(0, 1fr) 32px; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--mt-border); }
+.ri-extra input, .ri-extra textarea { width: 100%; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--mt-border); border-radius: 7px; }
+.ri-extra .x { border: none; background: transparent; color: var(--mt-text3); cursor: pointer; font-size: 16px; padding: 6px 0; }
+.ri-extra .x:hover { color: var(--mt-red); }
+.ri-addextra { margin-top: 8px; }
+.ri-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 10px 14px; margin-top: 8px; box-shadow: var(--mt-shadow-lg); }
+.ri-savebar .msg { font-size: 12.5px; color: var(--mt-text2); }
+.ri-savebar .msg.dirty { color: var(--mt-amber-dark); font-weight: 600; }
+.ri-savebar .msg.err { color: var(--mt-red-dark); font-weight: 600; }
+.ri-conflict { background: #FFF8F0; border: 1px solid #F1D9B5; border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--mt-text); }
+.ri-conflict .acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.ri-readonly { background: #F4F7FB; border: 1px solid #D8E0EA; border-left: 3px solid #2E5A88; border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 12.5px; color: #5A6A7A; margin: 0 0 12px; }
+.ri-table-wrap { overflow: auto; border: 1px solid var(--mt-border); border-radius: 10px; }
+.ri-table { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+.ri-table th, .ri-table td { border: 1px solid var(--mt-border); padding: 6px 9px; vertical-align: top; text-align: left; white-space: pre-wrap; min-width: 180px; }
+.ri-table th { background: var(--mt-surface2, #F5F6F8); color: var(--mt-brand); font-weight: 700; position: sticky; top: 0; }
+.ri-table th.g, .ri-table td.g { background: var(--mt-surface2, #F5F6F8); font-weight: 700; color: var(--mt-text2); min-width: 150px; position: sticky; left: 0; }
+.ri-table tr.grp td { background: #EEF1F5; color: var(--mt-brand); font-weight: 700; font-size: 11.5px; letter-spacing: .04em; }
+.ri-table .po { color: var(--mt-text3); font-family: var(--mt-mono); font-size: 11px; }
+.ri-footer { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 44px; font-family: var(--mt-mono); letter-spacing: .06em; }
+@media (max-width: 760px) {
+  .ri-layout { grid-template-columns: 1fr; }
+  .ri-side { position: static; max-height: none; flex-direction: row; flex-wrap: wrap; }
+  .ri-region { width: 100%; }
+  .ri-field, .ri-extra { grid-template-columns: 1fr; }
+  .ri-field label.l { padding-top: 0; }
+}
+@media print {
+  .mt-header, .ri-intro, .ri-layout, .ri-savebar, .ri-footer, .ri-tools { display: none !important; }
+  .ri-table-wrap { border: none; overflow: visible; }
+  .ri-table th, .ri-table td { min-width: 0; font-size: 10px; }
+  #riTable.mt-hidden { display: block !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="mt-container">
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <a href="../../sales/" class="mt-brand-link" title="영업 도구 홈으로"><img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="mt-brand-logo"></a>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">리조트 정보</span>
+    </div>
+    <div class="mt-header-actions ri-tools">
+      <button type="button" class="mt-btn" id="btnView">전체 표 보기</button>
+      <button type="button" class="mt-btn" id="btnPrint" title="전체 표를 인쇄합니다">인쇄</button>
+      <a class="mt-btn mt-btn-ghost" href="../../sales/" title="영업 도구 홈">⌂ 홈</a>
+    </div>
+  </div>
+
+  <p class="ri-intro">
+    리조트별 상세 정보를 <strong>담당자가 직접 입력</strong>하는 시트입니다. 왼쪽에서 리조트를 고르고 항목을 채운 뒤 <strong>저장</strong>을 누르세요.
+    출발지마다 다른 항목(담당 직원 · 항공편 · 수하물 · 출국·귀국일 특이사항)은 출발지별 칸이 따로 있습니다.
+    누가 언제 고쳤는지 남고, 저장 이력은 서버에 보관됩니다. 요금 숫자의 기준은 2027 안내문과 리조트 마스터이니 바뀌면 그쪽을 먼저 고칩니다.
+  </p>
+
+  <div class="ri-layout" id="riEditor">
+    <aside class="ri-side" id="riSide"></aside>
+    <main id="riMain"></main>
+  </div>
+
+  <section id="riTable" class="mt-hidden"></section>
+
+  <div class="ri-footer">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+</div>
+
+<script src="../../shared/util.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
+<script src="../../shared/store.js"></script>
+<script>
+(function () {
+  'use strict';
+  var AUTH = window.MT_AUTH, STORE = window.MT_STORE, MT = window.MT || {};
+  var esc = MT.escHtml || function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var toast = MT.showToast || function (m) { window.alert(m); };
+
+  /* ── 리조트 목록 — 대시보드 리조트 마스터(RESORT_DEFAULTS)의 key·name 과 같아야 한다.
+        tests/resortinfo.test.mjs 가 두 목록을 비교한다. 이름을 바꿀 때는 대시보드와 같이. ── */
+  var RESORTS = [
+    {key:'yamanami_golf', name:'야마나미 호텔', region:'구마모토'},
+    {key:'yamanami_bessou', name:'아소 프레스티지', region:'구마모토'},
+    {key:'yamanami_dome', name:'돔스테이', region:'구마모토'},
+    {key:'yamanami_hinoki_cabin', name:'히노키 스테이', region:'구마모토'},
+    {key:'yamanami_hinoki_family', name:'소보 테라스', region:'구마모토'},
+    {key:'kuzu', name:'쿠쥬 프라이빗 타운', region:'구마모토'},
+    {key:'ganji', name:'간지호텔', region:'구마모토'},
+    {key:'shizu', name:'시즈노야도 료칸', region:'구마모토'},
+    {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야'},
+    {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야'},
+    {key:'akiba', name:'아키바 리조트', region:'벳푸'},
+    {key:'mutsuki', name:'무츠키 료칸', region:'벳푸'},
+    {key:'shirosato', name:'시로사토CC', region:'이바라키'},
+    {key:'fukuroda', name:'후쿠로다노타키CC 호텔', region:'이바라키'},
+    {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노'},
+    {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노'},
+    {key:'miyazaki', name:'미야자키 상품 호텔', region:'미야자키'},
+    {key:'kumamoto_city', name:'구마모토 시내 상품 호텔', region:'구마모토'},
+    {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르'},
+    {key:'_common', name:'전 리조트 공통', region:'공통'}
+  ];
+  var ORIGINS = [ {k:'icn', l:'인천'}, {k:'pus', l:'부산(김해)'}, {k:'tae', l:'대구'} ];
+
+  /* 항목 — 옛 구글 시트의 행을 묶어 정리한 것. po = 출발지별 칸. 키는 저장된 값의 이름이므로 바꾸지 않는다(라벨만 바꾼다). */
+  var GROUPS = [
+    { id:'basic', title:'기본', items:[
+      { k:'bookable',      l:'예약 가능 여부',            t:'select', opts:['', 'O', 'X'], hint:'올해 판매 여부' },
+      { k:'staff',         l:'담당 직원',                 t:'text',  po:true },
+      { k:'airport',       l:'도착 공항',                 t:'text' },
+      { k:'transfer_time', l:'공항 → 리조트 소요 시간',   t:'text' },
+      { k:'checked_at',    l:'최신화 확인 날짜',          t:'date' },
+      { k:'golf',          l:'이용 골프장',               t:'textarea' },
+      { k:'homepage',      l:'홈페이지 주소',             t:'url' },
+      { k:'weather_url',   l:'날씨 정보 사이트 주소',     t:'url' }
+    ]},
+    { id:'air', title:'항공', items:[
+      { k:'flight_out',    l:'지정 출국편',               t:'text',     po:true },
+      { k:'flight_in',     l:'지정 귀국편',               t:'text',     po:true },
+      { k:'baggage_group', l:'수하물 (그룹 좌석)',        t:'textarea', po:true },
+      { k:'air_note',      l:'항공 특이사항',             t:'textarea', hint:'인디비 발권 시 수하물 등' }
+    ]},
+    { id:'schedule', title:'일정', items:[
+      { k:'patterns',      l:'상품 패턴',                 t:'textarea', hint:'예: 목~일 3박 / 일~목 4박 / 수~수 7박' },
+      { k:'day_out',       l:'출국일 특이사항',           t:'textarea', po:true },
+      { k:'day_stay',      l:'체류일 특이사항',           t:'textarea', po:true },
+      { k:'day_in',        l:'귀국일 특이사항',           t:'textarea', po:true }
+    ]},
+    { id:'golfing', title:'골프', items:[
+      { k:'fairway_cart',  l:'페어웨이 카트 진입',        t:'select', opts:['', 'O', 'X'] },
+      { k:'two_ball',      l:'2인 팀 특이사항',           t:'textarea' },
+      { k:'odd_team',      l:'3인 · 5인 팀 특이사항',     t:'textarea' },
+      { k:'two_bag',       l:'2BAG 차지 비용',            t:'text' },
+      { k:'extra_round',   l:'추가 라운딩 비용',          t:'text' },
+      { k:'club_rental',   l:'골프채 대여 (가능 여부 · 비용)', t:'text' }
+    ]},
+    { id:'rooms', title:'객실 · 시설', items:[
+      { k:'room_inventory',l:'온라인 예약 가능 객실 설정', t:'textarea', hint:'룸타입별 개수 · 트리플 수용 등' },
+      { k:'room_items',    l:'객실 구비 물품',            t:'textarea' },
+      { k:'facilities',    l:'부대시설',                  t:'textarea' },
+      { k:'room_extra',    l:'객실 추가 비용',            t:'textarea', hint:'싱글룸 · 4인실 등' }
+    ]},
+    { id:'meals', title:'식사', items:[
+      { k:'breakfast',     l:'조식',                      t:'textarea' },
+      { k:'lunch',         l:'중식',                      t:'textarea' },
+      { k:'dinner',        l:'석식',                      t:'textarea', hint:'요일별 메뉴가 있으면 한 줄에 하나' }
+    ]},
+    { id:'fees', title:'요금', items:[
+      { k:'stay_main',     l:'체재비 — 다이아몬드 · 다이아몬드Ⅱ · 골드 · EWRC이용권 · 특별', t:'text' },
+      { k:'stay_ewrc2',    l:'체재비 — EWRCⅡ',           t:'text' },
+      { k:'stay_rental',   l:'체재비 — 대여건',           t:'text' },
+      { k:'stay_guest',    l:'체재비 — 회원 동반',        t:'text' },
+      { k:'transfer_fee',  l:'왕복 송영비',               t:'text' },
+      { k:'local_pay',     l:'현지 지불 가능 여부',       t:'textarea' }
+    ]},
+    { id:'notes', title:'유의사항', items:[
+      { k:'insurance_note',l:'여행자보험 특이사항',       t:'textarea' },
+      { k:'cancel_note',   l:'취소 수수료 안내 시 주의사항', t:'textarea' },
+      { k:'sales_note',    l:'항공 · 영업 특이사항 · 주의사항', t:'textarea' }
+    ]}
+  ];
+  var COMMON_GROUPS = ['notes'];   // 「전 리조트 공통」에는 유의사항만 둔다
+
+  var state = { all: {}, me: null, canWrite: false, cur: null, form: null, version: 0, dirty: false, conflict: null, view: 'edit' };
+
+  function byKey(key) { for (var i = 0; i < RESORTS.length; i++) if (RESORTS[i].key === key) return RESORTS[i]; return null; }
+  function groupsFor(key) { return key === '_common' ? GROUPS.filter(function (g) { return COMMON_GROUPS.indexOf(g.id) >= 0; }) : GROUPS; }
+  function fmtAt(iso) {
+    if (!iso) return '';
+    var d = new Date(iso); if (isNaN(d)) return String(iso);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function emptyForm() { return { origins: ['icn', 'pus'], items: {}, extra: [] }; }
+  function cloneForm(d) {
+    var f = emptyForm();
+    if (d && Array.isArray(d.origins) && d.origins.length) f.origins = d.origins.slice();
+    if (d && d.items) Object.keys(d.items).forEach(function (k) {
+      var v = d.items[k];
+      f.items[k] = (v && typeof v === 'object') ? { icn: v.icn || '', pus: v.pus || '', tae: v.tae || '' } : String(v == null ? '' : v);
+    });
+    if (d && Array.isArray(d.extra)) f.extra = d.extra.map(function (x) { return { label: String(x.label || ''), value: String(x.value || '') }; });
+    return f;
+  }
+  /* 저장 직전 — 빈 값은 빼서 표가 가볍게 유지되게 */
+  function packForm(f) {
+    var out = { origins: f.origins.slice(), items: {}, extra: [] };
+    Object.keys(f.items).forEach(function (k) {
+      var v = f.items[k];
+      if (v && typeof v === 'object') {
+        var o = {}; var any = false;
+        ORIGINS.forEach(function (og) { var s = String(v[og.k] || '').trim(); if (s) { o[og.k] = s; any = true; } });
+        if (any) out.items[k] = o;
+      } else if (String(v || '').trim()) out.items[k] = String(v).trim();
+    });
+    f.extra.forEach(function (x) { if (String(x.label || '').trim() || String(x.value || '').trim()) out.extra.push({ label: String(x.label || '').trim(), value: String(x.value || '').trim() }); });
+    return out;
+  }
+  function hasContent(d) { return !!(d && ((d.items && Object.keys(d.items).length) || (d.extra && d.extra.length))); }
+
+  /* ── 왼쪽 목록 ── */
+  function renderSide() {
+    var side = document.getElementById('riSide');
+    var html = '', lastRegion = null;
+    RESORTS.forEach(function (r) {
+      if (r.region !== lastRegion) { html += '<div class="ri-region">' + esc(r.region) + '</div>'; lastRegion = r.region; }
+      var row = state.all[r.key];
+      var st = row && hasContent(row.data) ? '<span class="st has" title="' + esc((row.updatedBy || '') + ' · ' + fmtAt(row.updatedAt)) + '">' + esc(fmtAt(row.updatedAt).slice(2, 10)) + '</span>'
+                                          : '<span class="st">미입력</span>';
+      html += '<button type="button" class="ri-rs' + (state.cur === r.key ? ' on' : '') + '" data-key="' + esc(r.key) + '"><span>' + esc(r.name) + '</span>' + st + '</button>';
+    });
+    side.innerHTML = html;
+    side.querySelectorAll('.ri-rs').forEach(function (b) {
+      b.addEventListener('click', function () { openResort(b.getAttribute('data-key')); });
+    });
+  }
+
+  /* ── 오른쪽 입력 폼 ── */
+  function fieldHTML(it, val) {
+    var ro = state.canWrite ? '' : ' disabled';
+    if (it.t === 'select') {
+      return '<select data-k="' + esc(it.k) + '"' + ro + '>' + it.opts.map(function (o) {
+        return '<option value="' + esc(o) + '"' + (String(val || '') === o ? ' selected' : '') + '>' + (o || '—') + '</option>';
+      }).join('') + '</select>';
+    }
+    if (it.t === 'textarea') return '<textarea data-k="' + esc(it.k) + '" rows="1"' + ro + '>' + esc(val || '') + '</textarea>';
+    var type = it.t === 'url' ? 'url' : it.t === 'date' ? 'date' : 'text';
+    return '<input type="' + type + '" data-k="' + esc(it.k) + '" value="' + esc(val || '') + '"' + ro + '>';
+  }
+  function poHTML(it, val) {
+    var v = (val && typeof val === 'object') ? val : {};
+    var on = state.form.origins;
+    return '<div class="ri-po">' + ORIGINS.filter(function (o) { return on.indexOf(o.k) >= 0; }).map(function (o) {
+      var sub = Object.assign({}, it, { t: it.t === 'textarea' ? 'textarea' : 'text' });
+      return '<div class="o"><span>' + esc(o.l) + '</span>' + fieldHTML(sub, v[o.k]).replace('data-k="', 'data-o="' + o.k + '" data-k="') + '</div>';
+    }).join('') + '</div>';
+  }
+  function renderMain() {
+    var main = document.getElementById('riMain');
+    var r = byKey(state.cur);
+    if (!r) { main.innerHTML = '<div class="mt-card"><p style="margin:0;color:var(--mt-text2)">왼쪽에서 리조트를 고르세요.</p></div>'; return; }
+    var row = state.all[r.key];
+    var html = '<div class="ri-head"><h2>' + esc(r.name) + ' <small style="font-weight:400;color:var(--mt-text3);font-size:12px">' + esc(r.region) + '</small></h2>'
+             + '<span class="ri-meta">' + (row && row.updatedAt ? '마지막 저장 ' + esc(row.updatedBy || '') + ' · ' + esc(fmtAt(row.updatedAt)) : '아직 저장된 내용이 없습니다') + '</span></div>';
+    if (!state.canWrite) html += '<div class="ri-readonly">읽기만 가능한 계정입니다. 입력하려면 관리자에게 「리조트 정보」 쓰기 권한을 요청해 주세요.</div>';
+    if (state.conflict) {
+      html += '<div class="ri-conflict"><b>그 사이 다른 분(' + esc(state.conflict.updatedBy || '') + ' · ' + esc(fmtAt(state.conflict.updatedAt)) + ')이 이 리조트를 저장했습니다.</b><br>'
+            + '지금 화면의 입력은 아직 저장되지 않았습니다. 그분의 내용을 새로 받아 오거나(내 입력은 사라짐), 내 입력으로 덮어쓸 수 있습니다(그분의 내용은 이력에 남습니다).'
+            + '<div class="acts"><button type="button" class="mt-btn" id="btnReload">새로 받기</button><button type="button" class="mt-btn mt-btn-primary" id="btnOverwrite">내 입력으로 덮어쓰기</button></div></div>';
+    }
+    if (r.key !== '_common') {
+      html += '<div class="ri-origins"><span>출발지:</span>' + ORIGINS.map(function (o) {
+        return '<label><input type="checkbox" data-origin="' + o.k + '"' + (state.form.origins.indexOf(o.k) >= 0 ? ' checked' : '') + (state.canWrite ? '' : ' disabled') + '> ' + esc(o.l) + '</label>';
+      }).join('') + '<small style="color:var(--mt-text3)">출발지별 칸이 있는 항목에 적용</small></div>';
+    }
+    groupsFor(r.key).forEach(function (g) {
+      html += '<div class="mt-card ri-group"><h3>' + esc(g.title) + '</h3>';
+      g.items.forEach(function (it) {
+        var val = state.form.items[it.k];
+        html += '<div class="ri-field"><label class="l">' + esc(it.l) + (it.hint ? '<small>' + esc(it.hint) + '</small>' : '') + '</label>'
+              + (it.po ? poHTML(it, val) : fieldHTML(it, val)) + '</div>';
+      });
+      html += '</div>';
+    });
+    html += '<div class="mt-card ri-group"><h3>추가 항목</h3>';
+    state.form.extra.forEach(function (x, i) {
+      html += '<div class="ri-extra"><input type="text" data-xl="' + i + '" placeholder="항목 이름" value="' + esc(x.label) + '"' + (state.canWrite ? '' : ' disabled') + '>'
+            + '<textarea data-xv="' + i + '" rows="1" placeholder="내용"' + (state.canWrite ? '' : ' disabled') + '>' + esc(x.value) + '</textarea>'
+            + (state.canWrite ? '<button type="button" class="x" data-xdel="' + i + '" title="삭제">✕</button>' : '<span></span>') + '</div>';
+    });
+    if (state.canWrite) html += '<button type="button" class="mt-btn mt-btn-ghost ri-addextra" id="btnAddExtra">＋ 항목 추가</button>';
+    if (!state.form.extra.length) html += '<p style="margin:6px 0 0;font-size:12px;color:var(--mt-text3)">위 항목에 없는 내용은 여기에 이름을 붙여 적습니다.</p>';
+    html += '</div>';
+    html += '<div class="ri-savebar"><span class="msg" id="riMsg">' + (state.dirty ? '저장되지 않은 변경이 있습니다.' : '변경 사항 없음') + '</span>'
+          + '<span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="mt-btn" id="btnCopy" title="이 리조트 정보를 글로 복사">글로 복사</button>'
+          + '<button type="button" class="mt-btn" id="btnRevert"' + (state.dirty ? '' : ' disabled') + '>되돌리기</button>'
+          + '<button type="button" class="mt-btn mt-btn-primary" id="btnSave"' + (state.canWrite && state.dirty ? '' : ' disabled') + '>저장</button></span></div>';
+    main.innerHTML = html;
+    bindMain(main);
+    main.querySelectorAll('textarea').forEach(autoGrow);
+    setMsg();
+  }
+  function autoGrow(ta) {
+    var fit = function () { ta.style.height = 'auto'; ta.style.height = Math.max(38, ta.scrollHeight + 2) + 'px'; };
+    ta.addEventListener('input', fit); fit();
+  }
+  function setMsg(text, cls) {
+    var m = document.getElementById('riMsg'); if (!m) return;
+    m.textContent = text || (state.dirty ? '저장되지 않은 변경이 있습니다.' : '변경 사항 없음');
+    m.className = 'msg' + (cls ? ' ' + cls : (state.dirty ? ' dirty' : ''));
+    var s = document.getElementById('btnSave'), rv = document.getElementById('btnRevert');
+    if (s) s.disabled = !(state.canWrite && state.dirty);
+    if (rv) rv.disabled = !state.dirty;
+  }
+  function markDirty() { if (!state.dirty) { state.dirty = true; } setMsg(); }
+  function bindMain(main) {
+    main.querySelectorAll('[data-k]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var k = el.getAttribute('data-k'), o = el.getAttribute('data-o');
+        if (o) {
+          var cur = state.form.items[k];
+          if (!cur || typeof cur !== 'object') cur = state.form.items[k] = { icn: '', pus: '', tae: '' };
+          cur[o] = el.value;
+        } else state.form.items[k] = el.value;
+        markDirty();
+      });
+      if (el.tagName === 'SELECT') el.addEventListener('change', function () { state.form.items[el.getAttribute('data-k')] = el.value; markDirty(); });
+    });
+    main.querySelectorAll('[data-origin]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var k = cb.getAttribute('data-origin');
+        var i = state.form.origins.indexOf(k);
+        if (cb.checked && i < 0) state.form.origins.push(k);
+        if (!cb.checked && i >= 0) state.form.origins.splice(i, 1);
+        state.form.origins = ORIGINS.map(function (o) { return o.k; }).filter(function (x) { return state.form.origins.indexOf(x) >= 0; });
+        markDirty(); renderMain();
+      });
+    });
+    main.querySelectorAll('[data-xl]').forEach(function (el) { el.addEventListener('input', function () { state.form.extra[+el.getAttribute('data-xl')].label = el.value; markDirty(); }); });
+    main.querySelectorAll('[data-xv]').forEach(function (el) { el.addEventListener('input', function () { state.form.extra[+el.getAttribute('data-xv')].value = el.value; markDirty(); }); });
+    main.querySelectorAll('[data-xdel]').forEach(function (b) { b.addEventListener('click', function () { state.form.extra.splice(+b.getAttribute('data-xdel'), 1); markDirty(); renderMain(); }); });
+    var add = document.getElementById('btnAddExtra');
+    if (add) add.addEventListener('click', function () { state.form.extra.push({ label: '', value: '' }); markDirty(); renderMain(); var last = main.querySelector('[data-xl="' + (state.form.extra.length - 1) + '"]'); if (last) last.focus(); });
+    var save = document.getElementById('btnSave'); if (save) save.addEventListener('click', function () { doSave(false); });
+    var rv = document.getElementById('btnRevert'); if (rv) rv.addEventListener('click', function () { if (state.dirty && !window.confirm('입력한 내용을 버리고 저장된 값으로 되돌릴까요?')) return; loadForm(state.cur); renderMain(); });
+    var cp = document.getElementById('btnCopy'); if (cp) cp.addEventListener('click', copyCurrent);
+    var rl = document.getElementById('btnReload'); if (rl) rl.addEventListener('click', function () { state.conflict = null; loadForm(state.cur); renderMain(); });
+    var ow = document.getElementById('btnOverwrite'); if (ow) ow.addEventListener('click', function () { doSave(true); });
+  }
+
+  function loadForm(key) {
+    var row = state.all[key];
+    state.form = cloneForm(row ? row.data : null);
+    state.version = row ? (Number(row.version) || 0) : 0;
+    state.dirty = false; state.conflict = null;
+  }
+  function openResort(key) {
+    if (state.cur === key) return;
+    if (state.dirty && !window.confirm('저장하지 않은 변경이 있습니다. 버리고 다른 리조트로 이동할까요?')) return;
+    state.cur = key; loadForm(key);
+    renderSide(); renderMain();
+    try { location.hash = key; } catch (e) {}
+  }
+
+  function doSave(overwrite) {
+    if (!state.cur || !state.canWrite) return;
+    var key = state.cur, data = packForm(state.form);
+    var version = overwrite && state.conflict ? state.conflict.version : state.version;
+    setMsg('저장 중…');
+    var s = document.getElementById('btnSave'); if (s) s.disabled = true;
+    STORE.saveResortInfo(key, data, version, state.me && (state.me.name || state.me.email) || '').then(function (r) {
+      state.all[key] = { data: data, version: r.version, updatedAt: new Date().toISOString(), updatedBy: state.me && (state.me.name || state.me.email) || '' };
+      state.version = r.version; state.dirty = false; state.conflict = null;
+      renderSide(); renderMain();
+      toast('저장했습니다 — ' + byKey(key).name);
+    }).catch(function (e) {
+      if (e && e.conflict) {
+        state.conflict = e.current ? { version: e.current.version, updatedBy: e.current.updatedBy, updatedAt: e.current.updatedAt, data: e.current.data } : { version: 0 };
+        if (e.current) state.all[key] = e.current;
+        renderMain();
+        return;
+      }
+      setMsg(e && e.message ? e.message : '저장하지 못했습니다.', 'err');
+      if (s) s.disabled = !(state.canWrite && state.dirty);
+    });
+  }
+
+  /* ── 글로 복사 (카카오톡·메모용) ── */
+  function textOf(key, data) {
+    var r = byKey(key); if (!r) return '';
+    var lines = ['■ ' + r.name + (r.region !== '공통' ? ' (' + r.region + ')' : '')];
+    groupsFor(key).forEach(function (g) {
+      var block = [];
+      g.items.forEach(function (it) {
+        var v = data.items && data.items[it.k]; if (!v) return;
+        if (typeof v === 'object') {
+          var parts = ORIGINS.filter(function (o) { return v[o.k]; }).map(function (o) { return o.l + ': ' + v[o.k]; });
+          if (parts.length) block.push('- ' + it.l + '\n  ' + parts.join('\n  '));
+        } else block.push('- ' + it.l + ': ' + v);
+      });
+      if (block.length) lines.push('[' + g.title + ']', block.join('\n'));
+    });
+    (data.extra || []).forEach(function (x) { lines.push('- ' + (x.label || '항목') + ': ' + (x.value || '')); });
+    return lines.join('\n');
+  }
+  function copyCurrent() {
+    var t = textOf(state.cur, packForm(state.form));
+    var done = function () { toast('복사했습니다.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { window.prompt('복사해 주세요', t); });
+    else window.prompt('복사해 주세요', t);
+  }
+
+  /* ── 전체 표 (옛 시트와 같은 모양 · 인쇄용) ── */
+  function renderTable() {
+    var sec = document.getElementById('riTable');
+    var cols = RESORTS.filter(function (r) { return r.key !== '_common' && state.all[r.key] && hasContent(state.all[r.key].data); });
+    if (!cols.length) { sec.innerHTML = '<div class="mt-card"><p style="margin:0;color:var(--mt-text2)">아직 입력된 리조트가 없습니다.</p></div>'; return; }
+    var html = '<div class="ri-table-wrap"><table class="ri-table"><thead><tr><th class="g">항목</th>' + cols.map(function (r) {
+      var row = state.all[r.key];
+      return '<th>' + esc(r.name) + '<div class="po">' + esc(r.region) + ' · ' + esc(row.updatedBy || '') + ' ' + esc(fmtAt(row.updatedAt).slice(0, 10)) + '</div></th>';
+    }).join('') + '</tr></thead><tbody>';
+    GROUPS.forEach(function (g) {
+      html += '<tr class="grp"><td class="g">' + esc(g.title) + '</td><td colspan="' + cols.length + '"></td></tr>';
+      g.items.forEach(function (it) {
+        var any = cols.some(function (r) { return state.all[r.key].data.items && state.all[r.key].data.items[it.k]; });
+        if (!any) return;
+        html += '<tr><td class="g">' + esc(it.l) + '</td>' + cols.map(function (r) {
+          var v = state.all[r.key].data.items[it.k]; if (!v) return '<td></td>';
+          if (typeof v === 'object') return '<td>' + ORIGINS.filter(function (o) { return v[o.k]; }).map(function (o) { return '<span class="po">' + esc(o.l) + '</span> ' + esc(v[o.k]); }).join('\n') + '</td>';
+          return '<td>' + esc(v) + '</td>';
+        }).join('') + '</tr>';
+      });
+    });
+    var extras = cols.some(function (r) { return (state.all[r.key].data.extra || []).length; });
+    if (extras) {
+      html += '<tr class="grp"><td class="g">추가 항목</td><td colspan="' + cols.length + '"></td></tr><tr><td class="g"></td>' + cols.map(function (r) {
+        return '<td>' + (state.all[r.key].data.extra || []).map(function (x) { return '<b>' + esc(x.label) + '</b> ' + esc(x.value); }).join('\n') + '</td>';
+      }).join('') + '</tr>';
+    }
+    var common = state.all._common;
+    html += '</tbody></table></div>';
+    if (common && hasContent(common.data)) {
+      html += '<div class="mt-card" style="margin-top:14px"><h3 style="font-size:13px;margin:0 0 8px;color:var(--mt-brand)">전 리조트 공통</h3><pre style="white-space:pre-wrap;font:inherit;font-size:12.5px;margin:0;line-height:1.6">' + esc(textOf('_common', common.data).split('\n').slice(1).join('\n')) + '</pre></div>';
+    }
+    sec.innerHTML = html;
+  }
+  function setView(v) {
+    state.view = v;
+    document.getElementById('riEditor').classList.toggle('mt-hidden', v === 'table');
+    document.getElementById('riTable').classList.toggle('mt-hidden', v !== 'table');
+    document.getElementById('btnView').textContent = v === 'table' ? '입력 화면으로' : '전체 표 보기';
+    if (v === 'table') renderTable();
+  }
+
+  /* ── 시작 ── */
+  function boot() {
+    document.getElementById('btnView').addEventListener('click', function () { setView(state.view === 'table' ? 'edit' : 'table'); });
+    document.getElementById('btnPrint').addEventListener('click', function () { renderTable(); setView('table'); setTimeout(function () { window.print(); }, 50); });
+    window.addEventListener('beforeunload', function (e) { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+    document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 's') { e.preventDefault(); if (state.canWrite && state.dirty) doSave(false); } });
+    var first = (location.hash || '').replace(/^#/, '');
+    AUTH.me().then(function (u) {
+      state.me = u;
+      state.canWrite = !!(u && AUTH.canArea && AUTH.canArea(u, 'resortinfo'));
+      return STORE.loadResortInfo();
+    }).then(function (all) {
+      state.all = all || {};
+      renderSide();
+      openResort(byKey(first) ? first : RESORTS[0].key);
+    }).catch(function (e) {
+      document.getElementById('riMain').innerHTML = '<div class="mt-card"><p style="margin:0;color:var(--mt-red-dark)">' + esc(e && e.message ? e.message : '불러오지 못했습니다.') + '</p></div>';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+
+  window.RI = { RESORTS: RESORTS, GROUPS: GROUPS, ORIGINS: ORIGINS, packForm: packForm, textOf: textOf, state: state, renderTable: renderTable };
+})();
+</script>
+</body>
+</html>
