@@ -195,6 +195,16 @@
       { k:'transfer_fee',  l:'왕복 송영비',               t:'text' },
       { k:'local_pay',     l:'현지 지불 가능 여부',       t:'textarea' }
     ]},
+    /* 여행사(B2B)에 안내하는 요금 — 회원 요금과 따로 책정한다(2026-09-17 · Min). 위 「요금」은 회원 요금, 여기는 여행사 요금. */
+    { id:'agency', title:'여행사 안내 요금', hint:'여행사에 안내하는 요금 — 회원 요금(위 「요금」)과 따로 적습니다', items:[
+      { k:'agency_stay',     l:'체재비 (1박 · 여행사)',            t:'text',     hint:'예: 1박 ¥18,000 (조·중·석식 · 18홀 포함)' },
+      { k:'agency_transfer', l:'왕복 송영비 (여행사)',              t:'text' },
+      { k:'agency_golf',     l:'라운딩 · 카트 추가 비용 (여행사)',  t:'textarea', hint:'추가 9홀 · 카트 · 2인 플레이 차지 등' },
+      { k:'agency_single',   l:'싱글 차지 · 객실 추가 비용 (여행사)', t:'text' },
+      { k:'agency_meal',     l:'식사 조건 (여행사)',                t:'textarea', hint:'포함 범위가 회원 상품과 다르면 적는다' },
+      { k:'agency_terms',    l:'결제 · 취소 조건 (여행사)',         t:'textarea', hint:'커미션 · 입금 시점 · 취소 수수료' },
+      { k:'agency_note',     l:'여행사 안내 특이사항',              t:'textarea' }
+    ]},
     { id:'notes', title:'유의사항', items:[
       { k:'insurance_note',l:'여행자보험 특이사항',       t:'textarea' },
       { k:'cancel_note',   l:'취소 수수료 안내 시 주의사항', t:'textarea' },
@@ -296,7 +306,9 @@
       }).join('') + '<small style="color:var(--mt-text3)">출발지별 칸이 있는 항목에 적용</small></div>';
     }
     groupsFor(r.key).forEach(function (g) {
-      html += '<div class="mt-card ri-group"><h3>' + esc(g.title) + '</h3>';
+      html += '<div class="mt-card ri-group"><h3>' + esc(g.title)
+            + (g.hint ? ' <span style="font-size:12px;font-weight:400;color:var(--mt-text3);margin-left:8px">' + esc(g.hint) + '</span>' : '')
+            + '</h3>';
       g.items.forEach(function (it) {
         var val = state.form.items[it.k];
         html += '<div class="ri-field"><label class="l">' + esc(it.l) + (it.hint ? '<small>' + esc(it.hint) + '</small>' : '') + '</label>'
