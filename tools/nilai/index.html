@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 닐라이 견적·확정서</title>
+<script src="../../shared/guard.js" data-section="nilai"></script>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* ── 닐라이 견적·확정서 고유 스타일 (색은 core.css 토큰) ── */
+.nl-intro { font-size: 13px; color: var(--mt-text2); margin: 0 0 14px; line-height: 1.65; }
+.nl-layout { display: grid; grid-template-columns: minmax(0, 1fr) 430px; gap: 18px; align-items: start; }
+.nl-form { display: grid; gap: 12px; }
+.nl-fs { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg); padding: 14px 16px 12px; }
+.nl-fs h3 { font-size: 13px; font-weight: 700; color: var(--mt-brand); margin: 0 0 10px; display: flex; align-items: center; gap: 7px; }
+.nl-fs h3::before { content: ''; width: 3px; height: 12px; background: var(--mt-point); border-radius: 2px; }
+.nl-fs h3 small { font-weight: 400; color: var(--mt-text3); font-size: 11.5px; margin-left: auto; }
+.nl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.nl-grid .w { grid-column: 1 / -1; }
+.nl-f { display: grid; gap: 3px; }
+.nl-f label { font-size: 12px; color: var(--mt-text2); }
+.nl-f label b { color: var(--mt-red); font-weight: 700; }
+.nl-f input, .nl-f select, .nl-f textarea { width: 100%; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--mt-border); border-radius: 7px; background: var(--mt-surface); color: var(--mt-text); }
+.nl-f textarea { min-height: 54px; resize: vertical; line-height: 1.5; }
+.nl-f input:focus, .nl-f select:focus, .nl-f textarea:focus { outline: none; border-color: var(--mt-accent); box-shadow: 0 0 0 3px rgba(53,60,72,.08); }
+.nl-f .hint { font-size: 11px; color: var(--mt-text3); }
+.nl-kind { display: flex; gap: 8px; }
+.nl-kind label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid var(--mt-border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--mt-text2); }
+.nl-kind label.on { border-color: var(--mt-accent); background: var(--mt-accent-dim); color: var(--mt-brand); }
+.nl-kind input { display: none; }
+.nl-ex { display: grid; grid-template-columns: minmax(0, 1fr) 120px 60px 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.nl-ex input { width: 100%; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--mt-border); border-radius: 7px; }
+.nl-ex .x { background: none; border: 1px solid var(--mt-border); border-radius: 7px; color: var(--mt-text3); cursor: pointer; height: 30px; }
+.nl-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.nl-sum div { background: var(--mt-surface2); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--mt-text2); }
+.nl-sum b { display: block; font-size: 14px; color: var(--mt-brand); font-family: var(--mt-mono); }
+.nl-side { position: sticky; top: 12px; display: grid; gap: 10px; }
+.nl-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.nl-actions .mt-btn { font-size: 12.5px; }
+.nl-status { font-size: 12px; color: var(--mt-text2); background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px; padding: 8px 10px; line-height: 1.6; }
+.nl-status .ok { color: var(--mt-green-dark); font-weight: 600; }
+.nl-status .warn { color: var(--mt-amber-dark); font-weight: 600; }
+.nl-status .bad { color: var(--mt-red-dark); font-weight: 600; }
+.nl-status a { color: var(--mt-accent); word-break: break-all; }
+.nl-preview { background: var(--mt-surface3); border: 1px solid var(--mt-border); border-radius: 10px; overflow: hidden; position: relative; }
+.nl-preview .scale { width: 760px; transform-origin: 0 0; }
+.nl-preview iframe { width: 760px; height: 1200px; border: 0; background: #fff; display: block; }
+.nl-msg { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; }
+.nl-msg summary { cursor: pointer; font-weight: 600; color: var(--mt-brand); }
+.nl-msg pre { white-space: pre-wrap; background: var(--mt-surface2); border-radius: 8px; padding: 8px 10px; font: 12px/1.6 var(--mt-sans); margin: 8px 0 6px; }
+.nl-list { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-lg); padding: 12px 14px; margin: 0 0 14px; }
+.nl-list h3 { font-size: 13px; margin: 0 0 8px; color: var(--mt-brand); display: flex; justify-content: space-between; align-items: center; }
+.nl-list table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.nl-list th { text-align: left; font-weight: 600; color: var(--mt-text2); border-bottom: 1px solid var(--mt-border); padding: 5px 6px; font-size: 11.5px; }
+.nl-list td { border-bottom: 1px solid var(--mt-border); padding: 5px 6px; vertical-align: middle; }
+.nl-list tr.cur td { background: var(--mt-accent-dim); }
+.nl-list .st { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--mt-surface3); color: var(--mt-text2); white-space: nowrap; }
+.nl-list .st.sent { background: var(--mt-green-dim); color: var(--mt-green-dark); }
+.nl-list .st.link { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
+.nl-list .open { cursor: pointer; color: var(--mt-accent); font-weight: 600; background: none; border: 0; font: inherit; padding: 0; }
+.nl-footer { margin-top: 24px; font-size: 11px; color: var(--mt-text3); text-align: center; letter-spacing: .04em; }
+@media (max-width: 1000px) {
+  .nl-layout { grid-template-columns: 1fr; }
+  .nl-side { position: static; }
+  .nl-grid { grid-template-columns: 1fr; }
+}
+@media print { body * { visibility: hidden; } }
+</style>
+</head>
+<body>
+
+<div class="mt-container">
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <a href="../../sales/" class="mt-brand-link" title="영업 도구 홈으로"><img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="mt-brand-logo"></a>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">닐라이 견적·확정서</span>
+    </div>
+    <div class="mt-header-actions">
+      <button type="button" class="mt-btn" id="btnList">보낸 문서 목록</button>
+      <button type="button" class="mt-btn mt-btn-primary" id="btnNew">＋ 새 문서</button>
+      <a class="mt-btn mt-btn-ghost" href="../../sales/" title="영업 도구 홈">⌂ 홈</a>
+    </div>
+  </div>
+
+  <p class="nl-intro">
+    말레이시아 <strong>닐라이스프링스 골프</strong>의 견적서·확정서를 만듭니다. 손님 정보와 일정·요금을 적으면 오른쪽에 문서가 바로 그려지고,
+    <strong>저장 → 링크 생성 → 알림톡 발송</strong>까지 한 화면에서 끝납니다. 알림톡이 아직 안 열려 있으면 <strong>이미지 복사</strong>로 카카오톡에 붙여 넣어 보내세요.
+  </p>
+
+  <section id="nlList" class="nl-list mt-hidden">
+    <h3>보낸 문서 <span class="mt-mono" id="nlListMeta" style="font-weight:400;color:var(--mt-text3);font-size:11px"></span></h3>
+    <div id="nlListBody"></div>
+  </section>
+
+  <div class="nl-layout">
+    <form id="nlForm" class="nl-form" autocomplete="off" onsubmit="return false">
+
+      <div class="nl-fs">
+        <h3>문서 <small>종류를 고르면 제목과 유의사항 첫 줄이 바뀝니다</small></h3>
+        <div class="nl-grid">
+          <div class="nl-f w">
+            <div class="nl-kind" id="nlKind">
+              <label class="on"><input type="radio" name="kind" value="confirm" checked> 확정서</label>
+              <label><input type="radio" name="kind" value="quote"> 견적서</label>
+            </div>
+          </div>
+          <div class="nl-f"><label>문서번호</label><input type="text" data-k="docNo" placeholder="저장하면 자동으로 받습니다 (NS-연월일-순번)"></div>
+          <div class="nl-f"><label>발행일</label><input type="date" data-k="issueDate"></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>손님</h3>
+        <div class="nl-grid">
+          <div class="nl-f"><label>대표자 성함 <b>*</b></label><input type="text" data-k="repName" placeholder="홍길동"></div>
+          <div class="nl-f"><label>휴대폰 번호 <b>*</b></label><input type="tel" data-k="phone" placeholder="010-1234-5678"><span class="hint">알림톡이 가는 번호입니다</span></div>
+          <div class="nl-f"><label>인원 <b>*</b></label><input type="number" min="1" data-k="pax" placeholder="4"></div>
+          <div class="nl-f"><label>동행 (선택)</label><input type="text" data-k="companions" placeholder="김영희 · 이수진 (문서에 이름만 찍힙니다)"></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>일정 <small>박수는 비우면 「일수 − 2」(야간 비행)로 계산합니다</small></h3>
+        <div class="nl-grid">
+          <div class="nl-f"><label>출발일 <b>*</b></label><input type="date" data-k="dep"></div>
+          <div class="nl-f"><label>귀국일 <b>*</b></label><input type="date" data-k="ret"></div>
+          <div class="nl-f"><label>숙박 박수</label><input type="number" min="0" data-k="nights" placeholder="자동"></div>
+          <div class="nl-f"><label>라운딩 횟수</label><input type="number" min="0" data-k="rounds" placeholder="자동 (박수와 같게)"></div>
+          <div class="nl-f"><label>출국 항공편</label><input type="text" data-k="flightOut" placeholder="KE671"></div>
+          <div class="nl-f"><label>출국 시각</label><input type="text" data-k="flightOutTime" placeholder="인천 23:55 → 쿠알라룸푸르 05:20 (+1)"></div>
+          <div class="nl-f"><label>귀국 항공편</label><input type="text" data-k="flightIn" placeholder="KE672"></div>
+          <div class="nl-f"><label>귀국 시각</label><input type="text" data-k="flightInTime" placeholder="쿠알라룸푸르 10:30 → 인천 18:00"></div>
+          <div class="nl-f w"><label>일정 직접 입력 (선택 · 한 줄이 하루)</label><textarea data-k="itin" placeholder="비우면 출국 → 라운딩 → 귀국 순서로 자동으로 짭니다"></textarea></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>숙소 · 골프 · 식사 · 송영</h3>
+        <div class="nl-grid">
+          <div class="nl-f"><label>룸타입</label><input type="text" data-k="room"></div>
+          <div class="nl-f"><label>객실 수</label><input type="number" min="0" data-k="rooms" placeholder="자동 (2인 1실)"></div>
+          <div class="nl-f"><label>라운딩 조건</label><input type="text" data-k="roundNote"></div>
+          <div class="nl-f"><label>식사</label><input type="text" data-k="meals"></div>
+          <div class="nl-f w"><label>송영</label><input type="text" data-k="transfer"></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>요금 <small>원화 · 1인 금액 × 인원</small></h3>
+        <div class="nl-grid">
+          <div class="nl-f"><label>1인 투어 요금 (원) <b>*</b></label><input type="number" min="0" step="10000" data-k="pricePP" placeholder="1890000"></div>
+          <div class="nl-f"><label>할인 (원 · 총액에서 뺌)</label><input type="number" min="0" step="10000" data-k="discount" placeholder="0"></div>
+          <div class="nl-f"><label>1인 예약금 (원)</label><input type="number" min="0" step="10000" data-k="depositPP" placeholder="300000"></div>
+          <div class="nl-f" id="nlPaidWrap"><label>예약금 입금 확인일 (확정서)</label><input type="date" data-k="depositPaid"></div>
+          <div class="nl-f w"><label>추가 항목 (싱글룸 · 카트 · 추가 라운딩 등)</label>
+            <div id="nlExtras"></div>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnAddExtra">＋ 항목 추가</button></div>
+          </div>
+        </div>
+        <div class="nl-sum"><div>총 요금<b id="sumTotal">0원</b></div><div>예약금<b id="sumDeposit">0원</b></div><div>잔금 · 기한<b id="sumBalance">0원</b></div></div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>안내 사항 · 유의사항</h3>
+        <div class="nl-grid">
+          <div class="nl-f w"><label>안내 사항 (선택 · 문서의 「안내 사항」 상자)</label><textarea data-k="memo" placeholder="예: 공항 미팅 장소 · 현지 연락처 · 준비물"></textarea></div>
+          <div class="nl-f w"><label>유의사항 <span class="hint">(한 줄이 한 항목 · 비우면 기본 문안)</span></label><textarea data-k="notes" style="min-height:150px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnNotesReset">기본 문안으로</button></div></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>담당자 · 입금 계좌 <small>문서 아래에 찍힙니다</small></h3>
+        <div class="nl-grid">
+          <div class="nl-f"><label>담당자</label><input type="text" data-k="staffName"></div>
+          <div class="nl-f"><label>문의 전화</label><input type="text" data-k="staffTel"></div>
+          <div class="nl-f"><label>입금 은행</label><input type="text" data-k="acct.bank"></div>
+          <div class="nl-f"><label>계좌번호</label><input type="text" data-k="acct.no"></div>
+          <div class="nl-f"><label>예금주</label><input type="text" data-k="acct.holder"></div>
+        </div>
+      </div>
+    </form>
+
+    <aside class="nl-side">
+      <div class="nl-actions">
+        <button type="button" class="mt-btn mt-btn-primary" id="btnSave">저장</button>
+        <button type="button" class="mt-btn" id="btnCopyImg">이미지 복사</button>
+        <button type="button" class="mt-btn" id="btnJpg">JPG 저장</button>
+        <button type="button" class="mt-btn" id="btnPrint">인쇄</button>
+        <button type="button" class="mt-btn" id="btnLink">링크 생성</button>
+        <button type="button" class="mt-btn mt-btn-primary" id="btnSend">알림톡 발송</button>
+        <button type="button" class="mt-btn mt-btn-ghost" id="btnZoom" title="새 창에서 원본 크기로 봅니다">크게 보기</button>
+      </div>
+      <div class="nl-status" id="nlStatus">새 문서입니다. 손님 정보와 일정·요금을 적어 주세요.</div>
+      <div class="nl-preview">
+        <div class="scale" id="nlScale"><iframe id="nlFrame" title="문서 미리보기"></iframe></div>
+      </div>
+      <details class="nl-msg">
+        <summary>알림톡 문안 · 수동 발송용 글</summary>
+        <pre id="nlMsgAlim"></pre>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="mt-btn mt-btn-ghost" id="btnCopyAlim">알림톡 문안 복사</button><button type="button" class="mt-btn mt-btn-ghost" id="btnCopySms">링크 포함 문자 복사</button></div>
+        <p style="margin:8px 0 0;color:var(--mt-text3);font-size:11.5px">알림톡 문안은 알리고에 등록한 템플릿과 글자 단위로 같아야 합니다. 「링크 포함 문자」는 알림톡이 안 될 때 알리고 콘솔·카카오톡 채팅에 붙여 넣는 용도입니다.</p>
+      </details>
+    </aside>
+  </div>
+
+  <div class="nl-footer">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+</div>
+
+<script src="../../shared/util.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
+<script src="../../shared/store.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="nilai-logic.js"></script>
+<script>
+(function () {
+  'use strict';
+  var AUTH = window.MT_AUTH, STORE = window.MT_STORE, MT = window.MT || {}, N = window.MT_NILAI, SB = window.MT_SB || {};
+  var toast = MT.showToast || function (m) { window.alert(m); };
+  var $ = function (id) { return document.getElementById(id); };
+  var BUCKET = 'confirm-docs', LINK_TTL = 90 * 24 * 60 * 60;   // 대시보드 ⑦ 과 같은 버킷 · 90일 서명 링크
+
+  var state = { doc: N.blank('confirm'), id: null, version: 0, link: '', linkExp: '', sentAt: '', dirty: false, logo: '', rows: [] };
+
+  /* ── 서버 (store.js 의 rest 와 같은 꼴 · 로그인 토큰으로만 나간다) ── */
+  function authHeaders(extra) {
+    return AUTH.token().then(function (tk) {
+      if (!tk) throw new Error('로그인이 필요합니다. 다시 로그인해 주세요.');
+      return Object.assign({ apikey: SB.ANON_KEY, 'Authorization': 'Bearer ' + tk }, extra || {});
+    });
+  }
+  function base() { return String(SB.URL || '').replace(/\/+$/, ''); }
+  function rest(path, opts) {
+    opts = opts || {};
+    if (!SB.URL || !SB.ANON_KEY) return Promise.reject(new Error('Supabase 접속 설정이 비어 있습니다.'));
+    var h = { 'Content-Type': 'application/json' };
+    if (opts.prefer) h['Prefer'] = opts.prefer;
+    return authHeaders(h).then(function (headers) {
+      return fetch(base() + '/rest/v1' + path, { method: opts.method || 'GET', headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    }).then(function (r) {
+      return r.text().then(function (txt) {
+        var j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) { j = null; }
+        if (!r.ok) { var e = new Error((j && (j.message || j.error)) || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  /* ── 입력 ↔ state.doc ── */
+  function getPath(o, k) { return k.split('.').reduce(function (a, p) { return a == null ? a : a[p]; }, o); }
+  function setPath(o, k, v) { var ps = k.split('.'), last = ps.pop(), t = ps.reduce(function (a, p) { if (!a[p] || typeof a[p] !== 'object') a[p] = {}; return a[p]; }, o); t[last] = v; }
+  function fields() { return Array.prototype.slice.call(document.querySelectorAll('#nlForm [data-k]')); }
+  function fill() {
+    fields().forEach(function (el) { var v = getPath(state.doc, el.dataset.k); el.value = v == null ? '' : v; });
+    Array.prototype.forEach.call(document.querySelectorAll('#nlKind input'), function (r) { r.checked = (r.value === state.doc.kind); });
+    Array.prototype.forEach.call(document.querySelectorAll('#nlKind label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+    $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
+    renderExtras();
+  }
+  function read() {
+    fields().forEach(function (el) { setPath(state.doc, el.dataset.k, el.value); });
+    var k = document.querySelector('#nlKind input:checked'); state.doc.kind = k ? k.value : 'confirm';
+    state.doc.extras = Array.prototype.map.call(document.querySelectorAll('#nlExtras .nl-ex'), function (row) {
+      return { label: row.querySelector('.l').value, amount: row.querySelector('.a').value, qty: row.querySelector('.q').value };
+    });
+  }
+  function renderExtras() {
+    var box = $('nlExtras'); box.innerHTML = '';
+    (state.doc.extras || []).forEach(function (x, i) {
+      var row = document.createElement('div'); row.className = 'nl-ex';
+      row.innerHTML = '<input class="l" type="text" placeholder="항목 (예: 싱글룸 추가)"><input class="a" type="number" step="10000" placeholder="금액"><input class="q" type="number" min="1" placeholder="수량"><button type="button" class="x" title="지우기">×</button>';
+      row.querySelector('.l').value = x.label || ''; row.querySelector('.a').value = x.amount == null ? '' : x.amount; row.querySelector('.q').value = x.qty == null ? '' : x.qty;
+      row.querySelector('.x').addEventListener('click', function () { read(); state.doc.extras.splice(i, 1); renderExtras(); changed(); });
+      box.appendChild(row);
+    });
+  }
+
+  /* ── 미리보기 ── */
+  var renderTimer = null;
+  function changed() { state.dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, 220); }
+  function html() { return N.buildHtml(state.doc, { logoSrc: state.logo }); }
+  function render() {
+    read();
+    var c = N.calc(state.doc);
+    $('sumTotal').textContent = N.won(c.total);
+    $('sumDeposit').textContent = N.won(c.deposit);
+    $('sumBalance').textContent = N.won(c.balance) + (c.dueDate ? ' · ' + N.fmtDate(c.dueDate).slice(0, 10) : '');
+    $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
+    var f = $('nlFrame');
+    f.onload = function () { fitPreview(); };
+    f.srcdoc = html();
+    $('nlMsgAlim').textContent = N.alimtalk(state.doc);
+    status();
+  }
+  function fitPreview() {
+    var f = $('nlFrame'), box = f.closest('.nl-preview'), sc = $('nlScale');
+    var w = box.clientWidth || 430, scale = Math.min(1, w / 760);
+    var doc = f.contentDocument, h = doc && doc.documentElement ? Math.max(doc.body ? doc.body.scrollHeight : 0, doc.documentElement.scrollHeight) : 1200;
+    f.style.height = h + 'px';
+    sc.style.transform = 'scale(' + scale + ')';
+    box.style.height = Math.ceil(h * scale) + 'px';
+  }
+  window.addEventListener('resize', fitPreview);
+
+  function status(extra) {
+    var miss = N.validate(state.doc), parts = [];
+    if (state.id) parts.push('<span class="ok">저장됨</span> · ' + N.esc(state.doc.docNo || '') + (state.dirty ? ' · <span class="warn">수정 중 (저장 안 됨)</span>' : ''));
+    else parts.push('<span class="warn">아직 저장하지 않았습니다</span>');
+    if (miss.length) parts.push('<span class="bad">빠진 값</span> · ' + N.esc(miss.join(' · ')));
+    if (state.link) parts.push('링크 <a href="' + N.esc(state.link) + '" target="_blank" rel="noopener">열기</a>' + (state.linkExp ? ' · ' + N.esc(String(state.linkExp).slice(0, 10)) + ' 까지' : ''));
+    if (state.sentAt) parts.push('<span class="ok">알림톡 발송 ' + N.esc(String(state.sentAt).replace('T', ' ').slice(0, 16)) + '</span>');
+    if (extra) parts.push(extra);
+    $('nlStatus').innerHTML = parts.join('<br>');
+  }
+
+  /* ── 목록 ── */
+  var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,updated_at,updated_by,version';
+  function loadList() {
+    return rest('/nilai_docs?select=' + COLS + '&order=updated_at.desc&limit=80').then(function (rows) { state.rows = rows || []; renderList(); });
+  }
+  function renderList() {
+    var rows = state.rows, el = $('nlListBody');
+    $('nlListMeta').textContent = rows.length ? rows.length + '건' : '';
+    if (!rows.length) { el.innerHTML = '<p style="margin:0;color:var(--mt-text3);font-size:12.5px">저장된 문서가 없습니다.</p>'; return; }
+    var h = '<table><tr><th>문서번호</th><th>종류</th><th>대표자</th><th>출발</th><th>인원</th><th>총액</th><th>상태</th><th>마지막 저장</th><th></th></tr>';
+    rows.forEach(function (r) {
+      var d = r.data || {}, c = N.calc(d);
+      var st = r.sent_at ? '<span class="st sent">알림톡 발송</span>' : (r.link ? '<span class="st link">링크 생성</span>' : '<span class="st">저장</span>');
+      h += '<tr' + (r.id === state.id ? ' class="cur"' : '') + '><td class="mt-mono">' + N.esc(r.doc_no) + '</td><td>' + N.esc(N.KIND_LABEL[r.kind] || r.kind) + '</td><td>' + N.esc(d.repName || '') + '</td><td>' + N.esc(d.dep || '') + '</td><td>' + c.pax + '명</td><td class="mt-mono">' + N.esc(N.won(c.total)) + '</td><td>' + st + '</td><td style="color:var(--mt-text3)">' + N.esc(String(r.updated_at || '').replace('T', ' ').slice(0, 16)) + ' ' + N.esc(r.updated_by || '') + '</td><td><button type="button" class="open" data-id="' + r.id + '">열기</button></td></tr>';
+    });
+    el.innerHTML = h + '</table>';
+    Array.prototype.forEach.call(el.querySelectorAll('.open'), function (b) { b.addEventListener('click', function () { openRow(Number(b.dataset.id)); }); });
+  }
+  function openRow(id) {
+    var r = state.rows.filter(function (x) { return x.id === id; })[0]; if (!r) return;
+    if (state.dirty && !confirm('수정 중인 내용을 버리고 다른 문서를 열까요?')) return;
+    state.doc = Object.assign(N.blank(r.kind), r.data || {}, { kind: r.kind, docNo: r.doc_no });
+    state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sentAt = r.sent_at || ''; state.dirty = false;
+    fill(); render(); renderList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function newDoc() {
+    if (state.dirty && !confirm('수정 중인 내용을 버리고 새 문서를 열까요?')) return;
+    var keep = { staffName: state.doc.staffName, staffTel: state.doc.staffTel, acct: state.doc.acct };
+    state.doc = Object.assign(N.blank('confirm'), keep);
+    state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sentAt = ''; state.dirty = false;
+    fill(); render(); renderList();
+  }
+
+  /* ── 저장 (문서번호는 그날 저장된 수 + 1 · 겹치면 다음 번호로 다시) ── */
+  function nextDocNo(date) {
+    var prefix = N.docNo(date, 1).slice(0, -2);
+    return rest('/nilai_docs?select=doc_no&doc_no=like.' + encodeURIComponent(prefix + '*') + '&order=doc_no.desc&limit=1').then(function (rows) {
+      var last = rows && rows[0] ? Number(String(rows[0].doc_no).slice(-2)) : 0;
+      return N.docNo(date, last + 1);
+    });
+  }
+  function save() {
+    read();
+    var by = (window.MT_USER && window.MT_USER.get && window.MT_USER.get()) || '';
+    var p = state.doc.docNo ? Promise.resolve(state.doc.docNo) : nextDocNo(state.doc.issueDate);
+    return p.then(function (no) {
+      state.doc.docNo = no; fill();
+      var body = { doc_no: no, kind: state.doc.kind, data: state.doc, updated_by: by };
+      if (!state.id) {
+        body.created_by = by;
+        return rest('/nilai_docs', { method: 'POST', prefer: 'return=representation', body: body }).catch(function (e) {
+          if (e.status === 409) { state.doc.docNo = ''; return save(); }   // 같은 번호를 남이 먼저 썼다 → 다음 번호
+          throw e;
+        });
+      }
+      return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', prefer: 'return=representation', body: body });
+    }).then(function (rows) {
+      var r = rows && rows[0]; if (!r) throw new Error('저장할 권한이 없습니다. 관리자에게 역할 승인을 요청해 주세요.');
+      state.id = r.id; state.version = r.version || 0; state.dirty = false;
+      toast('저장했습니다 · ' + r.doc_no);
+      return loadList().then(function () { status(); return r; });
+    });
+  }
+
+  /* ── 이미지 (html2canvas · 미리보기 프레임의 .doc) ── */
+  function toCanvas() {
+    var doc = $('nlFrame').contentDocument, target = doc && doc.querySelector('.doc');
+    if (!target || typeof html2canvas === 'undefined') return Promise.reject(new Error('문서를 아직 그리지 못했습니다. 잠시 뒤 다시 눌러 주세요.'));
+    var go = function () { return html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 760, windowWidth: 760, scrollX: 0, scrollY: 0 }); };
+    return (doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve()).then(function () { return new Promise(function (r) { setTimeout(r, 120); }); }).then(go);
+  }
+  function toBlob(canvas, type, q) { return new Promise(function (res, rej) { canvas.toBlob(function (b) { b ? res(b) : rej(new Error('이미지 변환 실패')); }, type || 'image/jpeg', q || 0.92); }); }
+  function fileBase() { return (state.doc.docNo || 'nilai') + '_' + (N.KIND_LABEL[state.doc.kind] || ''); }
+  function copyImage() {
+    read();
+    toCanvas().then(function (cv) { return toBlob(cv, 'image/png'); }).then(function (b) {
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]);
+    }).then(function () { toast('이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣으세요'); })
+      .catch(function (e) { alert('이미지 복사가 안 되는 환경입니다. JPG 저장을 이용해 주세요.\n(' + e.message + ')'); });
+  }
+  function downloadJpg() {
+    read();
+    toCanvas().then(function (cv) { var a = document.createElement('a'); a.download = fileBase() + '.jpg'; a.href = cv.toDataURL('image/jpeg', 0.92); a.click(); })
+      .catch(function (e) { alert(e.message); });
+  }
+  function printDoc() { var w = $('nlFrame').contentWindow; if (w) { w.focus(); w.print(); } }
+  function zoom() { read(); var w = window.open('', '_blank'); if (!w) { alert('팝업이 막혀 있습니다.'); return; } w.document.open(); w.document.write(html()); w.document.close(); }
+
+  /* ── 링크 (private 버킷 업로드 → 90일 서명 링크 · 대시보드 ⑦ 과 같은 길) ── */
+  function makeLink() {
+    read();
+    var miss = N.validate(state.doc);
+    if (miss.length) { alert('먼저 채워 주세요: ' + miss.join(' · ')); return Promise.reject(new Error('incomplete')); }
+    var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
+    status('링크 생성 중…');
+    return pre.then(toCanvas).then(function (cv) { return toBlob(cv, 'image/jpeg', 0.92); }).then(function (blob) {
+      var path = state.doc.kind + '/' + encodeURIComponent(state.doc.docNo) + '.jpg';
+      return authHeaders({ 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }).then(function (h) {
+        return fetch(base() + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: blob });
+      }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error('업로드 실패(' + r.status + ') ' + t.slice(0, 120)); }); })
+        .then(function () { return authHeaders({ 'Content-Type': 'application/json' }); })
+        .then(function (h) { return fetch(base() + '/storage/v1/object/sign/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: JSON.stringify({ expiresIn: LINK_TTL }) }); })
+        .then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error('링크 발급 실패(' + r.status + ') ' + t.slice(0, 120)); }); return r.json(); })
+        .then(function (j) {
+          state.link = base() + '/storage/v1' + (j.signedURL || j.signedUrl);
+          state.linkExp = new Date(Date.now() + LINK_TTL * 1000).toISOString();
+          return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { link: state.link, link_expires_at: state.linkExp } });
+        }).then(function () { toast('링크를 만들었습니다 (90일)'); return loadList(); }).then(function () { status(); return state.link; });
+    }).catch(function (e) { status('<span class="bad">' + N.esc(e.message) + '</span>'); throw e; });
+  }
+  function copyText(t, msg) { navigator.clipboard.writeText(t).then(function () { toast(msg || '복사했습니다'); }).catch(function () { prompt('복사해 주세요', t); }); }
+
+  /* ── 알림톡 (Edge Function send-alimtalk · 로그인 토큰 · 서버가 fail-closed) ── */
+  function send() {
+    read();
+    var miss = N.validate(state.doc);
+    if (miss.length) { alert('먼저 채워 주세요: ' + miss.join(' · ')); return; }
+    var label = N.KIND_LABEL[state.doc.kind];
+    var pre = state.link && state.id && !state.dirty ? Promise.resolve(state.link) : makeLink();
+    pre.then(function (link) {
+      var r = N.recipient(state.doc, link);
+      if (!confirm(r.name + ' 님(' + r.phone + ')에게 ' + label + ' 알림톡을 보냅니다.\n\n' + N.alimtalk(state.doc) + '\n\n진행할까요?')) return;
+      status('알림톡 발송 요청 중…');
+      return authHeaders({ 'Content-Type': 'application/json' }).then(function (h) {
+        return fetch(base() + '/functions/v1/send-alimtalk', { method: 'POST', headers: h, body: JSON.stringify({ kind: state.doc.kind, recipients: [r] }) });
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (j) {
+          if (!res.ok) { var e = new Error(j.error || ('HTTP ' + res.status)); e.status = res.status; throw e; }
+          state.sentAt = new Date().toISOString();
+          var by = (window.MT_USER && window.MT_USER.get && window.MT_USER.get()) || '';
+          return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sent_at: state.sentAt, sent_by: by } });
+        });
+      }).then(function () { toast('알림톡 발송을 요청했습니다'); return loadList(); }).then(function () { status(); });
+    }).catch(function (e) {
+      if (e && e.message === 'incomplete') return;
+      var why = (e && e.status === 404) ? '알림톡 함수(send-alimtalk)가 아직 배포되지 않았습니다.' : (e && e.message) || '';
+      status('<span class="bad">알림톡을 보내지 못했습니다</span> · ' + N.esc(why) + '<br>아래 「링크 포함 문자 복사」로 알리고 콘솔이나 카카오톡 채팅에 붙여 넣어 보내 주세요.');
+      document.querySelector('.nl-msg').open = true;
+    });
+  }
+
+  /* ── 시작 ── */
+  function boot() {
+    var sel = document.querySelector('#nlKind');
+    sel.addEventListener('change', function () {
+      Array.prototype.forEach.call(sel.querySelectorAll('label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+      read();
+      if (!String(state.doc.notes || '').trim() || state.doc.notes === N.defaultNotes(state.doc.kind === 'confirm' ? 'quote' : 'confirm').join('\n')) { state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); }
+      changed();
+    });
+    $('nlForm').addEventListener('input', changed);
+    $('nlForm').addEventListener('change', changed);
+    $('btnAddExtra').addEventListener('click', function () { read(); state.doc.extras.push({ label: '', amount: '', qty: 1 }); renderExtras(); changed(); });
+    $('btnNotesReset').addEventListener('click', function () { read(); state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); changed(); });
+    $('btnNew').addEventListener('click', newDoc);
+    $('btnList').addEventListener('click', function () { $('nlList').classList.toggle('mt-hidden'); if (!$('nlList').classList.contains('mt-hidden')) loadList().catch(function (e) { toast(e.message); }); });
+    $('btnSave').addEventListener('click', function () { save().catch(function (e) { alert('저장 실패: ' + e.message); }); });
+    $('btnCopyImg').addEventListener('click', copyImage);
+    $('btnJpg').addEventListener('click', downloadJpg);
+    $('btnPrint').addEventListener('click', printDoc);
+    $('btnZoom').addEventListener('click', zoom);
+    $('btnLink').addEventListener('click', function () { makeLink().catch(function () {}); });
+    $('btnSend').addEventListener('click', send);
+    $('btnCopyAlim').addEventListener('click', function () { read(); copyText(N.alimtalk(state.doc), '알림톡 문안을 복사했습니다'); });
+    $('btnCopySms').addEventListener('click', function () { read(); copyText(N.smsText(state.doc, state.link), state.link ? '링크 포함 문자를 복사했습니다' : '문자를 복사했습니다 (링크는 아직 없습니다)'); });
+
+    state.doc.notes = N.defaultNotes(state.doc.kind).join('\n');
+    try { var u = window.MT_USER && window.MT_USER.get && window.MT_USER.get(); if (u) state.doc.staffName = u; } catch (e) {}
+    fill(); render();
+
+    // 로고(문서 머리) — 같은 저장소의 SVG 를 data URL 로 넣는다(html2canvas 가 그대로 그린다)
+    fetch('../../assets/logo-merittour-horizontal.svg').then(function (r) { return r.ok ? r.text() : ''; }).then(function (svg) {
+      if (svg) { state.logo = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))); render(); }
+    }).catch(function () {});
+    // 입금 계좌·문의 전화 — 공통 마스터(commonMaster.docAcct)가 있으면 그 값(대시보드 확정서와 같은 값)
+    if (STORE && STORE.loadMaster) STORE.loadMaster().then(function (m) {
+      var a = m && m.data && m.data.commonMaster && m.data.commonMaster.docAcct;
+      if (a && (a.bank || a.no)) { state.doc.acct = { bank: a.bank || '', no: a.no || '', holder: a.holder || '' }; if (a.tel) state.doc.staffTel = a.tel; fill(); render(); }
+    }).catch(function () {});
+    loadList().catch(function () {});
+    window.addEventListener('beforeunload', function (e) { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+</body>
+</html>
