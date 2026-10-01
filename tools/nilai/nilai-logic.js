@@ -123,6 +123,26 @@
   }
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   function ymd(d) { return d ? d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) : ''; }
+  /* ── 날짜 느슨하게 읽기(2026-10-01 · Min 「여기 입력이 이상함」 — 브라우저 date 칸은 연도 칸이 6자리까지 받아 엠클릭처럼 「20270105」를 치면 「202701-05-일」이 됐다) ──
+     받는 꼴: 20270105 · 2027-01-05 · 2027.1.5 · 2027/1/5 · 27.1.5 · 270105 · 0105 · 1/5(월·일만 — 해는 base 기준 · dir 'next'(기본)면 base 보다 앞설 때 다음 해, 'prev' 면 base 보다 뒤일 때 지난 해).
+     틀린 날짜(2월 30일 · 자릿수가 안 맞는 숫자)는 '' — 화면은 「날짜를 확인해 주세요」. */
+  function parseLoose(s, base, dir) {
+    var t = String(s || '').replace(/\s+/g, '');
+    if (!t) return '';
+    var m, y, mo, d, b = parseDate(base) || new Date();
+    if ((m = t.match(/^(\d{4})(\d{2})(\d{2})$/)) || (m = t.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})\.?$/))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else if ((m = t.match(/^(\d{2})(\d{2})(\d{2})$/)) || (m = t.match(/^(\d{2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})\.?$/))) { y = 2000 + +m[1]; mo = +m[2]; d = +m[3]; }
+    else if ((m = t.match(/^(\d{2})(\d{2})$/)) || (m = t.match(/^(\d{1,2})[.\-\/](\d{1,2})\.?$/))) {
+      y = b.getFullYear(); mo = +m[1]; d = +m[2];
+      var b0 = new Date(b.getFullYear(), b.getMonth(), b.getDate()), guess = new Date(y, mo - 1, d);
+      if (dir === 'prev' ? guess > b0 : guess < b0) y += (dir === 'prev' ? -1 : 1);
+    }
+    else return '';
+    var dt = new Date(y, mo - 1, d);
+    if (y < 2000 || y > 2100 || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '';
+    return ymd(dt);
+  }
+  function dowOf(s) { var d = parseDate(s); return d ? DOW[d.getDay()] : ''; }
   function fmtDate(d) { return d ? d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' (' + DOW[d.getDay()] + ')' : ''; }
   function fmtYmdDot(d) { return d ? d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) : ''; }
   function fmtMD(d) { return d ? pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' (' + DOW[d.getDay()] + ')' : ''; }
@@ -460,6 +480,6 @@
     calc: calc, flights: flights, itinerary: itinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient,
     VIA_LABEL: VIA_LABEL, sendEntry: sendEntry,
-    fmtDate: fmtDate, won: won, ymd: ymd, parseDate: parseDate, esc: esc
+    fmtDate: fmtDate, won: won, ymd: ymd, parseDate: parseDate, parseLoose: parseLoose, dowOf: dowOf, esc: esc
   };
 }));

@@ -25,6 +25,8 @@
 .nl-f textarea { min-height: 54px; resize: vertical; line-height: 1.5; }
 .nl-f input:focus, .nl-f select:focus, .nl-f textarea:focus { outline: none; border-color: var(--mt-accent); box-shadow: 0 0 0 3px rgba(53,60,72,.08); }
 .nl-f .hint { font-size: 11px; color: var(--mt-text3); }
+.nl-f .dow { font-size: 11px; color: var(--mt-accent); margin-left: 2px; }
+.nl-f .dow.bad { color: var(--mt-red); font-weight: 600; }
 .nl-kind { display: flex; gap: 8px; }
 .nl-kind label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid var(--mt-border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--mt-text2); }
 .nl-kind label.on { border-color: var(--mt-accent); background: var(--mt-accent-dim); color: var(--mt-brand); }
@@ -121,7 +123,7 @@
             </div>
           </div>
           <div class="nl-f"><label>행사번호 <span class="hint">(선택 · 비우면 문서와 알림톡에 공란)</span></label><input type="text" data-k="eventNo" placeholder="예: 24-0001"></div>
-          <div class="nl-f"><label>발행일</label><input type="date" data-k="issueDate"></div>
+          <div class="nl-f"><label>발행일 <span class="dow" data-dow="issueDate"></span></label><input type="text" class="nl-date" data-k="issueDate" inputmode="numeric" autocomplete="off" placeholder="20261001"></div>
         </div>
       </div>
 
@@ -136,10 +138,10 @@
       </div>
 
       <div class="nl-fs">
-        <h3>일정 <small>박수는 비우면 「일수 − 2」(야간 비행)로 계산합니다</small></h3>
+        <h3>일정 <small>날짜는 20270105 처럼 숫자만 적어도 됩니다 · 박수는 비우면 교통편 기준(체크인 ~ 체크아웃)으로 계산합니다</small></h3>
         <div class="nl-grid">
-          <div class="nl-f"><label>출발일 <b>*</b></label><input type="date" data-k="dep"></div>
-          <div class="nl-f"><label>귀국일 <b>*</b></label><input type="date" data-k="ret"></div>
+          <div class="nl-f"><label>출발일 <b>*</b> <span class="dow" data-dow="dep"></span></label><input type="text" class="nl-date" data-k="dep" inputmode="numeric" autocomplete="off" placeholder="20270105"></div>
+          <div class="nl-f"><label>귀국일 <b>*</b> <span class="dow" data-dow="ret"></span></label><input type="text" class="nl-date" data-k="ret" inputmode="numeric" autocomplete="off" placeholder="20270112"></div>
           <div class="nl-f"><label>숙박 박수</label><input type="number" min="0" data-k="nights" placeholder="자동"></div>
           <div class="nl-f"><label>라운딩 횟수</label><input type="number" min="0" data-k="rounds" placeholder="자동 (박수와 같게)"></div>
           <div class="nl-f w"><label>항공사 <span class="hint">(고르면 편명·시각이 기본값으로 채워집니다 · 고칠 수 있습니다)</span></label>
@@ -185,7 +187,7 @@
           </div>
           <div class="nl-f"><label>할인 (원 · 총합계에서 뺌)</label><input type="number" min="0" step="10000" data-k="discount" placeholder="0"></div>
           <div class="nl-f"><label>1인 예약금 (원)</label><input type="number" min="0" step="10000" data-k="depositPP" placeholder="300000"></div>
-          <div class="nl-f" id="nlPaidWrap"><label>예약금 입금 확인일 (확정서)</label><input type="date" data-k="depositPaid"></div>
+          <div class="nl-f" id="nlPaidWrap"><label>예약금 입금 확인일 (확정서) <span class="dow" data-dow="depositPaid"></span></label><input type="text" class="nl-date" data-k="depositPaid" inputmode="numeric" autocomplete="off" placeholder="20261001"></div>
         </div>
         <div class="nl-sum"><div>총합계<b id="sumTotal">0원</b></div><div>예약금<b id="sumDeposit">0원</b></div><div>잔금 · 기한<b id="sumBalance">0원</b></div></div>
       </div>
@@ -299,7 +301,22 @@
     Array.prototype.forEach.call(document.querySelectorAll('#nlKind label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
     $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
     renderExtras();
+    updateDows();
   }
+  /* 날짜 칸 — 「20270105」·「2027.1.5」·「0105」처럼 쳐도 YYYY-MM-DD 로 고쳐 쓰고 옆에 요일을 찍는다(브라우저 date 칸은 연도에 6자리를 받아 「202701-05-일」이 됐다 · 2026-10-01) */
+  function dowChip(el, v) {
+    var chip = document.querySelector('.dow[data-dow="' + el.dataset.k + '"]'); if (!chip) return;
+    var raw = String(el.value || '').trim();
+    chip.textContent = v ? '(' + N.dowOf(v) + ')' : (raw ? '날짜를 확인해 주세요' : '');
+    chip.classList.toggle('bad', !v && !!raw);
+  }
+  function normDate(el) {
+    var k = el.dataset.k, base = k === 'ret' ? document.querySelector('[data-k="dep"]').value : '';
+    var v = N.parseLoose(el.value, base, (k === 'issueDate' || k === 'depositPaid') ? 'prev' : 'next');
+    if (v) el.value = v;
+    dowChip(el, v);
+  }
+  function updateDows() { Array.prototype.forEach.call(document.querySelectorAll('.nl-date'), function (el) { dowChip(el, N.parseDate(el.value) ? el.value : ''); }); }
   function read() {
     fields().forEach(function (el) { setPath(state.doc, el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); });
     var k = document.querySelector('#nlKind input:checked'); state.doc.kind = k ? k.value : 'quote';
@@ -536,6 +553,7 @@
       changed();
     });
     $('nlForm').addEventListener('input', changed);
+    $('nlForm').addEventListener('change', function (e) { if (e.target && e.target.classList && e.target.classList.contains('nl-date')) normDate(e.target); });
     $('nlForm').addEventListener('change', changed);
     $('btnAddFare').addEventListener('click', function () { read(); state.doc.fares.push({ label: '', amount: '', qty: 1 }); renderExtras(); changed(); });
     $('btnNotesReset').addEventListener('click', function () { read(); state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); changed(); });

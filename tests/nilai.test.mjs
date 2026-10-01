@@ -155,6 +155,9 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(page, /data-k="outArrOffset"><option value="0">_선택_<\/option><option value="1">1일후도착<\/option>/, '출발편 도착 보정은 엠클릭 표현(1일후도착)');
   assert.match(page, /data-k="inDepOffset"><option value="-1">1일전출발<\/option><option value="0">_선택_<\/option>/, '도착편 출발 보정은 엠클릭 표현(1일전출발 · 기본)');
   assert.ok(!/inNextDay|outNextDay|밤 비행이라/.test(page), '헷갈리던 체크박스 표현이 남아 있다');
+  assert.ok(!/type="date"/.test(page), '브라우저 date 칸은 쓰지 않는다(연도 칸이 6자리를 받아 「202701-05-일」이 된다)');
+  for (const k of ['dep', 'ret', 'issueDate', 'depositPaid']) { assert.match(page, new RegExp('class="nl-date" data-k="' + k + '"'), '날짜 글자 칸이 없다: ' + k); assert.match(page, new RegExp('data-dow="' + k + '"'), '요일 칩이 없다: ' + k); }
+  assert.match(page, /function normDate|N\.parseLoose\(/, '날짜 칸 정리(normDate)가 없다');
   for (const id of ['btnRecord', 'recVia', 'recSave', 'nlHist', 'nlFilter']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (발송 기록 버튼 · 방법 선택 · 내역 패널 · 찾기)');
   const sql = read('supabase/migrations/34_nilai_docs.sql');
   assert.match(sql, /array_append\(areas, 'nilai'\)[\s\S]*role in \('owner', 'admin', 'manage', 'sales'\)/);
@@ -165,4 +168,15 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(sql35, /drop constraint if exists nilai_docs_doc_no_key/);
   assert.match(sql35, /alter column doc_no drop not null/);
   assert.match(sql35, /add column if not exists sends jsonb not null default '\[\]'::jsonb/);
+});
+
+test('날짜 — 숫자만 쳐도 읽는다(엠클릭 식 20270105) · 월·일만 치면 기준일의 해 · 틀린 날짜는 빈 값 · 요일', () => {
+  for (const t of ['20270105', '2027-01-05', '2027.1.5', '2027.1.5.', '2027/01/05', '27.1.5', '27/1/5', '270105', ' 2027-01-05 ']) assert.equal(N.parseLoose(t), '2027-01-05', t);
+  assert.equal(N.parseLoose('0112', '2027-01-05'), '2027-01-12', '귀국일 월·일만 — 출발일의 해');
+  assert.equal(N.parseLoose('1/3', '2027-12-28'), '2028-01-03', '기준일보다 앞서면 다음 해');
+  assert.equal(N.parseLoose('0930', '2026-10-01', 'prev'), '2026-09-30', '입금 확인일은 지난 쪽');
+  assert.equal(N.parseLoose('1002', '2026-10-01', 'prev'), '2025-10-02');
+  assert.equal(N.parseLoose('1001', '2026-10-01'), '2026-10-01', '기준일 당일은 그 해');
+  for (const t of ['2027-02-30', '2027105', '202701', '20271301', '1', 'abc', '']) assert.equal(N.parseLoose(t), '', '틀린 꼴: ' + JSON.stringify(t));
+  assert.equal(N.dowOf('2027-01-05'), '화'); assert.equal(N.dowOf('202701'), '');
 });
