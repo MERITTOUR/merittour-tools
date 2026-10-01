@@ -51,7 +51,16 @@ test('계산 — 엠클릭 예약 30003171 과 같은 값(6박 8일 · 요금 �
 test('계산 — 담당자가 적은 박수·방수·라운딩이 자동값을 이긴다 · 당일 도착이면 박수 = 일수 − 1 · 빈 입력은 0 으로 죽지 않는다', () => {
   const c = N.calc(Object.assign(sample(), { nights: 4, rooms: 3, rounds: 2 }));
   assert.equal(c.nights, 4); assert.equal(c.rooms, 3); assert.equal(c.rounds, 2);
-  assert.equal(N.calc(Object.assign(sample(), { inNextDay: false })).nights, 4);
+  assert.equal(N.calc(Object.assign(sample(), { inDepOffset: '0' })).nights, 4, '당일 출발이면 박수 = 일수 − 1');
+  assert.equal(N.calc(Object.assign(sample(), { outArrOffset: '1' })).nights, 2, '출발편 1일후도착이면 체크인이 하루 늦다');
+  assert.equal(N.calc(Object.assign(sample(), { inDepOffset: undefined, inNextDay: false })).nights, 4, '옛 저장분(보정 칸 없음)의 체크박스 값도 읽는다');
+  const same = Object.assign(sample(), { inDepOffset: '0' });
+  assert.equal(N.flights(same)[1].depDate, '2027-03-14'); assert.equal(N.flights(same)[1].depNote, '');
+  assert.equal(N.flights(sample())[1].depNote, '1일전출발'); assert.equal(N.flights(Object.assign(sample(), { outArrOffset: '1' }))[0].arrNote, '1일후도착');
+  const itSame = N.itinerary(same);
+  assert.match(itSame[itSame.length - 1].lines.join(' / '), /인천국제공항으로 출발.*인천국제공항 도착/, '당일 출발이면 마지막 날에 출발과 도착이 같이');
+  const itLate = N.itinerary(Object.assign(sample(), { outArrOffset: '1' }));
+  assert.equal(itLate[0].lines.length, 2); assert.match(itLate[1].lines[0], /^쿠알라룸푸르공항 도착/); assert.equal(itLate[0].meals, '불포함');
   const z = N.calc(N.blank('quote'));
   assert.equal(z.total, 0); assert.equal(z.days, 0); assert.equal(z.period, ''); assert.equal(z.productName, '닐라이스프링스CC 골프 투어 - 대한항공');
 });
@@ -142,7 +151,10 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(page, /id="nlKind">\s*<label class="on"><input type="radio" name="kind" value="quote" checked> 견적서<\/label>\s*<label><input type="radio" name="kind" value="confirm"> 확정서/, '토글은 견적서가 먼저(2026-10-01 · Min)');
   assert.match(page, /data-k="eventNo"/, '행사번호 입력 칸이 없다');
   assert.ok(!/docNo|NS-연월일|pricePP|nlExtras/.test(page), '옛 입력(자동 번호 · 1인 요금 한 칸)이 남아 있다');
-  for (const k of ['airline', 'flightOut', 'flightOutDep', 'flightOutArr', 'flightIn', 'flightInDep', 'flightInArr', 'inNextDay', 'hotel', 'incl', 'excl', 'ref', 'meeting', 'cancel']) assert.match(page, new RegExp('data-k="' + k + '"'), '입력 칸이 없다: ' + k);
+  for (const k of ['airline', 'flightOut', 'flightOutDep', 'flightOutArr', 'flightIn', 'flightInDep', 'flightInArr', 'outArrOffset', 'inDepOffset', 'hotel', 'incl', 'excl', 'ref', 'meeting', 'cancel']) assert.match(page, new RegExp('data-k="' + k + '"'), '입력 칸이 없다: ' + k);
+  assert.match(page, /data-k="outArrOffset"><option value="0">_선택_<\/option><option value="1">1일후도착<\/option>/, '출발편 도착 보정은 엠클릭 표현(1일후도착)');
+  assert.match(page, /data-k="inDepOffset"><option value="-1">1일전출발<\/option><option value="0">_선택_<\/option>/, '도착편 출발 보정은 엠클릭 표현(1일전출발 · 기본)');
+  assert.ok(!/inNextDay|outNextDay|밤 비행이라/.test(page), '헷갈리던 체크박스 표현이 남아 있다');
   for (const id of ['btnRecord', 'recVia', 'recSave', 'nlHist', 'nlFilter']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (발송 기록 버튼 · 방법 선택 · 내역 패널 · 찾기)');
   const sql = read('supabase/migrations/34_nilai_docs.sql');
   assert.match(sql, /array_append\(areas, 'nilai'\)[\s\S]*role in \('owner', 'admin', 'manage', 'sales'\)/);

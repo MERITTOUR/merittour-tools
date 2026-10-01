@@ -145,16 +145,28 @@
      (2026-10-01 · Min 「문서번호 → 행사번호로 수정 · 입력 안 하면 공란으로 나올 거니까 · 입력 항목은 있어야」).
      자동 번호는 쓰지 않는다 — 보관함의 열쇠는 행 id 다. */
 
+  /* ── 항공 날짜 보정(엠클릭 교통편의 표현 · 2026-10-01 · Min 「이 표현이 좀 헷갈려 기존 사용 표현을 보내줄게」) ──
+     출발편 도착: outArrOffset 0 = 「당일 도착」 · 1 = 「1일후도착」(출발일 다음 날 도착)
+     도착편 출발: inDepOffset −1 = 「1일전출발」(귀국일 전날 밤 쿠알라룸푸르 출발 · 기본) · 0 = 「당일 출발」
+     옛 저장분의 체크박스 값(outNextDay · inNextDay)도 읽는다. */
+  var OUT_ARR_LABEL = { 0: '당일 도착', 1: '1일후도착' };
+  var IN_DEP_LABEL = { '-1': '1일전출발', 0: '당일 출발' };
+  function offsets(d) {
+    var outArr = d.outArrOffset != null && d.outArrOffset !== '' ? Number(d.outArrOffset) : (d.outNextDay ? 1 : 0);
+    var inDep = d.inDepOffset != null && d.inDepOffset !== '' ? Number(d.inDepOffset) : (d.inNextDay === false ? 0 : -1);
+    return { outArr: outArr === 1 ? 1 : 0, inDep: inDep === 0 ? 0 : -1 };
+  }
+
   /* ── 계산 ──
-     여행기간(일수) = 귀국일 − 출발일 + 1 · 박수 기본값 = 일수 − 2 (귀국편이 밤 비행이라 6박 8일 · 7박 9일 — 엠클릭 예약과 같다).
-     귀국편이 당일 도착이면(inNextDay 끔) 박수 = 일수 − 1. 담당자가 박수를 직접 적으면 그 값. */
+     여행기간(일수) = 귀국일 − 출발일 + 1 · 체크인 = 출발일 + 출발편 도착 보정 · 체크아웃 = 귀국일 + 도착편 출발 보정(1일전출발이면 귀국일 전날)
+     박수 기본값 = 체크아웃 − 체크인 = 일수 − 2 (밤 비행 귀국 · 6박 8일 · 7박 9일 — 엠클릭 예약과 같다) · 당일 출발이면 일수 − 1. 담당자가 박수를 직접 적으면 그 값. */
   function calc(d) {
     d = d || {};
     var dep = parseDate(d.dep), ret = parseDate(d.ret);
     var days = (dep && ret && ret >= dep) ? Math.round((ret - dep) / 86400000) + 1 : 0;
-    var inNext = d.inNextDay == null ? true : !!d.inNextDay;
+    var off = offsets(d), inNext = off.inDep === -1;
     var nights = num(d.nights, null);
-    if (nights == null) nights = Math.max(0, days - (inNext ? 2 : 1));
+    if (nights == null) nights = Math.max(0, days ? days - 1 + off.inDep - off.outArr : 0);
     var pax = Math.max(0, Math.round(num(d.pax, 0)));
     var rooms = num(d.rooms, null); if (rooms == null) rooms = Math.ceil(pax / 2);
     var rounds = num(d.rounds, null); if (rounds == null) rounds = nights;
@@ -169,16 +181,16 @@
     var deposit = Math.min(total, Math.max(0, depositPP) * pax);
     var balance = Math.max(0, total - deposit);
     var dueDate = dep ? addDays(dep, -30) : null;
-    var checkIn = dep ? addDays(dep, d.outNextDay ? 1 : 0) : null;
+    var checkIn = dep ? addDays(dep, off.outArr) : null;
     var checkOut = checkIn ? addDays(checkIn, nights) : null;
-    var inDepDate = ret ? addDays(ret, inNext ? -1 : 0) : null;
+    var inDepDate = ret ? addDays(ret, off.inDep) : null;
     var airline = String(d.airline || '').trim();
     var stay = days ? nights + '박 ' + days + '일' : '';
     return {
       dep: dep, ret: ret, days: days, nights: nights, pax: pax, rooms: rooms, rounds: rounds,
       fares: fares, sum: sum, discount: discount, total: total,
       depositPP: depositPP, deposit: deposit, balance: balance, dueDate: dueDate,
-      checkIn: checkIn, checkOut: checkOut, inDepDate: inDepDate, inNextDay: inNext,
+      checkIn: checkIn, checkOut: checkOut, inDepDate: inDepDate, inNextDay: inNext, outArrOffset: off.outArr, inDepOffset: off.inDep,
       stay: stay,
       period: (dep && ret) ? fmtYmdDot(dep) + ' ~ ' + fmtYmdDot(ret) + (stay ? ' (' + stay + ')' : '') : '',
       productName: (stay ? '[' + stay + '] ' : '') + RESORT.golf + ' 골프 투어' + (airline ? ' - ' + airline : '')
@@ -190,8 +202,8 @@
     c = c || calc(d);
     var al = String(d.airline || '').trim();
     return [
-      { leg: '출발편', airline: al, no: d.flightOut || '', depDate: c.dep ? ymd(c.dep) : '', depTime: d.flightOutDep || '', from: RESORT.iataOut, to: RESORT.iataIn, arrDate: c.dep ? ymd(addDays(c.dep, d.outNextDay ? 1 : 0)) : '', arrTime: d.flightOutArr || '' },
-      { leg: '도착편', airline: al, no: d.flightIn || '', depDate: c.inDepDate ? ymd(c.inDepDate) : '', depTime: d.flightInDep || '', from: RESORT.iataIn, to: RESORT.iataOut, arrDate: c.ret ? ymd(c.ret) : '', arrTime: d.flightInArr || '' }
+      { leg: '출발편', airline: al, no: d.flightOut || '', depDate: c.dep ? ymd(c.dep) : '', depTime: d.flightOutDep || '', from: RESORT.iataOut, to: RESORT.iataIn, arrDate: c.dep ? ymd(addDays(c.dep, c.outArrOffset)) : '', arrTime: d.flightOutArr || '', arrNote: c.outArrOffset ? OUT_ARR_LABEL[1] : '' },
+      { leg: '도착편', airline: al, no: d.flightIn || '', depDate: c.inDepDate ? ymd(c.inDepDate) : '', depTime: d.flightInDep || '', from: RESORT.iataIn, to: RESORT.iataOut, arrDate: c.ret ? ymd(c.ret) : '', arrTime: d.flightInArr || '', depNote: c.inDepOffset ? IN_DEP_LABEL['-1'] : '' }
     ];
   }
 
@@ -202,19 +214,25 @@
     var custom = nonEmpty(d.itin);
     var al = String(d.airline || '').trim();
     var rows = [];
+    var arrLine = '쿠알라룸푸르공항 도착' + (d.flightOutArr ? ' (' + d.flightOutArr + ')' : '');
+    var icnLine = '인천국제공항 도착' + (d.flightInArr ? ' (' + d.flightInArr + ')' : '');
     for (var i = 0; i < c.days; i++) {
       var date = addDays(c.dep, i), last = (i === c.days - 1), first = (i === 0);
-      var depDay = c.inNextDay ? (i === c.days - 2) : last;      // 쿠알라룸푸르에서 출발하는 날
+      var arrDay = (i === c.outArrOffset);                       // 쿠알라룸푸르에 도착하는 날(당일 도착이면 1일차)
+      var depDay = (i === c.days - 1 + c.inDepOffset);           // 쿠알라룸푸르에서 출발하는 날(1일전출발이면 귀국일 전날)
       var r = { day: i + 1, date: fmtDate(date), lines: [], hotel: '', meals: '' };
       if (custom.length) { r.lines = [custom[i] || '']; }
       else if (first) {
-        r.lines = [RESORT.airportOut + (al === '대한항공' ? ' 2터미널' : '') + ' 출국장' + (al ? ', ' + al + ' 카운터' : '') + ' 개별수속', '출국 수속 완료 후 출발' + (d.flightOut ? ' (' + d.flightOut + (d.flightOutDep ? ' ' + d.flightOutDep : '') + ')' : ''),
-                   '쿠알라룸푸르공항 도착' + (d.flightOutArr ? ' (' + d.flightOutArr + ')' : ''), RESORT.transfer, '숙소에 도착 후 휴식'];
+        r.lines = [RESORT.airportOut + (al === '대한항공' ? ' 2터미널' : '') + ' 출국장' + (al ? ', ' + al + ' 카운터' : '') + ' 개별수속', '출국 수속 완료 후 출발' + (d.flightOut ? ' (' + d.flightOut + (d.flightOutDep ? ' ' + d.flightOutDep : '') + ')' : '')];
+        if (arrDay) r.lines = r.lines.concat([arrLine, RESORT.transfer, '숙소에 도착 후 휴식']);
+      } else if (arrDay) {
+        r.lines = [arrLine, RESORT.transfer, '숙소에 도착 후 휴식'];
       } else if (depDay) {
         r.lines = ['호텔 조식 후 라운딩', '❑ ' + RESORT.golf + ' (주중 18홀 / 주말&휴일 오후 18홀)', '라운딩 후 숙소 이동', '※ 귀국일 Late Check-out 희망 시 추가요금 발생 (현지에서 확인 가능)',
                    '석식 후 공항으로 이동', '쿠알라룸푸르 국제공항에서 인천국제공항으로 출발' + (d.flightIn ? ' (' + d.flightIn + (d.flightInDep ? ' ' + d.flightInDep : '') + ')' : '')];
+        if (last) r.lines.push(icnLine);
       } else if (last) {
-        r.lines = ['인천국제공항 도착' + (d.flightInArr ? ' (' + d.flightInArr + ')' : '')];
+        r.lines = [icnLine];
       } else if (i <= c.rounds) {
         r.lines = ['호텔 조식 후 라운딩', '❑ ' + RESORT.golf + ' (주중 18홀 / 주말&휴일 오후 18홀)', '라운딩 후 숙소 이동', '석식 및 휴식'];
       } else {
@@ -222,8 +240,9 @@
       }
       var sleeps = c.checkIn && c.checkOut && date >= c.checkIn && date < c.checkOut;
       r.hotel = sleeps ? (d.hotel || RESORT.hotel) : '';
-      if (first) r.meals = '석식 : 불포함';
-      else if (last && c.inNextDay) r.meals = '';
+      if (first && !arrDay) r.meals = '불포함';
+      else if (arrDay) r.meals = '석식 : 불포함';
+      else if (last && !depDay) r.meals = '';
       else r.meals = '조식 : 호텔식 · 중식 : 호텔식 · 석식 : 호텔식';
       rows.push(r);
     }
@@ -387,7 +406,7 @@
 
     h.push('<h2>항공정보</h2><table class="gd"><tr><th>구분</th><th>항공사</th><th>항공편</th><th>출발일자</th><th>출발시간</th><th>출발지</th><th>도착지</th><th>도착일자</th><th>도착시간</th></tr>');
     fl.forEach(function (f) {
-      h.push('<tr><td>' + esc(f.leg) + '</td><td>' + esc(f.airline) + '</td><td>' + esc(f.no) + '</td><td>' + esc(f.depDate) + '</td><td>' + esc(f.depTime) + '</td><td>' + esc(f.from) + '</td><td>' + esc(f.to) + '</td><td>' + esc(f.arrDate) + '</td><td>' + esc(f.arrTime) + '</td></tr>');
+      h.push('<tr><td>' + esc(f.leg) + '</td><td>' + esc(f.airline) + '</td><td>' + esc(f.no) + '</td><td>' + esc(f.depDate) + (f.depNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.depNote) + '</span>' : '') + '</td><td>' + esc(f.depTime) + '</td><td>' + esc(f.from) + '</td><td>' + esc(f.to) + '</td><td>' + esc(f.arrDate) + (f.arrNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.arrNote) + '</span>' : '') + '</td><td>' + esc(f.arrTime) + '</td></tr>');
     });
     h.push('</table>');
 
@@ -425,7 +444,7 @@
       repName: '', phone: '', pax: '', companions: '',
       dep: '', ret: '', nights: '', rounds: '',
       airline: DEFAULTS.airline, flightOut: al.out, flightOutDep: al.outDep, flightOutArr: al.outArr, flightIn: al.inn, flightInDep: al.inDep, flightInArr: al.inArr,
-      outNextDay: false, inNextDay: true,
+      outArrOffset: '0', inDepOffset: '-1',
       hotel: RESORT.hotel, room: DEFAULTS.room, rooms: '',
       fares: [{ label: '투어비(항공료 포함)', amount: '', qty: '' }], discount: '', depositPP: '', depositPaid: '',
       incl: DEFAULTS.incl, excl: DEFAULTS.excl, ref: DEFAULTS.ref, meeting: DEFAULTS.meeting, cancel: DEFAULTS.cancel,
@@ -436,7 +455,7 @@
   }
 
   return {
-    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL,
+    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL,
     defaultNotes: defaultNotes, blank: blank,
     calc: calc, flights: flights, itinerary: itinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient,

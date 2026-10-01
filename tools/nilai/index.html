@@ -32,9 +32,10 @@
 .nl-ex { display: grid; grid-template-columns: minmax(0, 1fr) 130px 64px 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
 .nl-ex input { width: 100%; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--mt-border); border-radius: 7px; }
 .nl-ex .x { background: none; border: 1px solid var(--mt-border); border-radius: 7px; color: var(--mt-text3); cursor: pointer; height: 30px; }
-.nl-times .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.nl-checks { display: flex; gap: 16px; flex-wrap: wrap; }
-.nl-checks label { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--mt-text); cursor: pointer; }
+.nl-fl { display: grid; grid-template-columns: 52px 86px 44px 72px 104px 44px 72px 104px; gap: 4px 6px; align-items: center; font-size: 12.5px; overflow-x: auto; }
+.nl-fl .h { font-size: 11px; color: var(--mt-text3); text-align: center; }
+.nl-fl .c { text-align: center; color: var(--mt-text2); }
+.nl-fl input, .nl-fl select { width: 100%; font: inherit; font-size: 12.5px; padding: 6px 6px; border: 1px solid var(--mt-border); border-radius: 7px; background: var(--mt-surface); }
 .nl-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
 .nl-sum div { background: var(--mt-surface2); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--mt-text2); }
 .nl-sum b { display: block; font-size: 14px; color: var(--mt-brand); font-family: var(--mt-mono); }
@@ -143,11 +144,12 @@
           <div class="nl-f"><label>라운딩 횟수</label><input type="number" min="0" data-k="rounds" placeholder="자동 (박수와 같게)"></div>
           <div class="nl-f w"><label>항공사 <span class="hint">(고르면 편명·시각이 기본값으로 채워집니다 · 고칠 수 있습니다)</span></label>
             <select data-k="airline" id="nlAirline"><option value="대한항공">대한항공</option><option value="바틱항공">바틱항공</option><option value="">직접 입력</option></select></div>
-          <div class="nl-f"><label>출발편 편명</label><input type="text" data-k="flightOut" placeholder="KE427"></div>
-          <div class="nl-f nl-times"><label>출발편 시각 (인천 출발 → 쿠알라룸푸르 도착)</label><div class="two"><input type="text" data-k="flightOutDep" placeholder="16:40"><input type="text" data-k="flightOutArr" placeholder="22:25"></div></div>
-          <div class="nl-f"><label>도착편 편명</label><input type="text" data-k="flightIn" placeholder="KE428"></div>
-          <div class="nl-f nl-times"><label>도착편 시각 (쿠알라룸푸르 출발 → 인천 도착)</label><div class="two"><input type="text" data-k="flightInDep" placeholder="23:55"><input type="text" data-k="flightInArr" placeholder="07:15"></div></div>
-          <div class="nl-f w nl-checks"><label><input type="checkbox" data-k="inNextDay"> 도착편이 밤 비행이라 귀국일 새벽에 도착 (귀국편 출발일 = 귀국일 전날)</label><label><input type="checkbox" data-k="outNextDay"> 출발편이 다음 날 도착</label></div>
+          <div class="nl-f w"><label>교통편 <span class="hint">(엠클릭 교통편과 같은 표 · 출발편은 출발일, 도착편은 귀국일 기준 — 밤 비행 귀국이면 「1일전출발」)</span></label>
+            <div class="nl-fl">
+              <div class="h">구분</div><div class="h">항공편</div><div class="h">출발지</div><div class="h">출발시간</div><div class="h"></div><div class="h">도착지</div><div class="h">도착시간</div><div class="h"></div>
+              <div class="c">출발편</div><input type="text" data-k="flightOut" placeholder="KE427"><div class="c">ICN</div><input type="text" data-k="flightOutDep" placeholder="16:40"><div class="c">_선택_</div><div class="c">KUL</div><input type="text" data-k="flightOutArr" placeholder="22:25"><select data-k="outArrOffset"><option value="0">_선택_</option><option value="1">1일후도착</option></select>
+              <div class="c">도착편</div><input type="text" data-k="flightIn" placeholder="KE428"><div class="c">KUL</div><input type="text" data-k="flightInDep" placeholder="23:55"><select data-k="inDepOffset"><option value="-1">1일전출발</option><option value="0">_선택_</option></select><div class="c">ICN</div><input type="text" data-k="flightInArr" placeholder="07:15"><div class="c">_선택_</div>
+            </div></div>
           <div class="nl-f w"><label>일정 직접 입력 (선택 · 한 줄이 하루)</label><textarea data-k="itin" placeholder="비우면 출국 → 라운딩 → 귀국 순서로 자동으로 짭니다 (엠클릭 확정서와 같은 구성)"></textarea></div>
         </div>
       </div>
