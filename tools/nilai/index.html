@@ -29,9 +29,12 @@
 .nl-kind label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid var(--mt-border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--mt-text2); }
 .nl-kind label.on { border-color: var(--mt-accent); background: var(--mt-accent-dim); color: var(--mt-brand); }
 .nl-kind input { display: none; }
-.nl-ex { display: grid; grid-template-columns: minmax(0, 1fr) 120px 60px 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.nl-ex { display: grid; grid-template-columns: minmax(0, 1fr) 130px 64px 32px; gap: 6px; align-items: center; margin-bottom: 6px; }
 .nl-ex input { width: 100%; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--mt-border); border-radius: 7px; }
 .nl-ex .x { background: none; border: 1px solid var(--mt-border); border-radius: 7px; color: var(--mt-text3); cursor: pointer; height: 30px; }
+.nl-times .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.nl-checks { display: flex; gap: 16px; flex-wrap: wrap; }
+.nl-checks label { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--mt-text); cursor: pointer; }
 .nl-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
 .nl-sum div { background: var(--mt-surface2); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--mt-text2); }
 .nl-sum b { display: block; font-size: 14px; color: var(--mt-brand); font-family: var(--mt-mono); }
@@ -59,6 +62,15 @@
 .nl-list .st.sent { background: var(--mt-green-dim); color: var(--mt-green-dark); }
 .nl-list .st.link { background: var(--mt-amber-dim); color: var(--mt-amber-dark); }
 .nl-list .open { cursor: pointer; color: var(--mt-accent); font-weight: 600; background: none; border: 0; font: inherit; padding: 0; }
+.nl-rec { background: var(--mt-point-dim); border: 1px solid var(--mt-border); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; display: grid; gap: 8px; }
+.nl-rec .row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto auto; gap: 6px; align-items: center; }
+.nl-rec select, .nl-rec input { font: inherit; font-size: 12.5px; padding: 6px 8px; border: 1px solid var(--mt-border); border-radius: 7px; background: var(--mt-surface); }
+.nl-list .tools { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+.nl-list .tools input { font: inherit; font-size: 12.5px; padding: 5px 9px; border: 1px solid var(--mt-border); border-radius: 7px; width: 240px; }
+.nl-hist { margin-top: 10px; border-top: 2px solid var(--mt-border2); padding-top: 10px; }
+.nl-hist h4 { margin: 0 0 6px; font-size: 12.5px; color: var(--mt-brand); display: flex; justify-content: space-between; }
+.nl-hist pre { white-space: pre-wrap; background: var(--mt-surface2); border-radius: 8px; padding: 8px 10px; font: 12px/1.6 var(--mt-sans); margin: 6px 0 0; }
+.nl-hist .via { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--mt-accent-dim); color: var(--mt-brand); white-space: nowrap; }
 .nl-footer { margin-top: 24px; font-size: 11px; color: var(--mt-text3); text-align: center; letter-spacing: .04em; }
 @media (max-width: 1000px) {
   .nl-layout { grid-template-columns: 1fr; }
@@ -90,8 +102,9 @@
   </p>
 
   <section id="nlList" class="nl-list mt-hidden">
-    <h3>보낸 문서 <span class="mt-mono" id="nlListMeta" style="font-weight:400;color:var(--mt-text3);font-size:11px"></span></h3>
+    <h3>보낸 문서 <span class="tools"><input type="search" id="nlFilter" placeholder="이름 · 휴대폰 · 행사번호로 찾기"><span class="mt-mono" id="nlListMeta" style="color:var(--mt-text3);font-size:11px"></span></span></h3>
     <div id="nlListBody"></div>
+    <div id="nlHist" class="nl-hist mt-hidden"></div>
   </section>
 
   <div class="nl-layout">
@@ -102,11 +115,11 @@
         <div class="nl-grid">
           <div class="nl-f w">
             <div class="nl-kind" id="nlKind">
-              <label class="on"><input type="radio" name="kind" value="confirm" checked> 확정서</label>
-              <label><input type="radio" name="kind" value="quote"> 견적서</label>
+              <label class="on"><input type="radio" name="kind" value="quote" checked> 견적서</label>
+              <label><input type="radio" name="kind" value="confirm"> 확정서</label>
             </div>
           </div>
-          <div class="nl-f"><label>문서번호</label><input type="text" data-k="docNo" placeholder="저장하면 자동으로 받습니다 (NS-연월일-순번)"></div>
+          <div class="nl-f"><label>행사번호 <span class="hint">(선택 · 비우면 문서와 알림톡에 공란)</span></label><input type="text" data-k="eventNo" placeholder="예: 24-0001"></div>
           <div class="nl-f"><label>발행일</label><input type="date" data-k="issueDate"></div>
         </div>
       </div>
@@ -128,38 +141,51 @@
           <div class="nl-f"><label>귀국일 <b>*</b></label><input type="date" data-k="ret"></div>
           <div class="nl-f"><label>숙박 박수</label><input type="number" min="0" data-k="nights" placeholder="자동"></div>
           <div class="nl-f"><label>라운딩 횟수</label><input type="number" min="0" data-k="rounds" placeholder="자동 (박수와 같게)"></div>
-          <div class="nl-f"><label>출국 항공편</label><input type="text" data-k="flightOut" placeholder="KE671"></div>
-          <div class="nl-f"><label>출국 시각</label><input type="text" data-k="flightOutTime" placeholder="인천 23:55 → 쿠알라룸푸르 05:20 (+1)"></div>
-          <div class="nl-f"><label>귀국 항공편</label><input type="text" data-k="flightIn" placeholder="KE672"></div>
-          <div class="nl-f"><label>귀국 시각</label><input type="text" data-k="flightInTime" placeholder="쿠알라룸푸르 10:30 → 인천 18:00"></div>
-          <div class="nl-f w"><label>일정 직접 입력 (선택 · 한 줄이 하루)</label><textarea data-k="itin" placeholder="비우면 출국 → 라운딩 → 귀국 순서로 자동으로 짭니다"></textarea></div>
+          <div class="nl-f w"><label>항공사 <span class="hint">(고르면 편명·시각이 기본값으로 채워집니다 · 고칠 수 있습니다)</span></label>
+            <select data-k="airline" id="nlAirline"><option value="대한항공">대한항공</option><option value="바틱항공">바틱항공</option><option value="">직접 입력</option></select></div>
+          <div class="nl-f"><label>출발편 편명</label><input type="text" data-k="flightOut" placeholder="KE427"></div>
+          <div class="nl-f nl-times"><label>출발편 시각 (인천 출발 → 쿠알라룸푸르 도착)</label><div class="two"><input type="text" data-k="flightOutDep" placeholder="16:40"><input type="text" data-k="flightOutArr" placeholder="22:25"></div></div>
+          <div class="nl-f"><label>도착편 편명</label><input type="text" data-k="flightIn" placeholder="KE428"></div>
+          <div class="nl-f nl-times"><label>도착편 시각 (쿠알라룸푸르 출발 → 인천 도착)</label><div class="two"><input type="text" data-k="flightInDep" placeholder="23:55"><input type="text" data-k="flightInArr" placeholder="07:15"></div></div>
+          <div class="nl-f w nl-checks"><label><input type="checkbox" data-k="inNextDay"> 도착편이 밤 비행이라 귀국일 새벽에 도착 (귀국편 출발일 = 귀국일 전날)</label><label><input type="checkbox" data-k="outNextDay"> 출발편이 다음 날 도착</label></div>
+          <div class="nl-f w"><label>일정 직접 입력 (선택 · 한 줄이 하루)</label><textarea data-k="itin" placeholder="비우면 출국 → 라운딩 → 귀국 순서로 자동으로 짭니다 (엠클릭 확정서와 같은 구성)"></textarea></div>
         </div>
       </div>
 
       <div class="nl-fs">
-        <h3>숙소 · 골프 · 식사 · 송영</h3>
+        <h3>숙소</h3>
         <div class="nl-grid">
+          <div class="nl-f w"><label>호텔명</label><input type="text" data-k="hotel"></div>
           <div class="nl-f"><label>룸타입</label><input type="text" data-k="room"></div>
-          <div class="nl-f"><label>객실 수</label><input type="number" min="0" data-k="rooms" placeholder="자동 (2인 1실)"></div>
-          <div class="nl-f"><label>라운딩 조건</label><input type="text" data-k="roundNote"></div>
-          <div class="nl-f"><label>식사</label><input type="text" data-k="meals"></div>
-          <div class="nl-f w"><label>송영</label><input type="text" data-k="transfer"></div>
+          <div class="nl-f"><label>방수</label><input type="number" min="0" data-k="rooms" placeholder="자동 (2인 1실)"></div>
         </div>
       </div>
 
       <div class="nl-fs">
-        <h3>요금 <small>원화 · 1인 금액 × 인원</small></h3>
+        <h3>상품정보 <small>엠클릭 확정서의 문안이 기본값 · 시즌 숫자(조인 기간 · 모터쇼 · 특식 · MDAC)는 여기서 고칩니다</small></h3>
         <div class="nl-grid">
-          <div class="nl-f"><label>1인 투어 요금 (원) <b>*</b></label><input type="number" min="0" step="10000" data-k="pricePP" placeholder="1890000"></div>
-          <div class="nl-f"><label>할인 (원 · 총액에서 뺌)</label><input type="number" min="0" step="10000" data-k="discount" placeholder="0"></div>
+          <div class="nl-f w"><label>포함 사항</label><input type="text" data-k="incl"></div>
+          <div class="nl-f w"><label>불포함 사항</label><input type="text" data-k="excl"></div>
+          <div class="nl-f w"><label>참고 사항 <span class="hint">(수하물 · 캐디피 · 골프 운영 · 홀수 인원 · 객실 옵션 · 추가 라운드 · 공휴일 · 시즌 요금 · 레이트 체크아웃 · 복장 · MDAC · 공항)</span></label><textarea data-k="ref" style="min-height:170px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnRefReset">기본 문안으로</button></div></div>
+          <div class="nl-f w"><label>미팅장소및시간</label><textarea data-k="meeting"></textarea></div>
+          <div class="nl-f w"><label>취소및환불정보</label><textarea data-k="cancel" style="min-height:110px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnCancelReset">기본 문안으로</button></div></div>
+        </div>
+      </div>
+
+      <div class="nl-fs">
+        <h3>요금안내 <small>판매요금 줄 = 요금구분 · 1인 금액(원) · 인원 — 첫 줄 인원을 비우면 손님 인원</small></h3>
+        <div class="nl-grid">
+          <div class="nl-f w"><label>판매요금 <b>*</b> <span class="hint">(예: 투어비(항공료 포함) · 투어비(항공료 불포함) · 싱글룸 추가)</span></label>
+            <div id="nlFares"></div>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnAddFare">＋ 줄 추가</button></div>
+          </div>
+          <div class="nl-f"><label>할인 (원 · 총합계에서 뺌)</label><input type="number" min="0" step="10000" data-k="discount" placeholder="0"></div>
           <div class="nl-f"><label>1인 예약금 (원)</label><input type="number" min="0" step="10000" data-k="depositPP" placeholder="300000"></div>
           <div class="nl-f" id="nlPaidWrap"><label>예약금 입금 확인일 (확정서)</label><input type="date" data-k="depositPaid"></div>
-          <div class="nl-f w"><label>추가 항목 (싱글룸 · 카트 · 추가 라운딩 등)</label>
-            <div id="nlExtras"></div>
-            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnAddExtra">＋ 항목 추가</button></div>
-          </div>
         </div>
-        <div class="nl-sum"><div>총 요금<b id="sumTotal">0원</b></div><div>예약금<b id="sumDeposit">0원</b></div><div>잔금 · 기한<b id="sumBalance">0원</b></div></div>
+        <div class="nl-sum"><div>총합계<b id="sumTotal">0원</b></div><div>예약금<b id="sumDeposit">0원</b></div><div>잔금 · 기한<b id="sumBalance">0원</b></div></div>
       </div>
 
       <div class="nl-fs">
@@ -192,8 +218,18 @@
         <button type="button" class="mt-btn" id="btnLink">링크 생성</button>
         <button type="button" class="mt-btn mt-btn-primary" id="btnSend">알림톡 발송</button>
         <button type="button" class="mt-btn mt-btn-ghost" id="btnZoom" title="새 창에서 원본 크기로 봅니다">크게 보기</button>
+        <button type="button" class="mt-btn" id="btnRecord" title="알림톡이 아니라 직접 보냈을 때 — 누구에게 어떤 내용을 보냈는지 남깁니다">발송 기록</button>
       </div>
       <div class="nl-status" id="nlStatus">새 문서입니다. 손님 정보와 일정·요금을 적어 주세요.</div>
+      <div class="nl-rec mt-hidden" id="nlRec">
+        <div><b>발송 기록 남기기</b> <span style="color:var(--mt-text2)">· 이미지 복사·문자 복사로 직접 보냈을 때. 지금 화면의 문서와 문안이 그대로 남습니다</span></div>
+        <div class="row">
+          <select id="recVia"><option value="kakao">카카오톡 이미지</option><option value="sms">문자 · 알리고 콘솔</option><option value="other">기타</option></select>
+          <input type="text" id="recMemo" placeholder="메모 (선택 · 예: 메일로도 보냄)">
+          <button type="button" class="mt-btn mt-btn-primary" id="recSave">기록</button>
+          <button type="button" class="mt-btn mt-btn-ghost" id="recCancel">취소</button>
+        </div>
+      </div>
       <div class="nl-preview">
         <div class="scale" id="nlScale"><iframe id="nlFrame" title="문서 미리보기"></iframe></div>
       </div>
@@ -222,8 +258,9 @@
   var toast = MT.showToast || function (m) { window.alert(m); };
   var $ = function (id) { return document.getElementById(id); };
   var BUCKET = 'confirm-docs', LINK_TTL = 90 * 24 * 60 * 60;   // 대시보드 ⑦ 과 같은 버킷 · 90일 서명 링크
+  var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,sends,updated_at,updated_by,created_at,created_by,version';
 
-  var state = { doc: N.blank('confirm'), id: null, version: 0, link: '', linkExp: '', sentAt: '', dirty: false, logo: '', rows: [] };
+  var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null };
 
   /* ── 서버 (store.js 의 rest 와 같은 꼴 · 로그인 토큰으로만 나간다) ── */
   function authHeaders(extra) {
@@ -248,32 +285,34 @@
       });
     });
   }
+  function who() { try { return (window.MT_USER && window.MT_USER.get && window.MT_USER.get()) || ''; } catch (e) { return ''; } }
 
   /* ── 입력 ↔ state.doc ── */
   function getPath(o, k) { return k.split('.').reduce(function (a, p) { return a == null ? a : a[p]; }, o); }
   function setPath(o, k, v) { var ps = k.split('.'), last = ps.pop(), t = ps.reduce(function (a, p) { if (!a[p] || typeof a[p] !== 'object') a[p] = {}; return a[p]; }, o); t[last] = v; }
   function fields() { return Array.prototype.slice.call(document.querySelectorAll('#nlForm [data-k]')); }
   function fill() {
-    fields().forEach(function (el) { var v = getPath(state.doc, el.dataset.k); el.value = v == null ? '' : v; });
+    fields().forEach(function (el) { var v = getPath(state.doc, el.dataset.k); if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; });
     Array.prototype.forEach.call(document.querySelectorAll('#nlKind input'), function (r) { r.checked = (r.value === state.doc.kind); });
     Array.prototype.forEach.call(document.querySelectorAll('#nlKind label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
     $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
     renderExtras();
   }
   function read() {
-    fields().forEach(function (el) { setPath(state.doc, el.dataset.k, el.value); });
-    var k = document.querySelector('#nlKind input:checked'); state.doc.kind = k ? k.value : 'confirm';
-    state.doc.extras = Array.prototype.map.call(document.querySelectorAll('#nlExtras .nl-ex'), function (row) {
+    fields().forEach(function (el) { setPath(state.doc, el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); });
+    var k = document.querySelector('#nlKind input:checked'); state.doc.kind = k ? k.value : 'quote';
+    state.doc.fares = Array.prototype.map.call(document.querySelectorAll('#nlFares .nl-ex'), function (row) {
       return { label: row.querySelector('.l').value, amount: row.querySelector('.a').value, qty: row.querySelector('.q').value };
     });
   }
   function renderExtras() {
-    var box = $('nlExtras'); box.innerHTML = '';
-    (state.doc.extras || []).forEach(function (x, i) {
+    var box = $('nlFares'); box.innerHTML = '';
+    if (!state.doc.fares || !state.doc.fares.length) state.doc.fares = [{ label: '투어비(항공료 포함)', amount: '', qty: '' }];
+    state.doc.fares.forEach(function (x, i) {
       var row = document.createElement('div'); row.className = 'nl-ex';
-      row.innerHTML = '<input class="l" type="text" placeholder="항목 (예: 싱글룸 추가)"><input class="a" type="number" step="10000" placeholder="금액"><input class="q" type="number" min="1" placeholder="수량"><button type="button" class="x" title="지우기">×</button>';
+      row.innerHTML = '<input class="l" type="text" placeholder="요금구분 (예: 투어비(항공료 포함))"><input class="a" type="number" step="10000" placeholder="1인 금액"><input class="q" type="number" min="0" placeholder="' + (i === 0 ? '인원' : '수') + '"><button type="button" class="x" title="지우기">×</button>';
       row.querySelector('.l').value = x.label || ''; row.querySelector('.a').value = x.amount == null ? '' : x.amount; row.querySelector('.q').value = x.qty == null ? '' : x.qty;
-      row.querySelector('.x').addEventListener('click', function () { read(); state.doc.extras.splice(i, 1); renderExtras(); changed(); });
+      row.querySelector('.x').addEventListener('click', function () { read(); state.doc.fares.splice(i, 1); renderExtras(); changed(); });
       box.appendChild(row);
     });
   }
@@ -281,7 +320,7 @@
   /* ── 미리보기 ── */
   var renderTimer = null;
   function changed() { state.dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, 220); }
-  function html() { return N.buildHtml(state.doc, { logoSrc: state.logo }); }
+  function html(doc) { return N.buildHtml(doc || state.doc, { logoSrc: state.logo }); }
   function render() {
     read();
     var c = N.calc(state.doc);
@@ -305,80 +344,108 @@
   }
   window.addEventListener('resize', fitPreview);
 
+  function label() { return state.doc.eventNo ? '행사번호 ' + state.doc.eventNo : (state.id ? '보관함 #' + state.id : ''); }
   function status(extra) {
     var miss = N.validate(state.doc), parts = [];
-    if (state.id) parts.push('<span class="ok">저장됨</span> · ' + N.esc(state.doc.docNo || '') + (state.dirty ? ' · <span class="warn">수정 중 (저장 안 됨)</span>' : ''));
+    if (state.id) parts.push('<span class="ok">저장됨</span> · ' + N.esc(label()) + (state.dirty ? ' · <span class="warn">수정 중 (저장 안 됨)</span>' : ''));
     else parts.push('<span class="warn">아직 저장하지 않았습니다</span>');
     if (miss.length) parts.push('<span class="bad">빠진 값</span> · ' + N.esc(miss.join(' · ')));
     if (state.link) parts.push('링크 <a href="' + N.esc(state.link) + '" target="_blank" rel="noopener">열기</a>' + (state.linkExp ? ' · ' + N.esc(String(state.linkExp).slice(0, 10)) + ' 까지' : ''));
-    if (state.sentAt) parts.push('<span class="ok">알림톡 발송 ' + N.esc(String(state.sentAt).replace('T', ' ').slice(0, 16)) + '</span>');
+    if (state.sends.length) { var l = state.sends[state.sends.length - 1]; parts.push('<span class="ok">발송 ' + state.sends.length + '회</span> · 최근 ' + N.esc(String(l.at).replace('T', ' ').slice(0, 16)) + ' ' + N.esc(N.VIA_LABEL[l.via] || l.via) + (l.to ? ' → ' + N.esc(l.to) : '')); }
     if (extra) parts.push(extra);
     $('nlStatus').innerHTML = parts.join('<br>');
   }
 
-  /* ── 목록 ── */
-  var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,updated_at,updated_by,version';
+  /* ── 목록 · 발송 내역 ── */
   function loadList() {
-    return rest('/nilai_docs?select=' + COLS + '&order=updated_at.desc&limit=80').then(function (rows) { state.rows = rows || []; renderList(); });
+    return rest('/nilai_docs?select=' + COLS + '&order=updated_at.desc&limit=200').then(function (rows) { state.rows = rows || []; renderList(); });
   }
+  function rowLabel(r) { return r.doc_no ? r.doc_no : '#' + r.id; }
   function renderList() {
-    var rows = state.rows, el = $('nlListBody');
-    $('nlListMeta').textContent = rows.length ? rows.length + '건' : '';
-    if (!rows.length) { el.innerHTML = '<p style="margin:0;color:var(--mt-text3);font-size:12.5px">저장된 문서가 없습니다.</p>'; return; }
-    var h = '<table><tr><th>문서번호</th><th>종류</th><th>대표자</th><th>출발</th><th>인원</th><th>총액</th><th>상태</th><th>마지막 저장</th><th></th></tr>';
+    var q = state.filter.trim().toLowerCase(), el = $('nlListBody');
+    var rows = state.rows.filter(function (r) {
+      if (!q) return true; var d = r.data || {};
+      return [r.doc_no, d.repName, d.phone, String(d.phone || '').replace(/[^0-9]/g, '')].some(function (v) { return String(v || '').toLowerCase().indexOf(q) >= 0; });
+    });
+    $('nlListMeta').textContent = state.rows.length ? rows.length + ' / ' + state.rows.length + '건' : '';
+    if (!rows.length) { el.innerHTML = '<p style="margin:0;color:var(--mt-text3);font-size:12.5px">' + (state.rows.length ? '찾는 문서가 없습니다.' : '저장된 문서가 없습니다.') + '</p>'; return; }
+    var h = '<table><tr><th>행사번호</th><th>종류</th><th>대표자</th><th>휴대폰</th><th>출발</th><th>인원</th><th>총액</th><th>발송</th><th>마지막 저장</th><th></th></tr>';
     rows.forEach(function (r) {
-      var d = r.data || {}, c = N.calc(d);
-      var st = r.sent_at ? '<span class="st sent">알림톡 발송</span>' : (r.link ? '<span class="st link">링크 생성</span>' : '<span class="st">저장</span>');
-      h += '<tr' + (r.id === state.id ? ' class="cur"' : '') + '><td class="mt-mono">' + N.esc(r.doc_no) + '</td><td>' + N.esc(N.KIND_LABEL[r.kind] || r.kind) + '</td><td>' + N.esc(d.repName || '') + '</td><td>' + N.esc(d.dep || '') + '</td><td>' + c.pax + '명</td><td class="mt-mono">' + N.esc(N.won(c.total)) + '</td><td>' + st + '</td><td style="color:var(--mt-text3)">' + N.esc(String(r.updated_at || '').replace('T', ' ').slice(0, 16)) + ' ' + N.esc(r.updated_by || '') + '</td><td><button type="button" class="open" data-id="' + r.id + '">열기</button></td></tr>';
+      var d = r.data || {}, c = N.calc(d), sends = r.sends || [], last = sends[sends.length - 1];
+      var st = last ? '<span class="st sent">발송 ' + sends.length + '회 · ' + N.esc(String(last.at).slice(0, 10)) + ' ' + N.esc(N.VIA_LABEL[last.via] || last.via) + '</span>'
+                    : (r.link ? '<span class="st link">링크 생성</span>' : '<span class="st">미발송</span>');
+      h += '<tr' + (r.id === state.id ? ' class="cur"' : '') + '><td class="mt-mono">' + N.esc(r.doc_no || '') + '</td><td>' + N.esc(N.KIND_LABEL[r.kind] || r.kind) + '</td><td>' + N.esc(d.repName || '') + '</td><td class="mt-mono">' + N.esc(d.phone || '') + '</td><td>' + N.esc(d.dep || '') + '</td><td>' + c.pax + '명</td><td class="mt-mono">' + N.esc(N.won(c.total)) + '</td><td>' + st + '</td><td style="color:var(--mt-text3)">' + N.esc(String(r.updated_at || '').replace('T', ' ').slice(0, 16)) + ' ' + N.esc(r.updated_by || '') + '</td>'
+        + '<td style="white-space:nowrap"><button type="button" class="open" data-id="' + r.id + '">열기</button> · <button type="button" class="open hist" data-id="' + r.id + '">내역' + (sends.length ? ' ' + sends.length : '') + '</button></td></tr>';
     });
     el.innerHTML = h + '</table>';
-    Array.prototype.forEach.call(el.querySelectorAll('.open'), function (b) { b.addEventListener('click', function () { openRow(Number(b.dataset.id)); }); });
+    Array.prototype.forEach.call(el.querySelectorAll('.open'), function (b) {
+      b.addEventListener('click', function () { var id = Number(b.dataset.id); b.classList.contains('hist') ? toggleHist(id) : openRow(id); });
+    });
+    if (state.histId != null) renderHist(state.histId);
+  }
+  function toggleHist(id) { state.histId = (state.histId === id) ? null : id; renderHist(state.histId); }
+  function renderHist(id) {
+    var box = $('nlHist');
+    var r = state.rows.filter(function (x) { return x.id === id; })[0];
+    if (id == null || !r) { box.classList.add('mt-hidden'); box.innerHTML = ''; return; }
+    var d = r.data || {}, sends = (r.sends || []).slice().reverse();
+    var h = '<h4><span>발송 내역 — ' + N.esc(rowLabel(r)) + ' · ' + N.esc(d.repName || '') + ' ' + N.esc(d.phone || '') + '</span><button type="button" class="open" id="histClose">닫기</button></h4>';
+    if (!sends.length) h += '<p style="margin:0;color:var(--mt-text3);font-size:12.5px">아직 발송 기록이 없습니다. 알림톡으로 보내면 자동으로 남고, 직접 보냈으면 「발송 기록」 버튼으로 남깁니다.</p>';
+    else {
+      h += '<table><tr><th>일시</th><th>담당</th><th>방법</th><th>받는 번호</th><th>종류</th><th>메모</th><th></th></tr>';
+      sends.forEach(function (e, i) {
+        h += '<tr><td class="mt-mono">' + N.esc(String(e.at || '').replace('T', ' ').slice(0, 16)) + '</td><td>' + N.esc(e.by || '') + '</td><td><span class="via">' + N.esc(N.VIA_LABEL[e.via] || e.via) + '</span></td><td class="mt-mono">' + N.esc(e.to || '') + '</td><td>' + N.esc(N.KIND_LABEL[e.kind] || '') + '</td><td>' + N.esc(e.memo || '') + '</td>'
+          + '<td style="white-space:nowrap"><button type="button" class="open msg" data-i="' + i + '">문안</button> · <button type="button" class="open docv" data-i="' + i + '">그때 문서</button>' + (e.link ? ' · <a href="' + N.esc(e.link) + '" target="_blank" rel="noopener">링크</a>' : '') + '</td></tr>';
+      });
+      h += '</table><pre id="histMsg" class="mt-hidden"></pre>';
+    }
+    box.innerHTML = h; box.classList.remove('mt-hidden');
+    $('histClose').addEventListener('click', function () { state.histId = null; renderHist(null); });
+    Array.prototype.forEach.call(box.querySelectorAll('.msg'), function (b) { b.addEventListener('click', function () { var e = sends[Number(b.dataset.i)]; var pre = $('histMsg'); pre.textContent = e.message || ''; pre.classList.remove('mt-hidden'); }); });
+    Array.prototype.forEach.call(box.querySelectorAll('.docv'), function (b) { b.addEventListener('click', function () { var e = sends[Number(b.dataset.i)]; openWindow(html(e.data || {})); }); });
   }
   function openRow(id) {
     var r = state.rows.filter(function (x) { return x.id === id; })[0]; if (!r) return;
     if (state.dirty && !confirm('수정 중인 내용을 버리고 다른 문서를 열까요?')) return;
-    state.doc = Object.assign(N.blank(r.kind), r.data || {}, { kind: r.kind, docNo: r.doc_no });
-    state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sentAt = r.sent_at || ''; state.dirty = false;
+    state.doc = Object.assign(N.blank(r.kind), r.data || {}, { kind: r.kind, eventNo: (r.data && r.data.eventNo) || r.doc_no || '' });
+    state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sends = r.sends || []; state.dirty = false;
     fill(); render(); renderList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function newDoc() {
     if (state.dirty && !confirm('수정 중인 내용을 버리고 새 문서를 열까요?')) return;
     var keep = { staffName: state.doc.staffName, staffTel: state.doc.staffTel, acct: state.doc.acct };
-    state.doc = Object.assign(N.blank('confirm'), keep);
-    state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sentAt = ''; state.dirty = false;
+    state.doc = Object.assign(N.blank('quote'), keep);
+    state.doc.notes = N.defaultNotes('quote').join('\n');
+    state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sends = []; state.dirty = false;
     fill(); render(); renderList();
   }
 
-  /* ── 저장 (문서번호는 그날 저장된 수 + 1 · 겹치면 다음 번호로 다시) ── */
-  function nextDocNo(date) {
-    var prefix = N.docNo(date, 1).slice(0, -2);
-    return rest('/nilai_docs?select=doc_no&doc_no=like.' + encodeURIComponent(prefix + '*') + '&order=doc_no.desc&limit=1').then(function (rows) {
-      var last = rows && rows[0] ? Number(String(rows[0].doc_no).slice(-2)) : 0;
-      return N.docNo(date, last + 1);
-    });
-  }
+  /* ── 저장 — 행사번호는 담당자가 적는 선택 항목(겹쳐도 된다) · 보관함 열쇠는 행 id ── */
   function save() {
     read();
-    var by = (window.MT_USER && window.MT_USER.get && window.MT_USER.get()) || '';
-    var p = state.doc.docNo ? Promise.resolve(state.doc.docNo) : nextDocNo(state.doc.issueDate);
-    return p.then(function (no) {
-      state.doc.docNo = no; fill();
-      var body = { doc_no: no, kind: state.doc.kind, data: state.doc, updated_by: by };
-      if (!state.id) {
-        body.created_by = by;
-        return rest('/nilai_docs', { method: 'POST', prefer: 'return=representation', body: body }).catch(function (e) {
-          if (e.status === 409) { state.doc.docNo = ''; return save(); }   // 같은 번호를 남이 먼저 썼다 → 다음 번호
-          throw e;
-        });
-      }
-      return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', prefer: 'return=representation', body: body });
-    }).then(function (rows) {
+    var by = who();
+    var body = { doc_no: String(state.doc.eventNo || '').trim() || null, kind: state.doc.kind, data: state.doc, updated_by: by };
+    var p = state.id
+      ? rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', prefer: 'return=representation', body: body })
+      : rest('/nilai_docs', { method: 'POST', prefer: 'return=representation', body: Object.assign({ created_by: by }, body) });
+    return p.then(function (rows) {
       var r = rows && rows[0]; if (!r) throw new Error('저장할 권한이 없습니다. 관리자에게 역할 승인을 요청해 주세요.');
       state.id = r.id; state.version = r.version || 0; state.dirty = false;
-      toast('저장했습니다 · ' + r.doc_no);
+      toast('저장했습니다' + (state.doc.eventNo ? ' · ' + state.doc.eventNo : ''));
       return loadList().then(function () { status(); return r; });
     });
+  }
+
+  /* ── 발송 기록 — 누구에게 · 어떤 내용(그때의 문서·문안·링크) · 어떻게 · 누가 · 언제 ── */
+  function recordSend(via, memo, link) {
+    read();
+    var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
+    return pre.then(function () {
+      var entry = N.sendEntry(state.doc, via, { by: who(), memo: memo, link: link || state.link || '' });
+      var sends = state.sends.concat([entry]);
+      return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sends: sends, sent_at: entry.at, sent_by: entry.by } }).then(function () { state.sends = sends; return entry; });
+    }).then(function (entry) { return loadList().then(function () { status(); return entry; }); });
   }
 
   /* ── 이미지 (html2canvas · 미리보기 프레임의 .doc) ── */
@@ -389,12 +456,12 @@
     return (doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve()).then(function () { return new Promise(function (r) { setTimeout(r, 120); }); }).then(go);
   }
   function toBlob(canvas, type, q) { return new Promise(function (res, rej) { canvas.toBlob(function (b) { b ? res(b) : rej(new Error('이미지 변환 실패')); }, type || 'image/jpeg', q || 0.92); }); }
-  function fileBase() { return (state.doc.docNo || 'nilai') + '_' + (N.KIND_LABEL[state.doc.kind] || ''); }
+  function fileBase() { return (String(state.doc.eventNo || '').trim() || ('nilai-' + (state.id || 'new'))) + '_' + (N.KIND_LABEL[state.doc.kind] || ''); }
   function copyImage() {
     read();
     toCanvas().then(function (cv) { return toBlob(cv, 'image/png'); }).then(function (b) {
       return navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]);
-    }).then(function () { toast('이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣으세요'); })
+    }).then(function () { toast('이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣고, 보냈으면 「발송 기록」을 눌러 주세요'); })
       .catch(function (e) { alert('이미지 복사가 안 되는 환경입니다. JPG 저장을 이용해 주세요.\n(' + e.message + ')'); });
   }
   function downloadJpg() {
@@ -403,9 +470,10 @@
       .catch(function (e) { alert(e.message); });
   }
   function printDoc() { var w = $('nlFrame').contentWindow; if (w) { w.focus(); w.print(); } }
-  function zoom() { read(); var w = window.open('', '_blank'); if (!w) { alert('팝업이 막혀 있습니다.'); return; } w.document.open(); w.document.write(html()); w.document.close(); }
+  function openWindow(markup) { var w = window.open('', '_blank'); if (!w) { alert('팝업이 막혀 있습니다.'); return; } w.document.open(); w.document.write(markup); w.document.close(); }
+  function zoom() { read(); openWindow(html()); }
 
-  /* ── 링크 (private 버킷 업로드 → 90일 서명 링크 · 대시보드 ⑦ 과 같은 길) ── */
+  /* ── 링크 (private 버킷 업로드 → 90일 서명 링크 · 대시보드 ⑦ 과 같은 길 · 파일 이름은 행 id) ── */
   function makeLink() {
     read();
     var miss = N.validate(state.doc);
@@ -413,7 +481,7 @@
     var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
     status('링크 생성 중…');
     return pre.then(toCanvas).then(function (cv) { return toBlob(cv, 'image/jpeg', 0.92); }).then(function (blob) {
-      var path = state.doc.kind + '/' + encodeURIComponent(state.doc.docNo) + '.jpg';
+      var path = state.doc.kind + '/nilai-' + state.id + '.jpg';
       return authHeaders({ 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }).then(function (h) {
         return fetch(base() + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: blob });
       }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error('업로드 실패(' + r.status + ') ' + t.slice(0, 120)); }); })
@@ -429,31 +497,29 @@
   }
   function copyText(t, msg) { navigator.clipboard.writeText(t).then(function () { toast(msg || '복사했습니다'); }).catch(function () { prompt('복사해 주세요', t); }); }
 
-  /* ── 알림톡 (Edge Function send-alimtalk · 로그인 토큰 · 서버가 fail-closed) ── */
+  /* ── 알림톡 (Edge Function send-alimtalk · 로그인 토큰 · 서버가 fail-closed) — 성공하면 발송 내역에 자동으로 남는다 ── */
   function send() {
     read();
     var miss = N.validate(state.doc);
     if (miss.length) { alert('먼저 채워 주세요: ' + miss.join(' · ')); return; }
-    var label = N.KIND_LABEL[state.doc.kind];
+    var kindLabel = N.KIND_LABEL[state.doc.kind];
     var pre = state.link && state.id && !state.dirty ? Promise.resolve(state.link) : makeLink();
     pre.then(function (link) {
       var r = N.recipient(state.doc, link);
-      if (!confirm(r.name + ' 님(' + r.phone + ')에게 ' + label + ' 알림톡을 보냅니다.\n\n' + N.alimtalk(state.doc) + '\n\n진행할까요?')) return;
+      if (!confirm(r.name + ' 님(' + r.phone + ')에게 ' + kindLabel + ' 알림톡을 보냅니다.\n\n' + N.alimtalk(state.doc) + '\n\n진행할까요?')) return;
       status('알림톡 발송 요청 중…');
       return authHeaders({ 'Content-Type': 'application/json' }).then(function (h) {
         return fetch(base() + '/functions/v1/send-alimtalk', { method: 'POST', headers: h, body: JSON.stringify({ kind: state.doc.kind, recipients: [r] }) });
       }).then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (j) {
           if (!res.ok) { var e = new Error(j.error || ('HTTP ' + res.status)); e.status = res.status; throw e; }
-          state.sentAt = new Date().toISOString();
-          var by = (window.MT_USER && window.MT_USER.get && window.MT_USER.get()) || '';
-          return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sent_at: state.sentAt, sent_by: by } });
+          return recordSend('alimtalk', '', link);
         });
-      }).then(function () { toast('알림톡 발송을 요청했습니다'); return loadList(); }).then(function () { status(); });
+      }).then(function () { toast('알림톡 발송을 요청했고 내역에 남겼습니다'); });
     }).catch(function (e) {
       if (e && e.message === 'incomplete') return;
       var why = (e && e.status === 404) ? '알림톡 함수(send-alimtalk)가 아직 배포되지 않았습니다.' : (e && e.message) || '';
-      status('<span class="bad">알림톡을 보내지 못했습니다</span> · ' + N.esc(why) + '<br>아래 「링크 포함 문자 복사」로 알리고 콘솔이나 카카오톡 채팅에 붙여 넣어 보내 주세요.');
+      status('<span class="bad">알림톡을 보내지 못했습니다</span> · ' + N.esc(why) + '<br>아래 「링크 포함 문자 복사」로 알리고 콘솔이나 카카오톡 채팅에 붙여 넣어 보내고, 보냈으면 「발송 기록」을 눌러 주세요.');
       document.querySelector('.nl-msg').open = true;
     });
   }
@@ -469,10 +535,18 @@
     });
     $('nlForm').addEventListener('input', changed);
     $('nlForm').addEventListener('change', changed);
-    $('btnAddExtra').addEventListener('click', function () { read(); state.doc.extras.push({ label: '', amount: '', qty: 1 }); renderExtras(); changed(); });
+    $('btnAddFare').addEventListener('click', function () { read(); state.doc.fares.push({ label: '', amount: '', qty: 1 }); renderExtras(); changed(); });
     $('btnNotesReset').addEventListener('click', function () { read(); state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); changed(); });
+    $('btnRefReset').addEventListener('click', function () { read(); state.doc.ref = N.DEFAULTS.ref; fill(); changed(); });
+    $('btnCancelReset').addEventListener('click', function () { read(); state.doc.cancel = N.DEFAULTS.cancel; fill(); changed(); });
+    $('nlAirline').addEventListener('change', function () {
+      read(); var al = N.AIRLINES[state.doc.airline];
+      if (al) { state.doc.flightOut = al.out; state.doc.flightOutDep = al.outDep; state.doc.flightOutArr = al.outArr; state.doc.flightIn = al.inn; state.doc.flightInDep = al.inDep; state.doc.flightInArr = al.inArr; fill(); }
+      changed();
+    });
     $('btnNew').addEventListener('click', newDoc);
     $('btnList').addEventListener('click', function () { $('nlList').classList.toggle('mt-hidden'); if (!$('nlList').classList.contains('mt-hidden')) loadList().catch(function (e) { toast(e.message); }); });
+    $('nlFilter').addEventListener('input', function () { state.filter = $('nlFilter').value; renderList(); });
     $('btnSave').addEventListener('click', function () { save().catch(function (e) { alert('저장 실패: ' + e.message); }); });
     $('btnCopyImg').addEventListener('click', copyImage);
     $('btnJpg').addEventListener('click', downloadJpg);
@@ -480,11 +554,19 @@
     $('btnZoom').addEventListener('click', zoom);
     $('btnLink').addEventListener('click', function () { makeLink().catch(function () {}); });
     $('btnSend').addEventListener('click', send);
+    $('btnRecord').addEventListener('click', function () { $('nlRec').classList.toggle('mt-hidden'); });
+    $('recCancel').addEventListener('click', function () { $('nlRec').classList.add('mt-hidden'); });
+    $('recSave').addEventListener('click', function () {
+      var miss = N.validate(state.doc); read();
+      if (!String(state.doc.repName || '').trim() || !String(state.doc.phone || '').replace(/[^0-9]/g, '')) { alert('누구에게 보냈는지 남기려면 대표자 성함과 휴대폰 번호가 필요합니다.'); return; }
+      recordSend($('recVia').value, $('recMemo').value).then(function () { $('nlRec').classList.add('mt-hidden'); $('recMemo').value = ''; toast('발송 내역에 남겼습니다'); })
+        .catch(function (e) { alert('기록 실패: ' + e.message); });
+    });
     $('btnCopyAlim').addEventListener('click', function () { read(); copyText(N.alimtalk(state.doc), '알림톡 문안을 복사했습니다'); });
     $('btnCopySms').addEventListener('click', function () { read(); copyText(N.smsText(state.doc, state.link), state.link ? '링크 포함 문자를 복사했습니다' : '문자를 복사했습니다 (링크는 아직 없습니다)'); });
 
     state.doc.notes = N.defaultNotes(state.doc.kind).join('\n');
-    try { var u = window.MT_USER && window.MT_USER.get && window.MT_USER.get(); if (u) state.doc.staffName = u; } catch (e) {}
+    var u = who(); if (u) state.doc.staffName = u;
     fill(); render();
 
     // 로고(문서 머리) — 같은 저장소의 SVG 를 data URL 로 넣는다(html2canvas 가 그대로 그린다)
