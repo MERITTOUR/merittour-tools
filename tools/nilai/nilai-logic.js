@@ -5,8 +5,9 @@
    UMD: 브라우저 전역 MT_NILAI + Node require(tests/nilai.test.mjs).
    DOM 을 만지지 않는다 — 화면(index.html)은 이 모듈이 돌려주는 값만 그린다.
 
-   왜 따로 두나 — 계산(박수 · 요금 · 잔금 기한)과 손님에게 나가는 문서 문안이
-   화면 코드 안에 흩어지면 검사할 수 없다. 숫자가 틀리면 손님 문서가 틀린다.
+   문서 구성은 엠클릭 확정서(2026-10-01 · Min 「이것도 참고해봐」 · 예약 30003171 MS워드 저장본)를 따른다:
+   머리(회사 정보 · 발신) → 여행정보 → 요금안내(판매항목 표) → 상품정보(포함 · 불포함 · 참고 사항)
+   → 항공정보 → 숙박정보 → 상세일정 → 미팅장소및시간 → 취소및환불정보 → 유의사항.
    ════════════════════════════════════════════════════════════════ */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -14,16 +15,26 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  /* ── 리조트 고정 정보 (손님 문서에 찍히는 공개 사실만) ── */
+  /* ── 회사 · 리조트 고정 정보 (손님 문서에 찍히는 공개 사실만) ── */
+  var COMPANY = {
+    name: '(주)메리트투어', tel: '02-365-9800', fax: '02-365-9801',
+    addr: '서울특별시 마포구 월드컵북로 15, 6층 601호(서교동, 엠지엘빌딩)', site: 'https://www.merittour.co.kr'
+  };
   var RESORT = {
     key: 'nilai',
-    nameKo: '닐라이스프링스 리조트',
+    hotel: '닐라이스프링스 리조트 호텔',
+    golf: '닐라이스프링스CC',
     nameEn: 'Nilai Springs Golf & Country Club',
-    golf: '닐라이스프링스CC (18홀)',
-    region: '말레이시아 · 쿠알라룸푸르 근교 닐라이',
-    airportOut: '인천국제공항',
-    airportIn: '쿠알라룸푸르 국제공항(KLIA)',
-    product: '말레이시아 닐라이스프링스 골프'
+    region: '말레이시아 · 쿠알라룸푸르',
+    airportOut: '인천국제공항', airportIn: '쿠알라룸푸르 국제공항(KLIA)',
+    iataOut: 'ICN', iataIn: 'KUL',
+    transfer: '닐라이스프링스 골프&리조트 이동 (약 25분 소요)',
+    addrEn: 'PT4770, NILAI SPRINGS PUTRA NILAI, NEGERI SEMBILAN, MALAYSIA', zip: '71800'
+  };
+  /* 항공사별 기본 편 — 항공사를 고르면 채워 주고 담당자가 고친다(엠클릭 예약 30003171 · 30003435 의 편). */
+  var AIRLINES = {
+    '대한항공': { out: 'KE427', outDep: '16:40', outArr: '22:25', inn: 'KE428', inDep: '23:55', inArr: '07:15', bag: '위탁수화물 23KG (골프백 포함) · 기내수화물 10KG' },
+    '바틱항공': { out: 'OD821', outDep: '06:50', outArr: '12:30', inn: 'OD820', inDep: '22:00', inArr: '05:50', bag: '위탁수화물 20KG 기준 (골프백 포함) · 기내수화물 7KG' }
   };
 
   var KIND_LABEL = { quote: '견적서', confirm: '확정서' };
@@ -33,31 +44,71 @@
     confirm: '예약이 확정되었습니다 · 출발 전 아래 내용을 확인하여 주시기 바랍니다'
   };
 
-  /* 입력 기본값 — 화면이 새 문서를 열 때 채운다. 담당자가 고칠 수 있다. */
+  /* 입력 기본값 — 엠클릭 확정서의 문안을 그대로 가져왔다. 시즌마다 바뀌는 숫자(동계 조인 기간 · GP 모터쇼 · 특식 · MDAC 개별 작성일)는 담당자가 고친다. */
   var DEFAULTS = {
-    kind: 'confirm',
-    room: '트윈 (2인 1실)',
-    meals: '조식 포함 (리조트 조식)',
-    transfer: '쿠알라룸푸르 국제공항(KLIA) ↔ 리조트 왕복 송영 포함',
-    roundNote: '매일 18홀 · 2인 1카트',
+    kind: 'quote',
+    airline: '대한항공',
+    room: '트윈 (TWN)',
+    incl: '숙박비, 라운딩비(1일 18홀), 식비(조, 중, 석식), 왕복송영비, 회원관리비[여행자보험가입 포함]',
+    excl: '캐디피+캐디팁, 개인비용',
     depositPP: 300000,
-    staffTel: '02-365-9800',
+    staffTel: COMPANY.tel,
     kakao: 'https://pf.kakao.com/_dxhWus/chat',
-    acct: { bank: '국민은행', no: '817201-04-109230', holder: '㈜메리트투어' }
+    acct: { bank: '하나은행', no: '109-890042-62004', holder: '(주)메리트투어' },
+    meeting: '쿠알라룸푸르 공항 도착 후 입국심사와 세관 절차를 마치고 수하물을 찾으신 뒤, 도착 출구는 한 곳이므로 출구로 나오시면 “닐라이스프링스CC” 피켓을 든 현지(말레이시아) 직원이 대기하고 있습니다.',
+    ref: [
+      '■ 항공 수하물 안내',
+      '바틱항공 · 위탁수화물 20KG 기준 (골프백 포함) · 기내수화물 7KG',
+      '대한항공 · 위탁수화물 23KG (골프백 포함) · 기내수화물 10KG',
+      '※ 원활한 수속을 위해 출발 3시간 전까지 공항 도착을 권장드립니다. (성수기, 단체 출발 및 골프백 위탁 시 수속 시간이 더 소요될 수 있습니다.)',
+      '※ 개별 발권 진행하신 분들은 개별적으로 위탁수화물 및 기내수화물 참고',
+      '',
+      '1. 캐디피+캐디팁 비용',
+      '2인 1캐디 (18홀 기준) → RM 150 (현지 지불, 카드결제 가능)',
+      '2. 골프 운영',
+      '주말/공휴일 오전 플레이: 2인 1캐디 필수 (현지에 의해 주중 캐디 필수 사용 가능성 있음)',
+      '주말·공휴일 2인 플레이: 오후 티업만 가능',
+      '조인 플레이: 2인 투어 리조트 사정에 따라 발생 가능 (동계 기간 26.12.01~27.2.28 2인 조인 플레이)',
+      '3. 홀수 인원 투어',
+      '홀수 인원: 싱글룸 + 싱글카트 필수',
+      '싱글룸 추가: 비수기 ₩50,000 / 성수기 ₩65,000 · 싱글카트: ₩18,000 (18홀)',
+      '4. 객실 옵션',
+      '발코니 디럭스룸: ₩13,000 / 1인 1박 (현지에서 일반 트윈 → 디럭스룸 변경 시 현지 닐라이스프링스 직원에게 직접 요청)',
+      '5. 추가 라운드 (9홀 기준)',
+      '9홀 RM28.00 / 1인 · 18홀 RM49.00 / 1인 · 캐디 선택사항 (18홀 캐디피+캐디팁 RM150 현지 지불) · 현지 카드결제 가능',
+      '6. 말레이시아 공휴일 안내',
+      '주말 및 공휴일 오전 티업 배정 시 캐디 필수 · 티업 시간(AM/PM): 랜덤 배정',
+      '7. 시즌 & 특별 요금',
+      '12/24, 12/31 특식 추가요금: RM 20 / 1인 (현지 지불)',
+      'GP 모터쇼 기간 요금 인상 → 2026.10.28~11.02: ₩20,000 / 1인 1박 추가',
+      '8. 레이트 체크아웃',
+      '18시 이전: ₩65,000 / 룸 · 18시 이후: ₩110,000 / 룸 (객실 상황에 따라 불가할 수 있음)',
+      '',
+      '■ 복장 규정',
+      '남성: 카라가 있는 상의 / 반바지 or 긴바지 (벨트 착용)',
+      '여성: 카라가 있는 상의 / 반바지 or 긴바지 or 치마바지 (치마바지 제외한 복장은 벨트 필수)',
+      '■ 캐리어는 일반 벨트, 골프백은 A벨트에서 수령 후 출구로 이동 바랍니다',
+      '■ MDAC(말레이시아 자동 입국신고서)는 출발 최대 하루 전날 작성 후 대표자님께 발송해 드립니다 (작성 시 E-Mail 필수)',
+      '■ 자동 입국 신고서 숙소 정보 — 공식사이트 https://imigresen-online.imi.gov.my/mdac/main?registerMain · 주소 ' + RESORT.addrEn + ' · 우편번호 ' + RESORT.zip,
+      '■ 주요 공항 안내 — 인천국제공항 https://www.airport.kr/ · 쿠알라룸푸르공항 https://airports.malaysiaairports.com.my/en/klia1 (링크는 예고 없이 바뀔 수 있습니다)'
+    ].join('\n'),
+    cancel: [
+      '※ 천재지변(우천, 폭설 등) 또는 골프장 사정으로 인해 라운드 진행이 불가한 경우 환불되지 않습니다.',
+      '· 표준약관 이전에 취소하시는 경우라도, 항공권 발권 이후 취소 시에는 항공사 규정에 따른 취소 수수료(페널티)가 별도로 부과될 수 있습니다.',
+      '· 본 상품의 예약 및 취소는 「국외여행 표준약관」 외 추가 특별 약관이 적용됩니다. (특별 약관은 바틱항공 계약 좌석에 한함)',
+      '· 국외여행 표준약관 [취소 수수료 안내] — 출발 30일 전까지: 계약금 전액 환급 / 29~20일: 여행요금의 10% / 19~10일: 15% / 9~8일: 20% / 7~1일: 30% / 출발 당일: 50% 배상 (No-show 의 경우 왕복 항공권은 전액 환불 불가)',
+      '· 추가 특별약관(바틱항공 계약 좌석) — 출발 50일 전 ~ 26일 전: 1인당 60,000원 / 25일 전 ~ 17일 전: 1인당 250,000원 / 16일 전 ~ 출발 1일 전: 항공료 전액 환불 불가 (평일 오전 9시 ~ 오후 5시 내 통보 기준 · 주말, 공휴일 제외)',
+      '· 상기 일정은 여행 표준약관 제8조, 제12조의 규정에 따라 여행자의 안전과 보호를 위하여 여행자의 요청 또는 현지 사정에 의하여 부득이하다고 쌍방이 합의한 경우, 천재지변 · 전란 · 정부의 명령 · 운송 · 숙박기관의 파업 · 휴업 등으로 여행의 목적을 달성할 수 없는 경우에 변경될 수 있습니다.'
+    ].join('\n')
   };
 
-  /* 유의사항 — 1인 원화 금액으로 정한 상품의 규칙(docs/confirm_2027_notice.md §1 끝줄).
-     환율 산정 규칙(출발월 두 달 전 환율)은 적용하지 않는다. */
+  /* 유의사항 — 1인 원화 금액으로 정한 상품의 규칙(docs/confirm_2027_notice.md §1 끝줄 · 환율 산정 규칙 미적용). 취소 · 라운딩 불가 · MDAC 는 위 절에 있어 겹치지 않게 뺐다. */
   function defaultNotes(kind) {
     var list = [
       '본 ' + KIND_LABEL[kind] + '의 요금은 원화로 안내된 확정 금액이며, 환율 변동에 따른 추가 청구나 차액 정산은 없습니다.',
-      '항공 · 송영 · 숙박 · 라운딩은 하나의 일정으로 준비됩니다. 회원님 사정으로 포함 서비스를 이용하지 않으시더라도 그 부분의 요금은 제외 · 환불되지 않으며, 정해진 일정 밖의 이동은 회원님의 책임으로 진행됩니다.',
-      '예약 변경 · 취소는 국외여행 표준약관을 따릅니다. 다만 항공권과 리조트는 항공사 · 리조트의 규정이 우선 적용되며, 해당하는 경우 담당자가 미리 안내드립니다.',
-      '예약금 입금 후 항공권 발권이 진행됩니다. 발권 후 취소 · 변경 시 항공사 규정에 따른 수수료가 발생합니다.',
-      '라운딩 시간은 일몰 · 골프장 사정에 따라 짧아질 수 있으며, 천재지변 또는 골프장 사정으로 라운딩이 불가한 경우 환불되지 않고 대체 프로그램으로 진행됩니다.',
+      '항공 · 송영 · 숙박 · 식사 · 라운딩은 하나의 일정으로 준비됩니다. 회원님 사정으로 포함 서비스를 이용하지 않으시더라도 그 부분의 요금은 제외 · 환불되지 않으며, 정해진 일정 밖의 이동은 회원님의 책임으로 진행됩니다.',
       '객실은 예약 순서를 기준으로 배정되며, 객실 종류와 시설은 예약 상황에 따라 조정될 수 있습니다.',
-      '여권 유효기간은 입국일 기준 6개월 이상 남아 있어야 합니다. 말레이시아 입국 시 전자입국신고(MDAC)를 출발 전 온라인으로 제출하여 주시기 바랍니다.',
-      '잔금은 출발 30일 전까지 납부하여 주시기 바랍니다.'
+      '여권 유효기간은 입국일 기준 6개월 이상 남아 있어야 합니다.'
     ];
     if (kind === 'quote') list.unshift('본 견적은 발행일 기준이며, 항공 좌석과 객실 상황에 따라 달라질 수 있습니다. 예약금 입금 시 예약이 확정됩니다.');
     return list;
@@ -73,8 +124,10 @@
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   function ymd(d) { return d ? d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) : ''; }
   function fmtDate(d) { return d ? d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' (' + DOW[d.getDay()] + ')' : ''; }
+  function fmtYmdDot(d) { return d ? d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) : ''; }
   function fmtMD(d) { return d ? pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' (' + DOW[d.getDay()] + ')' : ''; }
   function won(n) { n = Math.round(Number(n) || 0); return (n < 0 ? '-' : '') + Math.abs(n).toLocaleString('ko-KR') + '원'; }
+  function comma(n) { n = Math.round(Number(n) || 0); return (n < 0 ? '-' : '') + Math.abs(n).toLocaleString('ko-KR'); }
   function num(v, fallback) {
     if (v === '' || v == null) return fallback;
     var n = Number(String(v).replace(/[^0-9.-]/g, ''));
@@ -85,62 +138,94 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function lines(s) { return String(s || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean); }
+  function lines(s) { return String(s || '').split(/\r?\n/).map(function (l) { return l.trim(); }); }
+  function nonEmpty(s) { return lines(s).filter(Boolean); }
 
-  /* 문서 번호 — NS-연월일-순번 (예 NS-261001-01). 순번은 화면이 그날 저장된 수 + 1 로 정한다. */
-  function docNo(date, seq) {
-    var d = date instanceof Date ? date : (parseDate(date) || new Date());
-    return 'NS-' + String(d.getFullYear()).slice(2) + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(Math.max(1, Number(seq) || 1));
-  }
+  /* 행사번호 — 담당자가 적는 선택 항목이다. 비우면 문서·알림톡에 공란으로 나간다
+     (2026-10-01 · Min 「문서번호 → 행사번호로 수정 · 입력 안 하면 공란으로 나올 거니까 · 입력 항목은 있어야」).
+     자동 번호는 쓰지 않는다 — 보관함의 열쇠는 행 id 다. */
 
   /* ── 계산 ──
-     박수 기본값 = 일수 − 2 (야간 비행이라 3박 5일 · 5박 7일 — tools/booking 의 longHaul 규칙).
-     담당자가 박수를 직접 적으면 그 값을 쓴다. */
+     여행기간(일수) = 귀국일 − 출발일 + 1 · 박수 기본값 = 일수 − 2 (귀국편이 밤 비행이라 6박 8일 · 7박 9일 — 엠클릭 예약과 같다).
+     귀국편이 당일 도착이면(inNextDay 끔) 박수 = 일수 − 1. 담당자가 박수를 직접 적으면 그 값. */
   function calc(d) {
     d = d || {};
     var dep = parseDate(d.dep), ret = parseDate(d.ret);
     var days = (dep && ret && ret >= dep) ? Math.round((ret - dep) / 86400000) + 1 : 0;
+    var inNext = d.inNextDay == null ? true : !!d.inNextDay;
     var nights = num(d.nights, null);
-    if (nights == null) nights = days >= 3 ? days - 2 : Math.max(0, days - 1);
+    if (nights == null) nights = Math.max(0, days - (inNext ? 2 : 1));
     var pax = Math.max(0, Math.round(num(d.pax, 0)));
     var rooms = num(d.rooms, null); if (rooms == null) rooms = Math.ceil(pax / 2);
     var rounds = num(d.rounds, null); if (rounds == null) rounds = nights;
-    var pricePP = Math.max(0, num(d.pricePP, 0));
-    var base = pricePP * pax;
-    var extras = (d.extras || []).map(function (x) {
-      return { label: String(x.label || '').trim(), amount: num(x.amount, 0), qty: Math.max(1, Math.round(num(x.qty, 1))) };
-    }).filter(function (x) { return x.label || x.amount; });
-    var extraSum = extras.reduce(function (s, x) { return s + x.amount * x.qty; }, 0);
+    var fares = (d.fares || []).map(function (f, i) {
+      var qty = num(f.qty, null); if (qty == null) qty = (i === 0 ? pax : 1);
+      return { label: String(f.label || '').trim() || (i === 0 ? '투어비(항공료 포함)' : ''), amount: Math.max(0, num(f.amount, 0)), qty: Math.max(0, Math.round(qty)) };
+    }).filter(function (f) { return f.label || f.amount; });
+    var sum = fares.reduce(function (s, f) { return s + f.amount * f.qty; }, 0);
     var discount = Math.max(0, num(d.discount, 0));
-    var total = Math.max(0, base + extraSum - discount);
+    var total = Math.max(0, sum - discount);
     var depositPP = num(d.depositPP, null); if (depositPP == null) depositPP = DEFAULTS.depositPP;
     var deposit = Math.min(total, Math.max(0, depositPP) * pax);
     var balance = Math.max(0, total - deposit);
     var dueDate = dep ? addDays(dep, -30) : null;
+    var checkIn = dep ? addDays(dep, d.outNextDay ? 1 : 0) : null;
+    var checkOut = checkIn ? addDays(checkIn, nights) : null;
+    var inDepDate = ret ? addDays(ret, inNext ? -1 : 0) : null;
+    var airline = String(d.airline || '').trim();
+    var stay = days ? nights + '박 ' + days + '일' : '';
     return {
       dep: dep, ret: ret, days: days, nights: nights, pax: pax, rooms: rooms, rounds: rounds,
-      pricePP: pricePP, base: base, extras: extras, extraSum: extraSum, discount: discount, total: total,
+      fares: fares, sum: sum, discount: discount, total: total,
       depositPP: depositPP, deposit: deposit, balance: balance, dueDate: dueDate,
-      stay: days ? nights + '박 ' + days + '일' : '',
-      period: (dep && ret) ? fmtDate(dep) + ' ~ ' + fmtDate(ret) : '',
-      productName: RESORT.product + (days ? ' ' + nights + '박 ' + days + '일' : '')
+      checkIn: checkIn, checkOut: checkOut, inDepDate: inDepDate, inNextDay: inNext,
+      stay: stay,
+      period: (dep && ret) ? fmtYmdDot(dep) + ' ~ ' + fmtYmdDot(ret) + (stay ? ' (' + stay + ')' : '') : '',
+      productName: (stay ? '[' + stay + '] ' : '') + RESORT.golf + ' 골프 투어' + (airline ? ' - ' + airline : '')
     };
   }
 
-  /* ── 일정 — 담당자가 「일정 직접 입력」에 한 줄씩 적으면 그 줄을 쓰고, 비어 있으면 자동으로 짠다 ── */
+  /* ── 항공정보 두 줄 ── */
+  function flights(d, c) {
+    c = c || calc(d);
+    var al = String(d.airline || '').trim();
+    return [
+      { leg: '출발편', airline: al, no: d.flightOut || '', depDate: c.dep ? ymd(c.dep) : '', depTime: d.flightOutDep || '', from: RESORT.iataOut, to: RESORT.iataIn, arrDate: c.dep ? ymd(addDays(c.dep, d.outNextDay ? 1 : 0)) : '', arrTime: d.flightOutArr || '' },
+      { leg: '도착편', airline: al, no: d.flightIn || '', depDate: c.inDepDate ? ymd(c.inDepDate) : '', depTime: d.flightInDep || '', from: RESORT.iataIn, to: RESORT.iataOut, arrDate: c.ret ? ymd(c.ret) : '', arrTime: d.flightInArr || '' }
+    ];
+  }
+
+  /* ── 상세일정 — 엠클릭 확정서의 하루 구성(지역 · 내용 줄 · 호텔 · 식사). 「일정 직접 입력」에 한 줄씩 적으면 그 줄이 내용이 된다. ── */
   function itinerary(d, c) {
     c = c || calc(d);
     if (!c.dep || !c.days) return [];
-    var custom = lines(d.itin);
+    var custom = nonEmpty(d.itin);
+    var al = String(d.airline || '').trim();
     var rows = [];
     for (var i = 0; i < c.days; i++) {
-      var date = addDays(c.dep, i);
-      var text;
-      if (custom.length) text = custom[i] || '';
-      else if (i === 0) text = '인천 출발' + (d.flightOut ? ' (' + d.flightOut + ')' : '') + ' → 쿠알라룸푸르 도착 · 리조트 송영 · 체크인';
-      else if (i === c.days - 1) text = '체크아웃 · 공항 송영 · 쿠알라룸푸르 출발' + (d.flightIn ? ' (' + d.flightIn + ')' : '') + ' → 인천 도착';
-      else text = (i <= c.rounds ? '라운딩 · ' + RESORT.golf : '자유 일정') + (i === 1 && !custom.length ? '' : '');
-      rows.push({ day: i + 1, date: fmtMD(date), text: text });
+      var date = addDays(c.dep, i), last = (i === c.days - 1), first = (i === 0);
+      var depDay = c.inNextDay ? (i === c.days - 2) : last;      // 쿠알라룸푸르에서 출발하는 날
+      var r = { day: i + 1, date: fmtDate(date), lines: [], hotel: '', meals: '' };
+      if (custom.length) { r.lines = [custom[i] || '']; }
+      else if (first) {
+        r.lines = [RESORT.airportOut + (al === '대한항공' ? ' 2터미널' : '') + ' 출국장' + (al ? ', ' + al + ' 카운터' : '') + ' 개별수속', '출국 수속 완료 후 출발' + (d.flightOut ? ' (' + d.flightOut + (d.flightOutDep ? ' ' + d.flightOutDep : '') + ')' : ''),
+                   '쿠알라룸푸르공항 도착' + (d.flightOutArr ? ' (' + d.flightOutArr + ')' : ''), RESORT.transfer, '숙소에 도착 후 휴식'];
+      } else if (depDay) {
+        r.lines = ['호텔 조식 후 라운딩', '❑ ' + RESORT.golf + ' (주중 18홀 / 주말&휴일 오후 18홀)', '라운딩 후 숙소 이동', '※ 귀국일 Late Check-out 희망 시 추가요금 발생 (현지에서 확인 가능)',
+                   '석식 후 공항으로 이동', '쿠알라룸푸르 국제공항에서 인천국제공항으로 출발' + (d.flightIn ? ' (' + d.flightIn + (d.flightInDep ? ' ' + d.flightInDep : '') + ')' : '')];
+      } else if (last) {
+        r.lines = ['인천국제공항 도착' + (d.flightInArr ? ' (' + d.flightInArr + ')' : '')];
+      } else if (i <= c.rounds) {
+        r.lines = ['호텔 조식 후 라운딩', '❑ ' + RESORT.golf + ' (주중 18홀 / 주말&휴일 오후 18홀)', '라운딩 후 숙소 이동', '석식 및 휴식'];
+      } else {
+        r.lines = ['자유 일정', '석식 및 휴식'];
+      }
+      var sleeps = c.checkIn && c.checkOut && date >= c.checkIn && date < c.checkOut;
+      r.hotel = sleeps ? (d.hotel || RESORT.hotel) : '';
+      if (first) r.meals = '석식 : 불포함';
+      else if (last && c.inNextDay) r.meals = '';
+      else r.meals = '조식 : 호텔식 · 중식 : 호텔식 · 석식 : 호텔식';
+      rows.push(r);
     }
     return rows;
   }
@@ -154,33 +239,52 @@
     if (!c.dep) miss.push('출발일');
     if (!c.ret) miss.push('귀국일');
     if (c.dep && c.ret && c.ret < c.dep) miss.push('귀국일이 출발일보다 앞섭니다');
-    if (!c.pricePP) miss.push('1인 요금');
+    if (!c.fares.some(function (f) { return f.amount > 0; })) miss.push('요금');
     return miss;
   }
 
   /* ── 알림톡 문안 — Edge Function(send-alimtalk/index.ts buildMessage)과 글자 단위로 같아야 한다.
-     승인된 카카오 템플릿도 이 꼴이다. 한쪽만 바꾸지 말 것. ── */
+     승인된 카카오 템플릿도 이 꼴이다. 한쪽만 바꾸지 말 것. 행사번호를 비우면 공란으로 나간다. ── */
   function alimtalk(d, kind) {
     var c = calc(d);
     var label = KIND_LABEL[kind || d.kind] || '안내문';
     return [
       '[메리트투어] ' + (d.repName || '') + '님 ' + label + ' 안내',
       '',
-      '· 행사번호 : ' + (d.docNo || ''),
+      '· 행사번호 : ' + (d.eventNo || ''),
       '· 출발일 : ' + (c.dep ? ymd(c.dep) : ''),
       '· 상품 : ' + c.productName,
       '',
       '아래 버튼에서 ' + label + '를 확인해 주세요.'
     ].join('\n');
   }
-  /* 알림톡을 못 보낼 때(함수 미배포 · 템플릿 미승인) 알리고 콘솔이나 카카오톡 채팅에 붙여 넣는 글 */
+  /* 알림톡을 못 보낼 때(함수 미설정 · 템플릿 미승인) 알리고 콘솔이나 카카오톡 채팅에 붙여 넣는 글 */
   function smsText(d, link) {
     var c = calc(d), label = KIND_LABEL[d.kind] || '안내문';
     return '[메리트투어] ' + (d.repName || '') + '님 ' + label + ' 안내\n'
-      + '문서번호 ' + (d.docNo || '') + ' · 출발 ' + (c.dep ? fmtDate(c.dep) : '') + '\n'
+      + (d.eventNo ? '행사번호 ' + d.eventNo + ' · ' : '') + '출발 ' + (c.dep ? fmtDate(c.dep) : '') + '\n'
       + c.productName + '\n'
       + (link ? label + ' 확인: ' + link + '\n' : '')
       + '문의 ' + (d.staffTel || DEFAULTS.staffTel);
+  }
+  /* 발송 기록 한 건 — 누구에게(to) · 어떤 내용(message · data 스냅샷 · link) · 어떻게(via) · 누가·언제.
+     보낸 뒤 문서를 고쳐도 그때 보낸 내용이 남는다(Min 「어떤 사람한테 어떤 내용으로 보냈는지 내역만 남고 내역은 확인할 수 있어야」). */
+  var VIA_LABEL = { alimtalk: '알림톡', kakao: '카카오톡 이미지', sms: '문자·알리고 콘솔', other: '기타' };
+  function sendEntry(d, via, opts) {
+    opts = opts || {};
+    var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
+    return {
+      at: opts.at || new Date().toISOString(),
+      by: opts.by || '',
+      via: VIA_LABEL[via] ? via : 'other',
+      to: String(d.phone || '').replace(/[^0-9]/g, ''),
+      name: String(d.repName || '').trim(),
+      kind: kind,
+      memo: String(opts.memo || '').trim(),
+      link: opts.link || '',
+      message: via === 'alimtalk' ? alimtalk(d, kind) : smsText(d, opts.link || ''),
+      data: JSON.parse(JSON.stringify(d))
+    };
   }
   /* send-alimtalk 에 보낼 수신자 한 건 */
   function recipient(d, link) {
@@ -188,7 +292,7 @@
     return {
       phone: String(d.phone || '').replace(/[^0-9]/g, ''),
       name: String(d.repName || '').trim(),
-      eventNo: String(d.docNo || ''),
+      eventNo: String(d.eventNo || '').trim(),
       dep: c.dep ? ymd(c.dep) : '',
       prod: c.productName,
       link: link || ''
@@ -199,109 +303,114 @@
   var CSS = [
     '*{box-sizing:border-box}',
     'body{margin:0;background:#fff;color:#1f2430;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}',
-    '.doc{width:760px;margin:0 auto;background:#fff;padding:40px 44px 36px;line-height:1.6;font-size:13.5px;word-break:keep-all}',
-    '.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:3px solid #373F4A;padding-bottom:14px}',
+    '.doc{width:760px;margin:0 auto;background:#fff;padding:36px 40px 32px;line-height:1.6;font-size:13px;word-break:keep-all}',
+    '.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}',
     '.hd img{height:26px;display:block}',
-    '.hd .co{font-size:11px;color:#5A6472;margin-top:8px;letter-spacing:.02em}',
-    '.hd .kind{text-align:right}',
-    '.hd .kind b{display:block;font-size:26px;letter-spacing:.3em;color:#373F4A;line-height:1.2}',
-    '.hd .kind span{display:block;font-size:11.5px;color:#5A6472;font-family:"JetBrains Mono",monospace;margin-top:4px}',
-    '.sub{margin:12px 0 0;color:#5A6472;font-size:12.5px}',
-    '.hero{margin:16px 0 0;background:#F4F5F7;border-left:5px solid #B8935A;border-radius:0 10px 10px 0;padding:14px 18px}',
-    '.hero .t{font-size:17px;font-weight:700;color:#373F4A}',
-    '.hero .p{margin-top:4px;font-size:13.5px;color:#2A2F39}',
-    '.hero .p b{color:#373F4A}',
-    'h2{font-size:13px;margin:22px 0 8px;color:#373F4A;letter-spacing:.06em;display:flex;align-items:center;gap:8px}',
-    'h2::before{content:"";width:4px;height:13px;background:#B8935A;border-radius:2px}',
-    'table{width:100%;border-collapse:collapse;font-size:13px}',
-    '.kv th{width:124px;text-align:left;background:#F4F5F7;color:#5A6472;font-weight:600;padding:8px 10px;border:1px solid #E3E5EA;vertical-align:top}',
-    '.kv td{padding:8px 10px;border:1px solid #E3E5EA;vertical-align:top}',
-    '.it th{background:#373F4A;color:#fff;font-weight:600;padding:7px 10px;text-align:left;font-size:12.5px}',
-    '.it td{padding:7px 10px;border-bottom:1px solid #E3E5EA;vertical-align:top}',
-    '.it td.d{width:52px;color:#373F4A;font-weight:700;white-space:nowrap}',
-    '.it td.dt{width:86px;color:#5A6472;white-space:nowrap;font-family:"JetBrains Mono",monospace;font-size:12px}',
-    '.pr td{padding:7px 10px;border-bottom:1px solid #E3E5EA}',
-    '.pr td.n{text-align:right;white-space:nowrap;font-family:"JetBrains Mono",monospace}',
-    '.pr tr.tot td{border-top:2px solid #373F4A;border-bottom:none;font-weight:700;font-size:15px;color:#373F4A;padding-top:10px}',
-    '.pr tr.sub td{color:#5A6472;font-size:12.5px}',
-    '.pay{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}',
-    '.pay .b{border:1px solid #E3E5EA;border-radius:10px;padding:10px 14px}',
+    '.hd .co{font-size:11px;color:#5A6472;line-height:1.55;text-align:right}',
+    '.ttl{text-align:center;margin:16px 0 14px}',
+    '.ttl b{font-size:24px;letter-spacing:.35em;color:#373F4A;border-bottom:2px solid #373F4A;padding:0 6px 2px}',
+    '.ttl span{display:block;font-size:12px;color:#5A6472;margin-top:8px}',
+    'table{width:100%;border-collapse:collapse;font-size:12.5px}',
+    '.kv th{width:112px;text-align:center;background:#F4F5F7;color:#2A2F39;font-weight:600;padding:7px 8px;border:1px solid #CDD1D8;vertical-align:top}',
+    '.kv td{padding:7px 10px;border:1px solid #CDD1D8;vertical-align:top}',
+    'h2{font-size:13.5px;margin:18px 0 6px;color:#1f2430;display:flex;align-items:center;gap:6px}',
+    'h2::before{content:"▶";font-size:11px;color:#373F4A}',
+    '.gd th{background:#F4F5F7;color:#2A2F39;font-weight:600;padding:6px 8px;border:1px solid #CDD1D8;text-align:center;font-size:12px}',
+    '.gd td{padding:6px 8px;border:1px solid #CDD1D8;text-align:center;vertical-align:top}',
+    '.gd td.l{text-align:left}',
+    '.gd td.n{text-align:right;font-family:"JetBrains Mono",monospace;white-space:nowrap}',
+    '.gd tr.tot td{font-weight:700;background:#FBF7EE}',
+    '.pay{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}',
+    '.pay .b{border:1px solid #CDD1D8;border-radius:8px;padding:8px 12px}',
     '.pay .b .l{font-size:11.5px;color:#5A6472}',
-    '.pay .b .v{font-size:16px;font-weight:700;color:#373F4A;margin-top:2px;font-family:"JetBrains Mono",monospace}',
-    '.pay .b .s{font-size:11.5px;color:#5A6472;margin-top:2px}',
-    '.acct{margin-top:10px;background:#FBF7EE;border:1px solid #E6D9B8;border-radius:10px;padding:10px 14px;font-size:13px}',
+    '.pay .b .v{font-size:15px;font-weight:700;color:#373F4A;font-family:"JetBrains Mono",monospace}',
+    '.pay .b .s{font-size:11.5px;color:#5A6472}',
+    '.acct{margin-top:8px;background:#FBF7EE;border:1px solid #E6D9B8;border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.7}',
     '.acct b{color:#7F6019}',
-    '.memo{white-space:pre-wrap;background:#F4F5F7;border-radius:10px;padding:10px 14px;font-size:13px}',
-    'ol.notes{margin:0;padding-left:20px;font-size:12.5px;color:#2A2F39}',
-    'ol.notes li{margin:4px 0}',
-    '.ft{margin-top:26px;border-top:1px solid #E3E5EA;padding-top:12px;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#5A6472}',
-    '.ft b{color:#373F4A}',
-    '.badge{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:#EEF1F5;color:#373F4A;margin-left:6px;vertical-align:middle}'
+    '.pre{white-space:pre-wrap;font-size:12px;line-height:1.65}',
+    '.it td.d{width:92px;font-weight:700;color:#373F4A;background:#F4F5F7;border:1px solid #CDD1D8;padding:6px 8px;vertical-align:top;white-space:nowrap}',
+    '.it td.c{border:1px solid #CDD1D8;padding:6px 10px;vertical-align:top}',
+    '.it .ln{margin:0;padding:0;list-style:none}',
+    '.it .ln li{margin:1px 0}',
+    '.it .ht{margin-top:4px;font-size:11.5px;color:#5A6472}',
+    '.it .ht b{color:#373F4A;font-weight:600}',
+    'ol.notes{margin:0;padding-left:20px;font-size:12px;color:#2A2F39}',
+    'ol.notes li{margin:3px 0}',
+    '.ft{margin-top:22px;border-top:1px solid #CDD1D8;padding-top:10px;display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:#5A6472}',
+    '.ft b{color:#373F4A}'
   ].join('\n');
 
   function buildHtml(d, opts) {
     d = d || {}; opts = opts || {};
-    var kind = KIND_LABEL[d.kind] ? d.kind : 'confirm';
-    var c = calc(d);
-    var it = itinerary(d, c);
+    var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
+    var c = calc(d), fl = flights(d, c), it = itinerary(d, c);
     var issue = parseDate(d.issueDate) || new Date();
     var acct = d.acct || DEFAULTS.acct;
-    var notes = lines(d.notes);
-    if (!notes.length) notes = defaultNotes(kind);
+    var notes = nonEmpty(d.notes); if (!notes.length) notes = defaultNotes(kind);
+    var ref = String(d.ref == null ? DEFAULTS.ref : d.ref).trim();
+    var cancel = String(d.cancel == null ? DEFAULTS.cancel : d.cancel).trim();
+    var meeting = String(d.meeting == null ? DEFAULTS.meeting : d.meeting).trim();
     var staffTel = d.staffTel || DEFAULTS.staffTel;
     var h = [];
-    h.push('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(KIND_LABEL[kind]) + ' ' + esc(d.docNo || '') + '</title>');
+    h.push('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(KIND_LABEL[kind]) + (d.eventNo ? ' ' + esc(d.eventNo) : '') + '</title>');
     h.push('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">');
     h.push('<style>' + CSS + '</style></head><body><div class="doc">');
-    h.push('<div class="hd"><div>' + (opts.logoSrc ? '<img src="' + esc(opts.logoSrc) + '" alt="MERITTOUR">' : '<div style="font-weight:800;font-size:20px;color:#373F4A;letter-spacing:.08em">MERITTOUR</div>')
-      + '<div class="co">㈜메리트투어 · 회원제 골프 전문 여행 브랜드</div></div>'
-      + '<div class="kind"><b>' + KIND_TITLE[kind] + '</b><span>No. ' + esc(d.docNo || '—') + ' · 발행 ' + esc(fmtDate(issue)) + '</span></div></div>');
-    h.push('<p class="sub">' + esc(KIND_SUB[kind]) + '</p>');
-    h.push('<div class="hero"><div class="t">' + esc(RESORT.product) + (c.stay ? ' ' + esc(c.stay) : '') + '</div>'
-      + '<div class="p">' + esc(d.repName || '') + ' 님 외 ' + (c.pax ? Math.max(0, c.pax - 1) + '명' : '—') + ' · 총 <b>' + c.pax + '명</b>'
-      + (c.period ? ' · ' + esc(c.period) : '') + '</div></div>');
+    // 머리 — 회사 정보(엠클릭 확정서와 같은 자리)
+    h.push('<div class="hd"><div>' + (opts.logoSrc ? '<img src="' + esc(opts.logoSrc) + '" alt="MERITTOUR">' : '<div style="font-weight:800;font-size:20px;color:#373F4A;letter-spacing:.08em">MERITTOUR</div>') + '</div>'
+      + '<div class="co">' + esc(COMPANY.site) + '<br>TEL : ' + esc(COMPANY.tel) + '   FAX : ' + esc(COMPANY.fax) + '<br>' + esc(COMPANY.addr) + '</div></div>');
+    h.push('<div class="ttl"><b>' + KIND_TITLE[kind] + '</b><span>' + esc(KIND_SUB[kind]) + ' · 발행 ' + esc(fmtDate(issue)) + '</span></div>');
+    h.push('<table class="kv"><tr><th>발신</th><td>' + esc((d.staffName ? d.staffName + ' / ' : '') + COMPANY.name) + '</td></tr></table>');
 
-    h.push('<h2>예약 정보</h2><table class="kv">');
-    h.push('<tr><th>대표자</th><td>' + esc(d.repName || '') + '</td><th>연락처</th><td>' + esc(d.phone || '') + '</td></tr>');
-    h.push('<tr><th>인원</th><td>' + c.pax + '명' + (c.rooms ? ' · ' + c.rooms + '실' : '') + '</td><th>문서번호</th><td>' + esc(d.docNo || '—') + '</td></tr>');
-    if (lines(d.companions).length) h.push('<tr><th>동행</th><td colspan="3">' + esc(lines(d.companions).join(' · ')) + '</td></tr>');
+    h.push('<h2>여행정보</h2><table class="kv">');
+    h.push('<tr><th>상품명</th><td>' + esc(c.productName) + '</td></tr>');
+    h.push('<tr><th>여행기간</th><td>' + esc(c.period) + '</td></tr>');
+    h.push('<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명 (성인 ' + c.pax + ')' + (nonEmpty(d.companions).length ? ' · ' + esc(nonEmpty(d.companions).join(' · ')) : '') + '</td></tr>');
+    h.push('<tr><th>행사번호</th><td>' + esc(d.eventNo || '') + '</td></tr>');
+    h.push('<tr><th>연락처</th><td>' + esc(d.phone || '') + '</td></tr>');
     h.push('</table>');
 
-    h.push('<h2>여행 개요</h2><table class="kv">');
-    h.push('<tr><th>여행지</th><td colspan="3">' + esc(RESORT.nameKo) + ' <span class="badge">' + esc(RESORT.nameEn) + '</span><br>' + esc(RESORT.region) + '</td></tr>');
-    h.push('<tr><th>기간</th><td colspan="3">' + esc(c.period) + (c.stay ? ' · <b>' + esc(c.stay) + '</b>' : '') + '</td></tr>');
-    h.push('<tr><th>출국 항공편</th><td>' + esc(d.flightOut || '—') + (d.flightOutTime ? '<br><span style="color:#5A6472">' + esc(d.flightOutTime) + '</span>' : '') + '</td>'
-      + '<th>귀국 항공편</th><td>' + esc(d.flightIn || '—') + (d.flightInTime ? '<br><span style="color:#5A6472">' + esc(d.flightInTime) + '</span>' : '') + '</td></tr>');
-    h.push('<tr><th>숙소</th><td colspan="3">' + esc(RESORT.nameKo) + ' · ' + esc(d.room || DEFAULTS.room) + (c.rooms ? ' · ' + c.rooms + '실' : '') + '</td></tr>');
-    h.push('<tr><th>라운딩</th><td colspan="3">' + esc(RESORT.golf) + ' · ' + c.rounds + '회' + (d.roundNote ? ' · ' + esc(d.roundNote) : '') + '</td></tr>');
-    h.push('<tr><th>식사</th><td>' + esc(d.meals || DEFAULTS.meals) + '</td><th>송영</th><td>' + esc(d.transfer || DEFAULTS.transfer) + '</td></tr>');
+    h.push('<h2>요금안내</h2><table class="gd"><tr><th>판매항목</th><th>요금구분</th><th>구분</th><th>금액</th><th>인원</th><th>합계</th></tr>');
+    c.fares.forEach(function (f) {
+      h.push('<tr><td>판매요금</td><td class="l">' + esc(f.label) + '</td><td>성인</td><td class="n">' + esc(comma(f.amount)) + '</td><td>' + f.qty + '</td><td class="n">' + esc(comma(f.amount * f.qty)) + '</td></tr>');
+    });
+    if (c.discount) h.push('<tr><td>할인</td><td class="l">할인</td><td></td><td></td><td></td><td class="n">-' + esc(comma(c.discount)) + '</td></tr>');
+    h.push('<tr class="tot"><td colspan="5">총합계</td><td class="n">' + esc(comma(c.total)) + '</td></tr></table>');
+    h.push('<div class="pay"><div class="b"><div class="l">예약금' + (kind === 'confirm' && d.depositPaid ? ' · 입금 확인 ' + esc(fmtDate(parseDate(d.depositPaid))) : '') + '</div><div class="v">' + esc(won(c.deposit)) + '</div><div class="s">1인 ' + esc(won(c.depositPP)) + ' × ' + c.pax + '명' + (kind === 'quote' ? ' · 입금 시 예약 확정' : '') + '</div></div>'
+      + '<div class="b"><div class="l">잔금</div><div class="v">' + esc(won(c.balance)) + '</div><div class="s">' + (c.dueDate ? '납부 기한 ' + esc(fmtDate(c.dueDate)) + ' (출발 30일 전)' : '출발 30일 전까지') + '</div></div></div>');
+    h.push('<div class="acct">■ 입금 계좌 안내 <b>' + esc(acct.bank || '') + ' ' + esc(acct.no || '') + ' ' + esc(acct.holder || '') + '</b><br>※ 본 금액에는 선납하신 예약금이 포함되어 있습니다.<br>※ 투어피는 출국 30일 전까지 완납해 주시기 바랍니다.</div>');
+
+    h.push('<h2>상품정보</h2><table class="kv">');
+    h.push('<tr><th>포함 사항</th><td>' + esc(d.incl == null ? DEFAULTS.incl : d.incl) + '</td></tr>');
+    h.push('<tr><th>불포함 사항</th><td>' + esc(d.excl == null ? DEFAULTS.excl : d.excl) + '</td></tr>');
+    if (ref) h.push('<tr><th>참고 사항</th><td><div class="pre">' + esc(ref) + '</div></td></tr>');
     h.push('</table>');
+
+    h.push('<h2>항공정보</h2><table class="gd"><tr><th>구분</th><th>항공사</th><th>항공편</th><th>출발일자</th><th>출발시간</th><th>출발지</th><th>도착지</th><th>도착일자</th><th>도착시간</th></tr>');
+    fl.forEach(function (f) {
+      h.push('<tr><td>' + esc(f.leg) + '</td><td>' + esc(f.airline) + '</td><td>' + esc(f.no) + '</td><td>' + esc(f.depDate) + '</td><td>' + esc(f.depTime) + '</td><td>' + esc(f.from) + '</td><td>' + esc(f.to) + '</td><td>' + esc(f.arrDate) + '</td><td>' + esc(f.arrTime) + '</td></tr>');
+    });
+    h.push('</table>');
+
+    h.push('<h2>숙박정보</h2><table class="gd"><tr><th>호텔명</th><th>룸타입</th><th>체크인</th><th>체크아웃</th><th>박수</th><th>방수</th><th>식사</th></tr>');
+    h.push('<tr><td class="l">' + esc(d.hotel || RESORT.hotel) + '</td><td>' + esc(d.room || DEFAULTS.room) + '</td><td>' + esc(c.checkIn ? fmtDate(c.checkIn) : '') + '</td><td>' + esc(c.checkOut ? fmtDate(c.checkOut) : '') + '</td><td>' + c.nights + '</td><td>' + c.rooms + '</td><td>조 · 중 · 석식</td></tr></table>');
 
     if (it.length) {
-      h.push('<h2>일정</h2><table class="it"><tr><th>일차</th><th>날짜</th><th>일정</th></tr>');
-      it.forEach(function (r) { h.push('<tr><td class="d">' + r.day + '일차</td><td class="dt">' + esc(r.date) + '</td><td>' + esc(r.text) + '</td></tr>'); });
+      h.push('<h2>상세일정</h2><table class="it">');
+      it.forEach(function (r) {
+        h.push('<tr><td class="d">' + r.day + '일차<br><span style="font-weight:400;color:#5A6472;font-size:11.5px">' + esc(r.date) + '</span></td><td class="c"><ul class="ln">' + r.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
+          + ((r.hotel || r.meals) ? '<div class="ht">' + (r.hotel ? '<b>호텔</b> ' + esc(r.hotel) : '') + (r.hotel && r.meals ? ' · ' : '') + (r.meals ? '<b>식사</b> ' + esc(r.meals) : '') + '</div>' : '') + '</td></tr>');
+      });
       h.push('</table>');
     }
 
-    h.push('<h2>요금</h2><table class="pr">');
-    h.push('<tr><td>투어 요금 (항공 · 송영 · 숙박 · 라운딩 · ' + esc((d.meals || DEFAULTS.meals).replace(/\s*\(.*\)$/, '')) + ')</td><td class="n">' + esc(won(c.pricePP)) + ' × ' + c.pax + '명</td><td class="n">' + esc(won(c.base)) + '</td></tr>');
-    c.extras.forEach(function (x) {
-      h.push('<tr><td>' + esc(x.label || '추가 항목') + '</td><td class="n">' + esc(won(x.amount)) + (x.qty > 1 ? ' × ' + x.qty : '') + '</td><td class="n">' + esc(won(x.amount * x.qty)) + '</td></tr>');
-    });
-    if (c.discount) h.push('<tr><td>할인</td><td></td><td class="n">-' + esc(won(c.discount)) + '</td></tr>');
-    h.push('<tr class="tot"><td colspan="2">총 요금</td><td class="n">' + esc(won(c.total)) + '</td></tr>');
-    h.push('</table>');
-    h.push('<div class="pay"><div class="b"><div class="l">예약금' + (kind === 'confirm' && d.depositPaid ? ' · 입금 확인 ' + esc(fmtDate(parseDate(d.depositPaid))) : '') + '</div><div class="v">' + esc(won(c.deposit)) + '</div><div class="s">1인 ' + esc(won(c.depositPP)) + ' × ' + c.pax + '명' + (kind === 'quote' ? ' · 입금 시 예약 확정' : '') + '</div></div>'
-      + '<div class="b"><div class="l">잔금</div><div class="v">' + esc(won(c.balance)) + '</div><div class="s">' + (c.dueDate ? '납부 기한 ' + esc(fmtDate(c.dueDate)) + ' (출발 30일 전)' : '출발 30일 전까지') + '</div></div></div>');
-    h.push('<div class="acct">입금 계좌 <b>' + esc(acct.bank || '') + ' ' + esc(acct.no || '') + '</b>' + (acct.holder ? ' · 예금주 ' + esc(acct.holder) : '') + ' · 입금자명은 대표자 성함으로 부탁드립니다.</div>');
-
-    if (String(d.memo || '').trim()) h.push('<h2>안내 사항</h2><div class="memo">' + esc(d.memo) + '</div>');
-
+    if (meeting) h.push('<h2>미팅장소및시간</h2><div class="pre">' + esc(meeting) + '</div>');
+    if (String(d.memo || '').trim()) h.push('<h2>안내 사항</h2><div class="pre">' + esc(d.memo) + '</div>');
+    if (cancel) h.push('<h2>취소및환불정보</h2><div class="pre">' + esc(cancel) + '</div>');
     h.push('<h2>유의사항</h2><ol class="notes">');
     notes.forEach(function (n) { h.push('<li>' + esc(n) + '</li>'); });
     h.push('</ol>');
 
-    h.push('<div class="ft"><div><b>㈜메리트투어</b>' + (d.staffName ? ' · 담당 ' + esc(d.staffName) : '') + ' · ' + esc(staffTel) + ' (평일 09:00~18:00)</div><div>카카오톡 채널 「메리트투어」</div></div>');
+    h.push('<div class="ft"><div><b>' + esc(COMPANY.name) + '</b>' + (d.staffName ? ' · 담당 ' + esc(d.staffName) : '') + ' · ' + esc(staffTel) + ' (평일 09:00~18:00)</div><div>카카오톡 채널 「메리트투어」</div></div>');
     h.push('</div></body></html>');
     return h.join('\n');
   }
@@ -309,15 +418,17 @@
   /* 새 문서의 입력값 */
   function blank(kind, today) {
     var t = today instanceof Date ? today : new Date();
+    var al = AIRLINES[DEFAULTS.airline];
     return {
       kind: KIND_LABEL[kind] ? kind : DEFAULTS.kind,
-      docNo: '', issueDate: ymd(t),
+      eventNo: '', issueDate: ymd(t),
       repName: '', phone: '', pax: '', companions: '',
-      dep: '', ret: '', nights: '',
-      flightOut: '', flightOutTime: '', flightIn: '', flightInTime: '',
-      room: DEFAULTS.room, rooms: '', rounds: '', roundNote: DEFAULTS.roundNote,
-      meals: DEFAULTS.meals, transfer: DEFAULTS.transfer,
-      pricePP: '', extras: [], discount: '', depositPP: '', depositPaid: '',
+      dep: '', ret: '', nights: '', rounds: '',
+      airline: DEFAULTS.airline, flightOut: al.out, flightOutDep: al.outDep, flightOutArr: al.outArr, flightIn: al.inn, flightInDep: al.inDep, flightInArr: al.inArr,
+      outNextDay: false, inNextDay: true,
+      hotel: RESORT.hotel, room: DEFAULTS.room, rooms: '',
+      fares: [{ label: '투어비(항공료 포함)', amount: '', qty: '' }], discount: '', depositPP: '', depositPaid: '',
+      incl: DEFAULTS.incl, excl: DEFAULTS.excl, ref: DEFAULTS.ref, meeting: DEFAULTS.meeting, cancel: DEFAULTS.cancel,
       itin: '', memo: '', notes: '',
       staffName: '', staffTel: DEFAULTS.staffTel,
       acct: { bank: DEFAULTS.acct.bank, no: DEFAULTS.acct.no, holder: DEFAULTS.acct.holder }
@@ -325,10 +436,11 @@
   }
 
   return {
-    RESORT: RESORT, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL,
-    defaultNotes: defaultNotes, blank: blank, docNo: docNo,
-    calc: calc, itinerary: itinerary, validate: validate,
+    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL,
+    defaultNotes: defaultNotes, blank: blank,
+    calc: calc, flights: flights, itinerary: itinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient,
+    VIA_LABEL: VIA_LABEL, sendEntry: sendEntry,
     fmtDate: fmtDate, won: won, ymd: ymd, parseDate: parseDate, esc: esc
   };
 }));
