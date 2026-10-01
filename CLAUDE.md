@@ -9,7 +9,7 @@
 - 메리트투어(한국 골프 투어 여행사) 사내 자동화 도구함. GitHub Pages로 배포.
 - 계정 `cmc338111-crypto`, 저장소 `merittour-tools` (public), 기본 브랜치 `main`.
 - 진입점: 루트 `index.html` 이 계정의 섹션 권한을 보고 `sales` → `manage` → `air` 중 처음 열리는 허브로 보낸다.
-- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library·resortinfo. (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
+- 도구 경로: `tools/{toolname}/index.html`. 현재 도구: dashboard(주력)·insurance·imgtoolkit·weather·golfweather·library·resortinfo·nilai(닐라이 견적·확정서). (inquiry 폴더는 폐지됐으나 잔존. translate 는 삭제)
   - `library`(가입 서류 자료실): EWRC II · 장기숙박(개인·법인·비회원용) PDF 는 `DOCS` 쌍(원본 양식 + 작성방법본)으로 버튼을 만들고, **회원권 명의개서 서류 `transfer_forms.pdf`(v1.0 · 2026-09-17 · Min 「명의개서 관련 서류도 같이 등록」)**는 작성방법본이 없어 카드 안 단일 버튼이다.
     5쪽 = 필수준비서류 체크리스트(개인 → 개인 · 법인 → 개인) · 회원권 양도양수 계약서 3부(양도인·양수인·메리트투어 회신용) · 명의개서 신청서. 수수료 330,000원(부가세 포함 · 1구좌 기준)은 KB 계좌가 아니라 **하나은행 109-890042-63604**(양수인 성명으로 입금)라 공통 안내 「입금 계좌」에 따로 적었다.
     새 서류를 넣을 때는 PDF 를 `tools/library/` 에 두고 카드에 링크만 건다(파일 이름은 영문 `*_forms.pdf`). 검사 = scratchpad `library-smoke.mjs`(guard.js 를 stub 으로 막고 카드·링크·기존 버튼 6개·가로 넘침).
@@ -361,9 +361,10 @@
   못 켠다(보안 권고에 계속 뜨지만 무시). 최소 길이(6)·조합 규칙도 이미 계정을 만든 직원들을 생각해 당분간 그대로 —
   다시 묻지 말 것. 「Secure password change」·「Require current password when updating」은 켜면 안 된다 — 도구의 비밀번호 변경
   화면에 그 절차가 없고 Supabase 기본 메일은 오지 않아 직원들이 비밀번호를 못 바꾸게 된다.
-- **Edge Function 은 현재 하나도 배포되어 있지 않다**(`list_edge_functions` 0건). 아래 절의 `cron-d7-alimtalk`·`send-alimtalk` 는
-  코드·문서(`supabase/autosend_d7_setup.md`)만 있고 **D-7 알림톡 자동발송은 돌고 있지 않다.** 다시 배포할지, 표(`notice_sent`)와 문서를 접을지 결정 필요.
-
+- **Edge Function 배포 현황(2026-10-01)** — `send-alimtalk` 만 배포했다(verify_jwt 켬 · 함수 안에서도 호출자 토큰을 확인 · ALIGO 시크릿이 없으면 500 으로 거절하는 fail-closed).
+  닐라이 견적·확정서(`tools/nilai`)와 대시보드 ⑦ 확정서가 같은 함수를 부른다. 켜려면 Supabase 콘솔 → Edge Functions → Secrets 에 `ALIGO_API_KEY` `ALIGO_USER_ID` `ALIGO_SENDER_KEY` `ALIGO_SENDER`
+  `ALIGO_TPL_CONFIRM` `ALIGO_TPL_QUOTE`(알리고에서 승인받은 템플릿 코드)를 넣고 처음에는 `ALIGO_TEST_MODE=Y` 로 검증한다 — **키는 저장소·대화에 적지 않는다.**
+  `cron-d7-alimtalk` 는 여전히 미배포(코드·문서 `supabase/autosend_d7_setup.md` 만 있고 **D-7 알림톡 자동발송은 돌고 있지 않다**). 다시 배포할지, 표(`notice_sent`)와 문서를 접을지는 결정 필요.
 ## Edge Function 은 fail-closed
 - `cron-d7-alimtalk` 는 `if (secret && …)` 라 **`CRON_SECRET` 을 안 넣으면 검사를 통째로 건너뛰었다.** 주소만 알면 누구나 전 고객에게 D-7 알림톡을 쏠 수 있었다 — 이제 시크릿이 없으면 **막는다**.
 - `send-alimtalk` 은 검사가 아예 없었다(폐지한 `translate` 도 같았다). 로그인 토큰을 받아 `/auth/v1/user` 로 직접 확인한다. **환경변수가 비어 있으면 막는다** — 설정을 빠뜨렸을 때 열리는 쪽으로 기울면 안 된다.
@@ -395,3 +396,23 @@
   추가 항목 「입력 기준」 한 줄로 출처와 「담당자 확인 후 고쳐 주세요」를 적었다. **재실행해도 담당자 값을 지우지 않는다** — 행이 있으면 항목을 병합(같은 키는 저장된 값이 이김 · 출발지는 비어 있을 때만 · 「입력 기준」은 없을 때만) ·
   바뀐 것이 없으면 version 도 그대로. 미야자키는 상품 ①·② 를 한 행(`miyazaki`)에 「① … / ② …」로 적었고, 스가다이라는 2027 숙소(팔콜 츠마고이 리조트)를 항목에 적되 행 키·이름(`sugadaira_onsen` 「스가다이라 고원 온천호텔」)은 그대로(마스터 이름 규칙).
   스가다이라 맨션은 「2027 미진행」, 구마모토 시내 상품은 「안내문에 없음 — 담당자 확인」. 생성기 = scratchpad `riseed/gen.py`(안내문 텍스트에서 옮긴 사전 → SQL) · 검증 = DB 의 정규화 줄 md5 와 로컬 md5 비교(288줄).
+
+## 닐라이 견적·확정서 (`tools/nilai/` · 2026-10-01)
+
+- **왜 따로 만들었나** — 말레이시아 닐라이스프링스는 엠클릭 예약 데이터가 없는 상품(상시예약 · 자유 일정)이라 대시보드 ⑦ 확정서(`teams` 기반)로는 문서를 만들 수 없다.
+  Min 「기본정보를 넣어두고 출·귀국일 · 이용 항공편 · 인원 · 대표자 · 여행 기간 · 비용 · 연락처를 입력하면 그 폼대로 나오고 그걸 그대로 알리고로 발송 · 알림톡 신청해놓고 만들고」.
+- **구조** — `tools/nilai/index.html`(화면) + `tools/nilai/nilai-logic.js`(계산 · 문서 HTML · 알림톡 문안 · UMD 라 `tests/nilai.test.mjs` 가 require 한다 · DOM 을 만지지 않는다) +
+  `supabase/migrations/34_nilai_docs.sql`(보관함 `nilai_docs` · 2026-10-01 execute_sql 로 실행) + 영업 허브 카드 「닐라이 견적·확정서」 + `shared/access.js` 섹션 `nilai`(sales·manage 기본 · air 는 안 넣는다).
+- **보내는 길은 대시보드 ⑦ 과 같다** — html2canvas JPG → `confirm-docs` 버킷 `{quote|confirm}/{문서번호}.jpg`(x-upsert · 12 의 정책 그대로) → 90일 서명 링크 → `send-alimtalk`(kind quote/confirm · 수신자 1건 · eventNo = 문서번호 · 링크는 웹링크 버튼).
+  함수가 거절하면(시크릿 없음 · 템플릿 미승인) 화면이 「링크 포함 문자 복사」(알리고 콘솔·카카오톡 채팅용)를 안내한다. 이미지 복사 · JPG 저장 · 인쇄 · 크게 보기도 된다.
+- **계산 규칙** — 문서번호 `NS-연월일-순번`(그날 저장된 수 + 1 · unique 가 겹치면 다음 번호로 다시 저장) · 박수 기본값 = 일수 − 2(야간 비행 · 3박 5일 — `tools/booking` 의 longHaul 규칙) ·
+  객실 = 2인 1실 올림 · 라운딩 = 박수 · 예약금 1인 300,000(대시보드 `DOC_DEPOSIT_PP` 와 같은 값) · 잔금 기한 = 출발 30일 전 · 총액 = 1인 요금 × 인원 + 추가 항목 − 할인. 담당자가 직접 적은 값이 자동값을 이긴다.
+  일정은 「일정 직접 입력」이 비어 있으면 출국 → 라운딩(박수만큼) → 귀국으로 짠다.
+- **문안** — 유의사항은 1인 원화 금액 상품 규칙(`docs/confirm_2027_notice.md` §1 끝줄 · 환율 산정 규칙 미적용)으로 썼고 종류를 바꾸면 견적서 첫 줄(「발행일 기준 · 예약금 입금 시 확정」)이 더해진다.
+  MDAC(말레이시아 전자입국신고) 줄과 룸타입 · 라운딩 조건(「매일 18홀 · 2인 1카트」) · 식사(「조식 포함」) 기본값은 **담당자 확인 필요** — 화면에서 바로 고칠 수 있다.
+  입금 계좌 · 문의 전화는 공통 마스터 `commonMaster.docAcct` 가 있으면 그 값(대시보드 확정서와 같은 값), 없으면 국민은행 817201-04-109230 ㈜메리트투어 · 02-365-9800. 담당자 이름은 로그인 표시명.
+- **손님 이름·휴대폰이 `nilai_docs.data` 에 들어간다** — admin·sales·manage 만 읽고 쓴다 · anon 0 · 삭제 정책 없음(보낸 문서는 남긴다) · 누가·언제는 트리거 `mt_nd_stamp` 가 박는다.
+- **알림톡 문안은 `send-alimtalk/index.ts` 의 `buildMessage` 와 글자 단위로 같다**(`tests/nilai.test.mjs` 가 함수 소스를 읽어 비교) — 템플릿을 바꾸면 **세 곳(함수 · `nilai-logic.js` `alimtalk` · 알리고 템플릿)**을 같이.
+  알리고에 등록할 템플릿은 견적서 · 확정서 두 개(변수 고객명 · 행사번호 · 출발일 · 상품명 · 웹링크 버튼 「문서 확인」 링크 `#{링크}`):
+  「[메리트투어] #{고객명}님 확정서 안내 / (빈 줄) / · 행사번호 : #{행사번호} / · 출발일 : #{출발일} / · 상품 : #{상품명} / (빈 줄) / 아래 버튼에서 확정서를 확인해 주세요.」(견적서는 「확정서」 자리만 「견적서」).
+- 검사 — `tests/nilai.test.mjs`(계산 · 일정 · 빠진 값 · 문서 HTML 이스케이프 · 알림톡 문안 = 함수 · 섹션 배선 · 34 정책) · scratchpad `nilai-smoke.mjs`(가드·로그인·서버·html2canvas 를 가짜로 바꿔 입력 → 미리보기 → 저장 → 링크 → 알림톡 거절 안내 → 목록 → 견적서 전환).
