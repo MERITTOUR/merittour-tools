@@ -164,6 +164,11 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(page, /N\.buildHtml\(state\.doc, \{ logoSrc: state\.logo, view: true, until: exp \}\)/, '열람 조각(view · 만료일)');
   assert.match(page, /state\.link = VIEW_URL \+ '\?d=' \+ encodeURIComponent\(/, '링크 = 열람 페이지 + 서명 링크');
   assert.ok(!/nilai-' \+ state\.id \+ '\.jpg/.test(page), 'JPG 링크는 더 쓰지 않는다');
+  assert.match(page, /<div class="nl-to" id="nlTo"><\/div>/, '받는 분 상자');
+  assert.match(page, /function renderTo\(\)[\s\S]*N\.recipientsOf\(state\.doc\)/, '받는 분은 recipientsOf 로 그린다');
+  assert.match(page, /recipients: rs \}/, '알림톡은 체크한 분 전부에게');
+  assert.match(page, /return recordSend\('alimtalk', '', link, tos\);/, '내역은 받는 분마다');
+  assert.match(page, /N\.alimtalk\(state\.doc, null, t\)/, '문안 복사는 받는 분 성함');
   for (const id of ['btnRecord', 'recVia', 'recSave', 'nlHist', 'nlFilter']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (발송 기록 버튼 · 방법 선택 · 내역 패널 · 찾기)');
   const sql = read('supabase/migrations/34_nilai_docs.sql');
   assert.match(sql, /array_append\(areas, 'nilai'\)[\s\S]*role in \('owner', 'admin', 'manage', 'sales'\)/);
@@ -203,4 +208,22 @@ test('손님 열람 조각(view) — 절마다 접고 펼 수 있고 참고 사�
   const plain = N.buildHtml(d);
   assert.ok(!/<details|data-kind|\.tg\{/.test(plain) && /<!doctype html>/.test(plain) && /<h2>참고 사항<\/h2>|<th>참고 사항<\/th>/.test(plain), '미리보기·JPG 용 문서는 접는 상자 없이 그대로');
   assert.match(plain, /<h2>취소및환불정보<\/h2><div class="pre">/);
+});
+
+test('받는 분 — 동행 칸의 「이름 번호」를 읽고 · 대표자+동행 목록 · 알림톡·문자·내역·수신자는 받는 분 성함 · 문서에는 이름만', () => {
+  const d = Object.assign(sample(), { companions: '김영희 010-2222-3333 · 이수진, 박철수(01033334444); 최민호 010 4444 5555' });
+  assert.deepEqual(N.companionsOf(d), [{ name: '김영희', phone: '01022223333' }, { name: '이수진', phone: '' }, { name: '박철수', phone: '01033334444' }, { name: '최민호', phone: '01044445555' }]);
+  assert.deepEqual(N.companionsOf({ companions: '' }), []); assert.deepEqual(N.companionsOf({}), []);
+  const rs = N.recipientsOf(d);
+  assert.deepEqual(rs.map(r => [r.key, r.role, r.name, r.phone]), [['rep', '대표자', '홍길동', '01012345678'], ['c0', '동행', '김영희', '01022223333'], ['c1', '동행', '이수진', ''], ['c2', '동행', '박철수', '01033334444'], ['c3', '동행', '최민호', '01044445555']]);
+  assert.match(N.alimtalk(d, null, rs[1]), /^\[메리트투어\] 김영희님 확정서 안내\n/);
+  assert.match(N.alimtalk(d), /^\[메리트투어\] 홍길동님 확정서 안내\n/, '받는 분을 안 주면 대표자');
+  assert.match(N.smsText(d, 'https://x/y', rs[2]), /^\[메리트투어\] 이수진님 확정서 안내\n/);
+  const r = N.recipient(d, 'https://x/y', rs[1]); assert.equal(r.name, '김영희'); assert.equal(r.phone, '01022223333'); assert.equal(r.link, 'https://x/y');
+  const e = N.sendEntry(d, 'alimtalk', { by: '직원', link: 'https://x/y', to: rs[1] });
+  assert.equal(e.to, '01022223333'); assert.equal(e.name, '김영희'); assert.equal(e.role, '동행'); assert.match(e.message, /^\[메리트투어\] 김영희님/);
+  assert.equal(N.sendEntry(d, 'kakao', {}).name, '홍길동', '받는 분을 안 주면 대표자');
+  const html = N.buildHtml(d);
+  assert.ok(html.includes('홍길동 님 / 4명 (성인 4) · 김영희 · 이수진 · 박철수 · 최민호'), '문서에는 이름만');
+  assert.ok(!/2222|3333|4444|5555/.test(html), '동행 번호는 문서에 찍지 않는다');
 });

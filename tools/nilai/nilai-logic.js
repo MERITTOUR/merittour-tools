@@ -284,11 +284,32 @@
 
   /* ── 알림톡 문안 — Edge Function(send-alimtalk/index.ts buildMessage)과 글자 단위로 같아야 한다.
      승인된 카카오 템플릿도 이 꼴이다. 한쪽만 바꾸지 말 것. 행사번호를 비우면 공란으로 나간다. ── */
-  function alimtalk(d, kind) {
+  /* ── 받는 분 — 대표자 + 동행 (2026-10-02 · Min 「동행 적는 것도 맞는데 동행자 1인한테만 보낼 때는 어떻게 함?」) ──
+     동행 칸은 「김영희 010-2222-3333 · 이수진」처럼 적는다(· , ; 줄바꿈으로 나눔). 번호를 적은 동행에게는 따로(또는 함께) 보낼 수 있고,
+     알림톡·문자 문안은 받는 분 성함으로 나가며 내역도 받는 분마다 한 건씩 남는다. 문서(고객명/인원)에는 이름만 찍히고 번호는 찍지 않는다. */
+  function companionsOf(d) {
+    return String((d && d.companions) || '').split(/[·,;\n]/).map(function (t) {
+      t = t.trim(); if (!t) return null;
+      var m = t.match(/(0\d{1,2}[\s-]?\d{3,4}[\s-]?\d{4})/);
+      var phone = m ? m[1].replace(/[^0-9]/g, '') : '';
+      var name = (m ? t.replace(m[0], '') : t).replace(/[()\s]+/g, ' ').trim();
+      return { name: name, phone: phone };
+    }).filter(function (x) { return x && (x.name || x.phone); });
+  }
+  function recipientsOf(d) {
+    d = d || {};
+    var list = [{ key: 'rep', role: '대표자', name: String(d.repName || '').trim(), phone: String(d.phone || '').replace(/[^0-9]/g, '') }];
+    companionsOf(d).forEach(function (x, i) { list.push({ key: 'c' + i, role: '동행', name: x.name, phone: x.phone }); });
+    return list;
+  }
+  function companionNames(d) { return companionsOf(d).map(function (x) { return x.name; }).filter(Boolean); }
+  function nameOf(d, to) { return String((to && to.name) || (d && d.repName) || '').trim(); }
+
+  function alimtalk(d, kind, to) {
     var c = calc(d);
     var label = KIND_LABEL[kind || d.kind] || '안내문';
     return [
-      '[메리트투어] ' + (d.repName || '') + '님 ' + label + ' 안내',
+      '[메리트투어] ' + nameOf(d, to) + '님 ' + label + ' 안내',
       '',
       '· 행사번호 : ' + (d.eventNo || ''),
       '· 출발일 : ' + (c.dep ? ymd(c.dep) : ''),
@@ -298,9 +319,9 @@
     ].join('\n');
   }
   /* 알림톡을 못 보낼 때(함수 미설정 · 템플릿 미승인) 알리고 콘솔이나 카카오톡 채팅에 붙여 넣는 글 */
-  function smsText(d, link) {
+  function smsText(d, link, to) {
     var c = calc(d), label = KIND_LABEL[d.kind] || '안내문';
-    return '[메리트투어] ' + (d.repName || '') + '님 ' + label + ' 안내\n'
+    return '[메리트투어] ' + nameOf(d, to) + '님 ' + label + ' 안내\n'
       + (d.eventNo ? '행사번호 ' + d.eventNo + ' · ' : '') + '출발 ' + (c.dep ? fmtDate(c.dep) : '') + '\n'
       + c.productName + '\n'
       + (link ? label + ' 확인: ' + link + '\n' : '')
@@ -312,25 +333,28 @@
   function sendEntry(d, via, opts) {
     opts = opts || {};
     var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
+    var to = opts.to || recipientsOf(d)[0];   // 받는 분(대표자 또는 동행) — 비우면 대표자
     return {
       at: opts.at || new Date().toISOString(),
       by: opts.by || '',
       via: VIA_LABEL[via] ? via : 'other',
-      to: String(d.phone || '').replace(/[^0-9]/g, ''),
-      name: String(d.repName || '').trim(),
+      to: String(to.phone || '').replace(/[^0-9]/g, ''),
+      name: String(to.name || '').trim(),
+      role: to.role || '대표자',
       kind: kind,
       memo: String(opts.memo || '').trim(),
       link: opts.link || '',
-      message: via === 'alimtalk' ? alimtalk(d, kind) : smsText(d, opts.link || ''),
+      message: via === 'alimtalk' ? alimtalk(d, kind, to) : smsText(d, opts.link || '', to),
       data: JSON.parse(JSON.stringify(d))
     };
   }
   /* send-alimtalk 에 보낼 수신자 한 건 */
-  function recipient(d, link) {
+  function recipient(d, link, to) {
     var c = calc(d);
+    to = to || recipientsOf(d)[0];
     return {
-      phone: String(d.phone || '').replace(/[^0-9]/g, ''),
-      name: String(d.repName || '').trim(),
+      phone: String(to.phone || '').replace(/[^0-9]/g, ''),
+      name: String(to.name || '').trim(),
       eventNo: String(d.eventNo || '').trim(),
       dep: c.dep ? ymd(c.dep) : '',
       prod: c.productName,
@@ -450,7 +474,7 @@
     sec('여행정보', '<table class="kv">'
       + '<tr><th>상품명</th><td>' + esc(c.productName) + '</td></tr>'
       + '<tr><th>여행기간</th><td>' + esc(c.period) + '</td></tr>'
-      + '<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명 (성인 ' + c.pax + ')' + (nonEmpty(d.companions).length ? ' · ' + esc(nonEmpty(d.companions).join(' · ')) : '') + '</td></tr>'
+      + '<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명 (성인 ' + c.pax + ')' + (companionNames(d).length ? ' · ' + esc(companionNames(d).join(' · ')) : '') + '</td></tr>'
       + '<tr><th>행사번호</th><td>' + esc(d.eventNo || '') + '</td></tr>'
       + '<tr><th>연락처</th><td>' + esc(d.phone || '') + '</td></tr>'
       + '</table>');
@@ -528,7 +552,7 @@
     COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL,
     defaultNotes: defaultNotes, blank: blank,
     calc: calc, flights: flights, itinerary: itinerary, validate: validate,
-    buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient,
+    buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient, companionsOf: companionsOf, recipientsOf: recipientsOf,
     VIA_LABEL: VIA_LABEL, sendEntry: sendEntry,
     fmtDate: fmtDate, won: won, ymd: ymd, parseDate: parseDate, parseLoose: parseLoose, dowOf: dowOf, esc: esc
   };
