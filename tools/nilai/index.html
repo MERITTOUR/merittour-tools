@@ -52,6 +52,12 @@
 .nl-preview { background: var(--mt-surface3); border: 1px solid var(--mt-border); border-radius: 10px; overflow: hidden; position: relative; }
 .nl-preview .scale { width: 760px; transform-origin: 0 0; }
 .nl-preview iframe { width: 760px; height: 1200px; border: 0; background: #fff; display: block; }
+.nl-to { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.nl-to b { color: var(--mt-brand); margin-right: 2px; }
+.nl-to label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.nl-to label .role { color: var(--mt-text3); font-size: 11.5px; }
+.nl-to label .np { color: var(--mt-red); font-size: 11.5px; }
+.nl-to .hint { flex-basis: 100%; color: var(--mt-text3); font-size: 11.5px; }
 .nl-msg { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; }
 .nl-msg summary { cursor: pointer; font-weight: 600; color: var(--mt-brand); }
 .nl-msg pre { white-space: pre-wrap; background: var(--mt-surface2); border-radius: 8px; padding: 8px 10px; font: 12px/1.6 var(--mt-sans); margin: 8px 0 6px; }
@@ -133,7 +139,7 @@
           <div class="nl-f"><label>대표자 성함 <b>*</b></label><input type="text" data-k="repName" placeholder="홍길동"></div>
           <div class="nl-f"><label>휴대폰 번호 <b>*</b></label><input type="tel" data-k="phone" placeholder="010-1234-5678"><span class="hint">알림톡이 가는 번호입니다</span></div>
           <div class="nl-f"><label>인원 <b>*</b></label><input type="number" min="1" data-k="pax" placeholder="4"></div>
-          <div class="nl-f"><label>동행 (선택)</label><input type="text" data-k="companions" placeholder="김영희 · 이수진 (문서에 이름만 찍힙니다)"></div>
+          <div class="nl-f w"><label>동행 (선택) <span class="hint">(이름 뒤에 휴대폰 번호를 적으면 그분께도 보낼 수 있습니다 · 가운뎃점(·)이나 쉼표로 나눕니다 · 문서에는 이름만 찍힙니다)</span></label><input type="text" data-k="companions" placeholder="김영희 010-2222-3333 · 이수진"></div>
         </div>
       </div>
 
@@ -224,6 +230,7 @@
         <button type="button" class="mt-btn mt-btn-ghost" id="btnZoom" title="새 창에서 원본 크기로 봅니다">크게 보기</button>
         <button type="button" class="mt-btn" id="btnRecord" title="알림톡이 아니라 직접 보냈을 때 — 누구에게 어떤 내용을 보냈는지 남깁니다">발송 기록</button>
       </div>
+      <div class="nl-to" id="nlTo"></div>
       <div class="nl-status" id="nlStatus">새 문서입니다. 손님 정보와 일정·요금을 적어 주세요.</div>
       <div class="nl-rec mt-hidden" id="nlRec">
         <div><b>발송 기록 남기기</b> <span style="color:var(--mt-text2)">· 이미지 복사·문자 복사로 직접 보냈을 때. 지금 화면의 문서와 문안이 그대로 남습니다</span></div>
@@ -265,7 +272,7 @@
   var VIEW_URL = 'https://merittour.github.io/doc/';            // 손님 열람 페이지 — 서명 링크를 ?d= 로 받아 접고 펼 수 있는 화면으로 보여 준다(인쇄 · 만료 안내)
   var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,sends,updated_at,updated_by,created_at,created_by,version';
 
-  var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null };
+  var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null, to: { rep: true } };
 
   /* ── 서버 (store.js 의 rest 와 같은 꼴 · 로그인 토큰으로만 나간다) ── */
   function authHeaders(extra) {
@@ -351,9 +358,25 @@
     var f = $('nlFrame');
     f.onload = function () { fitPreview(); };
     f.srcdoc = html();
-    $('nlMsgAlim').textContent = N.alimtalk(state.doc);
+    renderTo(); updateMsg();
     status();
   }
+  /* ── 받는 분 — 대표자 + 동행(번호를 적은 분) · 체크한 분마다 성함을 넣어 보내고 내역도 따로 남는다(2026-10-02 · Min 「동행자 1인한테만 보낼 때는 어떻게 함?」) ── */
+  function renderTo() {
+    var list = N.recipientsOf(state.doc), box = $('nlTo');
+    if (!Object.keys(state.to).some(function (k) { return state.to[k] && list.some(function (r) { return r.key === k; }); })) state.to = { rep: true };
+    var h = ['<b>받는 분</b>'];
+    list.forEach(function (r) {
+      h.push('<label><input type="checkbox" data-to="' + r.key + '"' + (state.to[r.key] ? ' checked' : '') + '> <span class="role">' + r.role + '</span> ' + N.esc(r.name || '(성함 없음)') + (r.phone ? ' · ' + N.esc(r.phone) : ' <span class="np">· 번호 없음 (알림톡 불가)</span>') + '</label>');
+    });
+    if (list.length > 1) h.push('<span class="hint">체크한 분마다 성함을 넣어 보내고, 발송 내역도 한 분씩 남습니다. 동행에게만 보내려면 대표자 체크를 풀어 주세요.</span>');
+    box.innerHTML = h.join('');
+    Array.prototype.forEach.call(box.querySelectorAll('input[data-to]'), function (cb) {
+      cb.addEventListener('change', function () { state.to[cb.dataset.to] = cb.checked; updateMsg(); });
+    });
+  }
+  function chosen() { return N.recipientsOf(state.doc).filter(function (r) { return state.to[r.key]; }); }
+  function updateMsg() { var t = chosen(); $('nlMsgAlim').textContent = N.alimtalk(state.doc, null, t[0]) + (t.length > 1 ? '\n\n(받는 분 ' + t.length + '명 — 성함만 다릅니다)' : ''); }
   function fitPreview() {
     var f = $('nlFrame'), box = f.closest('.nl-preview'), sc = $('nlScale');
     var w = box.clientWidth || 430, scale = Math.min(1, w / 760);
@@ -371,7 +394,7 @@
     else parts.push('<span class="warn">아직 저장하지 않았습니다</span>');
     if (miss.length) parts.push('<span class="bad">빠진 값</span> · ' + N.esc(miss.join(' · ')));
     if (state.link) parts.push('링크 <a href="' + N.esc(state.link) + '" target="_blank" rel="noopener">열기</a>' + (state.linkExp ? ' · ' + N.esc(String(state.linkExp).slice(0, 10)) + ' 까지' : ''));
-    if (state.sends.length) { var l = state.sends[state.sends.length - 1]; parts.push('<span class="ok">발송 ' + state.sends.length + '회</span> · 최근 ' + N.esc(String(l.at).replace('T', ' ').slice(0, 16)) + ' ' + N.esc(N.VIA_LABEL[l.via] || l.via) + (l.to ? ' → ' + N.esc(l.to) : '')); }
+    if (state.sends.length) { var l = state.sends[state.sends.length - 1]; parts.push('<span class="ok">발송 ' + state.sends.length + '회</span> · 최근 ' + N.esc(String(l.at).replace('T', ' ').slice(0, 16)) + ' ' + N.esc(N.VIA_LABEL[l.via] || l.via) + ((l.name || l.to) ? ' → ' + N.esc(((l.name || '') + ' ' + (l.to || '')).trim()) : '')); }
     if (extra) parts.push(extra);
     $('nlStatus').innerHTML = parts.join('<br>');
   }
@@ -414,7 +437,7 @@
     else {
       h += '<table><tr><th>일시</th><th>담당</th><th>방법</th><th>받는 번호</th><th>종류</th><th>메모</th><th></th></tr>';
       sends.forEach(function (e, i) {
-        h += '<tr><td class="mt-mono">' + N.esc(String(e.at || '').replace('T', ' ').slice(0, 16)) + '</td><td>' + N.esc(e.by || '') + '</td><td><span class="via">' + N.esc(N.VIA_LABEL[e.via] || e.via) + '</span></td><td class="mt-mono">' + N.esc(e.to || '') + '</td><td>' + N.esc(N.KIND_LABEL[e.kind] || '') + '</td><td>' + N.esc(e.memo || '') + '</td>'
+        h += '<tr><td class="mt-mono">' + N.esc(String(e.at || '').replace('T', ' ').slice(0, 16)) + '</td><td>' + N.esc(e.by || '') + '</td><td><span class="via">' + N.esc(N.VIA_LABEL[e.via] || e.via) + '</span></td><td class="mt-mono">' + N.esc((e.name ? e.name + ' ' : '') + (e.to || '')) + '</td><td>' + N.esc(N.KIND_LABEL[e.kind] || '') + '</td><td>' + N.esc(e.memo || '') + '</td>'
           + '<td style="white-space:nowrap"><button type="button" class="open msg" data-i="' + i + '">문안</button> · <button type="button" class="open docv" data-i="' + i + '">그때 문서</button>' + (e.link ? ' · <a href="' + N.esc(e.link) + '" target="_blank" rel="noopener">링크</a>' : '') + '</td></tr>';
       });
       h += '</table><pre id="histMsg" class="mt-hidden"></pre>';
@@ -428,7 +451,7 @@
     var r = state.rows.filter(function (x) { return x.id === id; })[0]; if (!r) return;
     if (state.dirty && !confirm('수정 중인 내용을 버리고 다른 문서를 열까요?')) return;
     state.doc = Object.assign(N.blank(r.kind), r.data || {}, { kind: r.kind, eventNo: (r.data && r.data.eventNo) || r.doc_no || '' });
-    state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sends = r.sends || []; state.dirty = false;
+    state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sends = r.sends || []; state.dirty = false; state.to = { rep: true };
     fill(); render(); renderList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -437,7 +460,7 @@
     var keep = { staffName: state.doc.staffName, staffTel: state.doc.staffTel, acct: state.doc.acct };
     state.doc = Object.assign(N.blank('quote'), keep);
     state.doc.notes = N.defaultNotes('quote').join('\n');
-    state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sends = []; state.dirty = false;
+    state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sends = []; state.dirty = false; state.to = { rep: true };
     fill(); render(); renderList();
   }
 
@@ -458,14 +481,15 @@
   }
 
   /* ── 발송 기록 — 누구에게 · 어떤 내용(그때의 문서·문안·링크) · 어떻게 · 누가 · 언제 ── */
-  function recordSend(via, memo, link) {
+  function recordSend(via, memo, link, tos) {
     read();
+    tos = (tos && tos.length) ? tos : chosen();
     var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
     return pre.then(function () {
-      var entry = N.sendEntry(state.doc, via, { by: who(), memo: memo, link: link || state.link || '' });
-      var sends = state.sends.concat([entry]);
-      return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sends: sends, sent_at: entry.at, sent_by: entry.by } }).then(function () { state.sends = sends; return entry; });
-    }).then(function (entry) { return loadList().then(function () { status(); return entry; }); });
+      var entries = tos.map(function (t) { return N.sendEntry(state.doc, via, { by: who(), memo: memo, link: link || state.link || '', to: t }); });
+      var sends = state.sends.concat(entries), last = entries[entries.length - 1];
+      return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sends: sends, sent_at: last.at, sent_by: last.by } }).then(function () { state.sends = sends; return entries; });
+    }).then(function (entries) { return loadList().then(function () { status(); return entries; }); });
   }
 
   /* ── 이미지 (html2canvas · 미리보기 프레임의 .doc) ── */
@@ -527,19 +551,23 @@
     var miss = N.validate(state.doc);
     if (miss.length) { alert('먼저 채워 주세요: ' + miss.join(' · ')); return; }
     var kindLabel = N.KIND_LABEL[state.doc.kind];
+    var tos = chosen();
+    if (!tos.length) { alert('받는 분을 골라 주세요.'); return; }
+    var noPhone = tos.filter(function (t) { return !t.phone; });
+    if (noPhone.length) { alert('번호가 없는 분께는 알림톡을 보낼 수 없습니다: ' + noPhone.map(function (t) { return t.name; }).join(' · ') + '\n동행 칸에 이름 뒤 휴대폰 번호를 적어 주세요.'); return; }
     var pre = state.link && state.id && !state.dirty ? Promise.resolve(state.link) : makeLink();
     pre.then(function (link) {
-      var r = N.recipient(state.doc, link);
-      if (!confirm(r.name + ' 님(' + r.phone + ')에게 ' + kindLabel + ' 알림톡을 보냅니다.\n\n' + N.alimtalk(state.doc) + '\n\n진행할까요?')) return;
+      var rs = tos.map(function (t) { return N.recipient(state.doc, link, t); });
+      if (!confirm(rs.map(function (r) { return r.name + ' 님(' + r.phone + ')'; }).join(' · ') + '에게 ' + kindLabel + ' 알림톡을 보냅니다.' + (rs.length > 1 ? ' (' + rs.length + '명 · 성함만 다릅니다)' : '') + '\n\n' + N.alimtalk(state.doc, null, tos[0]) + '\n\n진행할까요?')) return;
       status('알림톡 발송 요청 중…');
       return authHeaders({ 'Content-Type': 'application/json' }).then(function (h) {
-        return fetch(base() + '/functions/v1/send-alimtalk', { method: 'POST', headers: h, body: JSON.stringify({ kind: state.doc.kind, recipients: [r] }) });
+        return fetch(base() + '/functions/v1/send-alimtalk', { method: 'POST', headers: h, body: JSON.stringify({ kind: state.doc.kind, recipients: rs }) });
       }).then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (j) {
           if (!res.ok) { var e = new Error(j.error || ('HTTP ' + res.status)); e.status = res.status; throw e; }
-          return recordSend('alimtalk', '', link);
+          return recordSend('alimtalk', '', link, tos);
         });
-      }).then(function () { toast('알림톡 발송을 요청했고 내역에 남겼습니다'); });
+      }).then(function () { toast('알림톡 발송을 요청했고 내역에 남겼습니다' + (rs.length > 1 ? ' (' + rs.length + '명)' : '')); });
     }).catch(function (e) {
       if (e && e.message === 'incomplete') return;
       var why = (e && e.status === 404) ? '알림톡 함수(send-alimtalk)가 아직 배포되지 않았습니다.' : (e && e.message) || '';
@@ -584,11 +612,12 @@
     $('recSave').addEventListener('click', function () {
       var miss = N.validate(state.doc); read();
       if (!String(state.doc.repName || '').trim() || !String(state.doc.phone || '').replace(/[^0-9]/g, '')) { alert('누구에게 보냈는지 남기려면 대표자 성함과 휴대폰 번호가 필요합니다.'); return; }
-      recordSend($('recVia').value, $('recMemo').value).then(function () { $('nlRec').classList.add('mt-hidden'); $('recMemo').value = ''; toast('발송 내역에 남겼습니다'); })
+      var tos = chosen(); if (!tos.length) { alert('받는 분을 골라 주세요.'); return; }
+      recordSend($('recVia').value, $('recMemo').value, '', tos).then(function () { $('nlRec').classList.add('mt-hidden'); $('recMemo').value = ''; toast('발송 내역에 남겼습니다' + (tos.length > 1 ? ' (' + tos.length + '명)' : '')); })
         .catch(function (e) { alert('기록 실패: ' + e.message); });
     });
-    $('btnCopyAlim').addEventListener('click', function () { read(); copyText(N.alimtalk(state.doc), '알림톡 문안을 복사했습니다'); });
-    $('btnCopySms').addEventListener('click', function () { read(); copyText(N.smsText(state.doc, state.link), state.link ? '링크 포함 문자를 복사했습니다' : '문자를 복사했습니다 (링크는 아직 없습니다)'); });
+    $('btnCopyAlim').addEventListener('click', function () { read(); var t = chosen()[0]; copyText(N.alimtalk(state.doc, null, t), '알림톡 문안을 복사했습니다' + (t ? ' (받는 분 ' + t.name + ')' : '')); });
+    $('btnCopySms').addEventListener('click', function () { read(); var t = chosen()[0]; copyText(N.smsText(state.doc, state.link, t), (state.link ? '링크 포함 문자를 복사했습니다' : '문자를 복사했습니다 (링크는 아직 없습니다)') + (t ? ' (받는 분 ' + t.name + ')' : '')); });
 
     state.doc.notes = N.defaultNotes(state.doc.kind).join('\n');
     var u = who(); if (u) state.doc.staffName = u;
