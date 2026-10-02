@@ -158,6 +158,12 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.ok(!/type="date"/.test(page), '브라우저 date 칸은 쓰지 않는다(연도 칸이 6자리를 받아 「202701-05-일」이 된다)');
   for (const k of ['dep', 'ret', 'issueDate', 'depositPaid']) { assert.match(page, new RegExp('class="nl-date" data-k="' + k + '"'), '날짜 글자 칸이 없다: ' + k); assert.match(page, new RegExp('data-dow="' + k + '"'), '요일 칩이 없다: ' + k); }
   assert.match(page, /function normDate|N\.parseLoose\(/, '날짜 칸 정리(normDate)가 없다');
+  assert.match(page, /var VIEW_URL = 'https:\/\/merittour\.github\.io\/doc\/';/, '손님 열람 페이지 주소');
+  assert.match(page, /'\/nilai-' \+ state\.id \+ '\.html'/, '열람 조각을 .html 로 올린다');
+  assert.match(page, /'Content-Type': 'text\/html; charset=utf-8', 'x-upsert': 'true'/, 'text/html 로 올린다');
+  assert.match(page, /N\.buildHtml\(state\.doc, \{ logoSrc: state\.logo, view: true, until: exp \}\)/, '열람 조각(view · 만료일)');
+  assert.match(page, /state\.link = VIEW_URL \+ '\?d=' \+ encodeURIComponent\(/, '링크 = 열람 페이지 + 서명 링크');
+  assert.ok(!/nilai-' \+ state\.id \+ '\.jpg/.test(page), 'JPG 링크는 더 쓰지 않는다');
   for (const id of ['btnRecord', 'recVia', 'recSave', 'nlHist', 'nlFilter']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (발송 기록 버튼 · 방법 선택 · 내역 패널 · 찾기)');
   const sql = read('supabase/migrations/34_nilai_docs.sql');
   assert.match(sql, /array_append\(areas, 'nilai'\)[\s\S]*role in \('owner', 'admin', 'manage', 'sales'\)/);
@@ -179,4 +185,22 @@ test('날짜 — 숫자만 쳐도 읽는다(엠클릭 식 20270105) · 월·일�
   assert.equal(N.parseLoose('1001', '2026-10-01'), '2026-10-01', '기준일 당일은 그 해');
   for (const t of ['2027-02-30', '2027105', '202701', '20271301', '1', 'abc', '']) assert.equal(N.parseLoose(t), '', '틀린 꼴: ' + JSON.stringify(t));
   assert.equal(N.dowOf('2027-01-05'), '화'); assert.equal(N.dowOf('202701'), '');
+});
+
+test('손님 열람 조각(view) — 절마다 접고 펼 수 있고 참고 사항·취소 규정만 접힌 채 · 스타일은 .doc 아래로만 · 스크립트 없음 · 미리보기용 문서는 그대로', () => {
+  const d = sample(), c = N.calc(d);
+  const v = N.buildHtml(d, { view: true, until: '2027-01-05T10:00:00.000Z' });
+  assert.ok(!/<html|<body|<!doctype|<script|<link /i.test(v), '조각이어야 한다(문서 틀·스크립트·외부 링크 없음)');
+  assert.match(v, /<div class="doc" data-kind="확정서" data-until="2027-01-05">/, '뷰어가 읽는 종류·열람 기한');
+  const secs = [...v.matchAll(/<details class="sec"( open)?><summary><h2>([^<]+)<span class="tg"><\/span><\/h2><\/summary>/g)].map(m => [m[2], !!m[1]]);
+  assert.deepEqual(secs.map(s => s[0]), ['여행정보', '요금안내', '상품정보', '항공정보', '숙박정보', '상세일정', '미팅장소및시간', '취소및환불정보', '유의사항']);
+  assert.deepEqual(secs.filter(s => !s[1]).map(s => s[0]), ['취소및환불정보'], '취소및환불정보만 접힌 채 시작');
+  assert.match(v, /<\/table>\n<details class="sub"><summary>참고 사항<span class="tg"><\/span><\/summary><div class="pre">■ 항공 수하물 안내/, '참고 사항은 상품정보 표 아래 접힌 상자');
+  assert.ok(!/<th>참고 사항<\/th>/.test(v), '열람 조각에서는 참고 사항 표 행이 없다');
+  const css = v.match(/<style>([\s\S]*?)<\/style>/)[1].split('\n');
+  assert.ok(css.every(l => !l || l.startsWith('.doc') || l.startsWith('@')), 'body·* 규칙 없이 전부 .doc 아래: ' + css.find(l => l && !l.startsWith('.doc') && !l.startsWith('@')));
+  for (const t of [c.productName, c.period, d.flightOut, c.total.toLocaleString('en-US'), '<div class="tw wide"><table class="gd">']) assert.ok(v.includes(t), '내용 그대로: ' + t);
+  const plain = N.buildHtml(d);
+  assert.ok(!/<details|data-kind|\.tg\{/.test(plain) && /<!doctype html>/.test(plain) && /<h2>참고 사항<\/h2>|<th>참고 사항<\/th>/.test(plain), '미리보기·JPG 용 문서는 접는 상자 없이 그대로');
+  assert.match(plain, /<h2>취소및환불정보<\/h2><div class="pre">/);
 });

@@ -262,6 +262,7 @@
   var toast = MT.showToast || function (m) { window.alert(m); };
   var $ = function (id) { return document.getElementById(id); };
   var BUCKET = 'confirm-docs', LINK_TTL = 90 * 24 * 60 * 60;   // 대시보드 ⑦ 과 같은 버킷 · 90일 서명 링크
+  var VIEW_URL = 'https://merittour.github.io/doc/';            // 손님 열람 페이지 — 서명 링크를 ?d= 로 받아 접고 펼 수 있는 화면으로 보여 준다(인쇄 · 만료 안내)
   var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,sends,updated_at,updated_by,created_at,created_by,version';
 
   var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null };
@@ -499,19 +500,23 @@
     if (miss.length) { alert('먼저 채워 주세요: ' + miss.join(' · ')); return Promise.reject(new Error('incomplete')); }
     var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
     status('링크 생성 중…');
-    return pre.then(toCanvas).then(function (cv) { return toBlob(cv, 'image/jpeg', 0.92); }).then(function (blob) {
-      var path = state.doc.kind + '/nilai-' + state.id + '.jpg';
-      return authHeaders({ 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }).then(function (h) {
-        return fetch(base() + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: blob });
+    return pre.then(function () {
+      /* 손님 열람 조각(접고 펼 수 있는 <details> · 스타일은 .doc 아래로만 · 스크립트 없음)을 올리고, 서명 링크를 손님 열람 페이지(/doc/?d=)에 싸서 보낸다.
+         JPG 링크는 2026-10-02 에 뺐다 — 폰에서 760px 그림을 맞추면 글자가 작아 확대해야 했고 긴 절을 접을 수 없었다(Min 「너무 긴 내용들은 접고 펴고 할 수 있고 인쇄도」). */
+      var exp = new Date(Date.now() + LINK_TTL * 1000).toISOString();
+      var markup = N.buildHtml(state.doc, { logoSrc: state.logo, view: true, until: exp });
+      var path = state.doc.kind + '/nilai-' + state.id + '.html';
+      return authHeaders({ 'Content-Type': 'text/html; charset=utf-8', 'x-upsert': 'true' }).then(function (h) {
+        return fetch(base() + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: new Blob([markup], { type: 'text/html; charset=utf-8' }) });
       }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error('업로드 실패(' + r.status + ') ' + t.slice(0, 120)); }); })
         .then(function () { return authHeaders({ 'Content-Type': 'application/json' }); })
         .then(function (h) { return fetch(base() + '/storage/v1/object/sign/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: JSON.stringify({ expiresIn: LINK_TTL }) }); })
         .then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error('링크 발급 실패(' + r.status + ') ' + t.slice(0, 120)); }); return r.json(); })
         .then(function (j) {
-          state.link = base() + '/storage/v1' + (j.signedURL || j.signedUrl);
-          state.linkExp = new Date(Date.now() + LINK_TTL * 1000).toISOString();
+          state.link = VIEW_URL + '?d=' + encodeURIComponent(base() + '/storage/v1' + (j.signedURL || j.signedUrl));
+          state.linkExp = exp;
           return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { link: state.link, link_expires_at: state.linkExp } });
-        }).then(function () { toast('링크를 만들었습니다 (90일)'); return loadList(); }).then(function () { status(); return state.link; });
+        }).then(function () { toast('링크를 만들었습니다 (90일 · 손님 열람 페이지)'); return loadList(); }).then(function () { status(); return state.link; });
     }).catch(function (e) { status('<span class="bad">' + N.esc(e.message) + '</span>'); throw e; });
   }
   function copyText(t, msg) { navigator.clipboard.writeText(t).then(function () { toast(msg || '복사했습니다'); }).catch(function () { prompt('복사해 주세요', t); }); }
