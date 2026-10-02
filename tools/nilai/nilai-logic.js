@@ -405,7 +405,7 @@
     '.doc details.sub[open]>summary::before{content:"▼"}',
     '.doc details.sub>.pre{padding:2px 0 12px}',
     /* 폰에서는 요금 표의 늘 같은 두 열(판매항목 「판매요금」 · 구분 「성인」)을 숨겨 총합계까지 한 화면에 보이게 한다 — 가로로 밀어야 보이면 견적의 핵심인 총합계를 놓친다 */
-    '@media (max-width:600px){.doc .hd{flex-wrap:wrap}.doc .hd .co{text-align:left}.doc .ttl b{font-size:20px;letter-spacing:.25em}.doc .pay{grid-template-columns:1fr}.doc .ft{flex-direction:column;gap:4px}.doc .tw table.fee{min-width:0}.doc table.fee th:nth-child(1),.doc table.fee td:nth-child(1),.doc table.fee th:nth-child(3),.doc table.fee td:nth-child(3){display:none}.doc table.fee th,.doc table.fee td{padding:6px 5px}}',
+    '@media (max-width:600px){.doc .hd{flex-wrap:wrap}.doc .hd .co{text-align:left}.doc .ttl b{font-size:20px;letter-spacing:.25em}.doc .pay{grid-template-columns:1fr}.doc .ft{flex-direction:column;gap:4px}.doc .tw table.fee{min-width:0}.doc table.fee th:nth-child(1),.doc table.fee tr:not(.tot)>td:nth-child(1),.doc table.fee th:nth-child(3),.doc table.fee tr:not(.tot)>td:nth-child(3){display:none}.doc table.fee th,.doc table.fee td{padding:6px 5px}}',
     '@media print{.doc .tg{display:none}.doc details.sec{border-top:none}.doc tr,.doc details.sub,.doc .pay .b,.doc .acct{break-inside:avoid}.doc h2{break-after:avoid}}'
   ].join('\n');
   function scopedCss() {
