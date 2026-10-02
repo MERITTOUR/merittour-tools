@@ -227,3 +227,17 @@ test('받는 분 — 동행 칸의 「이름 번호」를 읽고 · 대표자+�
   assert.ok(html.includes('홍길동 님 / 4명 (성인 4) · 김영희 · 이수진 · 박철수 · 최민호'), '문서에는 이름만');
   assert.ok(!/2222|3333|4444|5555/.test(html), '동행 번호는 문서에 찍지 않는다');
 });
+
+test('말레이시아항공 — 엠클릭 예약 화면의 편(MH067 11:05→16:45 당일 · MH066 23:15→06:30 다음 날) · 10박 12일 · 상품명 꼬리 · 화면 선택지', () => {
+  const a = N.AIRLINES['말레이시아항공'];
+  assert.deepEqual([a.out, a.outDep, a.outArr, a.inn, a.inDep, a.inArr], ['MH067', '11:05', '16:45', 'MH066', '23:15', '06:30']);
+  const d = Object.assign(sample(), { airline: '말레이시아항공', flightOut: a.out, flightOutDep: a.outDep, flightOutArr: a.outArr, flightIn: a.inn, flightInDep: a.inDep, flightInArr: a.inArr, dep: '2026-01-11', ret: '2026-01-22' });
+  const c = N.calc(d);
+  assert.equal(c.stay, '10박 12일'); assert.equal(c.productName, '[10박 12일] 닐라이스프링스CC 골프 투어 - 말레이시아항공');
+  const f = N.flights(d, c);
+  assert.deepEqual([f[0].airline, f[0].no, f[0].depDate, f[0].depTime, f[0].arrDate, f[0].arrTime, f[0].arrNote], ['말레이시아항공', 'MH067', '2026-01-11', '11:05', '2026-01-11', '16:45', '']);
+  assert.deepEqual([f[1].no, f[1].depDate, f[1].depTime, f[1].depNote, f[1].arrDate, f[1].arrTime], ['MH066', '2026-01-21', '23:15', '1일전출발', '2026-01-22', '06:30']);
+  const it = N.itinerary(d, c);
+  assert.equal(it.length, 12); assert.equal(it[0].lines[0], '인천국제공항 출국장, 말레이시아항공 카운터 개별수속'); assert.match(it[10].lines[it[10].lines.length - 1], /MH066 23:15/); assert.equal(it[11].lines[0], '인천국제공항 도착 (06:30)');
+  assert.match(read('tools/nilai/index.html'), /<option value="말레이시아항공">말레이시아항공<\/option><option value="">직접 입력<\/option>/, '항공사 선택지(직접 입력 앞)');
+});
