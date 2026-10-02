@@ -435,7 +435,8 @@
 - **문안 항목형(2026-10-02 · Min 「문안 항목형으로 진행해줘」)** — 참고 사항 · 취소및환불정보 · 유의사항은 항목 단위(`nilai-logic.js` `CLAUSES` 26개 · `{ key, g, t, b, airline, byAirline, odd, dates, annual, kind, on }`).
   조건에 맞는 항목만 문서에 들어간다: 수하물 줄은 고른 항공사(`byAirline`) · 바틱 특별약관 2줄은 `airline:['바틱항공']` · 홀수 인원 투어는 `odd` · GP 모터쇼(10.28~11.02)·동계 조인(12.01~2.28)은 `dates`(여행이 겹칠 때) · 특식(12/24·12/31)은 `annual` · 견적서 첫 줄은 `kind:'quote'`.
   `{문서}` 는 견적서/확정서로 바뀐다. 항목은 「■ 제목 + 줄」 꼴로 찍는다(번호 없음 — 빠지는 항목이 있어 번호가 어긋난다).
-  **기본값은 DB `nilai_settings` 의 `clauses` 한 행**(`36_nilai_settings.sql` · 2026-10-02 실행 · admin·sales·manage · anon 0 · version=eq 로 먼저 저장한 사람이 이긴다) — 화면 「기본 문안 설정」(항목 사용/제목/내용/조건/순서/추가/삭제 · 포함·불포함·미팅 기본값 · 「기본값으로 되돌리기」).
+  **기본값은 DB `nilai_settings` 의 `clauses` 한 행**(`36_nilai_settings.sql` · 2026-10-02 실행(MCP execute_sql 이 60초에 끊겨 문장을 나눠 돌렸다 — 긴 SQL 은 표 · 함수 · 정책 · 권한으로 쪼개서) · admin·sales·manage · anon 0 ·
+  **authenticated 는 select·insert·update 만** — 새 표의 기본 권한에 TRUNCATE(RLS 를 안 거친다)·REFERENCES·TRIGGER 가 딸려 와 걷어냈고 `nilai_docs` 도 같이 걷어냈다 · version=eq 로 먼저 저장한 사람이 이긴다) — 화면 「기본 문안 설정」(항목 사용/제목/내용/조건/순서/추가/삭제 · 포함·불포함·미팅 기본값 · 「기본값으로 되돌리기」).
   행이 없으면 `SETTINGS_DEFAULT`. 담당자가 고치면 이후 문서(열려 있는 문서 포함)에 적용된다.
   **문서별로는 항목을 끄거나(`d.clauses.off`) 덧붙임(`d.clauses.extra.{ref|cancel|notes}`)만** — 해당 없는 항목은 폼에 「해당 없음 — 홀수 인원 투어 (홀수 인원) · …」 한 줄로 보인다.
   **보낸 내역의 `data.clausesResolved`** 에 그때 들어간 항목이 스냅샷으로 남아 설정을 나중에 고쳐도 「그때 문서」는 그대로(`snapshot()`).

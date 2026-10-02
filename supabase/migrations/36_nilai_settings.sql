@@ -65,3 +65,7 @@ create policy ns_update on public.nilai_settings
 
 revoke all on public.nilai_settings from anon;
 grant select, insert, update on public.nilai_settings to authenticated;
+-- 새 표에는 기본 권한(default privileges)으로 authenticated 에 TRUNCATE·REFERENCES·TRIGGER 까지 붙어 있었다 — TRUNCATE 는 RLS 를 거치지 않으므로 걷어낸다.
+-- nilai_docs(34)도 같은 상태였음을 2026-10-02 에 확인해 여기서 함께 걷어낸다(둘 다 2026-10-02 실행).
+revoke delete, truncate, references, trigger on public.nilai_settings from authenticated;
+revoke delete, truncate, references, trigger on public.nilai_docs from authenticated;
