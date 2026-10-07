@@ -226,20 +226,18 @@
     <aside class="nl-side">
       <div class="nl-actions">
         <button type="button" class="mt-btn mt-btn-primary" id="btnSave">저장</button>
-        <button type="button" class="mt-btn" id="btnCopyCore" title="① 핵심본(요금 · 일정 · 항공 · 숙박)을 이미지로 복사합니다 — 카카오톡에 붙여 넣기">① 핵심본 복사</button>
-        <button type="button" class="mt-btn" id="btnCopyNotes" title="② 안내본(참고 사항 · 취소및환불정보 · 유의사항)을 이미지로 복사합니다 — 확정서는 ① 다음에 이어서">② 안내본 복사</button>
-        <button type="button" class="mt-btn" id="btnJpg" title="견적서는 ① 한 장 · 확정서는 ①·② 두 장을 JPG 로 내려받습니다">JPG 저장</button>
-        <button type="button" class="mt-btn" id="btnPrint">인쇄</button>
+        <button type="button" class="mt-btn" id="btnJpg1" title="1페이지(요금 · 일정 · 항공 · 숙박)를 JPG 로 내려받습니다">견적서 1페이지 저장</button>
+        <button type="button" class="mt-btn" id="btnJpg2" title="2페이지(참고 사항 · 취소및환불정보 · 유의사항)를 JPG 로 내려받습니다">견적서 2페이지 저장</button>
         <button type="button" class="mt-btn" id="btnLink">링크 생성</button>
         <button type="button" class="mt-btn mt-btn-primary" id="btnSend">알림톡 발송</button>
         <button type="button" class="mt-btn mt-btn-ghost" id="btnZoom" title="새 창에서 원본 크기로 봅니다">크게 보기</button>
         <button type="button" class="mt-btn" id="btnRecord" title="알림톡이 아니라 직접 보냈을 때 — 누구에게 어떤 내용을 보냈는지 남깁니다">발송 기록</button>
       </div>
-      <div class="nl-imgnote">이미지는 두 장 — <b>① 핵심본</b> 요금 · 일정 · 항공 · 숙박 / <b>② 안내본</b> 참고 사항 · 취소 · 유의사항. 견적서는 ①만 보내고 안내는 링크로, 확정서는 ①·② 두 장. 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힙니다.</div>
+      <div class="nl-imgnote">JPG 는 두 장 — <b>1페이지</b> 요금 · 일정 · 항공 · 숙박 / <b>2페이지</b> 참고 사항 · 취소 · 유의사항. 견적서는 1페이지만 보내고 안내는 링크로, 확정서는 1·2 페이지. 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힙니다.</div>
       <div class="nl-to" id="nlTo"></div>
       <div class="nl-status" id="nlStatus">새 문서입니다. 손님 정보와 일정·요금을 적어 주세요.</div>
       <div class="nl-rec mt-hidden" id="nlRec">
-        <div><b>발송 기록 남기기</b> <span style="color:var(--mt-text2)">· 이미지 복사·문자 복사로 직접 보냈을 때. 지금 화면의 문서와 문안이 그대로 남습니다</span></div>
+        <div><b>발송 기록 남기기</b> <span style="color:var(--mt-text2)">· JPG·문자 복사로 직접 보냈을 때. 지금 화면의 문서와 문안이 그대로 남습니다</span></div>
         <div class="row">
           <select id="recVia"><option value="kakao">카카오톡 이미지</option><option value="sms">문자 · 알리고 콘솔</option><option value="other">기타</option></select>
           <input type="text" id="recMemo" placeholder="메모 (선택 · 예: 메일로도 보냄)">
@@ -362,6 +360,7 @@
     $('sumDeposit').textContent = N.won(c.deposit);
     $('sumBalance').textContent = N.won(c.balance) + (c.dueDate ? ' · ' + N.fmtDate(c.dueDate).slice(0, 10) : '');
     $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
+    $('btnJpg1').textContent = N.KIND_LABEL[state.doc.kind] + ' 1페이지 저장'; $('btnJpg2').textContent = N.KIND_LABEL[state.doc.kind] + ' 2페이지 저장';   // 버튼 이름은 종류를 따른다
     var f = $('nlFrame');
     f.onload = function () { fitPreview(); };
     f.srcdoc = html();
@@ -499,7 +498,7 @@
     }).then(function (entries) { return loadList().then(function () { status(); return entries; }); });
   }
 
-  /* ── 이미지 (html2canvas · 화면 밖 프레임에 ① 핵심본 / ② 안내본을 따로 그린다 · 2026-10-07 · Min 「응 한번 해보자」) ──
+  /* ── 이미지 (html2canvas · 화면 밖 프레임에 1페이지 / 2페이지를 따로 그린다 · 2026-10-07 · Min 「응 한번 해보자」) ──
      한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 미리보기 · 링크 · 인쇄는 그대로 전체 문서. */
   function pageHtml(page) { return N.buildHtml(state.doc, { logoSrc: state.logo, page: page }); }
   function toCanvas(page) {
@@ -517,26 +516,16 @@
         .then(function () { return html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 760, windowWidth: 760, scrollX: 0, scrollY: 0 }); });
     });
   }
-  function toBlob(canvas, type, q) { return new Promise(function (res, rej) { canvas.toBlob(function (b) { b ? res(b) : rej(new Error('이미지 변환 실패')); }, type || 'image/jpeg', q || 0.92); }); }
-  function fileBase(page) { return (String(state.doc.eventNo || '').trim() || ('nilai-' + (state.id || 'new'))) + '_' + (N.KIND_LABEL[state.doc.kind] || '') + (page ? '_' + (page === 'core' ? '1' : '2') + N.PAGE_LABEL[page] : ''); }
-  function copyImage(page) {
+  function fileBase(page) { return (String(state.doc.eventNo || '').trim() || ('nilai-' + (state.id || 'new'))) + '_' + (N.KIND_LABEL[state.doc.kind] || '') + (page ? '_' + N.PAGE_LABEL[page] : ''); }
+  /* JPG — 1페이지(요금 · 일정 · 항공 · 숙박) · 2페이지(참고 사항 · 취소및환불정보 · 유의사항)를 따로 내려받는다(2026-10-07 · Min 「견적서 1페이지 저장 · 2페이지 저장 두 개로」).
+     견적서는 1페이지만 보내고 안내는 링크로 · 확정서는 두 장. 클립보드 복사와 「인쇄」 버튼은 같은 날 뺐다(Min). */
+  function downloadJpg(page) {
     read();
-    toCanvas(page).then(function (cv) { return toBlob(cv, 'image/png'); }).then(function (b) {
-      return navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]);
-    }).then(function () { toast((page === 'core' ? '① 핵심본' : '② 안내본') + ' 이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣고' + (page === 'core' && state.doc.kind === 'confirm' ? ' ② 안내본도 이어서 보내고,' : '') + ' 보냈으면 「발송 기록」을 눌러 주세요'); })
-      .catch(function (e) { alert('이미지 복사가 안 되는 환경입니다. JPG 저장을 이용해 주세요.\n(' + e.message + ')'); });
+    toCanvas(page).then(function (cv) {
+      var a = document.createElement('a'); a.download = fileBase(page) + '.jpg'; a.href = cv.toDataURL('image/jpeg', 0.92); a.click();
+      toast(N.KIND_LABEL[state.doc.kind] + ' ' + N.PAGE_LABEL[page] + '를 내려받았습니다' + (page === 'core' ? (state.doc.kind === 'confirm' ? ' · 2페이지도 이어서 보내고,' : ' · 안내는 링크로 보내고,') : ' ·') + ' 보냈으면 「발송 기록」을 눌러 주세요');
+    }).catch(function (e) { alert(e.message); });
   }
-  /* JPG — 견적서는 ① 한 장(안내는 링크로) · 확정서는 ①·② 두 장(브라우저가 여러 파일 다운로드를 물으면 허용) */
-  function imagePages() { return state.doc.kind === 'confirm' ? ['core', 'notes'] : ['core']; }
-  function downloadJpg() {
-    read();
-    var pages = imagePages();
-    pages.reduce(function (p, page) {
-      return p.then(function () { return toCanvas(page); }).then(function (cv) { var a = document.createElement('a'); a.download = fileBase(page) + '.jpg'; a.href = cv.toDataURL('image/jpeg', 0.92); a.click(); });
-    }, Promise.resolve()).then(function () { toast(pages.length === 2 ? '①·② 두 파일을 내려받았습니다 · 브라우저가 여러 파일 다운로드를 물으면 허용해 주세요' : '① 핵심본 한 파일을 내려받았습니다 · 안내는 링크로 보내 주세요'); })
-      .catch(function (e) { alert(e.message); });
-  }
-  function printDoc() { var w = $('nlFrame').contentWindow; if (w) { w.focus(); w.print(); } }
   function openWindow(markup) { var w = window.open('', '_blank'); if (!w) { alert('팝업이 막혀 있습니다.'); return; } w.document.open(); w.document.write(markup); w.document.close(); }
   function zoom() { read(); openWindow(html()); }
 
@@ -624,10 +613,8 @@
     $('btnList').addEventListener('click', function () { $('nlList').classList.toggle('mt-hidden'); if (!$('nlList').classList.contains('mt-hidden')) loadList().catch(function (e) { toast(e.message); }); });
     $('nlFilter').addEventListener('input', function () { state.filter = $('nlFilter').value; renderList(); });
     $('btnSave').addEventListener('click', function () { save().catch(function (e) { alert('저장 실패: ' + e.message); }); });
-    $('btnCopyCore').addEventListener('click', function () { copyImage('core'); });
-    $('btnCopyNotes').addEventListener('click', function () { copyImage('notes'); });
-    $('btnJpg').addEventListener('click', downloadJpg);
-    $('btnPrint').addEventListener('click', printDoc);
+    $('btnJpg1').addEventListener('click', function () { downloadJpg('core'); });
+    $('btnJpg2').addEventListener('click', function () { downloadJpg('notes'); });
     $('btnZoom').addEventListener('click', zoom);
     $('btnLink').addEventListener('click', function () { makeLink().catch(function () {}); });
     $('btnSend').addEventListener('click', send);

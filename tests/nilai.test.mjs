@@ -170,10 +170,11 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(page, /return recordSend\('alimtalk', '', link, tos\);/, '내역은 받는 분마다');
   assert.match(page, /N\.alimtalk\(state\.doc, null, t\)/, '문안 복사는 받는 분 성함');
   for (const id of ['btnRecord', 'recVia', 'recSave', 'nlHist', 'nlFilter']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (발송 기록 버튼 · 방법 선택 · 내역 패널 · 찾기)');
-  for (const id of ['btnCopyCore', 'btnCopyNotes', 'btnJpg', 'nlImgFrame']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (① 핵심본 복사 · ② 안내본 복사 · JPG 저장 · 이미지용 프레임)');
-  assert.ok(!/btnCopyImg/.test(page), '옛 「이미지 복사」(전체 한 장)는 더 쓰지 않는다(2026-10-07)');
+  for (const id of ['btnJpg1', 'btnJpg2', 'nlImgFrame']) assert.match(page, new RegExp('id="' + id + '"'), '없다: ' + id + ' (1페이지 저장 · 2페이지 저장 · 이미지용 프레임)');
+  assert.ok(!/btnCopyImg|btnCopyCore|btnCopyNotes|btnPrint|printDoc|copyImage|navigator\.clipboard\.write\(/.test(page), '옛 「이미지 복사」·클립보드 복사·「인쇄」 버튼은 더 쓰지 않는다(2026-10-07 · Min)');
   assert.match(page, /N\.buildHtml\(state\.doc, \{ logoSrc: state\.logo, page: page \}\)/, '이미지는 page 로 나눠 그린다');
-  assert.match(page, /return state\.doc\.kind === 'confirm' \? \['core', 'notes'\] : \['core'\];/, 'JPG 저장 — 견적서 ① 한 장 · 확정서 ①·② 두 장');
+  assert.match(page, /downloadJpg\('core'\)[\s\S]*downloadJpg\('notes'\)/, '1페이지 · 2페이지 저장 버튼');
+  assert.match(page, /N\.KIND_LABEL\[state\.doc\.kind\] \+ ' 1페이지 저장'/, '버튼 이름은 종류를 따른다(견적서 1페이지 저장 / 확정서 1페이지 저장)');
   assert.match(page, /\.nl-imgframe \{ position: fixed; left: -20000px;/, '이미지용 프레임은 화면 밖(display:none 이면 html2canvas 가 못 그린다)');
   const sql = read('supabase/migrations/34_nilai_docs.sql');
   assert.match(sql, /array_append\(areas, 'nilai'\)[\s\S]*role in \('owner', 'admin', 'manage', 'sales'\)/);
@@ -215,24 +216,24 @@ test('손님 열람 조각(view) — 절마다 접고 펼 수 있고 참고 사�
   assert.match(plain, /<h2>취소및환불정보<\/h2><div class="pre">/);
 });
 
-test('이미지 두 장(2026-10-07 · Min) — ① 핵심본(요금·일정·항공·숙박·미팅·안내 사항 · 참고·취소·유의 없음 · ※ 별도 안내문) · ② 안내본(「안 내 사 항」 · 문서·고객명·여행기간 · 참고 사항·취소·유의) · 전체 문서는 그대로', () => {
+test('JPG 두 장(2026-10-07 · Min) — 1페이지(요금·일정·항공·숙박·미팅·안내 사항 · 참고·취소·유의 없음 · ※ 별도 안내문) · 2페이지(「안 내 사 항」 · 문서·고객명·여행기간 · 참고 사항·취소·유의) · 전체 문서는 그대로', () => {
   const d = Object.assign(sample(), { memo: '공항 미팅 장소는 3번 출구' });
   const core = N.buildHtml(d, { page: 'core', logoSrc: 'data:image/svg+xml;base64,PHN2Zy8+' });
   for (const s of ['확 정 서', '<h2>여행정보</h2>', '<h2>요금안내</h2>', '>7,660,000<', '하나은행 109-890042-62004', '<h2>상품정보</h2>', '숙박비, 라운딩비(1일 18홀)', '캐디피+캐디팁, 개인비용', '<h2>항공정보</h2>', 'KE427', '<h2>숙박정보</h2>', '<h2>상세일정</h2>', '<h2>미팅장소및시간</h2>', '<h2>안내 사항</h2>', '공항 미팅 장소는 3번 출구',
-    '<div class="more">※ 참고 사항 · 취소 및 환불 규정 · 유의사항은 별도 안내문에서 확인해 주세요.</div>', 'class="ft"', '<title>확정서 핵심본 24-0001</title>']) assert.ok(core.includes(s), '핵심본에 없다: ' + s);
-  for (const s of ['참고 사항</th>', '<h2>참고 사항</h2>', '취소및환불정보', '<h2>유의사항</h2>', '캐디피+캐디팁 비용', 'imigresen-online', '국외여행 표준약관', '환율 변동에 따른', '안 내 사 항']) assert.ok(!core.includes(s), '핵심본에 있으면 안 된다: ' + s);
+    '<div class="more">※ 참고 사항 · 취소 및 환불 규정 · 유의사항은 별도 안내문에서 확인해 주세요.</div>', 'class="ft"', '<title>확정서 1페이지 24-0001</title>']) assert.ok(core.includes(s), '1페이지에 없다: ' + s);
+  for (const s of ['참고 사항</th>', '<h2>참고 사항</h2>', '취소및환불정보', '<h2>유의사항</h2>', '캐디피+캐디팁 비용', 'imigresen-online', '국외여행 표준약관', '환율 변동에 따른', '안 내 사 항']) assert.ok(!core.includes(s), '1페이지에 있으면 안 된다: ' + s);
   const notes = N.buildHtml(d, { page: 'notes' });
   for (const s of ['<b>안 내 사 항</b>', '확정서 안내 · 발행', '<th>발신</th>', '<th>문서</th><td>확정서 · 행사번호 24-0001</td>', '<th>고객명/인원</th><td>홍길동 님 / 4명</td>', '<th>여행기간</th>', '<h2>참고 사항</h2><div class="pre">■ 항공 수하물 안내', '캐디피+캐디팁 비용', 'imigresen-online',
-    '<h2>취소및환불정보</h2>', '국외여행 표준약관', '<h2>유의사항</h2>', '환율 변동에 따른 추가 청구나 차액 정산은 없습니다', 'class="ft"', '<title>확정서 안내본 24-0001</title>']) assert.ok(notes.includes(s), '안내본에 없다: ' + s);
-  for (const s of ['확 정 서', '<h2>여행정보</h2>', '<h2>요금안내</h2>', '7,660,000', '<h2>상품정보</h2>', '<h2>항공정보</h2>', 'KE427', '<h2>숙박정보</h2>', '<h2>상세일정</h2>', '공항 미팅 장소는 3번 출구', 'class="more"']) assert.ok(!notes.includes(s), '안내본에 있으면 안 된다: ' + s);
+    '<h2>취소및환불정보</h2>', '국외여행 표준약관', '<h2>유의사항</h2>', '환율 변동에 따른 추가 청구나 차액 정산은 없습니다', 'class="ft"', '<title>확정서 2페이지 24-0001</title>']) assert.ok(notes.includes(s), '2페이지에 없다: ' + s);
+  for (const s of ['확 정 서', '<h2>여행정보</h2>', '<h2>요금안내</h2>', '7,660,000', '<h2>상품정보</h2>', '<h2>항공정보</h2>', 'KE427', '<h2>숙박정보</h2>', '<h2>상세일정</h2>', '공항 미팅 장소는 3번 출구', 'class="more"']) assert.ok(!notes.includes(s), '2페이지에 있으면 안 된다: ' + s);
   const qn = N.buildHtml(Object.assign(sample(), { kind: 'quote' }), { page: 'notes' });
-  assert.ok(qn.includes('견적서 안내 · 발행') && qn.includes('본 견적은 발행일 기준'), '견적서 안내본은 견적서 첫 줄');
+  assert.ok(qn.includes('견적서 안내 · 발행') && qn.includes('본 견적은 발행일 기준'), '견적서 2페이지는 견적서 첫 줄');
   const vc = N.buildHtml(d, { page: 'core', view: true });
   assert.ok(!/<details|data-kind/.test(vc) && /<!doctype html>/.test(vc), 'page 가 있으면 view 는 무시(이미지는 접지 않는다)');
   const full = N.buildHtml(d);
   assert.ok(full.includes('<th>참고 사항</th>') && full.includes('<h2>취소및환불정보</h2>') && full.includes('<h2>유의사항</h2>') && !full.includes('class="more"') && !full.includes('안 내 사 항') && !/<th>문서<\/th>/.test(full), '전체 문서(미리보기 · 링크 · 인쇄)는 그대로');
   assert.ok(!/class="more"|안 내 사 항/.test(N.buildHtml(d, { view: true })), '열람 조각도 그대로');
-  assert.deepEqual(N.PAGE_LABEL, { core: '핵심본', notes: '안내본' });
+  assert.deepEqual(N.PAGE_LABEL, { core: '1페이지', notes: '2페이지' });
   assert.ok(N.buildHtml(d, { page: 'bogus' }).includes('<th>참고 사항</th>'), '모르는 page 값은 전체 문서');
   for (const h of [core, notes]) assert.ok(!/undefined|NaN/.test(h));
 });
