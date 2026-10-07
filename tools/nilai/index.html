@@ -53,6 +53,9 @@
 .nl-preview { background: var(--mt-surface3); border: 1px solid var(--mt-border); border-radius: 10px; overflow: hidden; position: relative; }
 .nl-preview .scale { width: 760px; transform-origin: 0 0; }
 .nl-preview iframe { width: 760px; height: 1200px; border: 0; background: #fff; display: block; }
+.nl-imgnote { font-size: 11.5px; color: var(--mt-text3); line-height: 1.5; margin-top: -4px; }
+.nl-imgnote b { color: var(--mt-text2); font-weight: 600; }
+.nl-imgframe { position: fixed; left: -20000px; top: 0; width: 760px; height: 1200px; border: 0; background: #fff; pointer-events: none; }   /* ① 핵심본 · ② 안내본을 따로 그리는 자리 — 보이지는 않지만 레이아웃은 있어야 html2canvas 가 그린다 */
 .nl-to { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
 .nl-to b { color: var(--mt-brand); margin-right: 2px; }
 .nl-to label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
@@ -223,14 +226,16 @@
     <aside class="nl-side">
       <div class="nl-actions">
         <button type="button" class="mt-btn mt-btn-primary" id="btnSave">저장</button>
-        <button type="button" class="mt-btn" id="btnCopyImg">이미지 복사</button>
-        <button type="button" class="mt-btn" id="btnJpg">JPG 저장</button>
+        <button type="button" class="mt-btn" id="btnCopyCore" title="① 핵심본(요금 · 일정 · 항공 · 숙박)을 이미지로 복사합니다 — 카카오톡에 붙여 넣기">① 핵심본 복사</button>
+        <button type="button" class="mt-btn" id="btnCopyNotes" title="② 안내본(참고 사항 · 취소및환불정보 · 유의사항)을 이미지로 복사합니다 — 확정서는 ① 다음에 이어서">② 안내본 복사</button>
+        <button type="button" class="mt-btn" id="btnJpg" title="견적서는 ① 한 장 · 확정서는 ①·② 두 장을 JPG 로 내려받습니다">JPG 저장</button>
         <button type="button" class="mt-btn" id="btnPrint">인쇄</button>
         <button type="button" class="mt-btn" id="btnLink">링크 생성</button>
         <button type="button" class="mt-btn mt-btn-primary" id="btnSend">알림톡 발송</button>
         <button type="button" class="mt-btn mt-btn-ghost" id="btnZoom" title="새 창에서 원본 크기로 봅니다">크게 보기</button>
         <button type="button" class="mt-btn" id="btnRecord" title="알림톡이 아니라 직접 보냈을 때 — 누구에게 어떤 내용을 보냈는지 남깁니다">발송 기록</button>
       </div>
+      <div class="nl-imgnote">이미지는 두 장 — <b>① 핵심본</b> 요금 · 일정 · 항공 · 숙박 / <b>② 안내본</b> 참고 사항 · 취소 · 유의사항. 견적서는 ①만 보내고 안내는 링크로, 확정서는 ①·② 두 장. 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힙니다.</div>
       <div class="nl-to" id="nlTo"></div>
       <div class="nl-status" id="nlStatus">새 문서입니다. 손님 정보와 일정·요금을 적어 주세요.</div>
       <div class="nl-rec mt-hidden" id="nlRec">
@@ -245,6 +250,7 @@
       <div class="nl-preview">
         <div class="scale" id="nlScale"><iframe id="nlFrame" title="문서 미리보기"></iframe></div>
       </div>
+      <iframe id="nlImgFrame" class="nl-imgframe" title="이미지용 문서 (화면 밖)" aria-hidden="true" tabindex="-1"></iframe>
       <details class="nl-msg">
         <summary>알림톡 문안 · 수동 발송용 글</summary>
         <pre id="nlMsgAlim"></pre>
@@ -493,25 +499,41 @@
     }).then(function (entries) { return loadList().then(function () { status(); return entries; }); });
   }
 
-  /* ── 이미지 (html2canvas · 미리보기 프레임의 .doc) ── */
-  function toCanvas() {
-    var doc = $('nlFrame').contentDocument, target = doc && doc.querySelector('.doc');
-    if (!target || typeof html2canvas === 'undefined') return Promise.reject(new Error('문서를 아직 그리지 못했습니다. 잠시 뒤 다시 눌러 주세요.'));
-    var go = function () { return html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 760, windowWidth: 760, scrollX: 0, scrollY: 0 }); };
-    return (doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve()).then(function () { return new Promise(function (r) { setTimeout(r, 120); }); }).then(go);
+  /* ── 이미지 (html2canvas · 화면 밖 프레임에 ① 핵심본 / ② 안내본을 따로 그린다 · 2026-10-07 · Min 「응 한번 해보자」) ──
+     한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 미리보기 · 링크 · 인쇄는 그대로 전체 문서. */
+  function pageHtml(page) { return N.buildHtml(state.doc, { logoSrc: state.logo, page: page }); }
+  function toCanvas(page) {
+    if (typeof html2canvas === 'undefined') return Promise.reject(new Error('이미지 라이브러리를 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.'));
+    var f = $('nlImgFrame');
+    return new Promise(function (res, rej) {
+      var done = false, t = setTimeout(function () { if (!done) { done = true; rej(new Error('문서를 그리지 못했습니다. 잠시 뒤 다시 눌러 주세요.')); } }, 8000);
+      f.onload = function () { if (done) return; done = true; clearTimeout(t); res(); };
+      f.srcdoc = pageHtml(page);
+    }).then(function () {
+      var doc = f.contentDocument, target = doc && doc.querySelector('.doc');
+      if (!target) throw new Error('문서를 그리지 못했습니다. 잠시 뒤 다시 눌러 주세요.');
+      f.style.height = Math.max(doc.body ? doc.body.scrollHeight : 0, doc.documentElement.scrollHeight) + 'px';
+      return (doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve()).then(function () { return new Promise(function (r) { setTimeout(r, 120); }); })
+        .then(function () { return html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 760, windowWidth: 760, scrollX: 0, scrollY: 0 }); });
+    });
   }
   function toBlob(canvas, type, q) { return new Promise(function (res, rej) { canvas.toBlob(function (b) { b ? res(b) : rej(new Error('이미지 변환 실패')); }, type || 'image/jpeg', q || 0.92); }); }
-  function fileBase() { return (String(state.doc.eventNo || '').trim() || ('nilai-' + (state.id || 'new'))) + '_' + (N.KIND_LABEL[state.doc.kind] || ''); }
-  function copyImage() {
+  function fileBase(page) { return (String(state.doc.eventNo || '').trim() || ('nilai-' + (state.id || 'new'))) + '_' + (N.KIND_LABEL[state.doc.kind] || '') + (page ? '_' + (page === 'core' ? '1' : '2') + N.PAGE_LABEL[page] : ''); }
+  function copyImage(page) {
     read();
-    toCanvas().then(function (cv) { return toBlob(cv, 'image/png'); }).then(function (b) {
+    toCanvas(page).then(function (cv) { return toBlob(cv, 'image/png'); }).then(function (b) {
       return navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]);
-    }).then(function () { toast('이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣고, 보냈으면 「발송 기록」을 눌러 주세요'); })
+    }).then(function () { toast((page === 'core' ? '① 핵심본' : '② 안내본') + ' 이미지를 복사했습니다 · 카카오톡·메일에 붙여 넣고' + (page === 'core' && state.doc.kind === 'confirm' ? ' ② 안내본도 이어서 보내고,' : '') + ' 보냈으면 「발송 기록」을 눌러 주세요'); })
       .catch(function (e) { alert('이미지 복사가 안 되는 환경입니다. JPG 저장을 이용해 주세요.\n(' + e.message + ')'); });
   }
+  /* JPG — 견적서는 ① 한 장(안내는 링크로) · 확정서는 ①·② 두 장(브라우저가 여러 파일 다운로드를 물으면 허용) */
+  function imagePages() { return state.doc.kind === 'confirm' ? ['core', 'notes'] : ['core']; }
   function downloadJpg() {
     read();
-    toCanvas().then(function (cv) { var a = document.createElement('a'); a.download = fileBase() + '.jpg'; a.href = cv.toDataURL('image/jpeg', 0.92); a.click(); })
+    var pages = imagePages();
+    pages.reduce(function (p, page) {
+      return p.then(function () { return toCanvas(page); }).then(function (cv) { var a = document.createElement('a'); a.download = fileBase(page) + '.jpg'; a.href = cv.toDataURL('image/jpeg', 0.92); a.click(); });
+    }, Promise.resolve()).then(function () { toast(pages.length === 2 ? '①·② 두 파일을 내려받았습니다 · 브라우저가 여러 파일 다운로드를 물으면 허용해 주세요' : '① 핵심본 한 파일을 내려받았습니다 · 안내는 링크로 보내 주세요'); })
       .catch(function (e) { alert(e.message); });
   }
   function printDoc() { var w = $('nlFrame').contentWindow; if (w) { w.focus(); w.print(); } }
@@ -602,7 +624,8 @@
     $('btnList').addEventListener('click', function () { $('nlList').classList.toggle('mt-hidden'); if (!$('nlList').classList.contains('mt-hidden')) loadList().catch(function (e) { toast(e.message); }); });
     $('nlFilter').addEventListener('input', function () { state.filter = $('nlFilter').value; renderList(); });
     $('btnSave').addEventListener('click', function () { save().catch(function (e) { alert('저장 실패: ' + e.message); }); });
-    $('btnCopyImg').addEventListener('click', copyImage);
+    $('btnCopyCore').addEventListener('click', function () { copyImage('core'); });
+    $('btnCopyNotes').addEventListener('click', function () { copyImage('notes'); });
     $('btnJpg').addEventListener('click', downloadJpg);
     $('btnPrint').addEventListener('click', printDoc);
     $('btnZoom').addEventListener('click', zoom);
