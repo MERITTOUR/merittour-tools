@@ -444,6 +444,23 @@
     }).filter(Boolean).join('\n') + '\n' + VIEW_CSS;
   }
 
+  /* 상세일정 묶기(2026-10-07 · Min 「일정이 14박 이상 되면 내용이 엄청 길어진다 · 1일차 · 귀국일 전날 · 귀국일 정도만 구분 두고 체류일은 통으로 · 동일하기 때문에」) —
+     첫날과 마지막 두 날(출국일 · 귀국일)은 그대로 두고, 그 사이에서 내용(줄 · 호텔 · 식사)이 같은 연속 날짜를 한 행(2 ~ 14일차 · 13일간 동일 일정)으로 묶는다.
+     내용이 다른 날(담당자가 일정을 직접 적은 경우)은 묶이지 않는다. 미리보기 · JPG · 링크(열람 조각) 전부 같은 표. */
+  function groupItinerary(it) {
+    var out = [], n = it.length;
+    for (var i = 0; i < n; i++) {
+      var r = it[i], fixed = i === 0 || i >= n - 2;
+      var key = JSON.stringify([r.lines, r.hotel || '', r.meals || '']);
+      var last = out[out.length - 1];
+      if (!fixed && last && !last.fixed && last.key === key) { last.to = r; last.count++; continue; }
+      out.push({ from: r, to: r, count: 1, key: key, fixed: fixed });
+    }
+    return out.map(function (g) {
+      return { day: g.from.day, dayTo: g.to.day, date: g.from.date, dateTo: g.to.date, count: g.count, lines: g.from.lines, hotel: g.from.hotel, meals: g.from.meals };
+    });
+  }
+
   /* page — '' 전체(미리보기 · 링크) · 'core' 1페이지(여행정보 · 요금 · 포함/불포함 · 항공 · 숙박 · 일정 · 미팅 · 안내 사항) · 'notes' 2페이지(참고 사항 · 취소및환불정보 · 유의사항).
      이미지로 보낼 때만 나눈다(2026-10-07 · Min 「응 한번 해보자」) — 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 링크(열람 조각)는 그대로 전체(손님 열람 페이지의 인쇄도 전체). page 가 있으면 view 는 무시한다(이미지는 접지 않는다). */
   function buildHtml(d, opts) {
@@ -524,8 +541,10 @@
 
       if (it.length) {
         var itn = ['<table class="it">'];
-        it.forEach(function (r) {
-          itn.push('<tr><td class="d">' + r.day + '일차<br><span style="font-weight:400;color:#5A6472;font-size:11.5px">' + esc(r.date) + '</span></td><td class="c"><ul class="ln">' + r.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
+        groupItinerary(it).forEach(function (r) {
+          var dayLabel = r.count > 1 ? r.day + ' ~ ' + r.dayTo + '일차' : r.day + '일차';
+          var dateLabel = r.count > 1 ? esc(r.date) + '<br>~ ' + esc(r.dateTo) + '<br>' + r.count + '일간 동일 일정' : esc(r.date);
+          itn.push('<tr><td class="d">' + dayLabel + '<br><span style="font-weight:400;color:#5A6472;font-size:11.5px">' + dateLabel + '</span></td><td class="c"><ul class="ln">' + r.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
             + ((r.hotel || r.meals) ? '<div class="ht">' + (r.hotel ? '<b>호텔</b> ' + esc(r.hotel) : '') + (r.hotel && r.meals ? ' · ' : '') + (r.meals ? '<b>식사</b> ' + esc(r.meals) : '') + '</div>' : '') + '</td></tr>');
         });
         itn.push('</table>');
@@ -571,7 +590,7 @@
   return {
     COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL, PAGE_LABEL: PAGE_LABEL,
     defaultNotes: defaultNotes, blank: blank,
-    calc: calc, flights: flights, itinerary: itinerary, validate: validate,
+    calc: calc, flights: flights, itinerary: itinerary, groupItinerary: groupItinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient, companionsOf: companionsOf, recipientsOf: recipientsOf,
     VIA_LABEL: VIA_LABEL, sendEntry: sendEntry,
     fmtDate: fmtDate, won: won, ymd: ymd, parseDate: parseDate, parseLoose: parseLoose, dowOf: dowOf, esc: esc

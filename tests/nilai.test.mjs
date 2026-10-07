@@ -238,6 +238,23 @@ test('JPG 두 장(2026-10-07 · Min) — 1페이지(요금·일정·항공·숙�
   for (const h of [core, notes]) assert.ok(!/undefined|NaN/.test(h));
 });
 
+test('상세일정 묶기(2026-10-07 · Min) — 1일차 · 귀국일 전날 · 귀국일은 따로, 그 사이 같은 체류일은 한 행 · 내용이 다른 날은 안 묶인다', () => {
+  const d = Object.assign(sample(), { dep: '2027-03-10', ret: '2027-03-25' });
+  const c = N.calc(d); assert.equal(c.stay, '14박 16일');
+  const g = N.groupItinerary(N.itinerary(d, c));
+  assert.deepEqual(g.map(r => [r.day, r.dayTo, r.count]), [[1, 1, 1], [2, 14, 13], [15, 15, 1], [16, 16, 1]]);
+  for (const h of [N.buildHtml(d), N.buildHtml(d, { view: true }), N.buildHtml(d, { page: 'core' })]) {
+    assert.equal((h.match(/<td class="d">/g) || []).length, 4, '일정표 행 4개');
+    assert.ok(h.includes('2 ~ 14일차') && h.includes('2027.03.11 (목)<br>~ 2027.03.23 (화)<br>13일간 동일 일정') && h.includes('15일차') && h.includes('16일차') && !h.includes('>3일차'), '묶인 행 표기');
+  }
+  const d2 = Object.assign(sample(), { itin: '출발\n라운딩 A\n라운딩 B\n출국\n귀국' });
+  assert.equal(N.groupItinerary(N.itinerary(d2, N.calc(d2))).length, 5, '날마다 다른 직접 입력 일정은 안 묶인다');
+  const g3 = N.groupItinerary(N.itinerary(sample(), N.calc(sample())));
+  assert.deepEqual(g3.map(r => [r.day, r.dayTo]), [[1, 1], [2, 3], [4, 4], [5, 5]], '3박 5일도 2~3일차가 한 행');
+  assert.ok(N.buildHtml(sample()).includes('2 ~ 3일차') && N.buildHtml(sample()).includes('2일간 동일 일정'));
+  assert.deepEqual(N.groupItinerary([]), []);
+});
+
 test('받는 분 — 동행 칸의 「이름 번호」를 읽고 · 대표자+동행 목록 · 알림톡·문자·내역·수신자는 받는 분 성함 · 문서에는 이름만', () => {
   const d = Object.assign(sample(), { companions: '김영희 010-2222-3333 · 이수진, 박철수(01033334444); 최민호 010 4444 5555' });
   assert.deepEqual(N.companionsOf(d), [{ name: '김영희', phone: '01022223333' }, { name: '이수진', phone: '' }, { name: '박철수', phone: '01033334444' }, { name: '최민호', phone: '01044445555' }]);
