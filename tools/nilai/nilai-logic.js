@@ -41,7 +41,7 @@
 
   var KIND_LABEL = { quote: '견적서', confirm: '확정서' };
   var KIND_TITLE = { quote: '견 적 서', confirm: '확 정 서' };
-  var PAGE_LABEL = { core: '핵심본', notes: '안내본' };   // 이미지 두 장 — ① 핵심본 · ② 안내본(2026-10-07 · Min)
+  var PAGE_LABEL = { core: '1페이지', notes: '2페이지' };   // JPG 두 장 — 1페이지(요금 · 일정 · 항공 · 숙박) · 2페이지(참고 사항 · 취소 · 유의사항)(2026-10-07 · Min)
   var KIND_SUB = {
     quote: '예상 일정과 금액을 안내드립니다 · 예약금 입금 시 예약이 확정됩니다',
     confirm: '예약이 확정되었습니다 · 출발 전 아래 내용을 확인하여 주시기 바랍니다'
@@ -444,8 +444,8 @@
     }).filter(Boolean).join('\n') + '\n' + VIEW_CSS;
   }
 
-  /* page — '' 전체(미리보기 · 링크 · 인쇄) · 'core' ① 핵심본(여행정보 · 요금 · 포함/불포함 · 항공 · 숙박 · 일정 · 미팅 · 안내 사항) · 'notes' ② 안내본(참고 사항 · 취소및환불정보 · 유의사항).
-     이미지로 보낼 때만 나눈다(2026-10-07 · Min 「응 한번 해보자」) — 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 링크(열람 조각)·인쇄는 그대로 전체. page 가 있으면 view 는 무시한다(이미지는 접지 않는다). */
+  /* page — '' 전체(미리보기 · 링크) · 'core' 1페이지(여행정보 · 요금 · 포함/불포함 · 항공 · 숙박 · 일정 · 미팅 · 안내 사항) · 'notes' 2페이지(참고 사항 · 취소및환불정보 · 유의사항).
+     이미지로 보낼 때만 나눈다(2026-10-07 · Min 「응 한번 해보자」) — 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 링크(열람 조각)는 그대로 전체(손님 열람 페이지의 인쇄도 전체). page 가 있으면 view 는 무시한다(이미지는 접지 않는다). */
   function buildHtml(d, opts) {
     d = d || {}; opts = opts || {};
     var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
@@ -460,7 +460,7 @@
     var staffTel = d.staffTel || DEFAULTS.staffTel;
     var view = !!opts.view && !page;
     var h = [];
-    /* 절 하나 — 손님 열람 조각에서는 접고 펼 수 있는 <details>(open === false 면 접힌 채 시작), 미리보기·JPG·인쇄용 문서에서는 h2 + 본문 */
+    /* 절 하나 — 손님 열람 조각에서는 접고 펼 수 있는 <details>(open === false 면 접힌 채 시작), 미리보기·JPG 용 문서에서는 h2 + 본문 */
     function sec(title, body, open) {
       if (view) h.push('<details class="sec"' + (open === false ? '' : ' open') + '><summary><h2>' + esc(title) + '<span class="tg"></span></h2></summary><div class="sb">' + body + '</div></details>');
       else h.push('<h2>' + esc(title) + '</h2>' + body);
