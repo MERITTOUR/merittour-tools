@@ -59,24 +59,22 @@
 
   <p class="wx-intro">
     리조트별 현지 <strong>3시간 단위 날씨 예보</strong>를 바로 확인하고, 손님께 보낼 안내문을 한 번에 복사합니다.<br>
-    <span class="src">출처: golfweather.info · 새 탭에서 열림</span>
+    <span class="src">출처: golfweather.info · 보조 tenki.jp · 새 탭에서 열림</span>
   </p>
 
-  <!-- 이 도구는 외부 사이트(golfweather.info)로 나간다. 그 사이트가 죽으면 여기도 같이
-       죽으므로, 대체 수단을 **그때 찾는 자리**에 붙여 둔다. 골프 날씨는 Open-Meteo
-       키리스라 외부 사이트에 기대지 않는다. 영업 허브 카드로 두면 평소에 자리만
-       차지하고, 정작 필요한 순간에는 여기서 헤매게 된다. -->
+  <!-- 이 도구는 외부 사이트(golfweather.info)로 나간다. 그 사이트가 죽으면 여기도 같이 죽으므로
+       보조 주소를 **그때 찾는 자리**에 붙여 둔다 — 골프장마다 tenki.jp(일본기상협회) 시·정 단위 예보(2026-10-07 · Min).
+       자체 계산 「골프 날씨」(tools/golfweather · Open-Meteo)는 쓰지 않기로 했다(Min 「자체적으로 만든 골프 날씨 버튼은 사용 안 할래」) — 링크를 뗐다. -->
   <p class="wx-fallback">
     <b>golfweather.info 가 안 열리나요?</b>
-    <a href="../golfweather/">골프 날씨</a> 로 보실 수 있습니다 —
-    외부 사이트에 기대지 않고 직접 계산합니다(라운딩 적합도 100점·신호색).
+    골프장마다 <b>tenki.jp</b> 버튼으로 보실 수 있습니다 — 일본기상협회의 시·정 단위 예보입니다. 안내문 복사에도 보조 주소로 함께 들어갑니다.
   </p>
 
   <div id="wxRoot"></div>
 
   <div class="mt-card wx-note" style="margin-top:30px;">
     <h3>안내문 형식</h3>
-    <p>"안내문 복사"를 누르면 아래 형식이 클립보드에 복사됩니다. 카카오톡에 바로 붙여넣으세요.<br>
+    <p>"안내문 복사"를 누르면 인사 · golfweather.info 주소 · 보조 tenki.jp 주소(위 주소가 열리지 않을 때) · 맺음말 순서로 클립보드에 복사됩니다. 카카오톡에 바로 붙여넣으세요.<br>
     형식을 바꾸고 싶으시면 말씀해 주세요.</p>
   </div>
 
@@ -86,26 +84,31 @@
 <!-- 공통 유틸 엔진 (MT.showToast 등) -->
 <script src="../../shared/util.js"></script>
 <script>
-// ── 데이터: 권역 → 골프장 → golfweather.info ID (이 도구 고유) ──
+// ── 데이터: 권역 → 골프장 → golfweather.info ID (이 도구 고유) + tenki.jp 보조 주소 ──
+// tenki: tenki.jp(일본기상협회) 시·정 단위 예보 — golfweather.info 가 안 열릴 때의 보조 주소(2026-10-07 · Min).
+//   야마나미는 Min 이 준 주소(/9/46/8620/43425/) 그대로. 나머지는 tenki.jp 주소 규칙(/forecast/지방/현 번호/일차세분구역/시정촌 JIS 코드/)으로
+//   골프장 소재지(竹田市 · 恵那市 · 別府市 · 城里町 · 大子町 · 宮崎市 · 上田市)를 맞춘 것 — 안 열리는 곳이 있으면 여기 주소만 바꾼다.
 const COURSES = [
-  { region: '구마모토', name: '아소 야마나미 리조트', id: 1936 },
-  { region: '구마모토', name: '쿠쥬고겐 골프클럽',     id: 2231 },
-  { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072 },
-  { region: '벳푸',     name: '벳푸 골프클럽 (벳푸CC · 유후·츠루미 코스)', id: 1866 },
-  { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865 },
-  { region: '이바라키', name: '시로사토 CC',           id: 376  },
-  { region: '이바라키', name: '후쿠로다노타키 CC',     id: 318  },
-  { region: '미야자키', name: '미야자키 국제공항 CC',  id: 1873 },
-  { region: '나가노',   name: '스가다이라 그린 CC',    id: 2283 },
+  { region: '구마모토', name: '아소 야마나미 리조트', id: 1936, tenki: 'https://tenki.jp/forecast/9/46/8620/43425/' },
+  { region: '구마모토', name: '쿠쥬고겐 골프클럽',     id: 2231, tenki: 'https://tenki.jp/forecast/9/47/8330/44208/' },   // 大分県竹田市(久住)
+  { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072, tenki: 'https://tenki.jp/forecast/5/24/5210/21210/' },   // 岐阜県恵那市
+  { region: '벳푸',     name: '벳푸 골프클럽 (벳푸CC · 유후·츠루미 코스)', id: 1866, tenki: 'https://tenki.jp/forecast/9/47/8310/44202/' },   // 大分県別府市
+  { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865, tenki: 'https://tenki.jp/forecast/9/47/8310/44202/' },   // 大分県別府市
+  { region: '이바라키', name: '시로사토 CC',           id: 376,  tenki: 'https://tenki.jp/forecast/3/11/4010/08310/' },   // 茨城県城里町
+  { region: '이바라키', name: '후쿠로다노타키 CC',     id: 318,  tenki: 'https://tenki.jp/forecast/3/11/4010/08364/' },   // 茨城県大子町
+  { region: '미야자키', name: '미야자키 국제공항 CC',  id: 1873, tenki: 'https://tenki.jp/forecast/9/48/8710/45201/' },   // 宮崎県宮崎市
+  { region: '나가노',   name: '스가다이라 그린 CC',    id: 2283, tenki: 'https://tenki.jp/forecast/3/23/4820/20203/' },   // 長野県上田市(菅平高原)
 ];
 
 const wxUrl = id => `https://www.golfweather.info/tenki/${id}/3hours`;
 
-// 손님 안내문 템플릿
-const buildMsg = (name, id) =>
+// 손님 안내문 템플릿 — golfweather.info 주소 + 보조로 tenki.jp 주소(2026-10-07 · Min 「골프텐이 안 열리면 보조로 열 수 있도록」)
+const buildMsg = (c) =>
 `안녕하세요, 메리트투어입니다.
-${name} 현지 날씨 예보를 안내드립니다.
-${wxUrl(id)}
+${c.name} 현지 날씨 예보를 안내드립니다.
+${wxUrl(c.id)}
+위 주소가 열리지 않으면 아래 주소(tenki.jp)로 보실 수 있습니다.
+${c.tenki}
 즐거운 라운딩 되시길 바랍니다.`;
 
 // ── 렌더 ──
@@ -125,14 +128,16 @@ regions.forEach(region => {
     row.innerHTML = `
       <div class="wx-info">
         <div class="wx-name"></div>
-        <div class="wx-meta">golfweather · ID ${c.id}</div>
+        <div class="wx-meta">golfweather · ID ${c.id} · 보조 tenki.jp</div>
       </div>
       <div class="wx-actions">
         <a class="mt-btn mt-btn-primary" target="_blank" rel="noopener">🌤️ 날씨 보기</a>
+        <a class="mt-btn mt-btn-ghost wx-tenki" target="_blank" rel="noopener" title="golfweather.info 가 안 열릴 때 보조">🗾 tenki.jp</a>
         <button class="mt-btn mt-btn-ghost" type="button">📋 안내문 복사</button>
       </div>`;
     row.querySelector('.wx-name').textContent = c.name;
     row.querySelector('a.mt-btn-primary').href = wxUrl(c.id);
+    row.querySelector('a.wx-tenki').href = c.tenki;
     const copyBtn = row.querySelector('button.mt-btn-ghost');
     copyBtn.addEventListener('click', () => copyMsg(c, copyBtn));
     list.appendChild(row);
@@ -142,7 +147,7 @@ regions.forEach(region => {
 
 // ── 복사 (토스트는 공통 MT.showToast 사용) ──
 async function copyMsg(c, btn) {
-  const text = buildMsg(c.name, c.id);
+  const text = buildMsg(c);
   let ok = false;
   try {
     await navigator.clipboard.writeText(text);
