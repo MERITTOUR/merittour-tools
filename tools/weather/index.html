@@ -85,19 +85,19 @@
 <script src="../../shared/util.js"></script>
 <script>
 // ── 데이터: 권역 → 골프장 → golfweather.info ID (이 도구 고유) + tenki.jp 보조 주소 ──
-// tenki: tenki.jp(일본기상협회) 시·정 단위 예보 — golfweather.info 가 안 열릴 때의 보조 주소(2026-10-07 · Min).
-//   야마나미는 Min 이 준 주소(/9/46/8620/43425/) 그대로. 나머지는 tenki.jp 주소 규칙(/forecast/지방/현 번호/일차세분구역/시정촌 JIS 코드/)으로
-//   골프장 소재지(竹田市 · 恵那市 · 別府市 · 城里町 · 大子町 · 宮崎市 · 上田市)를 맞춘 것 — 안 열리는 곳이 있으면 여기 주소만 바꾼다.
+// tenki: tenki.jp(일본기상협회) 「ゴルフ場の天気」 — golfweather.info 와 같은 골프장 단위 페이지(2026-10-07 · Min 「실제 주소를 찾아서 대입해줘」).
+//   처음에는 소재지 시·정 단위 /forecast/ 주소였는데(야마나미는 Min 이 준 /9/46/8620/43425/ · 나머지는 추정), 시·정 추정이 어긋난 곳이 있어
+//   (14ヒルズ는 恵那市가 아니라 中津川市 · 別府GC 는 杵築市) 골프장 페이지(/leisure/golf/지방/현/골프장 id/)로 전부 바꿨다. 각 id 는 tenki.jp 골프장 이름으로 찾은 것.
 const COURSES = [
-  { region: '구마모토', name: '아소 야마나미 리조트', id: 1936, tenki: 'https://tenki.jp/forecast/9/46/8620/43425/' },
-  { region: '구마모토', name: '쿠쥬고겐 골프클럽',     id: 2231, tenki: 'https://tenki.jp/forecast/9/47/8330/44208/' },   // 大分県竹田市(久住)
-  { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072, tenki: 'https://tenki.jp/forecast/5/24/5210/21210/' },   // 岐阜県恵那市
-  { region: '벳푸',     name: '벳푸 골프클럽 (벳푸CC · 유후·츠루미 코스)', id: 1866, tenki: 'https://tenki.jp/forecast/9/47/8310/44202/' },   // 大分県別府市
-  { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865, tenki: 'https://tenki.jp/forecast/9/47/8310/44202/' },   // 大分県別府市
-  { region: '이바라키', name: '시로사토 CC',           id: 376,  tenki: 'https://tenki.jp/forecast/3/11/4010/08310/' },   // 茨城県城里町
-  { region: '이바라키', name: '후쿠로다노타키 CC',     id: 318,  tenki: 'https://tenki.jp/forecast/3/11/4010/08364/' },   // 茨城県大子町
-  { region: '미야자키', name: '미야자키 국제공항 CC',  id: 1873, tenki: 'https://tenki.jp/forecast/9/48/8710/45201/' },   // 宮崎県宮崎市
-  { region: '나가노',   name: '스가다이라 그린 CC',    id: 2283, tenki: 'https://tenki.jp/forecast/3/23/4820/20203/' },   // 長野県上田市(菅平高原)
+  { region: '구마모토', name: '아소 야마나미 리조트', id: 1936, tenki: 'https://tenki.jp/leisure/golf/9/46/753044/' },   // 阿蘇やまなみリゾートホテル&ゴルフ倶楽部
+  { region: '구마모토', name: '쿠쥬고겐 골프클럽',     id: 2231, tenki: 'https://tenki.jp/leisure/golf/9/47/755362/' },   // 久住高原ゴルフ倶楽部
+  { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072, tenki: 'https://tenki.jp/leisure/golf/5/24/692143/' },   // 14ヒルズカントリークラブ(フォーティーンヒルズ · 中津川市)
+  { region: '벳푸',     name: '벳푸 골프클럽 (벳푸CC · 유후·츠루미 코스)', id: 1866, tenki: 'https://tenki.jp/leisure/golf/9/47/756545/' },   // 別府ゴルフ倶楽部
+  { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865, tenki: 'https://tenki.jp/leisure/golf/9/47/756544/' },   // 別府扇山ゴルフ倶楽部
+  { region: '이바라키', name: '시로사토 CC',           id: 376,  tenki: 'https://tenki.jp/leisure/golf/3/11/641418/' },   // 城里ゴルフ倶楽部
+  { region: '이바라키', name: '후쿠로다노타키 CC',     id: 318,  tenki: 'https://tenki.jp/leisure/golf/3/11/641443/' },   // 袋田の滝カントリークラブ
+  { region: '미야자키', name: '미야자키 국제공항 CC',  id: 1873, tenki: 'https://tenki.jp/leisure/golf/9/48/757977/' },   // 宮崎国際空港カントリークラブ
+  { region: '나가노',   name: '스가다이라 그린 CC',    id: 2283, tenki: 'https://tenki.jp/leisure/golf/3/23/687265/' },   // 菅平グリーンゴルフ
 ];
 
 const wxUrl = id => `https://www.golfweather.info/tenki/${id}/3hours`;
