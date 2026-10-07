@@ -116,125 +116,6 @@
     return list;
   }
 
-  /* ── 문안 항목(항목형 · 2026-10-02 · Min 「문안 항목형으로 진행해줘」) ──
-     참고 사항 · 취소및환불정보 · 유의사항은 항목 단위다. 항목마다 조건(항공사 · 홀수 인원 · 기간 · 매년 월일 · 종류)이 있어 해당하는 손님에게만 나가고,
-     숫자는 기본 문안 설정(DB nilai_settings 의 key 'clauses' · 없으면 아래 기본값) 한 곳에서만 고친다. 고정 문장(복장 · MDAC · 공항)은 조건 없는 항목.
-     문서별로는 항목을 끄거나(d.clauses.off) 덧붙임(d.clauses.extra.{ref|cancel|notes})만 한다. 옛 문서의 전체 텍스트(ref · cancel · notes)는 그대로 보여 준다(legacy).
-     항목 꼴 = { key, g: 'ref'|'cancel'|'notes', t: 제목(없으면 줄만), b: 내용(여러 줄 · {문서} = 견적서/확정서), on: false 면 전체 끔,
-               airline: ['바틱항공'] 그 항공사만 · byAirline: { 항공사: 줄 } 항공사별 첫 줄 · odd: true 홀수 인원만 · dates: [{from,to}] 여행이 겹칠 때만 · annual: [{from:'MM-DD',to}] 매년 · kind: 'quote'|'confirm' } */
-  var CLAUSE_GROUPS = [['ref', '참고 사항'], ['cancel', '취소및환불정보'], ['notes', '유의사항']];
-  var AIRLINE_NAMES = ['대한항공', '바틱항공', '말레이시아항공'];
-  var CLAUSES = [
-    { key: 'bag', g: 'ref', t: '항공 수하물 안내', byAirline: { '대한항공': '대한항공 · 위탁수화물 23KG (골프백 포함) · 기내수화물 10KG', '바틱항공': '바틱항공 · 위탁수화물 20KG 기준 (골프백 포함) · 기내수화물 7KG', '말레이시아항공': '' },
-      b: '※ 원활한 수속을 위해 출발 3시간 전까지 공항 도착을 권장드립니다. (성수기, 단체 출발 및 골프백 위탁 시 수속 시간이 더 소요될 수 있습니다.)\n※ 개별 발권 진행하신 분들은 개별적으로 위탁수화물 및 기내수화물 참고' },
-    { key: 'caddie', g: 'ref', t: '캐디피+캐디팁 비용', b: '2인 1캐디 (18홀 기준) → RM 150 (현지 지불, 카드결제 가능)' },
-    { key: 'golf_ops', g: 'ref', t: '골프 운영', b: '주말/공휴일 오전 플레이: 2인 1캐디 필수 (현지에 의해 주중 캐디 필수 사용 가능성 있음)\n주말·공휴일 2인 플레이: 오후 티업만 가능\n조인 플레이: 2인 투어 리조트 사정에 따라 발생 가능' },
-    { key: 'winter_join', g: 'ref', t: '동계 조인 플레이', b: '동계 기간(2026.12.01 ~ 2027.02.28)에는 2인 팀은 조인 플레이로 진행될 수 있습니다.', dates: [{ from: '2026-12-01', to: '2027-02-28' }] },
-    { key: 'odd', g: 'ref', t: '홀수 인원 투어', b: '홀수 인원: 싱글룸 + 싱글카트 필수\n싱글룸 추가: 비수기 ₩50,000 / 성수기 ₩65,000 · 싱글카트: ₩18,000 (18홀)', odd: true },
-    { key: 'room_opt', g: 'ref', t: '객실 옵션', b: '발코니 디럭스룸: ₩13,000 / 1인 1박 (현지에서 일반 트윈 → 디럭스룸 변경 시 현지 닐라이스프링스 직원에게 직접 요청)' },
-    { key: 'extra_round', g: 'ref', t: '추가 라운드 (9홀 기준)', b: '9홀 RM28.00 / 1인 · 18홀 RM49.00 / 1인 · 캐디 선택사항 (18홀 캐디피+캐디팁 RM150 현지 지불) · 현지 카드결제 가능' },
-    { key: 'holiday', g: 'ref', t: '말레이시아 공휴일 안내', b: '주말 및 공휴일 오전 티업 배정 시 캐디 필수 · 티업 시간(AM/PM): 랜덤 배정' },
-    { key: 'xmas', g: 'ref', t: '시즌 특별 요금 — 특식', b: '12/24, 12/31 특식 추가요금: RM 20 / 1인 (현지 지불)', annual: [{ from: '12-24', to: '12-24' }, { from: '12-31', to: '12-31' }] },
-    { key: 'gp', g: 'ref', t: '시즌 특별 요금 — GP 모터쇼 기간', b: 'GP 모터쇼 기간 요금 인상 → 2026.10.28~11.02: ₩20,000 / 1인 1박 추가', dates: [{ from: '2026-10-28', to: '2026-11-02' }] },
-    { key: 'late', g: 'ref', t: '레이트 체크아웃', b: '18시 이전: ₩65,000 / 룸 · 18시 이후: ₩110,000 / 룸 (객실 상황에 따라 불가할 수 있음)' },
-    { key: 'dress', g: 'ref', t: '복장 규정', b: '남성: 카라가 있는 상의 / 반바지 or 긴바지 (벨트 착용)\n여성: 카라가 있는 상의 / 반바지 or 긴바지 or 치마바지 (치마바지 제외한 복장은 벨트 필수)' },
-    { key: 'belt', g: 'ref', t: '수하물 수령', b: '캐리어는 일반 벨트, 골프백은 A벨트에서 수령 후 출구로 이동 바랍니다' },
-    { key: 'mdac', g: 'ref', t: 'MDAC(말레이시아 자동 입국신고서)', b: '출발 최대 하루 전날 작성 후 대표자님께 발송해 드립니다 (작성 시 E-Mail 필수)\n자동 입국 신고서 숙소 정보 — 공식사이트 https://imigresen-online.imi.gov.my/mdac/main?registerMain · 주소 PT4770, NILAI SPRINGS PUTRA NILAI, NEGERI SEMBILAN, MALAYSIA · 우편번호 71800' },
-    { key: 'airports', g: 'ref', t: '주요 공항 안내', b: '인천국제공항 https://www.airport.kr/ · 쿠알라룸푸르공항 https://airports.malaysiaairports.com.my/en/klia1 (링크는 예고 없이 바뀔 수 있습니다)' },
-    { key: 'c_weather', g: 'cancel', t: '', b: '※ 천재지변(우천, 폭설 등) 또는 골프장 사정으로 인해 라운드 진행이 불가한 경우 환불되지 않습니다.' },
-    { key: 'c_air', g: 'cancel', t: '', b: '· 표준약관 이전에 취소하시는 경우라도, 항공권 발권 이후 취소 시에는 항공사 규정에 따른 취소 수수료(페널티)가 별도로 부과될 수 있습니다.' },
-    { key: 'c_special_note', g: 'cancel', t: '', b: '· 본 상품의 예약 및 취소는 「국외여행 표준약관」 외 추가 특별 약관이 적용됩니다. (특별 약관은 바틱항공 계약 좌석에 한함)', airline: ['바틱항공'] },
-    { key: 'c_std', g: 'cancel', t: '', b: '· 국외여행 표준약관 [취소 수수료 안내] — 출발 30일 전까지: 계약금 전액 환급 / 29~20일: 여행요금의 10% / 19~10일: 15% / 9~8일: 20% / 7~1일: 30% / 출발 당일: 50% 배상 (No-show 의 경우 왕복 항공권은 전액 환불 불가)' },
-    { key: 'c_special', g: 'cancel', t: '', b: '· 추가 특별약관(바틱항공 계약 좌석) — 출발 50일 전 ~ 26일 전: 1인당 60,000원 / 25일 전 ~ 17일 전: 1인당 250,000원 / 16일 전 ~ 출발 1일 전: 항공료 전액 환불 불가 (평일 오전 9시 ~ 오후 5시 내 통보 기준 · 주말, 공휴일 제외)', airline: ['바틱항공'] },
-    { key: 'c_change', g: 'cancel', t: '', b: '· 상기 일정은 여행 표준약관 제8조, 제12조의 규정에 따라 여행자의 안전과 보호를 위하여 여행자의 요청 또는 현지 사정에 의하여 부득이하다고 쌍방이 합의한 경우, 천재지변 · 전란 · 정부의 명령 · 운송 · 숙박기관의 파업 · 휴업 등으로 여행의 목적을 달성할 수 없는 경우에 변경될 수 있습니다.' },
-    { key: 'n_quote', g: 'notes', t: '', b: '본 견적은 발행일 기준이며, 항공 좌석과 객실 상황에 따라 달라질 수 있습니다. 예약금 입금 시 예약이 확정됩니다.', kind: 'quote' },
-    { key: 'n_fx', g: 'notes', t: '', b: '본 {문서}의 요금은 원화로 안내된 확정 금액이며, 환율 변동에 따른 추가 청구나 차액 정산은 없습니다.' },
-    { key: 'n_incl', g: 'notes', t: '', b: '항공 · 송영 · 숙박 · 식사 · 라운딩은 하나의 일정으로 준비됩니다. 회원님 사정으로 포함 서비스를 이용하지 않으시더라도 그 부분의 요금은 제외 · 환불되지 않으며, 정해진 일정 밖의 이동은 회원님의 책임으로 진행됩니다.' },
-    { key: 'n_room', g: 'notes', t: '', b: '객실은 예약 순서를 기준으로 배정되며, 객실 종류와 시설은 예약 상황에 따라 조정될 수 있습니다.' },
-    { key: 'n_passport', g: 'notes', t: '', b: '여권 유효기간은 입국일 기준 6개월 이상 남아 있어야 합니다.' }
-  ];
-  var SETTINGS_DEFAULT = { incl: DEFAULTS.incl, excl: DEFAULTS.excl, meeting: DEFAULTS.meeting, items: CLAUSES };
-  function clone(o) { return JSON.parse(JSON.stringify(o)); }
-  /* DB 에 저장된 설정(없거나 깨졌으면 기본값) — items 는 통째로 바꾼다(지운 항목이 되살아나지 않게) · 「기본값으로 되돌리기」가 따로 있다 */
-  function settingsOf(raw) {
-    var st = clone(SETTINGS_DEFAULT);
-    if (raw && typeof raw === 'object') {
-      ['incl', 'excl', 'meeting'].forEach(function (k) { if (typeof raw[k] === 'string') st[k] = raw[k]; });
-      if (Array.isArray(raw.items)) st.items = clone(raw.items).filter(function (it) { return it && typeof it === 'object' && it.key && CLAUSE_GROUPS.some(function (g) { return g[0] === it.g; }); });
-    }
-    return st;
-  }
-  function mmdd(d) { return pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  /* 여행(출발일~귀국일)이 기간과 겹치는가 — 날짜를 아직 안 적었으면 겹치는 것으로 본다(미리보기에서 사라지지 않게) */
-  function tripOverlaps(c, from, to) {
-    if (!c.dep || !c.ret) return true;
-    var f = parseDate(from), t = parseDate(to) || f;
-    if (!f) return true;
-    return c.dep <= t && c.ret >= f;
-  }
-  function tripHasAnnual(c, from, to) {
-    if (!c.dep || !c.ret) return true;
-    if (!/^\d{2}-\d{2}$/.test(String(from || ''))) return false;
-    to = /^\d{2}-\d{2}$/.test(String(to || '')) ? to : from;
-    for (var i = 0; i < 400; i++) {
-      var day = addDays(c.dep, i); if (day > c.ret) break;
-      var m = mmdd(day);
-      if (from <= to ? (m >= from && m <= to) : (m >= from || m <= to)) return true;
-    }
-    return false;
-  }
-  function clauseApplies(it, d, c) {
-    if (!it || it.on === false) return false;
-    var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
-    if (it.kind && it.kind !== kind) return false;
-    if (Array.isArray(it.airline) && it.airline.length && it.airline.indexOf(d.airline) < 0) return false;
-    if (it.odd && c.pax % 2 !== 1) return false;
-    if (Array.isArray(it.dates) && it.dates.length && !it.dates.some(function (r) { return tripOverlaps(c, r.from, r.to); })) return false;
-    if (Array.isArray(it.annual) && it.annual.length && !it.annual.some(function (r) { return tripHasAnnual(c, r.from, r.to); })) return false;
-    return true;
-  }
-  /* 화면에 보여 줄 조건 설명 */
-  function clauseWhy(it) {
-    var w = [];
-    if (Array.isArray(it.airline) && it.airline.length) w.push(it.airline.join('·') + '만');
-    if (it.odd) w.push('홀수 인원');
-    if (Array.isArray(it.dates) && it.dates.length) w.push(it.dates.map(function (r) { return String(r.from || '').replace(/-/g, '.') + '~' + String(r.to || r.from || '').replace(/-/g, '.'); }).join(' · '));
-    if (Array.isArray(it.annual) && it.annual.length) w.push('매년 ' + it.annual.map(function (r) { var a = String(r.from || '').replace('-', '/'), b = String(r.to || '').replace('-', '/'); return (!b || a === b) ? a : a + '~' + b; }).join('·'));
-    if (it.kind) w.push(KIND_LABEL[it.kind] + '만');
-    return w.join(' · ');
-  }
-  function clauseLines(it, d, kind) {
-    var out = [];
-    if (it.byAirline && d.airline && it.byAirline[d.airline]) out = out.concat(nonEmpty(String(it.byAirline[d.airline])));
-    return out.concat(nonEmpty(String(it.b || '').replace(/\{문서\}/g, KIND_LABEL[kind])));
-  }
-  /* 문서 하나에 들어갈 항목 — { ref:[{key,t,lines,off}], cancel:[…], notes:[…], skipped:{g:[{key,t,why}]}, legacy:{ref|cancel|notes: 옛 전체 텍스트} } */
-  function resolveClauses(d, settings) {
-    d = d || {};
-    var st = settingsOf(settings), c = calc(d), kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
-    var cl = d.clauses || {}, off = Array.isArray(cl.off) ? cl.off : [], extra = cl.extra || {};
-    var r = { ref: [], cancel: [], notes: [], skipped: { ref: [], cancel: [], notes: [] }, legacy: {} };
-    st.items.forEach(function (it) {
-      if (!r[it.g]) return;
-      if (!clauseApplies(it, d, c)) { if (it.on !== false) r.skipped[it.g].push({ key: it.key, t: it.t || nonEmpty(it.b)[0] || '', why: clauseWhy(it) }); return; }
-      var ls = clauseLines(it, d, kind);
-      if (!ls.length) return;
-      r[it.g].push({ key: it.key, t: it.t || '', lines: ls, off: off.indexOf(it.key) >= 0 });
-    });
-    CLAUSE_GROUPS.forEach(function (g) { var x = String(extra[g[0]] || '').trim(); if (x) r[g[0]].push({ key: 'extra', t: '', lines: nonEmpty(x), off: false, extra: true }); });
-    if (typeof d.ref === 'string' && d.ref.trim() && d.ref.trim() !== DEFAULTS.ref.trim()) r.legacy.ref = d.ref.trim();
-    if (typeof d.cancel === 'string' && d.cancel.trim() && d.cancel.trim() !== DEFAULTS.cancel.trim()) r.legacy.cancel = d.cancel.trim();
-    if (typeof d.notes === 'string' && d.notes.trim() && nonEmpty(d.notes).join('\n') !== defaultNotes(kind).join('\n')) r.legacy.notes = d.notes.trim();
-    return r;
-  }
-  function activeClauses(r, g) { return (r && r[g] ? r[g] : []).filter(function (x) { return !x.off; }); }
-  function clauseBlockHtml(items) {   // 참고 사항 — ■ 제목 + 줄
-    return items.map(function (x) { return '<div class="ci">' + (x.t ? '<b>■ ' + esc(x.t) + '</b>' : '') + x.lines.map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('') + '</div>'; }).join('');
-  }
-  function clauseText(items) {   // 취소및환불정보 — 줄글
-    return items.map(function (x) { return (x.t ? '■ ' + x.t + '\n' : '') + x.lines.join('\n'); }).join('\n');
-  }
-
   /* ── 날짜 · 숫자 ── */
   var DOW = ['일', '월', '화', '수', '목', '금', '토'];
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -451,13 +332,6 @@
   /* 발송 기록 한 건 — 누구에게(to) · 어떤 내용(message · data 스냅샷 · link) · 어떻게(via) · 누가·언제.
      보낸 뒤 문서를 고쳐도 그때 보낸 내용이 남는다(Min 「어떤 사람한테 어떤 내용으로 보냈는지 내역만 남고 내역은 확인할 수 있어야」). */
   var VIA_LABEL = { alimtalk: '알림톡', kakao: '카카오톡 이미지', sms: '문자·알리고 콘솔', other: '기타' };
-  /* 보낸 그때의 입력값 + 그때 들어간 문안 항목(clausesResolved) — 설정을 나중에 고쳐도 내역의 「그때 문서」는 그대로 */
-  function snapshot(d, settings) {
-    var snap = JSON.parse(JSON.stringify(d)), rc = resolveClauses(d, settings);
-    delete rc.skipped;
-    snap.clausesResolved = rc;
-    return snap;
-  }
   function sendEntry(d, via, opts) {
     opts = opts || {};
     var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
@@ -473,7 +347,7 @@
       memo: String(opts.memo || '').trim(),
       link: opts.link || '',
       message: via === 'alimtalk' ? alimtalk(d, kind, to) : smsText(d, opts.link || '', to),
-      data: snapshot(d, opts.settings)
+      data: JSON.parse(JSON.stringify(d))
     };
   }
   /* send-alimtalk 에 보낼 수신자 한 건 */
@@ -519,9 +393,6 @@
     '.acct{margin-top:8px;background:#FBF7EE;border:1px solid #E6D9B8;border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.7}',
     '.acct b{color:#7F6019}',
     '.pre{white-space:pre-wrap;font-size:12px;line-height:1.65}',
-    '.cl .ci{margin:0 0 8px;font-size:12px;line-height:1.65}',
-    '.cl .ci:last-child{margin-bottom:0}',
-    '.cl .ci b{display:block;color:#373F4A}',
     '.it td.d{width:92px;font-weight:700;color:#373F4A;background:#F4F5F7;border:1px solid #CDD1D8;padding:6px 8px;vertical-align:top;white-space:nowrap}',
     '.it td.c{border:1px solid #CDD1D8;padding:6px 10px;vertical-align:top}',
     '.it .ln{margin:0;padding:0;list-style:none}',
@@ -558,7 +429,7 @@
     '.doc details.sub>summary::-webkit-details-marker{display:none}',
     '.doc details.sub>summary::before{content:"▶";font-size:11px}',
     '.doc details.sub[open]>summary::before{content:"▼"}',
-    '.doc details.sub>.pre,.doc details.sub>.cl{padding:2px 0 12px}',
+    '.doc details.sub>.pre{padding:2px 0 12px}',
     /* 폰에서는 요금 표의 늘 같은 두 열(판매항목 「판매요금」 · 구분 「성인」)을 숨겨 총합계까지 한 화면에 보이게 한다 — 가로로 밀어야 보이면 견적의 핵심인 총합계를 놓친다 */
     '@media (max-width:600px){.doc .hd{flex-wrap:wrap}.doc .hd .co{text-align:left}.doc .ttl b{font-size:20px;letter-spacing:.25em}.doc .pay{grid-template-columns:1fr}.doc .ft{flex-direction:column;gap:4px}.doc .tw table.fee{min-width:0}.doc table.fee th:nth-child(1),.doc table.fee tr:not(.tot)>td:nth-child(1),.doc table.fee th:nth-child(3),.doc table.fee tr:not(.tot)>td:nth-child(3){display:none}.doc table.fee th,.doc table.fee td{padding:6px 5px}}',
     '@media print{.doc .tg{display:none}.doc details.sec{border-top:none}.doc tr,.doc details.sub,.doc .pay .b,.doc .acct{break-inside:avoid}.doc h2{break-after:avoid}}'
@@ -577,10 +448,10 @@
     var c = calc(d), fl = flights(d, c), it = itinerary(d, c);
     var issue = parseDate(d.issueDate) || new Date();
     var acct = d.acct || DEFAULTS.acct;
-    var st = settingsOf(opts.settings);
-    var rc = (d.clausesResolved && d.clausesResolved.ref) ? d.clausesResolved : resolveClauses(d, st);   // 보낸 내역의 스냅샷이 있으면 그때 문안 그대로
-    var refItems = activeClauses(rc, 'ref'), cancelItems = activeClauses(rc, 'cancel'), noteItems = activeClauses(rc, 'notes'), legacy = rc.legacy || {};
-    var meeting = String(d.meeting == null ? st.meeting : d.meeting).trim();
+    var notes = nonEmpty(d.notes); if (!notes.length) notes = defaultNotes(kind);
+    var ref = String(d.ref == null ? DEFAULTS.ref : d.ref).trim();
+    var cancel = String(d.cancel == null ? DEFAULTS.cancel : d.cancel).trim();
+    var meeting = String(d.meeting == null ? DEFAULTS.meeting : d.meeting).trim();
     var staffTel = d.staffTel || DEFAULTS.staffTel;
     var view = !!opts.view;
     var h = [];
@@ -621,13 +492,12 @@
     fee.push('<div class="acct">■ 입금 계좌 안내 <b>' + esc(acct.bank || '') + ' ' + esc(acct.no || '') + ' ' + esc(acct.holder || '') + '</b><br>※ 본 금액에는 선납하신 예약금이 포함되어 있습니다.<br>※ 투어피는 출국 30일 전까지 완납해 주시기 바랍니다.</div>');
     sec('요금안내', fee.join('\n'));
 
-    var refHtml = legacy.ref ? '<div class="pre">' + esc(legacy.ref) + '</div>' : (refItems.length ? '<div class="cl">' + clauseBlockHtml(refItems) + '</div>' : '');
     var prod = ['<table class="kv">'
-      + '<tr><th>포함 사항</th><td>' + esc(d.incl == null ? st.incl : d.incl) + '</td></tr>'
-      + '<tr><th>불포함 사항</th><td>' + esc(d.excl == null ? st.excl : d.excl) + '</td></tr>'];
-    if (refHtml && !view) prod.push('<tr><th>참고 사항</th><td>' + refHtml + '</td></tr>');
+      + '<tr><th>포함 사항</th><td>' + esc(d.incl == null ? DEFAULTS.incl : d.incl) + '</td></tr>'
+      + '<tr><th>불포함 사항</th><td>' + esc(d.excl == null ? DEFAULTS.excl : d.excl) + '</td></tr>'];
+    if (ref && !view) prod.push('<tr><th>참고 사항</th><td><div class="pre">' + esc(ref) + '</div></td></tr>');
     prod.push('</table>');
-    if (refHtml && view) prod.push('<details class="sub"><summary>참고 사항<span class="tg"></span></summary>' + refHtml + '</details>');
+    if (ref && view) prod.push('<details class="sub"><summary>참고 사항<span class="tg"></span></summary><div class="pre">' + esc(ref) + '</div></details>');
     sec('상품정보', prod.join('\n'));
 
     var air = ['<div class="tw wide"><table class="gd"><tr><th>구분</th><th>항공사</th><th>항공편</th><th>출발일자</th><th>출발시간</th><th>출발지</th><th>도착지</th><th>도착일자</th><th>도착시간</th></tr>'];
@@ -652,11 +522,8 @@
 
     if (meeting) sec('미팅장소및시간', '<div class="pre">' + esc(meeting) + '</div>');
     if (String(d.memo || '').trim()) sec('안내 사항', '<div class="pre">' + esc(d.memo) + '</div>');
-    var cancelText = legacy.cancel || clauseText(cancelItems);
-    if (cancelText) sec('취소및환불정보', '<div class="pre">' + esc(cancelText) + '</div>', false);
-    var noteLis = legacy.notes ? nonEmpty(legacy.notes).map(function (n) { return '<li>' + esc(n) + '</li>'; })
-      : noteItems.map(function (x) { return '<li>' + (x.t ? '<b>' + esc(x.t) + '</b> ' : '') + x.lines.map(esc).join('<br>') + '</li>'; });
-    if (noteLis.length) sec('유의사항', '<ol class="notes">' + noteLis.join('') + '</ol>');
+    if (cancel) sec('취소및환불정보', '<div class="pre">' + esc(cancel) + '</div>', false);
+    sec('유의사항', '<ol class="notes">' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol>');
 
     h.push('<div class="ft"><div><b>' + esc(COMPANY.name) + '</b>' + (d.staffName ? ' · 담당 ' + esc(d.staffName) : '') + ' · ' + esc(staffTel) + ' (평일 09:00~18:00)</div><div>카카오톡 채널 「메리트투어」</div></div>');
     h.push('</div>' + (view ? '' : '</body></html>'));
@@ -664,9 +531,9 @@
   }
 
   /* 새 문서의 입력값 */
-  function blank(kind, today, settings) {
+  function blank(kind, today) {
     var t = today instanceof Date ? today : new Date();
-    var al = AIRLINES[DEFAULTS.airline], st = settingsOf(settings);
+    var al = AIRLINES[DEFAULTS.airline];
     return {
       kind: KIND_LABEL[kind] ? kind : DEFAULTS.kind,
       eventNo: '', issueDate: ymd(t),
@@ -676,9 +543,8 @@
       outArrOffset: '0', inDepOffset: '-1',
       hotel: RESORT.hotel, room: DEFAULTS.room, rooms: '',
       fares: [{ label: '투어비(항공료 포함)', amount: '', qty: '' }], discount: '', depositPP: '', depositPaid: '',
-      incl: st.incl, excl: st.excl, meeting: st.meeting,
-      clauses: { off: [], extra: { ref: '', cancel: '', notes: '' } },
-      itin: '', memo: '',
+      incl: DEFAULTS.incl, excl: DEFAULTS.excl, ref: DEFAULTS.ref, meeting: DEFAULTS.meeting, cancel: DEFAULTS.cancel,
+      itin: '', memo: '', notes: '',
       staffName: '', staffTel: DEFAULTS.staffTel,
       acct: { bank: DEFAULTS.acct.bank, no: DEFAULTS.acct.no, holder: DEFAULTS.acct.holder }
     };
@@ -687,8 +553,6 @@
   return {
     COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL,
     defaultNotes: defaultNotes, blank: blank,
-    CLAUSES: CLAUSES, CLAUSE_GROUPS: CLAUSE_GROUPS, AIRLINE_NAMES: AIRLINE_NAMES, SETTINGS_DEFAULT: SETTINGS_DEFAULT,
-    settingsOf: settingsOf, resolveClauses: resolveClauses, activeClauses: activeClauses, clauseApplies: clauseApplies, clauseWhy: clauseWhy, snapshot: snapshot,
     calc: calc, flights: flights, itinerary: itinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient, companionsOf: companionsOf, recipientsOf: recipientsOf,
     VIA_LABEL: VIA_LABEL, sendEntry: sendEntry,

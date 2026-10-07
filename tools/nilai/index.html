@@ -16,6 +16,7 @@
 .nl-fs h3 { font-size: 13px; font-weight: 700; color: var(--mt-brand); margin: 0 0 10px; display: flex; align-items: center; gap: 7px; }
 .nl-fs h3::before { content: ''; width: 3px; height: 12px; background: var(--mt-point); border-radius: 2px; }
 .nl-fs h3 small { font-weight: 400; color: var(--mt-text3); font-size: 11.5px; margin-left: auto; }
+.nl-fs h3 small.warn { color: var(--mt-red-dark); }   /* 종류를 바꾸면 문서가 달라진다는 안내 — 약간 붉게(2026-10-07 · Min) */
 .nl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
 .nl-grid .w { grid-column: 1 / -1; }
 .nl-f { display: grid; gap: 3px; }
@@ -58,31 +59,6 @@
 .nl-to label .role { color: var(--mt-text3); font-size: 11.5px; }
 .nl-to label .np { color: var(--mt-red); font-size: 11.5px; }
 .nl-to .hint { flex-basis: 100%; color: var(--mt-text3); font-size: 11.5px; }
-.nl-cl { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0 4px; }
-.nl-cl label.it { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--mt-text); cursor: pointer; }
-.nl-cl label.it.off { color: var(--mt-text3); text-decoration: line-through; }
-.nl-cl .skip { flex-basis: 100%; font-size: 11.5px; color: var(--mt-text3); }
-.nl-cl .legacy { flex-basis: 100%; display: grid; gap: 6px; }
-.nl-cl .legacy textarea { min-height: 150px; }
-.nl-settings { background: var(--mt-surface); border: 1px solid var(--mt-point); border-radius: var(--mt-radius-lg); padding: 14px 16px 12px; margin: 0 0 14px; display: grid; gap: 10px; }
-.st-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
-.st-head b { color: var(--mt-brand); font-size: 14px; }
-.st-head .hint { font-size: 11.5px; color: var(--mt-text3); }
-.st-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-.st-status { font-size: 12px; color: var(--mt-text2); min-height: 1em; }
-.st-group h4 { font-size: 13px; color: var(--mt-brand); margin: 10px 0 6px; display: flex; align-items: center; gap: 8px; }
-.st-item { border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; display: grid; gap: 6px; background: var(--mt-surface2); }
-.st-item .row1 { display: flex; align-items: center; gap: 8px; }
-.st-item .row1 input.f-t { flex: 1; min-width: 0; }
-.st-item .row1 .mv { display: flex; gap: 2px; }
-.st-item .row1 .mv button { border: 1px solid var(--mt-border); background: var(--mt-surface); border-radius: 6px; cursor: pointer; font-size: 12px; padding: 3px 7px; }
-.st-item textarea { min-height: 54px; }
-.st-item input[type="text"], .st-item select, .st-item textarea { font: inherit; font-size: 12.5px; padding: 5px 7px; border: 1px solid var(--mt-border); border-radius: 7px; background: var(--mt-surface); color: var(--mt-text); }
-.st-item .cond { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 12px; color: var(--mt-text2); }
-.st-item .cond label { display: inline-flex; align-items: center; gap: 4px; }
-.st-item .cond .lb { color: var(--mt-text3); }
-.st-item .cond input.f-dates, .st-item .cond input.f-annual { width: 200px; }
-.st-item .ba { display: grid; grid-template-columns: 96px 1fr; gap: 4px 8px; align-items: center; font-size: 12px; color: var(--mt-text2); }
 .nl-msg { background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; }
 .nl-msg summary { cursor: pointer; font-weight: 600; color: var(--mt-brand); }
 .nl-msg pre { white-space: pre-wrap; background: var(--mt-surface2); border-radius: 8px; padding: 8px 10px; font: 12px/1.6 var(--mt-sans); margin: 8px 0 6px; }
@@ -125,7 +101,6 @@
     </div>
     <div class="mt-header-actions">
       <button type="button" class="mt-btn" id="btnList">보낸 문서 목록</button>
-      <button type="button" class="mt-btn" id="btnSettings" title="참고 사항 · 취소 규정 · 유의사항의 항목과 기본값 — 고치면 이후 문서에 적용됩니다">기본 문안 설정</button>
       <button type="button" class="mt-btn mt-btn-primary" id="btnNew">＋ 새 문서</button>
       <a class="mt-btn mt-btn-ghost" href="../../sales/" title="영업 도구 홈">⌂ 홈</a>
     </div>
@@ -143,23 +118,10 @@
   </section>
 
   <div class="nl-layout">
-    <section class="nl-settings mt-hidden" id="nlSettings">
-      <div class="st-head">
-        <div><b>기본 문안 설정</b> <span class="hint">담당자가 고치면 이후 만드는 문서에 적용됩니다 · 이미 보낸 문서의 내역은 그때 문안 그대로 남습니다 · 조건을 비우면 모든 문서에 들어갑니다</span></div>
-        <div class="st-btns"><button type="button" class="mt-btn mt-btn-primary" id="stSave">저장</button><button type="button" class="mt-btn mt-btn-ghost" id="stReset">기본값으로 되돌리기</button><button type="button" class="mt-btn mt-btn-ghost" id="stClose">닫기</button></div>
-      </div>
-      <div class="st-status" id="stStatus"></div>
-      <div class="nl-grid">
-        <div class="nl-f w"><label>포함 사항 (기본값)</label><input type="text" id="stIncl"></div>
-        <div class="nl-f w"><label>불포함 사항 (기본값)</label><input type="text" id="stExcl"></div>
-        <div class="nl-f w"><label>미팅장소및시간 (기본값)</label><textarea id="stMeeting"></textarea></div>
-      </div>
-      <div id="stGroups"></div>
-    </section>
     <form id="nlForm" class="nl-form" autocomplete="off" onsubmit="return false">
 
       <div class="nl-fs">
-        <h3>문서 <small>종류를 고르면 제목과 유의사항 첫 줄이 바뀝니다</small></h3>
+        <h3>문서 <small class="warn">종류를 고르면 제목과 유의사항 첫 줄이 바뀝니다</small></h3>
         <div class="nl-grid">
           <div class="nl-f w">
             <div class="nl-kind" id="nlKind">
@@ -211,17 +173,15 @@
       </div>
 
       <div class="nl-fs">
-        <h3>상품정보 <small>항목과 숫자는 「기본 문안 설정」에서 · 이 문서에서는 항목을 끄거나 덧붙임만</small></h3>
+        <h3>상품정보 <small>엠클릭 확정서의 문안이 기본값 · 시즌 숫자(조인 기간 · 모터쇼 · 특식 · MDAC)는 여기서 고칩니다</small></h3>
         <div class="nl-grid">
           <div class="nl-f w"><label>포함 사항</label><input type="text" data-k="incl"></div>
           <div class="nl-f w"><label>불포함 사항</label><input type="text" data-k="excl"></div>
-          <div class="nl-f w"><label>참고 사항 <span class="hint">(해당하는 항목만 들어갑니다 · 이 문서에서 뺄 항목은 체크를 풀고, 더할 말은 덧붙임에)</span></label>
-            <div class="nl-cl" id="clRef"></div>
-            <textarea data-k="clauses.extra.ref" placeholder="덧붙임 (선택 · 이 문서에만 · 「■ 제목」 줄로 시작해도 됩니다)" style="min-height:52px"></textarea></div>
+          <div class="nl-f w"><label>참고 사항 <span class="hint">(수하물 · 캐디피 · 골프 운영 · 홀수 인원 · 객실 옵션 · 추가 라운드 · 공휴일 · 시즌 요금 · 레이트 체크아웃 · 복장 · MDAC · 공항)</span></label><textarea data-k="ref" style="min-height:170px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnRefReset">기본 문안으로</button></div></div>
           <div class="nl-f w"><label>미팅장소및시간</label><textarea data-k="meeting"></textarea></div>
-          <div class="nl-f w"><label>취소및환불정보 <span class="hint">(바틱항공 특별약관은 바틱항공일 때만 들어갑니다)</span></label>
-            <div class="nl-cl" id="clCancel"></div>
-            <textarea data-k="clauses.extra.cancel" placeholder="덧붙임 (선택)" style="min-height:44px"></textarea></div>
+          <div class="nl-f w"><label>취소및환불정보</label><textarea data-k="cancel" style="min-height:110px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnCancelReset">기본 문안으로</button></div></div>
         </div>
       </div>
 
@@ -243,9 +203,8 @@
         <h3>안내 사항 · 유의사항</h3>
         <div class="nl-grid">
           <div class="nl-f w"><label>안내 사항 (선택 · 문서의 「안내 사항」 상자)</label><textarea data-k="memo" placeholder="예: 공항 미팅 장소 · 현지 연락처 · 준비물"></textarea></div>
-          <div class="nl-f w"><label>유의사항 <span class="hint">(견적서에만 들어가는 줄은 견적서일 때만)</span></label>
-            <div class="nl-cl" id="clNotes"></div>
-            <textarea data-k="clauses.extra.notes" placeholder="덧붙임 (선택 · 한 줄이 한 항목)" style="min-height:44px"></textarea></div>
+          <div class="nl-f w"><label>유의사항 <span class="hint">(한 줄이 한 항목 · 비우면 기본 문안)</span></label><textarea data-k="notes" style="min-height:150px"></textarea>
+            <div><button type="button" class="mt-btn mt-btn-ghost" id="btnNotesReset">기본 문안으로</button></div></div>
         </div>
       </div>
 
@@ -314,7 +273,7 @@
   var VIEW_URL = 'https://merittour.github.io/doc/';            // 손님 열람 페이지 — 서명 링크를 ?d= 로 받아 접고 펼 수 있는 화면으로 보여 준다(인쇄 · 만료 안내)
   var COLS = 'id,doc_no,kind,data,link,link_expires_at,sent_at,sent_by,sends,updated_at,updated_by,created_at,created_by,version';
 
-  var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null, to: { rep: true }, settings: N.settingsOf(null), stVersion: 0, stDraft: null };
+  var state = { doc: N.blank('quote'), id: null, version: 0, link: '', linkExp: '', sends: [], dirty: false, logo: '', rows: [], filter: '', histId: null, to: { rep: true } };
 
   /* ── 서버 (store.js 의 rest 와 같은 꼴 · 로그인 토큰으로만 나간다) ── */
   function authHeaders(extra) {
@@ -352,7 +311,6 @@
     $('nlPaidWrap').style.display = state.doc.kind === 'confirm' ? '' : 'none';
     renderExtras();
     updateDows();
-    renderClauses();
   }
   /* 날짜 칸 — 「20270105」·「2027.1.5」·「0105」처럼 쳐도 YYYY-MM-DD 로 고쳐 쓰고 옆에 요일을 찍는다(브라우저 date 칸은 연도에 6자리를 받아 「202701-05-일」이 됐다 · 2026-10-01) */
   function dowChip(el, v) {
@@ -390,7 +348,7 @@
   /* ── 미리보기 ── */
   var renderTimer = null;
   function changed() { state.dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, 220); }
-  function html(doc) { return N.buildHtml(doc || state.doc, { logoSrc: state.logo, settings: state.settings }); }
+  function html(doc) { return N.buildHtml(doc || state.doc, { logoSrc: state.logo }); }
   function render() {
     read();
     var c = N.calc(state.doc);
@@ -401,137 +359,8 @@
     var f = $('nlFrame');
     f.onload = function () { fitPreview(); };
     f.srcdoc = html();
-    renderClauses(); renderTo(); updateMsg();
+    renderTo(); updateMsg();
     status();
-  }
-  /* ── 문서의 문안 항목(항목형 · 2026-10-02) — 해당하는 항목은 체크 상자(끄면 이 문서에서 뺀다) · 해당 없는 항목은 이유와 함께 한 줄 · 옛 문서는 전체 텍스트 그대로 ── */
-  function renderClauses() {
-    var rc = N.resolveClauses(state.doc, state.settings);
-    [['ref', 'clRef'], ['cancel', 'clCancel'], ['notes', 'clNotes']].forEach(function (p) {
-      var g = p[0], box = $(p[1]), h = [];
-      if (rc.legacy[g]) {
-        h.push('<div class="legacy"><span class="hint">이 문서는 옛 방식(전체 텍스트)입니다 — 아래 글이 그대로 나갑니다. 항목형으로 바꾸려면 「항목형으로 전환」(이 글은 지워집니다).</span><textarea data-k="' + g + '"></textarea><div><button type="button" class="mt-btn mt-btn-ghost toitems" data-g="' + g + '">항목형으로 전환</button></div></div>');
-      } else {
-        var items = rc[g].filter(function (x) { return !x.extra; });
-        items.forEach(function (x) { h.push('<label class="it' + (x.off ? ' off' : '') + '"><input type="checkbox" data-cl="' + N.esc(x.key) + '"' + (x.off ? '' : ' checked') + '> ' + N.esc(x.t || x.lines[0]) + '</label>'); });
-        if (!items.length) h.push('<span class="skip">들어갈 항목이 없습니다 — 「기본 문안 설정」에서 더합니다.</span>');
-        if (rc.skipped[g].length) h.push('<div class="skip">해당 없음 — ' + rc.skipped[g].map(function (x) { return N.esc(x.t) + (x.why ? ' (' + N.esc(x.why) + ')' : ''); }).join(' · ') + '</div>');
-      }
-      var sig = h.join('');
-      if (box.dataset.sig === sig) return;   // 같은 그림이면 다시 그리지 않는다(글 쓰는 중에 초점이 날아가지 않게)
-      box.dataset.sig = sig; box.innerHTML = sig;
-      var ta = box.querySelector('textarea[data-k]'); if (ta) ta.value = state.doc[g] || '';
-      Array.prototype.forEach.call(box.querySelectorAll('input[data-cl]'), function (cb) {
-        cb.addEventListener('change', function () {
-          var cl = state.doc.clauses = state.doc.clauses || { off: [], extra: {} };
-          cl.off = (cl.off || []).filter(function (k) { return k !== cb.dataset.cl; });
-          if (!cb.checked) cl.off.push(cb.dataset.cl);
-          cb.closest('label').classList.toggle('off', !cb.checked);
-          changed();
-        });
-      });
-      var tb = box.querySelector('.toitems'); if (tb) tb.addEventListener('click', function () { if (!confirm('옛 전체 텍스트를 지우고 항목형으로 바꿀까요?')) return; read(); state.doc[g] = ''; fill(); changed(); });
-    });
-  }
-
-  /* ── 기본 문안 설정(항목형) — DB nilai_settings 의 'clauses' 한 행 · 없으면 N.SETTINGS_DEFAULT · version=eq 로 먼저 저장한 사람을 이긴다 ── */
-  function loadSettings() {
-    return rest('/nilai_settings?key=eq.clauses&select=key,data,version').then(function (rows) {
-      var row = rows && rows[0];
-      state.settings = N.settingsOf(row ? row.data : null); state.stVersion = row ? (row.version || 0) : 0;
-      if (!state.id && !state.dirty) { var keep = { staffName: state.doc.staffName, staffTel: state.doc.staffTel, acct: state.doc.acct }; state.doc = Object.assign(N.blank('quote', null, state.settings), keep); fill(); }
-      render();
-    });
-  }
-  function openSettings() {
-    state.stDraft = JSON.parse(JSON.stringify(state.settings)); renderSettings();
-    $('nlSettings').classList.remove('mt-hidden');
-    $('stStatus').textContent = state.stVersion ? '저장본 v' + state.stVersion : '아직 저장한 적이 없습니다 — 화면의 기본값입니다';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  function closeSettings() { $('nlSettings').classList.add('mt-hidden'); }
-  function rangesText(list) { return (list || []).map(function (r) { var a = String(r.from || ''), b = String(r.to || ''); return (!b || a === b) ? a : a + '~' + b; }).join(', '); }
-  function mmddOf(t) { var m = String(t || '').trim().match(/^(\d{1,2})[\/\-.](\d{1,2})$/) || String(t || '').trim().match(/^(\d{2})(\d{2})$/); return m ? ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2) : ''; }
-  function parseRanges(txt, annual) {
-    return String(txt || '').split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean).map(function (t) {
-      var p = t.split('~').map(function (x) { return x.trim(); });
-      var f = annual ? mmddOf(p[0]) : N.parseLoose(p[0]), to = p[1] ? (annual ? mmddOf(p[1]) : N.parseLoose(p[1])) : f;
-      return f ? { from: f, to: to || f } : null;
-    }).filter(Boolean);
-  }
-  function renderSettings() {
-    var st = state.stDraft; $('stIncl').value = st.incl || ''; $('stExcl').value = st.excl || ''; $('stMeeting').value = st.meeting || '';
-    var box = $('stGroups'), h = [];
-    N.CLAUSE_GROUPS.forEach(function (g) {
-      h.push('<div class="st-group"><h4>' + g[1] + ' <button type="button" class="mt-btn mt-btn-ghost add" data-g="' + g[0] + '">＋ 항목</button></h4>');
-      st.items.forEach(function (it, i) {
-        if (it.g !== g[0]) return;
-        var air = Array.isArray(it.airline) ? it.airline : [];
-        h.push('<div class="st-item" data-i="' + i + '">'
-          + '<div class="row1"><label><input type="checkbox" class="f-on"' + (it.on === false ? '' : ' checked') + '> 사용</label><input type="text" class="f-t" value="' + N.esc(it.t || '') + '" placeholder="제목 (비우면 줄만)"><span class="mv"><button type="button" class="up" title="위로">↑</button><button type="button" class="dn" title="아래로">↓</button><button type="button" class="del" title="지우기">✕</button></span></div>'
-          + '<textarea class="f-b" placeholder="내용 — 한 줄이 한 줄 · {문서} 는 견적서/확정서로 바뀝니다">' + N.esc(it.b || '') + '</textarea>'
-          + '<div class="cond"><span class="lb">조건</span>' + N.AIRLINE_NAMES.map(function (a) { return '<label><input type="checkbox" class="f-air" value="' + a + '"' + (air.indexOf(a) >= 0 ? ' checked' : '') + '> ' + a + '</label>'; }).join('')
-          + '<label><input type="checkbox" class="f-odd"' + (it.odd ? ' checked' : '') + '> 홀수 인원만</label>'
-          + '<select class="f-kind"><option value=""' + (!it.kind ? ' selected' : '') + '>견적서·확정서</option><option value="quote"' + (it.kind === 'quote' ? ' selected' : '') + '>견적서만</option><option value="confirm"' + (it.kind === 'confirm' ? ' selected' : '') + '>확정서만</option></select>'
-          + '<label>기간 <input type="text" class="f-dates" value="' + N.esc(rangesText(it.dates)) + '" placeholder="2026-10-28~2026-11-02 (쉼표로 여러 개)"></label>'
-          + '<label>매년 <input type="text" class="f-annual" value="' + N.esc(rangesText(it.annual)) + '" placeholder="12-24, 12-31 또는 12-24~12-26"></label>'
-          + '<button type="button" class="mt-btn mt-btn-ghost f-ba">항공사별 줄' + (it.byAirline ? ' ✓' : '') + '</button></div>'
-          + '<div class="ba' + (it.byAirline ? '' : ' mt-hidden') + '">' + N.AIRLINE_NAMES.map(function (a) { return '<span>' + a + '</span><input type="text" class="f-ba-line" data-a="' + a + '" value="' + N.esc((it.byAirline && it.byAirline[a]) || '') + '" placeholder="이 항공사일 때 맨 위에 넣을 줄 (비우면 없음)">'; }).join('') + '</div>'
-          + '</div>');
-      });
-      h.push('</div>');
-    });
-    box.innerHTML = h.join('');
-    Array.prototype.forEach.call(box.querySelectorAll('.add'), function (b) { b.addEventListener('click', function () { readSettings(); state.stDraft.items.push({ key: 'c' + Date.now().toString(36), g: b.dataset.g, t: '', b: '' }); renderSettings(); }); });
-    Array.prototype.forEach.call(box.querySelectorAll('.st-item'), function (card) {
-      var i = Number(card.dataset.i);
-      card.querySelector('.up').addEventListener('click', function () { readSettings(); moveItem(i, -1); renderSettings(); });
-      card.querySelector('.dn').addEventListener('click', function () { readSettings(); moveItem(i, 1); renderSettings(); });
-      card.querySelector('.del').addEventListener('click', function () { readSettings(); if (!confirm('이 항목을 지울까요? (저장을 눌러야 반영됩니다)')) return; state.stDraft.items.splice(i, 1); renderSettings(); });
-      card.querySelector('.f-ba').addEventListener('click', function () { card.querySelector('.ba').classList.toggle('mt-hidden'); });
-    });
-  }
-  function moveItem(i, dir) {   // 같은 묶음 안에서 한 칸
-    var items = state.stDraft.items, g = items[i].g, j = i + dir;
-    while (j >= 0 && j < items.length && items[j].g !== g) j += dir;
-    if (j < 0 || j >= items.length) return;
-    var t = items[i]; items[i] = items[j]; items[j] = t;
-  }
-  function readSettings() {
-    var st = state.stDraft; st.incl = $('stIncl').value; st.excl = $('stExcl').value; st.meeting = $('stMeeting').value;
-    Array.prototype.forEach.call($('stGroups').querySelectorAll('.st-item'), function (card) {
-      var it = st.items[Number(card.dataset.i)]; if (!it) return;
-      if (card.querySelector('.f-on').checked) delete it.on; else it.on = false;
-      it.t = card.querySelector('.f-t').value.trim(); it.b = card.querySelector('.f-b').value;
-      var air = Array.prototype.filter.call(card.querySelectorAll('.f-air'), function (c) { return c.checked; }).map(function (c) { return c.value; });
-      if (air.length) it.airline = air; else delete it.airline;
-      if (card.querySelector('.f-odd').checked) it.odd = true; else delete it.odd;
-      var k = card.querySelector('.f-kind').value; if (k) it.kind = k; else delete it.kind;
-      var ds = parseRanges(card.querySelector('.f-dates').value, false); if (ds.length) it.dates = ds; else delete it.dates;
-      var an = parseRanges(card.querySelector('.f-annual').value, true); if (an.length) it.annual = an; else delete it.annual;
-      var ba = {}, any = false; Array.prototype.forEach.call(card.querySelectorAll('.f-ba-line'), function (inp) { ba[inp.dataset.a] = inp.value.trim(); if (inp.value.trim()) any = true; });
-      if (any) it.byAirline = ba; else delete it.byAirline;
-    });
-    return st;
-  }
-  function saveSettings() {
-    var st = readSettings();
-    var empty = st.items.filter(function (it) { return !String(it.b || '').trim() && !(it.byAirline && Object.keys(it.byAirline).some(function (a) { return it.byAirline[a]; })); });
-    if (empty.length && !confirm('내용이 빈 항목이 ' + empty.length + '개 있습니다(문서에는 안 들어갑니다). 그대로 저장할까요?')) return Promise.resolve();
-    $('stStatus').textContent = '저장 중…';
-    var p = state.stVersion
-      ? rest('/nilai_settings?key=eq.clauses&version=eq.' + state.stVersion, { method: 'PATCH', body: { data: st }, prefer: 'return=representation' })
-      : rest('/nilai_settings', { method: 'POST', body: { key: 'clauses', data: st }, prefer: 'return=representation' });
-    return p.then(function (rows) {
-      var row = rows && rows[0];
-      if (!row) throw new Error('다른 사람이 먼저 저장했습니다 — 다시 불러옵니다');
-      state.settings = N.settingsOf(row.data); state.stVersion = row.version || (state.stVersion + 1); state.stDraft = JSON.parse(JSON.stringify(state.settings));
-      $('stStatus').textContent = '저장했습니다 (v' + state.stVersion + ')'; toast('기본 문안을 저장했습니다 — 지금 문서에도 바로 적용됩니다');
-      render();
-    }).catch(function (e) {
-      $('stStatus').textContent = '저장 실패: ' + e.message;
-      if (/먼저 저장/.test(e.message)) loadSettings().then(function () { state.stDraft = JSON.parse(JSON.stringify(state.settings)); renderSettings(); }).catch(function () {});
-    });
   }
   /* ── 받는 분 — 대표자 + 동행(번호를 적은 분) · 체크한 분마다 성함을 넣어 보내고 내역도 따로 남는다(2026-10-02 · Min 「동행자 1인한테만 보낼 때는 어떻게 함?」) ── */
   function renderTo() {
@@ -622,7 +451,7 @@
   function openRow(id) {
     var r = state.rows.filter(function (x) { return x.id === id; })[0]; if (!r) return;
     if (state.dirty && !confirm('수정 중인 내용을 버리고 다른 문서를 열까요?')) return;
-    state.doc = Object.assign(N.blank(r.kind, null, state.settings), r.data || {}, { kind: r.kind, eventNo: (r.data && r.data.eventNo) || r.doc_no || '' });
+    state.doc = Object.assign(N.blank(r.kind), r.data || {}, { kind: r.kind, eventNo: (r.data && r.data.eventNo) || r.doc_no || '' });
     state.id = r.id; state.version = r.version || 0; state.link = r.link || ''; state.linkExp = r.link_expires_at || ''; state.sends = r.sends || []; state.dirty = false; state.to = { rep: true };
     fill(); render(); renderList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -630,7 +459,8 @@
   function newDoc() {
     if (state.dirty && !confirm('수정 중인 내용을 버리고 새 문서를 열까요?')) return;
     var keep = { staffName: state.doc.staffName, staffTel: state.doc.staffTel, acct: state.doc.acct };
-    state.doc = Object.assign(N.blank('quote', null, state.settings), keep);
+    state.doc = Object.assign(N.blank('quote'), keep);
+    state.doc.notes = N.defaultNotes('quote').join('\n');
     state.id = null; state.version = 0; state.link = ''; state.linkExp = ''; state.sends = []; state.dirty = false; state.to = { rep: true };
     fill(); render(); renderList();
   }
@@ -657,7 +487,7 @@
     tos = (tos && tos.length) ? tos : chosen();
     var pre = (state.id && !state.dirty) ? Promise.resolve() : save();
     return pre.then(function () {
-      var entries = tos.map(function (t) { return N.sendEntry(state.doc, via, { by: who(), memo: memo, link: link || state.link || '', to: t, settings: state.settings }); });
+      var entries = tos.map(function (t) { return N.sendEntry(state.doc, via, { by: who(), memo: memo, link: link || state.link || '', to: t }); });
       var sends = state.sends.concat(entries), last = entries[entries.length - 1];
       return rest('/nilai_docs?id=eq.' + state.id, { method: 'PATCH', body: { sends: sends, sent_at: last.at, sent_by: last.by } }).then(function () { state.sends = sends; return entries; });
     }).then(function (entries) { return loadList().then(function () { status(); return entries; }); });
@@ -699,7 +529,7 @@
       /* 손님 열람 조각(접고 펼 수 있는 <details> · 스타일은 .doc 아래로만 · 스크립트 없음)을 올리고, 서명 링크를 손님 열람 페이지(/doc/?d=)에 싸서 보낸다.
          JPG 링크는 2026-10-02 에 뺐다 — 폰에서 760px 그림을 맞추면 글자가 작아 확대해야 했고 긴 절을 접을 수 없었다(Min 「너무 긴 내용들은 접고 펴고 할 수 있고 인쇄도」). */
       var exp = new Date(Date.now() + LINK_TTL * 1000).toISOString();
-      var markup = N.buildHtml(state.doc, { logoSrc: state.logo, view: true, until: exp, settings: state.settings });
+      var markup = N.buildHtml(state.doc, { logoSrc: state.logo, view: true, until: exp });
       var path = state.doc.kind + '/nilai-' + state.id + '.html';
       return authHeaders({ 'Content-Type': 'text/html; charset=utf-8', 'x-upsert': 'true' }).then(function (h) {
         return fetch(base() + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'POST', headers: h, body: new Blob([markup], { type: 'text/html; charset=utf-8' }) });
@@ -753,16 +583,16 @@
     sel.addEventListener('change', function () {
       Array.prototype.forEach.call(sel.querySelectorAll('label'), function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
       read();
+      if (!String(state.doc.notes || '').trim() || state.doc.notes === N.defaultNotes(state.doc.kind === 'confirm' ? 'quote' : 'confirm').join('\n')) { state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); }
       changed();
     });
     $('nlForm').addEventListener('input', changed);
     $('nlForm').addEventListener('change', function (e) { if (e.target && e.target.classList && e.target.classList.contains('nl-date')) normDate(e.target); });
     $('nlForm').addEventListener('change', changed);
     $('btnAddFare').addEventListener('click', function () { read(); state.doc.fares.push({ label: '', amount: '', qty: 1 }); renderExtras(); changed(); });
-    $('btnSettings').addEventListener('click', function () { if ($('nlSettings').classList.contains('mt-hidden')) openSettings(); else closeSettings(); });
-    $('stClose').addEventListener('click', closeSettings);
-    $('stSave').addEventListener('click', function () { saveSettings(); });
-    $('stReset').addEventListener('click', function () { if (!confirm('화면의 기본값으로 되돌릴까요? 저장을 눌러야 반영됩니다.')) return; state.stDraft = N.settingsOf(null); renderSettings(); $('stStatus').textContent = '기본값을 불러왔습니다 — 저장을 누르면 반영됩니다'; });
+    $('btnNotesReset').addEventListener('click', function () { read(); state.doc.notes = N.defaultNotes(state.doc.kind).join('\n'); fill(); changed(); });
+    $('btnRefReset').addEventListener('click', function () { read(); state.doc.ref = N.DEFAULTS.ref; fill(); changed(); });
+    $('btnCancelReset').addEventListener('click', function () { read(); state.doc.cancel = N.DEFAULTS.cancel; fill(); changed(); });
     $('nlAirline').addEventListener('change', function () {
       read(); var al = N.AIRLINES[state.doc.airline];
       if (al) { state.doc.flightOut = al.out; state.doc.flightOutDep = al.outDep; state.doc.flightOutArr = al.outArr; state.doc.flightIn = al.inn; state.doc.flightInDep = al.inDep; state.doc.flightInArr = al.inArr; fill(); }
@@ -790,6 +620,7 @@
     $('btnCopyAlim').addEventListener('click', function () { read(); var t = chosen()[0]; copyText(N.alimtalk(state.doc, null, t), '알림톡 문안을 복사했습니다' + (t ? ' (받는 분 ' + t.name + ')' : '')); });
     $('btnCopySms').addEventListener('click', function () { read(); var t = chosen()[0]; copyText(N.smsText(state.doc, state.link, t), (state.link ? '링크 포함 문자를 복사했습니다' : '문자를 복사했습니다 (링크는 아직 없습니다)') + (t ? ' (받는 분 ' + t.name + ')' : '')); });
 
+    state.doc.notes = N.defaultNotes(state.doc.kind).join('\n');
     var u = who(); if (u) state.doc.staffName = u;
     fill(); render();
 
@@ -802,7 +633,6 @@
       var a = m && m.data && m.data.commonMaster && m.data.commonMaster.docAcct;
       if (a && (a.bank || a.no)) { state.doc.acct = { bank: a.bank || '', no: a.no || '', holder: a.holder || '' }; if (a.tel) state.doc.staffTel = a.tel; fill(); render(); }
     }).catch(function () {});
-    loadSettings().catch(function (e) { toast('기본 문안 설정을 못 불러왔습니다 — 화면의 기본값으로 진행합니다 (' + e.message + ')'); });
     loadList().catch(function () {});
     window.addEventListener('beforeunload', function (e) { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
   }
