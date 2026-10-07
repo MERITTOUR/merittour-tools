@@ -41,6 +41,7 @@
 
   var KIND_LABEL = { quote: '견적서', confirm: '확정서' };
   var KIND_TITLE = { quote: '견 적 서', confirm: '확 정 서' };
+  var PAGE_LABEL = { core: '핵심본', notes: '안내본' };   // 이미지 두 장 — ① 핵심본 · ② 안내본(2026-10-07 · Min)
   var KIND_SUB = {
     quote: '예상 일정과 금액을 안내드립니다 · 예약금 입금 시 예약이 확정됩니다',
     confirm: '예약이 확정되었습니다 · 출발 전 아래 내용을 확인하여 주시기 바랍니다'
@@ -393,6 +394,7 @@
     '.acct{margin-top:8px;background:#FBF7EE;border:1px solid #E6D9B8;border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.7}',
     '.acct b{color:#7F6019}',
     '.pre{white-space:pre-wrap;font-size:12px;line-height:1.65}',
+    '.more{margin-top:18px;background:#F4F5F7;border:1px solid #CDD1D8;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#373F4A}',
     '.it td.d{width:92px;font-weight:700;color:#373F4A;background:#F4F5F7;border:1px solid #CDD1D8;padding:6px 8px;vertical-align:top;white-space:nowrap}',
     '.it td.c{border:1px solid #CDD1D8;padding:6px 10px;vertical-align:top}',
     '.it .ln{margin:0;padding:0;list-style:none}',
@@ -442,9 +444,12 @@
     }).filter(Boolean).join('\n') + '\n' + VIEW_CSS;
   }
 
+  /* page — '' 전체(미리보기 · 링크 · 인쇄) · 'core' ① 핵심본(여행정보 · 요금 · 포함/불포함 · 항공 · 숙박 · 일정 · 미팅 · 안내 사항) · 'notes' ② 안내본(참고 사항 · 취소및환불정보 · 유의사항).
+     이미지로 보낼 때만 나눈다(2026-10-07 · Min 「응 한번 해보자」) — 한 장에 다 넣으면 카카오톡이 긴 그림을 줄여 글자가 안 읽힌다. 링크(열람 조각)·인쇄는 그대로 전체. page 가 있으면 view 는 무시한다(이미지는 접지 않는다). */
   function buildHtml(d, opts) {
     d = d || {}; opts = opts || {};
     var kind = KIND_LABEL[d.kind] ? d.kind : 'quote';
+    var page = PAGE_LABEL[opts.page] ? opts.page : '';
     var c = calc(d), fl = flights(d, c), it = itinerary(d, c);
     var issue = parseDate(d.issueDate) || new Date();
     var acct = d.acct || DEFAULTS.acct;
@@ -453,7 +458,7 @@
     var cancel = String(d.cancel == null ? DEFAULTS.cancel : d.cancel).trim();
     var meeting = String(d.meeting == null ? DEFAULTS.meeting : d.meeting).trim();
     var staffTel = d.staffTel || DEFAULTS.staffTel;
-    var view = !!opts.view;
+    var view = !!opts.view && !page;
     var h = [];
     /* 절 하나 — 손님 열람 조각에서는 접고 펼 수 있는 <details>(open === false 면 접힌 채 시작), 미리보기·JPG·인쇄용 문서에서는 h2 + 본문 */
     function sec(title, body, open) {
@@ -462,7 +467,7 @@
     }
     if (view) h.push('<style>' + scopedCss() + '</style>');
     else {
-      h.push('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(KIND_LABEL[kind]) + (d.eventNo ? ' ' + esc(d.eventNo) : '') + '</title>');
+      h.push('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + esc(KIND_LABEL[kind]) + (page ? ' ' + PAGE_LABEL[page] : '') + (d.eventNo ? ' ' + esc(d.eventNo) : '') + '</title>');
       h.push('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">');
       h.push('<style>' + CSS + '</style></head><body>');
     }
@@ -470,60 +475,73 @@
     // 머리 — 회사 정보(엠클릭 확정서와 같은 자리)
     h.push('<div class="hd"><div>' + (opts.logoSrc ? '<img src="' + esc(opts.logoSrc) + '" alt="MERITTOUR">' : '<div style="font-weight:800;font-size:20px;color:#373F4A;letter-spacing:.08em">MERITTOUR</div>') + '</div>'
       + '<div class="co">' + esc(COMPANY.site) + '<br>TEL : ' + esc(COMPANY.tel) + '   FAX : ' + esc(COMPANY.fax) + '<br>' + esc(COMPANY.addr) + '</div></div>');
-    h.push('<div class="ttl"><b>' + KIND_TITLE[kind] + '</b><span>' + esc(KIND_SUB[kind]) + ' · 발행 ' + esc(fmtDate(issue)) + '</span></div>');
+    if (page === 'notes') h.push('<div class="ttl"><b>안 내 사 항</b><span>' + esc(KIND_LABEL[kind]) + ' 안내 · 발행 ' + esc(fmtDate(issue)) + '</span></div>');
+    else h.push('<div class="ttl"><b>' + KIND_TITLE[kind] + '</b><span>' + esc(KIND_SUB[kind]) + ' · 발행 ' + esc(fmtDate(issue)) + '</span></div>');
     h.push('<table class="kv"><tr><th>발신</th><td>' + esc((d.staffName ? d.staffName + ' / ' : '') + COMPANY.name) + '</td></tr></table>');
 
-    sec('여행정보', '<table class="kv">'
-      + '<tr><th>상품명</th><td>' + esc(c.productName) + '</td></tr>'
-      + '<tr><th>여행기간</th><td>' + esc(c.period) + '</td></tr>'
-      + '<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명 (성인 ' + c.pax + ')' + (companionNames(d).length ? ' · ' + esc(companionNames(d).join(' · ')) : '') + '</td></tr>'
-      + '<tr><th>행사번호</th><td>' + esc(d.eventNo || '') + '</td></tr>'
-      + '<tr><th>연락처</th><td>' + esc(d.phone || '') + '</td></tr>'
-      + '</table>');
+    if (page === 'notes') {
+      // ② 안내본 — 어느 문서의 안내인지(문서 · 행사번호 · 고객명 · 여행기간)만 짧게
+      h.push('<table class="kv"><tr><th>문서</th><td>' + esc(KIND_LABEL[kind]) + (d.eventNo ? ' · 행사번호 ' + esc(d.eventNo) : '') + '</td></tr>'
+        + '<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명</td></tr>'
+        + '<tr><th>여행기간</th><td>' + esc(c.period) + '</td></tr></table>');
+    } else {
+      sec('여행정보', '<table class="kv">'
+        + '<tr><th>상품명</th><td>' + esc(c.productName) + '</td></tr>'
+        + '<tr><th>여행기간</th><td>' + esc(c.period) + '</td></tr>'
+        + '<tr><th>고객명/인원</th><td>' + esc(d.repName || '') + ' 님 / ' + c.pax + '명 (성인 ' + c.pax + ')' + (companionNames(d).length ? ' · ' + esc(companionNames(d).join(' · ')) : '') + '</td></tr>'
+        + '<tr><th>행사번호</th><td>' + esc(d.eventNo || '') + '</td></tr>'
+        + '<tr><th>연락처</th><td>' + esc(d.phone || '') + '</td></tr>'
+        + '</table>');
 
-    var fee = ['<div class="tw"><table class="gd fee"><tr><th>판매항목</th><th>요금구분</th><th>구분</th><th>금액</th><th>인원</th><th>합계</th></tr>'];
-    c.fares.forEach(function (f) {
-      fee.push('<tr><td>판매요금</td><td class="l">' + esc(f.label) + '</td><td>성인</td><td class="n">' + esc(comma(f.amount)) + '</td><td>' + f.qty + '</td><td class="n">' + esc(comma(f.amount * f.qty)) + '</td></tr>');
-    });
-    if (c.discount) fee.push('<tr><td>할인</td><td class="l">할인</td><td></td><td></td><td></td><td class="n">-' + esc(comma(c.discount)) + '</td></tr>');
-    fee.push('<tr class="tot"><td colspan="5">총합계</td><td class="n">' + esc(comma(c.total)) + '</td></tr></table></div>');
-    fee.push('<div class="pay"><div class="b"><div class="l">예약금' + (kind === 'confirm' && d.depositPaid ? ' · 입금 확인 ' + esc(fmtDate(parseDate(d.depositPaid))) : '') + '</div><div class="v">' + esc(won(c.deposit)) + '</div><div class="s">1인 ' + esc(won(c.depositPP)) + ' × ' + c.pax + '명' + (kind === 'quote' ? ' · 입금 시 예약 확정' : '') + '</div></div>'
-      + '<div class="b"><div class="l">잔금</div><div class="v">' + esc(won(c.balance)) + '</div><div class="s">' + (c.dueDate ? '납부 기한 ' + esc(fmtDate(c.dueDate)) + ' (출발 30일 전)' : '출발 30일 전까지') + '</div></div></div>');
-    fee.push('<div class="acct">■ 입금 계좌 안내 <b>' + esc(acct.bank || '') + ' ' + esc(acct.no || '') + ' ' + esc(acct.holder || '') + '</b><br>※ 본 금액에는 선납하신 예약금이 포함되어 있습니다.<br>※ 투어피는 출국 30일 전까지 완납해 주시기 바랍니다.</div>');
-    sec('요금안내', fee.join('\n'));
-
-    var prod = ['<table class="kv">'
-      + '<tr><th>포함 사항</th><td>' + esc(d.incl == null ? DEFAULTS.incl : d.incl) + '</td></tr>'
-      + '<tr><th>불포함 사항</th><td>' + esc(d.excl == null ? DEFAULTS.excl : d.excl) + '</td></tr>'];
-    if (ref && !view) prod.push('<tr><th>참고 사항</th><td><div class="pre">' + esc(ref) + '</div></td></tr>');
-    prod.push('</table>');
-    if (ref && view) prod.push('<details class="sub"><summary>참고 사항<span class="tg"></span></summary><div class="pre">' + esc(ref) + '</div></details>');
-    sec('상품정보', prod.join('\n'));
-
-    var air = ['<div class="tw wide"><table class="gd"><tr><th>구분</th><th>항공사</th><th>항공편</th><th>출발일자</th><th>출발시간</th><th>출발지</th><th>도착지</th><th>도착일자</th><th>도착시간</th></tr>'];
-    fl.forEach(function (f) {
-      air.push('<tr><td>' + esc(f.leg) + '</td><td>' + esc(f.airline) + '</td><td>' + esc(f.no) + '</td><td>' + esc(f.depDate) + (f.depNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.depNote) + '</span>' : '') + '</td><td>' + esc(f.depTime) + '</td><td>' + esc(f.from) + '</td><td>' + esc(f.to) + '</td><td>' + esc(f.arrDate) + (f.arrNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.arrNote) + '</span>' : '') + '</td><td>' + esc(f.arrTime) + '</td></tr>');
-    });
-    air.push('</table></div>');
-    sec('항공정보', air.join('\n'));
-
-    sec('숙박정보', '<div class="tw"><table class="gd"><tr><th>호텔명</th><th>룸타입</th><th>체크인</th><th>체크아웃</th><th>박수</th><th>방수</th><th>식사</th></tr>'
-      + '<tr><td class="l">' + esc(d.hotel || RESORT.hotel) + '</td><td>' + esc(d.room || DEFAULTS.room) + '</td><td>' + esc(c.checkIn ? fmtDate(c.checkIn) : '') + '</td><td>' + esc(c.checkOut ? fmtDate(c.checkOut) : '') + '</td><td>' + c.nights + '</td><td>' + c.rooms + '</td><td>조 · 중 · 석식</td></tr></table></div>');
-
-    if (it.length) {
-      var itn = ['<table class="it">'];
-      it.forEach(function (r) {
-        itn.push('<tr><td class="d">' + r.day + '일차<br><span style="font-weight:400;color:#5A6472;font-size:11.5px">' + esc(r.date) + '</span></td><td class="c"><ul class="ln">' + r.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
-          + ((r.hotel || r.meals) ? '<div class="ht">' + (r.hotel ? '<b>호텔</b> ' + esc(r.hotel) : '') + (r.hotel && r.meals ? ' · ' : '') + (r.meals ? '<b>식사</b> ' + esc(r.meals) : '') + '</div>' : '') + '</td></tr>');
+      var fee = ['<div class="tw"><table class="gd fee"><tr><th>판매항목</th><th>요금구분</th><th>구분</th><th>금액</th><th>인원</th><th>합계</th></tr>'];
+      c.fares.forEach(function (f) {
+        fee.push('<tr><td>판매요금</td><td class="l">' + esc(f.label) + '</td><td>성인</td><td class="n">' + esc(comma(f.amount)) + '</td><td>' + f.qty + '</td><td class="n">' + esc(comma(f.amount * f.qty)) + '</td></tr>');
       });
-      itn.push('</table>');
-      sec('상세일정', itn.join('\n'));
+      if (c.discount) fee.push('<tr><td>할인</td><td class="l">할인</td><td></td><td></td><td></td><td class="n">-' + esc(comma(c.discount)) + '</td></tr>');
+      fee.push('<tr class="tot"><td colspan="5">총합계</td><td class="n">' + esc(comma(c.total)) + '</td></tr></table></div>');
+      fee.push('<div class="pay"><div class="b"><div class="l">예약금' + (kind === 'confirm' && d.depositPaid ? ' · 입금 확인 ' + esc(fmtDate(parseDate(d.depositPaid))) : '') + '</div><div class="v">' + esc(won(c.deposit)) + '</div><div class="s">1인 ' + esc(won(c.depositPP)) + ' × ' + c.pax + '명' + (kind === 'quote' ? ' · 입금 시 예약 확정' : '') + '</div></div>'
+        + '<div class="b"><div class="l">잔금</div><div class="v">' + esc(won(c.balance)) + '</div><div class="s">' + (c.dueDate ? '납부 기한 ' + esc(fmtDate(c.dueDate)) + ' (출발 30일 전)' : '출발 30일 전까지') + '</div></div></div>');
+      fee.push('<div class="acct">■ 입금 계좌 안내 <b>' + esc(acct.bank || '') + ' ' + esc(acct.no || '') + ' ' + esc(acct.holder || '') + '</b><br>※ 본 금액에는 선납하신 예약금이 포함되어 있습니다.<br>※ 투어피는 출국 30일 전까지 완납해 주시기 바랍니다.</div>');
+      sec('요금안내', fee.join('\n'));
+
+      var prod = ['<table class="kv">'
+        + '<tr><th>포함 사항</th><td>' + esc(d.incl == null ? DEFAULTS.incl : d.incl) + '</td></tr>'
+        + '<tr><th>불포함 사항</th><td>' + esc(d.excl == null ? DEFAULTS.excl : d.excl) + '</td></tr>'];
+      if (ref && !view && !page) prod.push('<tr><th>참고 사항</th><td><div class="pre">' + esc(ref) + '</div></td></tr>');
+      prod.push('</table>');
+      if (ref && view) prod.push('<details class="sub"><summary>참고 사항<span class="tg"></span></summary><div class="pre">' + esc(ref) + '</div></details>');
+      sec('상품정보', prod.join('\n'));
+
+      var air = ['<div class="tw wide"><table class="gd"><tr><th>구분</th><th>항공사</th><th>항공편</th><th>출발일자</th><th>출발시간</th><th>출발지</th><th>도착지</th><th>도착일자</th><th>도착시간</th></tr>'];
+      fl.forEach(function (f) {
+        air.push('<tr><td>' + esc(f.leg) + '</td><td>' + esc(f.airline) + '</td><td>' + esc(f.no) + '</td><td>' + esc(f.depDate) + (f.depNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.depNote) + '</span>' : '') + '</td><td>' + esc(f.depTime) + '</td><td>' + esc(f.from) + '</td><td>' + esc(f.to) + '</td><td>' + esc(f.arrDate) + (f.arrNote ? '<br><span style="font-size:11px;color:#5A6472">' + esc(f.arrNote) + '</span>' : '') + '</td><td>' + esc(f.arrTime) + '</td></tr>');
+      });
+      air.push('</table></div>');
+      sec('항공정보', air.join('\n'));
+
+      sec('숙박정보', '<div class="tw"><table class="gd"><tr><th>호텔명</th><th>룸타입</th><th>체크인</th><th>체크아웃</th><th>박수</th><th>방수</th><th>식사</th></tr>'
+        + '<tr><td class="l">' + esc(d.hotel || RESORT.hotel) + '</td><td>' + esc(d.room || DEFAULTS.room) + '</td><td>' + esc(c.checkIn ? fmtDate(c.checkIn) : '') + '</td><td>' + esc(c.checkOut ? fmtDate(c.checkOut) : '') + '</td><td>' + c.nights + '</td><td>' + c.rooms + '</td><td>조 · 중 · 석식</td></tr></table></div>');
+
+      if (it.length) {
+        var itn = ['<table class="it">'];
+        it.forEach(function (r) {
+          itn.push('<tr><td class="d">' + r.day + '일차<br><span style="font-weight:400;color:#5A6472;font-size:11.5px">' + esc(r.date) + '</span></td><td class="c"><ul class="ln">' + r.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
+            + ((r.hotel || r.meals) ? '<div class="ht">' + (r.hotel ? '<b>호텔</b> ' + esc(r.hotel) : '') + (r.hotel && r.meals ? ' · ' : '') + (r.meals ? '<b>식사</b> ' + esc(r.meals) : '') + '</div>' : '') + '</td></tr>');
+        });
+        itn.push('</table>');
+        sec('상세일정', itn.join('\n'));
+      }
+
+      if (meeting) sec('미팅장소및시간', '<div class="pre">' + esc(meeting) + '</div>');
+      if (String(d.memo || '').trim()) sec('안내 사항', '<div class="pre">' + esc(d.memo) + '</div>');
     }
 
-    if (meeting) sec('미팅장소및시간', '<div class="pre">' + esc(meeting) + '</div>');
-    if (String(d.memo || '').trim()) sec('안내 사항', '<div class="pre">' + esc(d.memo) + '</div>');
-    if (cancel) sec('취소및환불정보', '<div class="pre">' + esc(cancel) + '</div>', false);
-    sec('유의사항', '<ol class="notes">' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol>');
+    if (page === 'core') h.push('<div class="more">※ 참고 사항 · 취소 및 환불 규정 · 유의사항은 별도 안내문에서 확인해 주세요.</div>');
+    else {
+      if (page === 'notes' && ref) sec('참고 사항', '<div class="pre">' + esc(ref) + '</div>');
+      if (cancel) sec('취소및환불정보', '<div class="pre">' + esc(cancel) + '</div>', false);
+      sec('유의사항', '<ol class="notes">' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol>');
+    }
 
     h.push('<div class="ft"><div><b>' + esc(COMPANY.name) + '</b>' + (d.staffName ? ' · 담당 ' + esc(d.staffName) : '') + ' · ' + esc(staffTel) + ' (평일 09:00~18:00)</div><div>카카오톡 채널 「메리트투어」</div></div>');
     h.push('</div>' + (view ? '' : '</body></html>'));
@@ -551,7 +569,7 @@
   }
 
   return {
-    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL,
+    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL, PAGE_LABEL: PAGE_LABEL,
     defaultNotes: defaultNotes, blank: blank,
     calc: calc, flights: flights, itinerary: itinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient, companionsOf: companionsOf, recipientsOf: recipientsOf,
