@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ko" data-view="m">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>홈페이지 예약 방법 안내 · 메리트투어</title>
+<meta name="description" content="메리트투어 홈페이지 예약 순서 안내 — 로그인 · 출발지·호텔·기간·출발월 선택 · 출발일·인원 수 선택 · 약관 동의 후 예약하기">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="메리트투어 · MERITTOUR">
+<meta property="og:title" content="홈페이지 예약 방법 안내">
+<meta property="og:description" content="메리트투어 홈페이지 예약 순서 안내 — 로그인 · 출발지·호텔·기간·출발월 선택 · 출발일·인원 수 선택 · 약관 동의 후 예약하기">
+<meta property="og:url" content="https://merittour.github.io/2027/booking/">
+<meta property="og:image" content="https://merittour.github.io/assets/og-logo.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#F6F2E8">
+<script>
+/* 휴대폰 화면 / PC 화면 고르기 — 주소의 ?view=pc · ?view=m 이 먼저, 없으면 화면 폭으로 정한다(그리기 전에 실행해 깜빡임 방지) */
+(function () {
+  var v = null;
+  try { v = new URLSearchParams(location.search).get('view'); } catch (e) {}
+  if (v === 'pc' || v === 'p') v = 'p';
+  else if (v === 'm' || v === 'mobile') v = 'm';
+  else v = (window.matchMedia && window.matchMedia('(min-width: 900px)').matches) ? 'p' : 'm';
+  document.documentElement.setAttribute('data-view', v);
+})();
+</script>
+<style>
+  /* ── 2027 예약 안내(/2027/)와 같은 디자인 토큰 · 베이지 라이트 고정 ── */
+  :root{
+    --paper:#F6F2E8; --surface:#FFFFFF; --surface-warm:#FCFAF4; --band:#EDE7D6;
+    --ink:#1E2618; --ink-soft:#4C573F; --muted:#5F6B47;
+    --line:#DFD8C5; --line-soft:#E9E3D2;
+    --olive:#5A6C3E; --olive-deep:#47562F;
+    --gold:#7F6019; --gold-soft:#9E7C33; --member-line:#D3BA85;
+    --tap:#D7263D;                       /* 화면에서 누를 곳 표시(빨간 테두리) */
+    --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Pretendard',system-ui,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype','Palatino',Georgia,serif;
+    --maxw:720px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);line-height:1.75;font-size:17px;word-break:keep-all;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  p{margin:0 0 14px;color:var(--ink)}
+  p:last-child{margin-bottom:0}
+  .soft{color:var(--ink-soft)}
+
+  /* ── 상단 브랜드 바 ── */
+  .brand{display:flex;align-items:center;gap:10px;padding:22px 0 0;color:var(--ink-soft)}
+  .brand .logo{display:block;height:24px;width:auto;color:var(--ink)}
+  footer .logo{display:block;height:26px;width:auto;margin:0 auto 10px;color:var(--ink-soft)}
+
+  /* ── 히어로 ── */
+  .hero{padding:44px 0 36px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--serif);font-style:italic;font-size:15px;letter-spacing:.04em;color:var(--gold);margin:0 0 14px}
+  .hero h1{font-size:clamp(26px,6vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.35;text-wrap:balance;margin:0}
+  .hero p.lead{font-size:17px;color:var(--ink-soft);margin:16px 0 0;max-width:52ch}
+  .hero p.lead b{color:var(--tap);font-weight:800}
+
+  /* ── 휴대폰 화면 / PC 화면 고르기 ── */
+  html[data-view="m"] .only-p, html[data-view="p"] .only-m{display:none}
+  html[data-view="p"]{--maxw:1040px}                 /* PC 화면 안내는 캡처가 넓어 본문 폭도 넓힌다 */
+  .view{margin:22px 0 0}
+  .view-q{font-size:14.5px;font-weight:800;color:var(--olive-deep);margin:0 0 8px}
+  .view-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:460px}
+  .view-btns button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;padding:10px 12px;cursor:pointer;
+    border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    font-family:inherit;font-size:16.5px;font-weight:800;line-height:1.3}
+  .view-btns button svg{flex:none;width:22px;height:22px}
+  .view-btns button[aria-pressed="true"]{background:var(--olive-deep);border-color:var(--olive-deep);color:#fff}
+  @media (hover:hover){ .view-btns button[aria-pressed="false"]:hover{border-color:var(--olive)} }
+  .view-btns button:focus-visible{outline:3px solid var(--gold-soft);outline-offset:2px}
+
+  /* ── 예약 순서 한눈에 보기 ── */
+  .flow{margin:24px 0 0;background:var(--band);border:1px solid color-mix(in srgb,var(--olive) 24%,var(--line));
+    border-radius:14px;padding:18px 20px 20px}
+  .flow .inc-tag{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;letter-spacing:.08em;
+    color:var(--olive-deep);margin:0 0 10px}
+  .flow .inc-tag::before{content:"";width:18px;height:1.5px;background:var(--olive)}
+  .flow ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .flow a{display:flex;align-items:center;gap:10px;min-height:54px;padding:10px 14px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:800;font-size:16px;line-height:1.35}
+  .flow a .n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--olive-deep);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+  @media (hover:hover){ .flow a:hover{border-color:var(--olive)} }
+  .flow .fine{margin:12px 0 0;font-size:14px;line-height:1.65;color:var(--ink-soft)}
+  @media (max-width:560px){ .flow ol{grid-template-columns:1fr} }
+
+  /* ── 섹션 공통 ── */
+  section{padding:38px 0;border-bottom:1px solid var(--line);scroll-margin-top:18px}
+  @media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth} }
+  .kicker{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+  .kicker .no{font-family:var(--serif);font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
+  .kicker h2{font-size:21px;font-weight:800;letter-spacing:-.01em;margin:0}
+  .sec-lead{font-size:16.5px;color:var(--ink-soft);margin:0 0 22px}
+  .sec-lead b{color:var(--ink)}
+
+  /* ── 단계 카드: 번호 · 제목 · 설명 · 화면 ── */
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 20px 22px;margin:0 0 16px}
+  .step:last-of-type{margin-bottom:0}
+  .step-head{display:flex;align-items:flex-start;gap:12px;margin:0 0 8px}
+  .step-no{flex:none;width:34px;height:34px;border-radius:50%;background:var(--olive-deep);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:1px}
+  .step h3{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.45;margin:3px 0 0}
+  .step-desc{font-size:16.5px;line-height:1.7;color:var(--ink-soft);margin:0 0 0 46px}
+  .step-desc b{color:var(--ink);font-weight:800}
+  .step-desc .eg{display:inline-block;margin-top:4px;padding:1px 9px;border-radius:999px;background:var(--band);
+    border:1px solid var(--line);font-size:14.5px;font-weight:700;color:var(--ink-soft)}
+
+  .shot{margin:16px auto 0;max-width:400px}
+  /* 번호·'여기' 표시가 화면 밖으로 살짝 나와도 잘리지 않게 틀은 넘침 허용, 모서리는 이미지에 준다 */
+  .shot-frame{position:relative;display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:14px;overflow:visible;
+    background:#fff;box-shadow:0 6px 20px rgba(30,38,24,.10);cursor:zoom-in;font:inherit}
+  .shot-frame img{display:block;width:100%;height:auto;border-radius:13px}
+  .hl{position:absolute;border:3px solid var(--tap);border-radius:10px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.95),0 0 0 6px color-mix(in srgb,var(--tap) 22%,transparent);pointer-events:none}
+  .hl i{position:absolute;left:-12px;top:-20px;min-width:26px;height:26px;padding:0 7px;border-radius:999px;
+    background:var(--tap);color:#fff;border:2px solid #fff;font-style:normal;font-size:13.5px;font-weight:800;line-height:22px;
+    text-align:center;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .hl.r i{left:auto;right:-12px}
+  .shot figcaption{margin:9px 0 0;text-align:center;font-size:13.5px;color:var(--muted)}
+
+  /* 넓은 화면: 화면(왼쪽) + 설명(오른쪽) */
+  @media (min-width:700px){
+    .step{display:grid;grid-template-columns:300px 1fr;gap:4px 26px;align-items:start;padding:22px 24px 24px}
+    .step .shot{grid-column:1;grid-row:1 / span 3;margin:0;max-width:none}
+    .step-head,.step-desc,.step .callout{grid-column:2}
+    .step-desc{margin-left:46px}
+  }
+
+  /* PC 화면 안내: 캡처가 가로로 넓으므로 설명 아래에 크게 놓는다(휴대폰 캡처를 쓰는 단계 .phone 은 위 배치 그대로) */
+  .mode-p .step:not(.phone){display:block}
+  .mode-p .step:not(.phone) .shot{margin:16px auto 0}
+  .mode-p .step:not(.phone) .step-desc,.mode-p .step:not(.phone) .callout{max-width:860px}
+  .shot.wide .hl{border-width:2.5px}
+  /* 휴대폰에서 PC 캡처를 볼 때: 화면이 작게 줄어들므로 표시도 작게 */
+  @media (max-width:560px){ .shot.wide .hl{border-width:2px;border-radius:6px;box-shadow:0 0 0 1px rgba(255,255,255,.95),0 0 0 3px color-mix(in srgb,var(--tap) 22%,transparent)}
+    .shot.wide .hl i{transform:scale(.72);transform-origin:left bottom;left:-8px;top:-22px} .shot.wide .hl.r i{transform-origin:right bottom;left:auto;right:-8px} }
+
+  /* 참고 카드(순서에 들어가지 않는 안내) */
+  .step.tip{background:var(--surface-warm);border-style:dashed;border-color:var(--member-line)}
+  .step.tip .step-no{width:auto;padding:0 12px;border-radius:999px;background:var(--gold);font-size:14px;letter-spacing:.02em}
+  .step.tip .step-desc{margin-left:0}
+  @media (min-width:700px){ .step.tip .step-desc{margin-left:0} }
+
+  /* ── 꼭 봐야 하는 안내 ── */
+  .callout{margin:16px 0 0;padding:16px 18px;border-radius:12px;background:var(--band);
+    border:1.5px solid var(--gold);border-left-width:6px;font-size:16px;line-height:1.7;color:var(--ink)}
+  .callout .co-tag{display:block;font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--olive-deep);margin-bottom:6px}
+  .callout b{color:var(--ink)}
+  .callout ul{margin:4px 0 0;padding-left:18px}
+  .callout li{margin:4px 0}
+  .callout.warn{border-color:var(--tap);background:#FFF6F4}
+  .callout.warn .co-tag{color:var(--tap)}
+  .cred{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:6px 0 4px;align-items:baseline}
+  .cred dt{font-size:14px;font-weight:800;color:var(--olive-deep);white-space:nowrap}
+  .cred dd{margin:0;font-weight:700}
+  .cred code{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--line);
+    font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:15.5px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+  .callout .fine{margin:8px 0 0;font-size:14.5px;color:var(--ink-soft)}
+  .note{margin-top:14px;padding:12px 14px;border-radius:9px;background:var(--band);border:1px solid var(--line);
+    font-size:14px;line-height:1.7;color:var(--ink-soft);font-weight:500}
+
+  /* ── 문의 / 푸터 ── */
+  .contact{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:20px 24px;display:flex;flex-wrap:wrap;gap:14px 30px;align-items:center;margin-top:4px}
+  .contact .citem{display:inline-flex;align-items:baseline;gap:10px}
+  .contact .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+  .contact .val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .contact a{color:var(--olive-deep);text-decoration:none;font-weight:800}
+  .contact a:hover{text-decoration:underline}
+  .more{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:12px 18px;border-radius:12px;
+    background:var(--olive-deep);color:#fff;font-weight:800;font-size:16px;text-decoration:none}
+  @media (hover:hover){ .more:hover{background:var(--olive)} }
+  footer{padding:34px 0 90px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* ── 떠 있는 버튼 ── */
+  .fabs{position:fixed;right:16px;bottom:18px;z-index:28;display:flex;flex-direction:column;gap:9px}
+  .fab{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.10);font-family:inherit;
+    font-size:12.5px;font-weight:800;padding:11px 14px;text-decoration:none}
+  .fab-kakao{background:#FAE100;border-color:#EBD400;color:#3C1E1E}
+  .fab-site{background:var(--olive-deep);border-color:var(--olive-deep);color:#fff}
+  /* 두 안내문 오가기 — 「2027 안내」(/2027/) ↔ 「예약 방법」(이 페이지). /2027/ 에도 같은 자리에 같은 것을 둔다(지금 보는 쪽이 흰 칸) */
+  .fab-switch{display:flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--band);
+    box-shadow:0 4px 14px rgba(0,0,0,.10)}
+  .fab-switch a,.fab-switch span{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:999px;
+    font-size:12.5px;font-weight:800;line-height:1.3;white-space:nowrap;text-decoration:none;color:var(--ink-soft)}
+  .fab-switch [aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.16)}
+  @media (hover:hover){ .fab-switch a:hover{color:var(--ink)} }
+  .fab-top{width:44px;height:44px;padding:0;font-size:16px;align-self:flex-end;
+    opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+  .fab-top.on{opacity:1;visibility:visible;transition:opacity .2s}
+  @media (max-width:560px){ .fabs{right:12px;bottom:14px} .wrap{padding:0 18px} .step{padding:18px 16px 20px} }
+
+  /* ── 화면 크게 보기 ── */
+  .zoom{position:fixed;inset:0;z-index:60;background:rgba(20,24,16,.82);display:none;
+    overflow:auto;padding:54px 20px 24px;cursor:zoom-out}
+  .zoom.on{display:block}
+  .zoom .shot-frame{width:min(100%,560px);cursor:zoom-out;border-radius:12px;margin:0 auto}
+  .zoom .close{position:fixed;top:10px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:var(--ink);
+    font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="brand">
+    <!--LOGO-->
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">Booking Guide · 예약 방법 안내</p>
+    <h1>홈페이지 예약 방법 안내</h1>
+    <p class="lead">메리트투어 홈페이지에서 예약하시는 순서를 화면과 함께 안내드립니다.
+      각 화면에 <b>빨간 테두리</b>로 표시한 곳을 순서대로 눌러 주시면 됩니다.</p>
+
+    <div class="view" role="group" aria-labelledby="viewQ">
+      <p class="view-q" id="viewQ">예약하실 기기를 골라 주십시오</p>
+      <div class="view-btns">
+        <button type="button" data-view-btn="m" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.2h2"/></svg>
+          휴대폰 화면
+        </button>
+        <button type="button" data-view-btn="p" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="1.8"/><path d="M8.5 20.5h7M12 16.5v4"/></svg>
+          PC 화면
+        </button>
+      </div>
+    </div>
+
+    <div class="flow">
+      <p class="inc-tag">예약 순서 · 한눈에 보기</p>
+      <!--FLOW-->
+      <p class="fine">예약은 <b>회원 전용</b>이며 로그인하셔야 진행됩니다. 안내 화면은 예시이며, 실제 날짜와 남은 객실 수는 다를 수 있습니다. 화면을 누르면 크게 보실 수 있습니다.</p>
+    </div>
+  </header>
+
+<!--SECTIONS-->
+
+  <section id="s-contact" style="border-bottom:none">
+    <div class="kicker"><span class="no"><!--CONTACT_NO--></span><h2>문의</h2></div>
+    <p class="sec-lead">예약 화면 이용이 어려우시면 메리트투어로 문의하여 주시기 바랍니다.</p>
+    <div class="contact">
+      <span class="citem"><span class="lbl">문의</span><span class="val">메리트투어</span></span>
+      <span class="citem"><span class="lbl">전화</span><span class="val"><a href="tel:0223659800">02-365-9800</a></span></span>
+      <span class="citem"><span class="lbl">카카오톡</span><span class="val"><a href="https://pf.kakao.com/_dxhWus/chat" target="_blank" rel="noopener">메리트투어 채널 상담</a></span></span>
+    </div>
+    <a class="more" href="/2027/">2027 시즌 예약 안내 보기 →</a>
+  </section>
+
+  <footer>
+    <!--LOGO-->
+    <p>변함없는 성원에 깊이 감사드립니다.</p>
+  </footer>
+
+</div>
+
+<div class="fabs">
+  <a class="fab fab-kakao" href="https://pf.kakao.com/_dxhWus/chat" target="_blank" rel="noopener">카카오톡 상담</a>
+  <a class="fab fab-site" href="https://www.merittour.co.kr" target="_blank" rel="noopener">예약 홈페이지 바로가기</a>
+  <nav class="fab-switch" aria-label="안내문 오가기">
+    <a href="/2027/">2027 안내</a>
+    <span aria-current="page">예약 방법</span>
+  </nav>
+  <button class="fab fab-top" id="fabTop" type="button" aria-label="맨 위로">↑</button>
+</div>
+
+<div class="zoom" id="zoom" role="dialog" aria-label="화면 크게 보기">
+  <button class="close" type="button" aria-label="닫기">×</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  /* 맨 위로 */
+  var top = document.getElementById('fabTop');
+  top.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  function onScroll() { top.classList.toggle('on', window.pageYOffset > 400); }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* 휴대폰 화면 / PC 화면 전환 — 고른 쪽을 주소(?view=)에 남겨 새로 고침·링크 공유 때 그대로 열리게 한다 */
+  var root = document.documentElement;
+  var viewBtns = document.querySelectorAll('[data-view-btn]');
+  function paintView() {
+    var v = root.getAttribute('data-view');
+    for (var i = 0; i < viewBtns.length; i++) {
+      viewBtns[i].setAttribute('aria-pressed', viewBtns[i].getAttribute('data-view-btn') === v ? 'true' : 'false');
+    }
+  }
+  for (var i = 0; i < viewBtns.length; i++) {
+    viewBtns[i].addEventListener('click', function () {
+      var v = this.getAttribute('data-view-btn');
+      root.setAttribute('data-view', v); paintView();
+      try {
+        var u = new URL(location.href);
+        u.searchParams.set('view', v === 'p' ? 'pc' : 'm'); u.hash = '';
+        history.replaceState(null, '', u.pathname + u.search);
+      } catch (e) {}
+    });
+  }
+  paintView();
+
+  /* 화면 크게 보기 — 누른 화면(빨간 테두리 포함)을 그대로 복제해 크게 띄운다 */
+  var zoom = document.getElementById('zoom');
+  /* 크게 보기를 열어 둔 동안은 fresh.js 띠를 미룬다(/2027/ 의 사진 크게 보기와 같은 규칙) */
+  window.MT_FRESH_BUSY = function () { return zoom.classList.contains('on'); };
+  function closeZoom() {
+    zoom.classList.remove('on');
+    var old = zoom.querySelector('.shot-frame'); if (old) old.remove();
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    var frame = e.target.closest('.shot .shot-frame');
+    if (frame) {
+      var copy = frame.cloneNode(true);
+      copy.removeAttribute('aria-label');
+      /* PC 캡처는 원본 폭까지 키운다. 좁은 화면에서는 820px 로 띄워 좌우로 밀어 본다 */
+      var zw = frame.getAttribute('data-zoom');
+      if (zw) copy.style.width = 'min(' + zw + 'px, max(100%, 820px))';
+      zoom.appendChild(copy); zoom.classList.add('on'); document.body.style.overflow = 'hidden';
+      return;
+    }
+    if (zoom.classList.contains('on') && e.target.closest('#zoom')) closeZoom();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeZoom(); });
+})();
+</script>
+
+<!-- 열어 둔 탭이 옛 안내문을 들고 있지 않게 — 돌아올 때 서버에 한 번 물어본다 -->
+<script defer src="/assets/fresh.js"></script>
+</body>
+</html>
