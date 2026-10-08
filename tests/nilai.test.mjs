@@ -151,7 +151,7 @@ test('섹션 배선 — access.js(SECTIONS · 역할 기본값 sales·manage) ·
   assert.match(page, /id="nlKind">\s*<label class="on"><input type="radio" name="kind" value="quote" checked> 견적서<\/label>\s*<label><input type="radio" name="kind" value="confirm"> 확정서/, '토글은 견적서가 먼저(2026-10-01 · Min)');
   assert.match(page, /data-k="eventNo"/, '행사번호 입력 칸이 없다');
   assert.ok(!/docNo|NS-연월일|pricePP|nlExtras/.test(page), '옛 입력(자동 번호 · 1인 요금 한 칸)이 남아 있다');
-  for (const k of ['airline', 'flightOut', 'flightOutDep', 'flightOutArr', 'flightIn', 'flightInDep', 'flightInArr', 'outArrOffset', 'inDepOffset', 'hotel', 'incl', 'excl', 'ref', 'meeting', 'cancel']) assert.match(page, new RegExp('data-k="' + k + '"'), '입력 칸이 없다: ' + k);
+  for (const k of ['airline', 'flightOut', 'flightOutFrom', 'flightOutDep', 'flightOutArr', 'flightOutTo', 'flightIn', 'flightInFrom', 'flightInDep', 'flightInArr', 'flightInTo', 'outArrOffset', 'inDepOffset', 'hotel', 'incl', 'excl', 'ref', 'meeting', 'cancel']) assert.match(page, new RegExp('data-k="' + k + '"'), '입력 칸이 없다: ' + k);
   assert.match(page, /data-k="outArrOffset"><option value="0">_선택_<\/option><option value="1">1일후도착<\/option>/, '출발편 도착 보정은 엠클릭 표현(1일후도착)');
   assert.match(page, /data-k="inDepOffset"><option value="-1">1일전출발<\/option><option value="0">_선택_<\/option>/, '도착편 출발 보정은 엠클릭 표현(1일전출발 · 기본)');
   assert.ok(!/inNextDay|outNextDay|밤 비행이라/.test(page), '헷갈리던 체크박스 표현이 남아 있다');
@@ -285,4 +285,27 @@ test('말레이시아항공 — 엠클릭 예약 화면의 편(MH067 11:05→16:
   const it = N.itinerary(d, c);
   assert.equal(it.length, 12); assert.equal(it[0].lines[0], '인천국제공항 출국장, 말레이시아항공 카운터 개별수속'); assert.match(it[10].lines[it[10].lines.length - 1], /MH066 23:15/); assert.equal(it[11].lines[0], '인천국제공항 도착 (06:30)');
   assert.match(read('tools/nilai/index.html'), /<option value="말레이시아항공">말레이시아항공<\/option><option value="">직접 입력<\/option>/, '항공사 선택지(직접 입력 앞)');
+});
+
+test('출발지·도착지 입력(2026-10-08 · Min 「출발지, 도착지도 항공편처럼 수정할 수 있게」) — 기본 ICN/KUL · 코드별 이름으로 일정표 · 빈 값·옛 문서는 기본값 · 화면 칸', () => {
+  const b = N.blank('quote');
+  assert.deepEqual([b.flightOutFrom, b.flightOutTo, b.flightInFrom, b.flightInTo], ['ICN', 'KUL', 'KUL', 'ICN']);
+  assert.equal(N.AIRPORTS.PUS, '김해국제공항');
+  const d = Object.assign(sample(), { flightOutFrom: 'pus', flightOutTo: 'kul ', flightInFrom: 'KUL', flightInTo: 'PUS' });
+  const f = N.flights(d);
+  assert.deepEqual([f[0].from, f[0].to, f[1].from, f[1].to], ['PUS', 'KUL', 'KUL', 'PUS'], '소문자·공백도 코드로');
+  const it = N.itinerary(d), all = it.map(r => r.lines.join(' / ')).join(' | ');
+  assert.equal(it[0].lines[0], '김해국제공항 출국장, 대한항공 카운터 개별수속', '2터미널은 대한항공 + 인천일 때만');
+  assert.match(all, /쿠알라룸푸르공항 도착/); assert.match(all, /쿠알라룸푸르 국제공항에서 김해국제공항으로 출발/); assert.match(it[it.length - 1].lines[0], /^김해국제공항 도착/);
+  const old = sample(); delete old.flightOutFrom; delete old.flightOutTo; delete old.flightInFrom; delete old.flightInTo;
+  assert.deepEqual(N.flights(old).map(x => x.from + '>' + x.to), ['ICN>KUL', 'KUL>ICN'], '옛 문서(칸 없음)는 기본값');
+  assert.deepEqual(N.flights(Object.assign(sample(), { flightOutFrom: '', flightOutTo: ' ', flightInFrom: '', flightInTo: '' })).map(x => x.from + '>' + x.to), ['ICN>KUL', 'KUL>ICN'], '비우면 기본값');
+  const itOld = N.itinerary(old), allOld = itOld.map(r => r.lines.join(' / ')).join(' | ');
+  assert.equal(itOld[0].lines[0], '인천국제공항 2터미널 출국장, 대한항공 카운터 개별수속'); assert.match(allOld, /쿠알라룸푸르공항 도착/); assert.match(allOld, /쿠알라룸푸르 국제공항에서 인천국제공항으로 출발/); assert.match(itOld[itOld.length - 1].lines[0], /^인천국제공항 도착/);
+  const unk = N.itinerary(Object.assign(sample(), { flightOutFrom: 'NRT', flightInTo: 'NRT' })), allUnk = unk.map(r => r.lines.join(' / ')).join(' | ');
+  assert.equal(unk[0].lines[0], 'NRT 출국장, 대한항공 카운터 개별수속', '모르는 코드는 적은 그대로'); assert.match(allUnk, /쿠알라룸푸르 국제공항에서 NRT로 출발/); assert.match(unk[unk.length - 1].lines[0], /^NRT 도착/);
+  const page = read('tools/nilai/index.html');
+  assert.match(page, /data-k="flightOut" placeholder="KE427"><input type="text" class="iata" data-k="flightOutFrom" placeholder="ICN"/, '출발편 출발지 칸이 항공편 옆에');
+  assert.match(page, /class="iata" data-k="flightInTo" placeholder="ICN"/, '도착편 도착지 칸');
+  assert.ok(!/<div class="c">ICN<\/div>|<div class="c">KUL<\/div>/.test(page), '고정 글자 칸이 남아 있다');
 });

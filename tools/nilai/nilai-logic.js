@@ -31,6 +31,17 @@
     transfer: '닐라이스프링스 골프&리조트 이동 (약 25분 소요)',
     addrEn: 'PT4770, NILAI SPRINGS PUTRA NILAI, NEGERI SEMBILAN, MALAYSIA', zip: '71800'
   };
+  /* 공항 코드 → 일정표에 적는 이름(2026-10-08 · Min 「출발지, 도착지도 항공편처럼 수정할 수 있게」). 교통편 표에는 코드(ICN · KUL)를, 일정표 글에는 이름을 쓴다.
+     없는 코드는 적은 그대로. 도착 줄의 KUL 만 엠클릭 확정서 문안 그대로 「쿠알라룸푸르공항」(출발 줄은 「쿠알라룸푸르 국제공항」) — 기본값의 글이 바뀌지 않게. */
+  var AIRPORTS = { ICN: '인천국제공항', GMP: '김포국제공항', PUS: '김해국제공항', TAE: '대구국제공항', CJU: '제주국제공항', KUL: '쿠알라룸푸르 국제공항' };
+  var AIRPORTS_ARR = { KUL: '쿠알라룸푸르공항' };
+  function iata(v, fallback) { var t = String(v == null ? '' : v).trim(); return t ? t.toUpperCase() : fallback; }
+  function airportName(code) { return AIRPORTS[code] || code; }
+  function toParticle(name) { return /공항$/.test(name) ? '으로' : '로'; }
+  /* 네 칸(출발편 출발지·도착지 · 도착편 출발지·도착지) — 비우거나 옛 문서(칸 없음)면 리조트 기본값(ICN → KUL → ICN) */
+  function airports(d) {
+    return { oF: iata(d.flightOutFrom, RESORT.iataOut), oT: iata(d.flightOutTo, RESORT.iataIn), iF: iata(d.flightInFrom, RESORT.iataIn), iT: iata(d.flightInTo, RESORT.iataOut) };
+  }
   /* 항공사별 기본 편 — 항공사를 고르면 채워 주고 담당자가 고친다(엠클릭 예약 30003171 · 30003435 의 편). */
   var AIRLINES = {
     '대한항공': { out: 'KE427', outDep: '16:40', outArr: '22:25', inn: 'KE428', inDep: '23:55', inArr: '07:15', bag: '위탁수하물 23KG (골프백 포함) · 기내수하물 10KG' },
@@ -223,10 +234,10 @@
   /* ── 항공정보 두 줄 ── */
   function flights(d, c) {
     c = c || calc(d);
-    var al = String(d.airline || '').trim();
+    var al = String(d.airline || '').trim(), ap = airports(d);
     return [
-      { leg: '출발편', airline: al, no: d.flightOut || '', depDate: c.dep ? ymd(c.dep) : '', depTime: d.flightOutDep || '', from: RESORT.iataOut, to: RESORT.iataIn, arrDate: c.dep ? ymd(addDays(c.dep, c.outArrOffset)) : '', arrTime: d.flightOutArr || '', arrNote: c.outArrOffset ? OUT_ARR_LABEL[1] : '' },
-      { leg: '도착편', airline: al, no: d.flightIn || '', depDate: c.inDepDate ? ymd(c.inDepDate) : '', depTime: d.flightInDep || '', from: RESORT.iataIn, to: RESORT.iataOut, arrDate: c.ret ? ymd(c.ret) : '', arrTime: d.flightInArr || '', depNote: c.inDepOffset ? IN_DEP_LABEL['-1'] : '' }
+      { leg: '출발편', airline: al, no: d.flightOut || '', depDate: c.dep ? ymd(c.dep) : '', depTime: d.flightOutDep || '', from: ap.oF, to: ap.oT, arrDate: c.dep ? ymd(addDays(c.dep, c.outArrOffset)) : '', arrTime: d.flightOutArr || '', arrNote: c.outArrOffset ? OUT_ARR_LABEL[1] : '' },
+      { leg: '도착편', airline: al, no: d.flightIn || '', depDate: c.inDepDate ? ymd(c.inDepDate) : '', depTime: d.flightInDep || '', from: ap.iF, to: ap.iT, arrDate: c.ret ? ymd(c.ret) : '', arrTime: d.flightInArr || '', depNote: c.inDepOffset ? IN_DEP_LABEL['-1'] : '' }
     ];
   }
 
@@ -235,10 +246,10 @@
     c = c || calc(d);
     if (!c.dep || !c.days) return [];
     var custom = nonEmpty(d.itin);
-    var al = String(d.airline || '').trim();
+    var al = String(d.airline || '').trim(), ap = airports(d);
     var rows = [];
-    var arrLine = '쿠알라룸푸르공항 도착' + (d.flightOutArr ? ' (' + d.flightOutArr + ')' : '');
-    var icnLine = '인천국제공항 도착' + (d.flightInArr ? ' (' + d.flightInArr + ')' : '');
+    var arrLine = (AIRPORTS_ARR[ap.oT] || airportName(ap.oT)) + ' 도착' + (d.flightOutArr ? ' (' + d.flightOutArr + ')' : '');
+    var icnLine = airportName(ap.iT) + ' 도착' + (d.flightInArr ? ' (' + d.flightInArr + ')' : '');
     for (var i = 0; i < c.days; i++) {
       var date = addDays(c.dep, i), last = (i === c.days - 1), first = (i === 0);
       var arrDay = (i === c.outArrOffset);                       // 쿠알라룸푸르에 도착하는 날(당일 도착이면 1일차)
@@ -246,13 +257,13 @@
       var r = { day: i + 1, date: fmtDate(date), lines: [], hotel: '', meals: '' };
       if (custom.length) { r.lines = [custom[i] || '']; }
       else if (first) {
-        r.lines = [RESORT.airportOut + (al === '대한항공' ? ' 2터미널' : '') + ' 출국장' + (al ? ', ' + al + ' 카운터' : '') + ' 개별수속', '출국 수속 완료 후 출발' + (d.flightOut ? ' (' + d.flightOut + (d.flightOutDep ? ' ' + d.flightOutDep : '') + ')' : '')];
+        r.lines = [airportName(ap.oF) + (al === '대한항공' && ap.oF === 'ICN' ? ' 2터미널' : '') + ' 출국장' + (al ? ', ' + al + ' 카운터' : '') + ' 개별수속', '출국 수속 완료 후 출발' + (d.flightOut ? ' (' + d.flightOut + (d.flightOutDep ? ' ' + d.flightOutDep : '') + ')' : '')];
         if (arrDay) r.lines = r.lines.concat([arrLine, RESORT.transfer, '숙소에 도착 후 휴식']);
       } else if (arrDay) {
         r.lines = [arrLine, RESORT.transfer, '숙소에 도착 후 휴식'];
       } else if (depDay) {
         r.lines = ['호텔 조식 후 라운딩', '❑ ' + RESORT.golf + ' (주중 18홀 / 주말&휴일 오후 18홀)', '라운딩 후 숙소 이동', '※ 귀국일 Late Check-out 희망 시 추가요금 발생 (현지에서 확인 가능)',
-                   '석식 후 공항으로 이동', '쿠알라룸푸르 국제공항에서 인천국제공항으로 출발' + (d.flightIn ? ' (' + d.flightIn + (d.flightInDep ? ' ' + d.flightInDep : '') + ')' : '')];
+                   '석식 후 공항으로 이동', airportName(ap.iF) + '에서 ' + airportName(ap.iT) + toParticle(airportName(ap.iT)) + ' 출발' + (d.flightIn ? ' (' + d.flightIn + (d.flightInDep ? ' ' + d.flightInDep : '') + ')' : '')];
         if (last) r.lines.push(icnLine);
       } else if (last) {
         r.lines = [icnLine];
@@ -577,6 +588,7 @@
       repName: '', phone: '', pax: '', companions: '',
       dep: '', ret: '', nights: '', rounds: '',
       airline: DEFAULTS.airline, flightOut: al.out, flightOutDep: al.outDep, flightOutArr: al.outArr, flightIn: al.inn, flightInDep: al.inDep, flightInArr: al.inArr,
+      flightOutFrom: RESORT.iataOut, flightOutTo: RESORT.iataIn, flightInFrom: RESORT.iataIn, flightInTo: RESORT.iataOut,
       outArrOffset: '0', inDepOffset: '-1',
       hotel: RESORT.hotel, room: DEFAULTS.room, rooms: '',
       fares: [{ label: '투어비(항공료 포함)', amount: '', qty: '' }], discount: '', depositPP: '', depositPaid: '',
@@ -588,7 +600,7 @@
   }
 
   return {
-    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL, PAGE_LABEL: PAGE_LABEL,
+    COMPANY: COMPANY, RESORT: RESORT, AIRLINES: AIRLINES, AIRPORTS: AIRPORTS, DEFAULTS: DEFAULTS, KIND_LABEL: KIND_LABEL, OUT_ARR_LABEL: OUT_ARR_LABEL, IN_DEP_LABEL: IN_DEP_LABEL, PAGE_LABEL: PAGE_LABEL,
     defaultNotes: defaultNotes, blank: blank,
     calc: calc, flights: flights, itinerary: itinerary, groupItinerary: groupItinerary, validate: validate,
     buildHtml: buildHtml, alimtalk: alimtalk, smsText: smsText, recipient: recipient, companionsOf: companionsOf, recipientsOf: recipientsOf,
