@@ -34,8 +34,16 @@ AFTER = '''<div class="callout">
         <span class="co-tag">예약 이후</span>
         예약금은 <b>1인당 30만 원</b>이며, 예약금 입금으로 예약이 확정됩니다.
       </div>'''
-ROOMS = ('<b>쓰실 객실에 맞게</b> 인원을 나누어 넣어 주십시오. '
+ROOMS = ('<b>쓰실 객실에 맞게</b> 인원을 나누어 넣어 주십시오(넣는 숫자는 객실 수가 아니라 <b>인원 수</b>입니다). '
          '<b>2인실(트윈) 인원은 반드시 짝수</b>(2명 · 4명)로 넣어 주십시오. ')   # 예시는 2명 · 4명만(2026-10-08 Min 「6명 이런 거는 지워 · 6명 이상되는 사람은 잘 없으니까」)
+# 「객실 수가 아니라 인원 수」 · 「모든 룸타입을 합한」 · 「∨ 표시 → 날짜별」은 2026-10-13 Min(1차 예약 때 자주 있었던 실수 — 아래 CHECK 절과 한 몸).
+DATES_HINT = '숫자 옆의 <b>∨ 표시</b>를 누르면 체류 기간의 <b>날짜별</b> 남은 객실이 보입니다(아래 <b>꼭 확인하실 점</b> 참고). '
+
+
+def cal_desc(n):
+    """달력 단계 설명 — 날짜 아래 숫자 = 모든 룸타입 합계(2026-10-13 Min 「캘린더 달력 날짜의 숫자는 모든 룸타입의 합계이고 아래 요금 구분에는 각각 방타입에 맞는 잔여객실이 나옴」)"""
+    return (f'날짜 아래의 숫자(예: <b>{n}</b>)는 <b>모든 룸타입을 합한</b> 현재 남은 객실 수입니다(룸타입별로 남은 객실은 그 아래 요금구분에 나옵니다). '
+            '남은 객실 수가 표시된 날짜 중에서 출발하실 날을 누릅니다.<br><span class="eg">예시 · 3월 10일</span>')
 HOME_TITLE = '홈 화면으로 돌아가려면 왼쪽 위 ‘MERITTOUR’ 로고를 누릅니다'
 HOME_DESC = ('예약을 마치신 뒤나 다른 화면을 보시다가 <b>홈 화면(첫 화면)</b>으로 돌아가실 때는, '
              '화면 <b>왼쪽 위의 MERITTOUR 로고</b>를 누르시면 됩니다.')
@@ -45,8 +53,50 @@ FINISH_LEAD = '마지막으로 예약자 정보를 확인하고 약관에 동의
 # (이력) PC 안내에서 휴대폰 캡처를 쓰는 단계에 「휴대폰 화면 예시입니다. PC에서도 같은 순서로 진행됩니다.」 캡션을 달았었다 — 2026-10-08 Min 「어차피 똑같은 화면이니 지워줘」로 뺐다. 다시 달지 않는다.
 
 # 단계 정의: img, crop(원본 좌표), hl=[(x0,y0,x1,y1,라벨[,'r'])](원본 좌표), title, desc(HTML), extra(HTML)
-#   tip=True  → 번호 없는 '참고' 카드(순서에 들어가지 않는 안내)
+#   tip='이름' → 번호 없는 카드(순서에 들어가지 않는 안내 · 요소 id = {모드}-tip-{이름} · 라벨은 tipno, 기본 '참고')
+#   check=True → 「꼭 확인하실 점」 카드 꼴(빨간 라벨 · 실선 테두리 · CSS .step.check)
 #   cap='…'   → 화면 아래 작은 설명(지금은 쓰는 단계 없음) / phone=True → PC 안내 안에서 휴대폰 캡처를 쓰는 단계(좁게 · 설명 옆에 표시 · 캡션은 달지 않는다)
+
+# ══ 예약 전에 꼭 확인하실 점 ══ (2026-10-13 · Min 「1차 예약하면서 많이 하시는 실수」 — 번호 없는 「확인 1 · 2」 카드. 더 보내 주시면 같은 꼴로 이어 붙인다)
+#   캡처 17_fare_dates.png(휴대폰 477×826) · p11_fare_dates.png(PC 1325×914) = 2026-10-13 실제 화면(8월 11일 출발 7박 · 트윈 날짜별 잔여 펼침 · 실명·연락처 없음).
+#   「달력 4실인데 수요일 마감 → 트윈 마감」 캡처 2장(4월 11일 출발)은 파일로 못 받아 글(ROOMS_WARN)로만 — 받으면 「안 되는 예」 카드로 붙인다.
+CHECK_LEAD = '<b>1차 우선예약 때 자주 있었던 실수</b>입니다. 출발일과 인원 수를 정하실 때 아래 두 가지를 꼭 확인해 주십시오.'
+ROOMS_TITLE = '체류하시는 날짜 모두에 객실이 남아 있어야 예약이 됩니다'
+ROOMS_DESC = ('달력 날짜 아래의 숫자(①)는 <b>모든 룸타입을 합한</b> 남은 객실 수입니다. 쓰실 룸타입(트윈 · 싱글)의 남은 객실은 그 아래 <b>요금구분</b>에 룸타입별로 나옵니다(②). '
+              '숫자 옆의 <b>∨ 표시</b>를 누르면 체류 기간의 <b>날짜별 남은 객실</b>이 펼쳐집니다(③). <b>체류하시는 날짜 모두</b>에 객실이 남아 있어야 그 룸타입으로 예약하실 수 있습니다. '
+              '하루라도 <b>마감</b>이면 그 출발일에는 그 룸타입을 예약하실 수 없으니 다른 출발일을 골라 주십시오.'
+              '<br><span class="eg">예시 · 8월 11일 출발 7박 8일 — 11일(수)부터 17일(화)까지 날짜마다 객실이 남아 있어 트윈으로 예약하실 수 있습니다</span>')
+ROOMS_WARN = '''<div class="callout warn">
+        <span class="co-tag">달력에 숫자가 있어도 마감일 수 있습니다</span>
+        달력에는 <b>4실</b>로 보여도, 날짜별로 펼쳤을 때 체류 중 하루(예: 수요일)가 <b>마감</b>이면 그 일정의 트윈은 <b>마감</b>입니다.
+        달력의 숫자만 보고 진행하지 마시고, 요금구분에서 날짜별 남은 객실을 꼭 펼쳐 보십시오.
+      </div>'''
+PAX_TITLE = '− + 로 넣는 숫자는 객실 수가 아니라 인원 수입니다'
+PAX_DESC = ('요금구분의 <b>− +</b> 버튼(①)은 <b>예약하시는 인원 수</b>를 정하는 것입니다. 객실 수를 넣는 칸이 아닙니다. '
+            '트윈 1실에 2명이면 <b>2</b>, 트윈 2실에 4명이면 <b>4</b>로 맞춰 주십시오(2인실(트윈) 인원은 반드시 짝수). '
+            '위의 ‘선택 0 / 16명’(②)에서 앞 숫자가 지금 고르신 인원 수입니다.'
+            '<br><span class="eg">예시 · 2명이 트윈 1실 → 2 · 4명이 트윈 2실 → 4</span>')
+M_CHECK_CROP, P_CHECK_CROP = (0, 96, 477, 732), (95, 128, 915, 885)
+S_CHECK = {
+    'm': dict(id='s-check', flow='꼭 확인하실 점', title='예약 전에 꼭 확인하실 점', lead=CHECK_LEAD,
+              steps=[
+                  dict(tip='rooms', tipno='확인 1', check=True, img='17_fare_dates.png', crop=M_CHECK_CROP,
+                       hl=[(205, 102, 267, 154, '1'), (382, 332, 450, 366, '2'), (15, 437, 457, 603, '3')],
+                       title=ROOMS_TITLE, desc=ROOMS_DESC, extra=ROOMS_WARN),
+                  dict(tip='pax', tipno='확인 2', check=True, img='17_fare_dates.png', crop=M_CHECK_CROP,
+                       hl=[(60, 388, 166, 430, '1'), (84, 288, 166, 314, '2')],
+                       title=PAX_TITLE, desc=PAX_DESC),
+              ]),
+    'p': dict(id='s-check', flow='꼭 확인하실 점', title='예약 전에 꼭 확인하실 점', lead=CHECK_LEAD,
+              steps=[
+                  dict(tip='rooms', tipno='확인 1', check=True, img='p11_fare_dates.png', crop=P_CHECK_CROP,
+                       hl=[(449, 292, 563, 345, '1'), (684, 654, 752, 692, '2'), (104, 712, 909, 802, '3')],
+                       title=ROOMS_TITLE, desc=ROOMS_DESC, extra=ROOMS_WARN),
+                  dict(tip='pax', tipno='확인 2', check=True, img='p11_fare_dates.png', crop=P_CHECK_CROP,
+                       hl=[(790, 650, 897, 692, '1'), (172, 556, 254, 586, '2')],
+                       title=PAX_TITLE, desc=PAX_DESC),
+              ]),
+}
 
 # ══ 휴대폰 화면 ══
 MOBILE = [
@@ -87,15 +137,16 @@ MOBILE = [
          steps=[
              dict(img='12_fare_real.png', crop=(0, 112, 393, 385), hl=[(166, 169, 229, 281, '여기')],
                   title='달력에서 출발일을 누릅니다',
-                  desc='날짜 아래의 숫자(예: <b>85실</b>)는 <b>현재 남은 객실 수</b>입니다. 남은 객실 수가 표시된 날짜 중에서 출발하실 날을 누릅니다.<br><span class="eg">예시 · 3월 10일</span>'),
+                  desc=cal_desc('85실')),
              dict(img='12_fare_real.png', crop=(0, 400, 393, 830),
                   hl=[(60, 514, 166, 554, '1', 'r'), (60, 636, 166, 676, '2', 'r'), (67, 762, 387, 819, '3')],
                   title='인원 수를 정하고 ‘예약하기’를 누릅니다',
                   desc='<b>요금구분</b>에서 객실 종류마다 <b>− +</b> 버튼을 눌러 <b>인원 수</b>를 정합니다(①②). ' + ROOMS +
-                       '오른쪽의 숫자(예: <b>67실</b>)는 현재 남은 객실 수입니다. 인원을 정하신 뒤 맨 아래 ③ <b>예약하기</b>를 누릅니다.'
+                       '오른쪽의 숫자(예: <b>67실</b>)는 현재 남은 객실 수입니다. ' + DATES_HINT + '인원을 정하신 뒤 맨 아래 ③ <b>예약하기</b>를 누릅니다.'
                        '<br><span class="eg">예시 · 4명 = 2인실(트윈) 2명 + 1인실(싱글) 2명</span>',
                   extra=SINGLE),
          ]),
+    S_CHECK['m'],
     dict(id='s-finish', flow='약관 동의 후 예약 마치기', title='약관 동의 후 예약 마치기', lead=FINISH_LEAD,
          steps=[
              dict(img='14_form_checked.png', crop=(0, 262, 391, 730),
@@ -109,7 +160,7 @@ MOBILE = [
                   title='예약 내역을 확인합니다',
                   desc='예약 내역 화면에서 예약번호와 진행 단계(<b>예약접수 → 예약대기 → 예약확정 → 여행출발</b>)를 확인하실 수 있습니다.',
                   extra=AFTER),
-             dict(tip=True, img='16_detail.png', crop=(2, 0, 401, 215), hl=[(12, 9, 183, 47, '여기', 'r')],
+             dict(tip='home', img='16_detail.png', crop=(2, 0, 401, 215), hl=[(12, 9, 183, 47, '여기', 'r')],
                   title=HOME_TITLE, desc=HOME_DESC),
          ]),
 ]
@@ -150,15 +201,16 @@ PC = [
          steps=[
              dict(img='p07_calendar_fare.png', crop=(340, 130, 1250, 600), hl=[(734, 341, 857, 396, '여기')],
                   title='달력에서 출발일을 누릅니다',
-                  desc='날짜 아래의 숫자(예: <b>82실</b>)는 <b>현재 남은 객실 수</b>입니다. 남은 객실 수가 표시된 날짜 중에서 출발하실 날을 누릅니다.<br><span class="eg">예시 · 3월 10일</span>'),
+                  desc=cal_desc('82실')),
              dict(img='p07_calendar_fare.png', crop=(340, 0, 1560, 900),
                   hl=[(1110, 736, 1230, 786, '1'), (1110, 824, 1230, 874, '2'), (1264, 8, 1550, 78, '3', 'r')],
                   title='인원 수를 정하고 ‘예약하기’를 누릅니다',
                   desc='달력 아래 <b>요금구분</b>에서 객실 종류마다 <b>− +</b> 버튼을 눌러 <b>인원 수</b>를 정합니다(①②). ' + ROOMS +
-                       '‘잔여’ 칸의 숫자(예: <b>66실</b>)는 현재 남은 객실 수입니다. 인원을 정하신 뒤 화면 <b>오른쪽 위</b>의 ③ <b>예약하기</b>를 누릅니다.'
+                       '‘잔여’ 칸의 숫자(예: <b>66실</b>)는 현재 남은 객실 수입니다. ' + DATES_HINT + '인원을 정하신 뒤 화면 <b>오른쪽 위</b>의 ③ <b>예약하기</b>를 누릅니다.'
                        '<br><span class="eg">예시 · 4명 = 2인실(트윈) 4명</span>',
                   extra=SINGLE),
          ]),
+    S_CHECK['p'],
     dict(id='s-finish', flow='약관 동의 후 예약 마치기', title='약관 동의 후 예약 마치기', lead=FINISH_LEAD,
          steps=[
              dict(img='p08_form.png', crop=(340, 430, 1565, 875),
@@ -172,7 +224,7 @@ PC = [
                   title='예약 내역을 확인합니다',
                   desc='예약 내역 화면에서 예약번호와 진행 단계(<b>예약접수 → 예약대기 → 예약확정 → 여행출발</b>)를 확인하실 수 있습니다.',
                   extra=AFTER),
-             dict(tip=True, img='p09_done.png', crop=(330, 0, 1575, 165), hl=[(342, 25, 597, 75, '여기', 'r')],
+             dict(tip='home', img='p09_done.png', crop=(330, 0, 1575, 165), hl=[(342, 25, 597, 75, '여기', 'r')],
                   title=HOME_TITLE, desc=HOME_DESC),
          ]),
 ]
@@ -223,10 +275,11 @@ for mode, mode_name, sections in GUIDES:
         for st in sec['steps']:
             tip = st.get('tip')
             if not tip: n += 1
-            fig, size = shot_html(st, '참고' if tip else f'{n}단계', mode); total += size
-            cls = 'step' + (' tip' if tip else '') + (' phone' if st.get('phone') else '')
-            sid = f' id="{mode}-tip-home"' if tip else f' id="{mode}-step-{n}"'
-            no = '<span class="step-no">참고</span>' if tip else f'<span class="step-no">{n}</span>'
+            tipno = st.get('tipno', '참고')
+            fig, size = shot_html(st, tipno if tip else f'{n}단계', mode); total += size
+            cls = 'step' + (' tip' if tip else '') + (' check' if st.get('check') else '') + (' phone' if st.get('phone') else '')
+            sid = f' id="{mode}-tip-{tip}"' if tip else f' id="{mode}-step-{n}"'
+            no = f'<span class="step-no">{tipno}</span>' if tip else f'<span class="step-no">{n}</span>'
             out.append(f'''    <article class="{cls}"{sid}>
       <div class="step-head">{no}<h3>{st["title"]}</h3></div>
       <p class="step-desc">{st["desc"]}</p>
