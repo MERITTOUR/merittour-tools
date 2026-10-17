@@ -209,9 +209,13 @@
     main.innerHTML = html;
     var ta = document.getElementById('enText');
     ta.value = buildMsg(e);
+    fit(ta); ta.addEventListener('input', function () { fit(ta); });
     document.getElementById('btnCopy').addEventListener('click', function () { copyText(ta.value, this, r.name); });
     document.getElementById('btnReset').addEventListener('click', function () { ta.value = buildMsg(e); toast('원래 문안으로 되돌렸습니다.'); });
   }
+
+  /* 문안 전체가 스크롤 없이 보이게 — 글 길이만큼 늘린다 */
+  function fit(ta) { ta.style.height = 'auto'; ta.style.height = Math.max(360, ta.scrollHeight + 4) + 'px'; }
 
   function openResort(key) {
     state.cur = key;
