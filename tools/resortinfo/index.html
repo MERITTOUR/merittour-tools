@@ -156,6 +156,14 @@
       { k:'homepage',      l:'홈페이지 주소',             t:'url' },
       { k:'weather_url',   l:'날씨 정보 사이트 주소',     t:'url' }
     ]},
+    /* 손님이 Visit Japan Web·종이 신고서의 숙소 칸에 적는 값(2026-10-17 · Min 「각 리조트 별 주소도 바로 손님한테 안내 나갈 수 있게」).
+       영업 허브 「일본 입국 안내 문안」(tools/entry)이 이 네 칸을 읽어 발송 문안을 만든다 — 호텔 공식 표기(영문)로 적는다. */
+    { id:'entry', title:'일본 입국 신고용 숙소 정보', hint:'Visit Japan Web · 종이 신고서의 숙소 칸에 적는 값 — 영문 · 영업 허브 「일본 입국 안내 문안」이 읽어 갑니다', items:[
+      { k:'entry_name_en', l:'숙소 영문명',               t:'text',  hint:'예: ASO YAMANAMI RESORT HOTEL & GOLF CLUB' },
+      { k:'entry_postal',  l:'우편번호',                  t:'text',  hint:'예: 869-2702' },
+      { k:'entry_address', l:'영문 주소',                 t:'text',  hint:'예: 630 Ori, Ubuyama, Aso District, Kumamoto' },
+      { k:'entry_phone',   l:'전화 (국가번호 포함)',      t:'text',  hint:'예: +81-967-25-2331' }
+    ]},
     { id:'air', title:'항공', items:[
       { k:'flight_out',    l:'지정 출국편',               t:'text',     po:true },
       { k:'flight_in',     l:'지정 귀국편',               t:'text',     po:true },
