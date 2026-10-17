@@ -59,3 +59,40 @@ test('화면 항목 키는 서로 다르고, 출발지 키는 icn·pus·tae 다'
   assert.equal(new Set(keys).size, keys.length, '항목 키가 겹친다 — 저장된 값이 서로 덮어쓴다');
   assert.match(src, /\{k:'icn', l:'인천'\}, \{k:'pus', l:'부산\(김해\)'\}, \{k:'tae', l:'대구'\}/);
 });
+
+/* 일본 입국 안내 문안(tools/entry · 2026-10-17) — 리조트 정보의 「일본 입국 신고용 숙소 정보」 네 칸을 읽어 손님께 보낼 글을 만든다. */
+test('일본 입국 안내 문안(tools/entry) — 리조트 목록 = 리조트 정보 화면(공통 제외) · 섹션 가드 · 항목 키 · 허브 카드 · 문안', () => {
+  const ri = read('tools/resortinfo/index.html');
+  const en = read('tools/entry/index.html');
+  const riList = list(ri).filter(([k]) => !k.startsWith('_'));
+  const enList = list(en);
+  assert.ok(enList.length >= 15, '입국 안내 화면의 RESORTS 를 못 읽었다');
+  assert.deepEqual(enList, riList, '입국 안내 화면과 리조트 정보 화면의 리조트 목록이 다르다');
+  assert.match(en, /guard\.js" data-section="resortinfo"/, '입국 안내 화면이 resortinfo 섹션 가드를 안 건다');
+  for (const k of ['entry_name_en', 'entry_postal', 'entry_address', 'entry_phone']) {
+    assert.match(ri, new RegExp("\\{\\s*k:\\s*'" + k + "',"), '리조트 정보 화면에 ' + k + ' 항목이 없다');
+    assert.ok(en.includes("k:'" + k + "'"), '입국 안내 화면이 ' + k + ' 를 안 읽는다');
+  }
+  const hub = read('sales/index.html');
+  const card = hub.match(/href="\.\.\/tools\/entry\/"[^>]*data-section="resortinfo"[\s\S]{0,300}?tool-card-title">([^<]+)</);
+  assert.ok(card, '영업 허브에 입국 안내 카드가 없다(또는 resortinfo 섹션이 아니다)');
+  assert.equal(card[1].trim(), '일본 입국 안내 문안');
+  for (const s of ['■ 일본 입국 안내', 'Visit Japan Web 사전 등록을 권장드립니다', 'https://www.vjw.digital.go.jp/', '일본 도착 공항에서 종이 신고서 작성이 가능합니다',
+                   '■ 일본 입국 신고용 숙소 정보', "'우편번호 : '", "'주소 : '", "'전화 : '"]) {
+    assert.ok(en.includes(s), '문안에 「' + s + '」 가 없다');
+  }
+});
+
+test('37 — 입국 신고용 숙소 정보 시드는 야마나미 리조트 6행에 병합하고, 담당자가 적은 값을 덮지 않는다', () => {
+  const sql = read('supabase/migrations/37_resort_info_entry_seed.sql');
+  for (const k of ['yamanami_golf', 'yamanami_bessou', 'yamanami_dome', 'yamanami_hinoki_cabin', 'yamanami_hinoki_family', 'kuzu']) {
+    assert.ok(sql.includes("('" + k + "'"), k + ' 행이 없다');
+  }
+  assert.match(sql, /ASO YAMANAMI RESORT HOTEL & GOLF CLUB/);
+  assert.match(sql, /869-2702/);
+  assert.match(sql, /630 Ori, Ubuyama, Aso District, Kumamoto/);
+  assert.match(sql, /\+81-967-25-2331/);
+  assert.match(sql, /coalesce\(excluded\.data->'items', '\{\}'::jsonb\) \|\| coalesce\(resort_info\.data->'items'/, '저장된 값이 이기는 병합(excluded || existing)이 아니다');
+  assert.match(sql, /is distinct from coalesce\(resort_info\.data->'items'/, '바뀐 것이 없으면 건드리지 않는 조건이 없다');
+  assert.doesNotMatch(sql, /\bdelete\b/i, '시드가 지우는 문장을 가진다');
+});

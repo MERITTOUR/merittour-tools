@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERITTOUR · 일본 입국 안내 문안</title>
+<script src="../../shared/guard.js" data-section="resortinfo"></script>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" href="../../shared/core.css">
+<style>
+/* ── 일본 입국 안내 문안 고유 스타일 (색은 core.css 토큰) ── */
+.en-intro { font-size: 13px; color: var(--mt-text2); margin: 0 0 14px; line-height: 1.65; }
+.en-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+.en-side { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 4px; max-height: calc(100vh - 24px); overflow: auto; }
+.en-region { font-size: 11px; font-weight: 700; color: var(--mt-text3); letter-spacing: .06em; margin: 10px 6px 2px; font-family: var(--mt-mono); }
+.en-region:first-child { margin-top: 0; }
+.en-rs { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left;
+  background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 8px; padding: 8px 10px; cursor: pointer; font: inherit; color: var(--mt-text); }
+.en-rs:hover { border-color: var(--mt-accent); }
+.en-rs.on { border-color: var(--mt-accent); background: var(--mt-accent-dim, #EEF1F5); font-weight: 600; }
+.en-rs .st { font-size: 10px; color: var(--mt-text3); font-family: var(--mt-mono); white-space: nowrap; }
+.en-rs .st.has { color: var(--mt-green-dark); }
+.en-rs .st.na { color: var(--mt-text3); }
+.en-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+.en-head h2 { font-size: 18px; margin: 0; color: var(--mt-brand); }
+.en-meta { font-size: 11.5px; color: var(--mt-text3); font-family: var(--mt-mono); }
+.en-text { width: 100%; min-height: 360px; resize: vertical; font: inherit; font-size: 13.5px; line-height: 1.7; color: var(--mt-text);
+  background: var(--mt-surface); border: 1px solid var(--mt-border); border-radius: 10px; padding: 14px 16px; box-sizing: border-box; white-space: pre-wrap; }
+.en-text:focus { outline: none; border-color: var(--mt-accent); }
+.en-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.en-acts .mt-btn { text-decoration: none; }
+.mt-btn.copied { color: var(--mt-green-dark); border-color: var(--mt-green-dark); background: var(--mt-green-dim); }
+.en-fields { margin: 0 0 12px; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 10px; font-size: 12.5px; }
+.en-fields dt { color: var(--mt-text3); font-family: var(--mt-mono); font-size: 11px; letter-spacing: .03em; padding-top: 2px; }
+.en-fields dd { margin: 0; color: var(--mt-text); }
+.en-fields dd.empty { color: var(--mt-amber, #B7791F); }
+.en-missing { background: var(--mt-amber-dim, #FFF8E6); border: 1px solid var(--mt-amber, #B7791F); border-left-width: 3px; border-radius: 0 10px 10px 0;
+  padding: 14px 16px; font-size: 13px; line-height: 1.7; color: var(--mt-text2); }
+.en-missing b { color: var(--mt-text); }
+.en-missing a { color: var(--mt-accent); font-weight: 700; }
+.en-note { font-size: 12px; color: var(--mt-text3); margin-top: 12px; line-height: 1.65; }
+.en-footer { text-align: center; color: var(--mt-text3); font-size: 11px; margin-top: 44px; font-family: var(--mt-mono); letter-spacing: .06em; }
+@media (max-width: 760px) {
+  .en-layout { grid-template-columns: 1fr; }
+  .en-side { position: static; max-height: none; flex-direction: row; flex-wrap: wrap; }
+  .en-region { width: 100%; }
+  .en-fields { grid-template-columns: 1fr; }
+  .en-acts .mt-btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="mt-container">
+  <div class="mt-header">
+    <div class="mt-brand-wrap">
+      <a href="../../sales/" class="mt-brand-link" title="영업 도구 홈으로"><img src="../../assets/logo-merittour-horizontal.svg" alt="MERITTOUR" class="mt-brand-logo"></a>
+      <div class="mt-brand-sub">INTERNAL TOOLS</div>
+      <span class="mt-dept-badge">일본 입국 안내 문안</span>
+    </div>
+    <div class="mt-header-actions">
+      <a class="mt-btn" href="../resortinfo/" title="숙소 정보를 입력·수정하는 화면">리조트 정보</a>
+      <a class="mt-btn mt-btn-ghost" href="../../sales/" title="영업 도구 홈">⌂ 홈</a>
+    </div>
+  </div>
+
+  <p class="en-intro">
+    리조트를 고르면 <strong>Visit Japan Web 사전 등록 안내</strong>와 <strong>입국 신고용 숙소 정보</strong>(영문명 · 우편번호 · 주소 · 전화)가 손님께 보낼 글로 만들어집니다.
+    「안내문 복사」를 눌러 카카오톡·문자에 붙여 넣으세요. 보내기 전에 글을 고쳐도 됩니다(여기서 고친 것은 저장되지 않습니다).
+    숙소 정보는 <a href="../resortinfo/">리조트 정보</a>의 「일본 입국 신고용 숙소 정보」 묶음에서 읽어 옵니다 — 비어 있으면 거기서 채워 주세요.
+  </p>
+
+  <div class="en-layout">
+    <aside class="en-side" id="enSide"></aside>
+    <main id="enMain"></main>
+  </div>
+
+  <div class="en-footer">MERITTOUR · 02-365-9800 · MAPO-GU SEOUL</div>
+</div>
+
+<script src="../../shared/util.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/access.js"></script>
+<script src="../../shared/store.js"></script>
+<script>
+(function () {
+  'use strict';
+  var STORE = window.MT_STORE, MT = window.MT || {};
+  var esc = MT.escHtml || function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var toast = MT.showToast || function (m) { window.alert(m); };
+
+  /* ── 리조트 목록 — 리조트 정보 화면(tools/resortinfo)의 RESORTS 와 같아야 한다(「전 리조트 공통」만 뺀다).
+        tests/resortinfo.test.mjs 가 두 목록을 비교한다. jp:false = 일본이 아니라 이 안내문의 대상이 아닌 곳. ── */
+  var RESORTS = [
+    {key:'yamanami_golf', name:'야마나미 호텔', region:'구마모토'},
+    {key:'yamanami_bessou', name:'아소 프레스티지', region:'구마모토'},
+    {key:'yamanami_dome', name:'돔스테이', region:'구마모토'},
+    {key:'yamanami_hinoki_cabin', name:'히노키 스테이', region:'구마모토'},
+    {key:'yamanami_hinoki_family', name:'소보 테라스', region:'구마모토'},
+    {key:'kuzu', name:'쿠쥬 프라이빗 타운', region:'구마모토'},
+    {key:'ganji', name:'간지호텔', region:'구마모토'},
+    {key:'shizu', name:'시즈노야도 료칸', region:'구마모토'},
+    {key:'fourteen_golf', name:'포틴힐즈CC 호텔', region:'나고야'},
+    {key:'fourteen_caravan', name:'포틴힐즈CC 카라반', region:'나고야'},
+    {key:'akiba', name:'아키바 리조트', region:'벳푸'},
+    {key:'mutsuki', name:'무츠키 료칸', region:'벳푸'},
+    {key:'shirosato', name:'시로사토CC', region:'이바라키'},
+    {key:'fukuroda', name:'후쿠로다노타키CC 호텔', region:'이바라키'},
+    {key:'sugadaira_onsen', name:'스가다이라 고원 온천호텔', region:'나가노'},
+    {key:'sugadaira_mansion', name:'스가다이라 맨션', region:'나가노'},
+    {key:'miyazaki', name:'미야자키 상품 호텔', region:'미야자키'},
+    {key:'kumamoto_city', name:'구마모토 시내 상품 호텔', region:'구마모토'},
+    {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', jp:false}
+  ];
+  /* 리조트 정보 화면의 항목 키(GROUPS id 'entry') — 저장된 값의 이름이라 바꾸지 않는다 */
+  var FIELDS = [
+    { k:'entry_name_en', l:'숙소 영문명', req:true },
+    { k:'entry_postal',  l:'우편번호' },
+    { k:'entry_address', l:'영문 주소', req:true },
+    { k:'entry_phone',   l:'전화' }
+  ];
+
+  var state = { all: {}, cur: null };
+
+  function byKey(key) { for (var i = 0; i < RESORTS.length; i++) if (RESORTS[i].key === key) return RESORTS[i]; return null; }
+  function val(row, k) {
+    var v = row && row.data && row.data.items ? row.data.items[k] : '';
+    if (v && typeof v === 'object') v = v.icn || v.pus || v.tae || '';   // 출발지별 칸으로 저장됐어도 읽는다
+    return String(v == null ? '' : v).trim();
+  }
+  function entryOf(key) {
+    var row = state.all[key], o = {};
+    FIELDS.forEach(function (f) { o[f.k] = val(row, f.k); });
+    o.ready = !!(o.entry_name_en && o.entry_address);
+    return o;
+  }
+  function fmtAt(iso) {
+    if (!iso) return '';
+    var d = new Date(iso); if (isNaN(d)) return String(iso);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  /* ── 문안 — Min 이 쓰던 안내문 그대로(2026-10-17). 앞부분은 전 리조트 공통, 숙소 정보만 리조트별. ── */
+  function buildMsg(e) {
+    var lines = [
+      '■ 일본 입국 안내',
+      '',
+      '일본 입국 시 Visit Japan Web 사전 등록을 권장드립니다.',
+      '공식 사이트 : https://www.vjw.digital.go.jp/',
+      '',
+      '사전 등록을 하지 않으신 경우에도 입국은 가능하며,',
+      '일본 도착 공항에서 종이 신고서 작성이 가능합니다.',
+      '',
+      '사전 등록 시 입국 및 세관 절차가 보다 원활합니다.',
+      '',
+      '■ 일본 입국 신고용 숙소 정보',
+      '',
+      e.entry_name_en,
+      ''
+    ];
+    if (e.entry_postal) lines.push('우편번호 : ' + e.entry_postal);
+    lines.push('주소 : ' + e.entry_address);
+    if (e.entry_phone) lines.push('전화 : ' + e.entry_phone);
+    return lines.join('\n');
+  }
+
+  /* ── 왼쪽 목록 ── */
+  function renderSide() {
+    var side = document.getElementById('enSide');
+    var html = '', lastRegion = null;
+    RESORTS.forEach(function (r) {
+      if (r.region !== lastRegion) { html += '<div class="en-region">' + esc(r.region) + '</div>'; lastRegion = r.region; }
+      var st = r.jp === false ? '<span class="st na">대상 아님</span>'
+             : entryOf(r.key).ready ? '<span class="st has">입력됨</span>' : '<span class="st">미입력</span>';
+      html += '<button type="button" class="en-rs' + (state.cur === r.key ? ' on' : '') + '" data-key="' + esc(r.key) + '"><span>' + esc(r.name) + '</span>' + st + '</button>';
+    });
+    side.innerHTML = html;
+    side.querySelectorAll('.en-rs').forEach(function (b) { b.addEventListener('click', function () { openResort(b.getAttribute('data-key')); }); });
+  }
+
+  /* ── 오른쪽 문안 ── */
+  function renderMain() {
+    var main = document.getElementById('enMain');
+    var r = byKey(state.cur);
+    if (!r) { main.innerHTML = '<div class="mt-card"><p style="margin:0;color:var(--mt-text2)">왼쪽에서 리조트를 고르세요.</p></div>'; return; }
+    var row = state.all[r.key], e = entryOf(r.key);
+    var html = '<div class="en-head"><h2>' + esc(r.name) + ' <small style="font-weight:400;color:var(--mt-text3);font-size:12px">' + esc(r.region) + '</small></h2>'
+             + '<span class="en-meta">' + (row && row.updatedAt ? '리조트 정보 마지막 저장 ' + esc(row.updatedBy || '') + ' · ' + esc(fmtAt(row.updatedAt)) : '리조트 정보에 저장된 내용이 없습니다') + '</span></div>';
+    if (r.jp === false) {
+      html += '<div class="en-missing"><b>' + esc(r.name) + '</b>은 말레이시아 상품이라 일본 입국 안내의 대상이 아닙니다. 말레이시아 입국(MDAC) 안내는 닐라이 견적·확정서의 참고 사항에 있습니다.</div>';
+      main.innerHTML = html; return;
+    }
+    html += '<div class="mt-card"><dl class="en-fields">' + FIELDS.map(function (f) {
+      var v = e[f.k];
+      return '<dt>' + esc(f.l) + '</dt><dd class="' + (v ? '' : 'empty') + '">' + (v ? esc(v) : (f.req ? '(비어 있음 — 필수)' : '(비어 있음)')) + '</dd>';
+    }).join('') + '</dl>';
+    if (!e.ready) {
+      html += '<div class="en-missing"><b>' + esc(r.name) + '</b>의 입국 신고용 숙소 정보가 아직 없습니다. '
+            + '<a href="../resortinfo/#' + esc(r.key) + '">리조트 정보에서 「일본 입국 신고용 숙소 정보」 네 칸을 채우면</a> 여기서 바로 복사할 수 있습니다. '
+            + '손님이 입국 신고서에 적는 값이니 호텔 공식 표기(영문명 · 우편번호 · 주소 · 국가번호가 붙은 전화)를 확인해 입력해 주세요.</div></div>';
+      main.innerHTML = html; return;
+    }
+    html += '<textarea class="en-text" id="enText" spellcheck="false" aria-label="손님께 보낼 안내문"></textarea>'
+          + '<div class="en-acts"><button type="button" class="mt-btn mt-btn-primary" id="btnCopy">📋 안내문 복사</button>'
+          + '<button type="button" class="mt-btn" id="btnReset" title="고친 글을 원래 문안으로 되돌립니다">원래 문안으로</button>'
+          + '<a class="mt-btn mt-btn-ghost" href="../resortinfo/#' + esc(r.key) + '">리조트 정보에서 고치기 →</a></div>'
+          + '<p class="en-note">앞부분(Visit Japan Web 안내)은 전 리조트 공통이고, 숙소 정보만 리조트별로 들어갑니다. 우편번호·전화가 비어 있으면 그 줄은 빠집니다.</p></div>';
+    main.innerHTML = html;
+    var ta = document.getElementById('enText');
+    ta.value = buildMsg(e);
+    fit(ta); ta.addEventListener('input', function () { fit(ta); });
+    document.getElementById('btnCopy').addEventListener('click', function () { copyText(ta.value, this, r.name); });
+    document.getElementById('btnReset').addEventListener('click', function () { ta.value = buildMsg(e); toast('원래 문안으로 되돌렸습니다.'); });
+  }
+
+  /* 문안 전체가 스크롤 없이 보이게 — 글 길이만큼 늘린다 */
+  function fit(ta) { ta.style.height = 'auto'; ta.style.height = Math.max(360, ta.scrollHeight + 4) + 'px'; }
+
+  function openResort(key) {
+    state.cur = key;
+    renderSide(); renderMain();
+    try { location.hash = key; } catch (e) {}
+  }
+
+  /* ── 복사 (리조트 날씨의 복사와 같은 꼴 · 토스트는 공통 MT.showToast) ── */
+  function copyText(text, btn, name) {
+    var done = function (ok) {
+      if (!ok) { toast('복사에 실패했습니다. 글을 직접 선택해 복사해 주세요.'); return; }
+      var orig = btn.innerHTML;
+      btn.classList.add('copied'); btn.innerHTML = '✓ 복사됨';
+      toast(name + ' 입국 안내문 복사 완료');
+      setTimeout(function () { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1600);
+    };
+    var fallback = function () {
+      try {
+        var t = document.createElement('textarea');
+        t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.focus(); t.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(t);
+        done(ok);
+      } catch (e2) { done(false); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    else fallback();
+  }
+
+  /* ── 시작 ── */
+  function boot() {
+    var first = (location.hash || '').replace(/^#/, '');
+    STORE.loadResortInfo().then(function (all) {
+      state.all = all || {};
+      renderSide();
+      openResort(byKey(first) ? first : RESORTS[0].key);
+    }).catch(function (e) {
+      document.getElementById('enMain').innerHTML = '<div class="mt-card"><p style="margin:0;color:var(--mt-red-dark)">' + esc(e && e.message ? e.message : '불러오지 못했습니다.') + '</p></div>';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+
+  window.EN = { RESORTS: RESORTS, FIELDS: FIELDS, buildMsg: buildMsg, entryOf: entryOf, state: state };
+})();
+</script>
+</body>
+</html>
