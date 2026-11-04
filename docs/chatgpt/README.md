@@ -14,6 +14,7 @@
 | `knowledge/style_guide.md` | 지식 파일 ① 표기 규칙 · 이름 · 문장 원칙 |
 | `knowledge/faq_2027.md` | 지식 파일 ② 2027 시즌 손님 FAQ |
 | (지식 파일 ③) `guide_2027.txt` | 2027 안내문 본문 텍스트 — 저장소에 두지 않고 올릴 때마다 안내문 페이지에서 새로 만든다(§4) |
+| (지식 파일 ④) `about_company.txt` | 회사 소개 · 회원권 · 장기숙박 본문 텍스트 — 올릴 때마다 회사 소개 페이지에서 새로 만든다(§4) · 계약서 전문 · 납부 계좌는 넣지 않는다(2026-11-04 추가) |
 | `onboarding_message.md` | 직원에게 보내는 사용 안내(카카오톡·메일용) |
 
 ---
@@ -34,10 +35,10 @@
 
    | GPT 이름 | 지침 파일 | 지식 파일 | 웹 검색 |
    |---|---|---|---|
-   | 메리트투어 손님 안내문 | `gpts/01_guest_notice.md` | style_guide · faq_2027 · guide_2027.txt | 끔 |
+   | 메리트투어 손님 안내문 | `gpts/01_guest_notice.md` | style_guide · faq_2027 · guide_2027.txt · about_company.txt | 끔 |
    | 메리트투어 일본 현지 연락 | `gpts/02_japan_contact.md` | style_guide | 켜도 됨 |
    | 메리트투어 업무 문서 정리 | `gpts/03_work_docs.md` | style_guide | 끔 |
-   | 메리트투어 문의·민원 응대 | `gpts/04_inquiry_reply.md` | style_guide · faq_2027 · guide_2027.txt | 끔 |
+   | 메리트투어 문의·민원 응대 | `gpts/04_inquiry_reply.md` | style_guide · faq_2027 · guide_2027.txt · about_company.txt | 끔 |
 
    - 「대화 시작 문구」는 각 지침 파일 끝의 4개를 넣습니다.
    - 웹 검색을 끄는 이유: 손님 안내는 우리 자료만 근거로 써야 합니다. 검색이 켜져 있으면 다른 여행사 글이나 옛 요금을 섞어 씁니다.
@@ -68,6 +69,7 @@
 
 - `knowledge/style_guide.md` · `knowledge/faq_2027.md` 는 이 저장소에서 내려받아 그대로 올립니다.
 - `guide_2027.txt` 는 안내문 페이지(https://merittour.github.io/2027/)를 열어 **전체 선택(Ctrl+A) → 복사 → 메모장에 붙여 넣어 저장**한 텍스트 파일입니다. 안내문이 바뀔 때마다(띠가 뜨는 변경) 다시 만들어 GPT 두 개의 지식 파일을 교체합니다. 예약 방법 페이지(https://merittour.github.io/2027/booking/)도 같은 방법으로 `booking_2027.txt` 를 만들어 올리면 로그인·예약 절차 질문에 답합니다.
+- `about_company.txt` 는 회사 소개 페이지(https://merittour.github.io/about/)를 같은 방법으로 복사한 텍스트입니다(회원권 · 장기숙박 질문용). **「계약서 전문 보기」 모달은 열지 않고** 복사하며, 붙여 넣은 글에 계약서 조문이나 「납부 계좌」 줄이 보이면 지웁니다 — 계약서 전문과 계좌는 지식 파일에 넣지 않습니다. 2026-11-03 묶음(zip)에는 이 파일이 없었고, 2026-11-04 묶음부터 들어 있습니다.
 - 표기 규칙이 바뀌면(이름 변경 · 금지 표현 추가) `style_guide.md` 를 고치고 GPT 네 개 모두 교체합니다 — **한 GPT 만 바꾸지 않습니다.**
 
 ## 5. 운영
