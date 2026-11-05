@@ -20,5 +20,5 @@ for src in sys.argv[1:]:
             data = zin.read(item.filename)
             if item.filename.startswith('ppt/theme/') and item.filename.endswith('.xml'):
                 data = fix_theme(data.decode('utf-8')).encode('utf-8')
-            zout.writestr(item, data)
+            item.compress_type = zipfile.ZIP_DEFLATED; zout.writestr(item, data)
     shutil.move(tmp, src); print('theme applied', os.path.basename(src))
