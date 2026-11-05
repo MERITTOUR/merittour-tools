@@ -1,0 +1,7 @@
+{
+  "name": "merittour-brand-templates",
+  "private": true,
+  "description": "메리트투어 홍보 템플릿(Google Slides 용 pptx 7개) 생성 스크립트",
+  "scripts": { "build": "node build.js && python3 theme.py out/*.pptx" },
+  "dependencies": { "pptxgenjs": "^4.0.1" }
+}
