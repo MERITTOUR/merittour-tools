@@ -92,6 +92,8 @@ const COURSES = [
   { region: '구마모토', name: '아소 야마나미 리조트', id: 1936, tenki: 'https://tenki.jp/leisure/golf/9/46/753044/' },   // 阿蘇やまなみリゾートホテル&ゴルフ倶楽部
   { region: '구마모토', name: '쿠쥬고겐 골프클럽',     id: 2231, tenki: 'https://tenki.jp/leisure/golf/9/47/755362/' },   // 久住高原ゴルフ倶楽部
   { region: '구마모토', name: '트라이얼 골프클럽 (아소 코스)', id: 1935, tenki: 'https://tenki.jp/leisure/golf/9/46/754087/' },   // トライアルゴルフ&リゾート ASO COURSE(南阿蘇村 · tenki.jp 는 옛 이름 南阿蘇カントリークラブ 로 실려 있다 · 2026-11-13 Min)
+  // 시내 날씨(골프장 아님 · 2026-11-13 Min 「구마모토 시내 지역 날씨 정보도 추가」) — city:true 면 golfweather 없이 tenki.jp 시·구 예보만. 43101 = 熊本市中央区(시청 · 시모토리 · 구마모토성)
+  { region: '구마모토', name: '구마모토 시내', city: true, tenki: 'https://tenki.jp/forecast/9/46/8610/43101/' },
   { region: '나고야',   name: '포틴힐즈 CC (14hills)', id: 1072, tenki: 'https://tenki.jp/leisure/golf/5/24/692143/' },   // 14ヒルズカントリークラブ(フォーティーンヒルズ · 中津川市)
   { region: '벳푸',     name: '벳푸 골프클럽 (벳푸CC · 유후·츠루미 코스)', id: 1866, tenki: 'https://tenki.jp/leisure/golf/9/47/756545/' },   // 別府ゴルフ倶楽部
   { region: '벳푸',     name: '벳푸오기야마 골프클럽', id: 1865, tenki: 'https://tenki.jp/leisure/golf/9/47/756544/' },   // 別府扇山ゴルフ倶楽部
@@ -104,7 +106,11 @@ const COURSES = [
 const wxUrl = id => `https://www.golfweather.info/tenki/${id}/3hours`;
 
 // 손님 안내문 템플릿 — golfweather.info 주소 + 보조로 tenki.jp 주소(2026-10-07 · Min 「골프텐이 안 열리면 보조로 열 수 있도록」)
-const buildMsg = (c) =>
+const buildMsg = (c) => c.city ?
+`안녕하세요, 메리트투어입니다.
+${c.name} 현지 날씨 예보를 안내드립니다.
+${c.tenki}
+즐거운 여행 되시길 바랍니다.` :
 `안녕하세요, 메리트투어입니다.
 ${c.name} 현지 날씨 예보를 안내드립니다.
 ${wxUrl(c.id)}
@@ -126,7 +132,17 @@ regions.forEach(region => {
   COURSES.filter(c => c.region === region).forEach(c => {
     const row = document.createElement('div');
     row.className = 'wx-row';
-    row.innerHTML = `
+    if (c.city) {
+      row.innerHTML = `
+      <div class="wx-info">
+        <div class="wx-name"></div>
+        <div class="wx-meta">시내 날씨 · tenki.jp 시·구 예보</div>
+      </div>
+      <div class="wx-actions">
+        <a class="mt-btn mt-btn-primary wx-tenki" target="_blank" rel="noopener">🗾 tenki.jp</a>
+        <button class="mt-btn mt-btn-ghost" type="button">📋 안내문 복사</button>
+      </div>`;
+    } else row.innerHTML = `
       <div class="wx-info">
         <div class="wx-name"></div>
         <div class="wx-meta">골프장 날씨 · golfweather ID ${c.id} · 보조 tenki.jp</div>
@@ -137,7 +153,7 @@ regions.forEach(region => {
         <button class="mt-btn mt-btn-ghost" type="button">📋 안내문 복사</button>
       </div>`;
     row.querySelector('.wx-name').textContent = c.name;
-    row.querySelector('a.mt-btn-primary').href = wxUrl(c.id);
+    if (!c.city) row.querySelector('a.mt-btn-primary').href = wxUrl(c.id);
     row.querySelector('a.wx-tenki').href = c.tenki;
     const copyBtn = row.querySelector('button.mt-btn-ghost');
     copyBtn.addEventListener('click', () => copyMsg(c, copyBtn));
