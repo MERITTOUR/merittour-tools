@@ -17,7 +17,9 @@ test('리조트 정보 화면의 리조트 목록 = 대시보드 리조트 마�
   const dash = list(read('tools/dashboard/index.html'));
   const page = list(read('tools/resortinfo/index.html')).filter(([k]) => !k.startsWith('_'));
   assert.ok(dash.length >= 15, '대시보드 RESORT_DEFAULTS 를 못 읽었다 — 정규식이 형식을 못 따라간다');
-  assert.deepEqual(page, dash);
+  // 리조트 정보는 대시보드 마스터 한 줄을 상품별로 나눠 적을 수 있다(미야자키 · 2026-11-18) — 마스터 이름은 블록·웹오픈 조정 키라 그대로 둔다
+  const SPLITS = { miyazaki: [['miyazaki', '미야자키 국제공항CC 상품'], ['miyazaki_city', '미야자키 시내 상품']] };
+  assert.deepEqual(page, dash.flatMap(([k, n]) => SPLITS[k] || [[k, n]]));
 });
 
 test('「전 리조트 공통」 항목이 목록 끝에 있다', () => {
@@ -109,5 +111,12 @@ test('38 — 숙소 소개(2027 안내문) 시드는 guide_desc 만 병합하고
   assert.match(sql, /coalesce\(excluded\.data->'items', '\{\}'::jsonb\) \|\| coalesce\(resort_info\.data->'items'/, '저장된 값이 이기는 병합(excluded || existing)이 아니다');
   assert.match(sql, /is distinct from coalesce\(resort_info\.data->'items'/, '바뀐 것이 없으면 건드리지 않는 조건이 없다');
   assert.doesNotMatch(sql, /\bdelete\b/i, '시드가 지우는 문장을 가진다');
+});
+
+test('39 — 미야자키 분리는 miyazaki_city 가 없을 때만 돌고, 지우지 않는다', () => {
+  const sql = read('supabase/migrations/39_resort_info_miyazaki_split.sql');
+  assert.match(sql, /where not exists \(select 1 from public\.resort_info where resort_key = 'miyazaki_city'\)/, '한 번만 도는 조건이 없다');
+  assert.match(sql, /where resort_key = 'miyazaki' and exists \(select 1 from ins\)/, '① 행 갱신이 분리와 묶여 있지 않다');
+  assert.doesNotMatch(sql, /\bdelete\b/i, '지우는 문장을 가진다');
 });
 
