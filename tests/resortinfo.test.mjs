@@ -96,3 +96,18 @@ test('37 — 입국 신고용 숙소 정보 시드는 야마나미 리조트 6�
   assert.match(sql, /is distinct from coalesce\(resort_info\.data->'items'/, '바뀐 것이 없으면 건드리지 않는 조건이 없다');
   assert.doesNotMatch(sql, /\bdelete\b/i, '시드가 지우는 문장을 가진다');
 });
+
+test('38 — 숙소 소개(2027 안내문) 시드는 guide_desc 만 병합하고, 담당자가 적은 값을 덮지 않는다', () => {
+  const sql = read('supabase/migrations/38_resort_info_guide_desc_seed.sql');
+  const ui = read('tools/resortinfo/index.html');
+  assert.match(ui, /k:'guide_desc'/, '화면에 guide_desc 칸이 없다');
+  for (const k of ['yamanami_golf', 'yamanami_bessou', 'yamanami_hinoki_cabin', 'yamanami_hinoki_family', 'yamanami_dome', 'ganji', 'shizu', 'fourteen_golf']) {
+    assert.ok(sql.includes("('" + k + "'"), k + ' 행이 없다');
+  }
+  const keys = [...sql.matchAll(/\{"([a-z_]+)":/g)].map(m => m[1]);
+  assert.ok(keys.length > 0 && keys.every(k => k === 'guide_desc'), 'guide_desc 말고 다른 항목을 건드린다');
+  assert.match(sql, /coalesce\(excluded\.data->'items', '\{\}'::jsonb\) \|\| coalesce\(resort_info\.data->'items'/, '저장된 값이 이기는 병합(excluded || existing)이 아니다');
+  assert.match(sql, /is distinct from coalesce\(resort_info\.data->'items'/, '바뀐 것이 없으면 건드리지 않는 조건이 없다');
+  assert.doesNotMatch(sql, /\bdelete\b/i, '시드가 지우는 문장을 가진다');
+});
+
