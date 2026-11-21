@@ -487,6 +487,15 @@
     });
   }
 
+  /* 저장 이력(트리거가 리조트마다 최근 100벌 남긴다) — 최신부터. 화면 「변경 이력」이 앞뒤 판을 비교한다(2026-11-21). */
+  function loadResortInfoHistory(key) {
+    return rest('/resort_info_history?resort_key=eq.' + encodeURIComponent(String(key || ''))
+              + '&select=id,data,version,changed_at,changed_by&order=id.desc&limit=100')
+      .then(function (rows) {
+        return (rows || []).map(function (r) { return { id: r.id, data: r.data || {}, version: r.version, at: r.changed_at, by: r.changed_by || '' }; });
+      });
+  }
+
   function saveResortInfo(key, data, version, byName) {
     key = String(key || '');
     var v = Number(version) || 0;
@@ -516,6 +525,7 @@
     loadResortInfo: loadResortInfo,
     loadResortInfoOne: loadResortInfoOne,
     saveResortInfo: saveResortInfo,
+    loadResortInfoHistory: loadResortInfoHistory,
     load: load,
     loadMany: loadMany,
     loadBlock: loadBlock,

@@ -134,3 +134,17 @@ test('운영 상태 — bookable 키 · 네 값 · 핵심 칸 · 40 SQL', () => 
   assert.match(sql, /\('nilai', 'offline'\)/, '닐라이는 2027 운영 · 온라인 미오픈(offline)');
   assert.match(sql, /in \('', 'O'\)/, '담당자가 고친 값은 덮지 않는다');
 });
+
+/* 변경 이력 · 담당 직원 제안(2026-11-21) — 이력은 읽기만(트리거가 쓴다) · 되돌리기는 폼에만 불러오고 저장은 사람이 누른다 */
+test('변경 이력 — 저장소 로더 · 화면 버튼 · 되돌리기는 저장하지 않는다 · 담당 직원 제안 목록', () => {
+  const store = read('shared/store.js');
+  assert.match(store, /function loadResortInfoHistory\(key\)[\s\S]{0,200}resort_info_history\?resort_key=eq\./);
+  assert.match(store, /loadResortInfoHistory: loadResortInfoHistory/);
+  const src = read('tools/resortinfo/index.html');
+  assert.match(src, /id="btnHist"/);
+  const restore = src.match(/querySelectorAll\('\[data-restore\]'\)[\s\S]*?\}\);\s*\}\);/);
+  assert.ok(restore, '되돌리기 처리부를 못 읽었다');
+  assert.doesNotMatch(restore[0], /doSave|saveResortInfo/, '되돌리기가 바로 저장하면 안 된다 — 폼에 불러오고 사람이 「저장」');
+  assert.match(src, /list="riStaffList"/);
+  assert.match(src, /<datalist id="riStaffList">/);
+});
