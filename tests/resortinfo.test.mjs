@@ -120,3 +120,17 @@ test('39 — 미야자키 분리는 miyazaki_city 가 없을 때만 돌고, 지�
   assert.doesNotMatch(sql, /\bdelete\b/i, '지우는 문장을 가진다');
 });
 
+
+/* 운영 상태(2026-11-21) — 키는 옛 이름 bookable 그대로(저장본 호환) · 값 O·later·offline·X · 목록의 「빈칸」은 core:true 항목만 센다 */
+test('운영 상태 — bookable 키 · 네 값 · 핵심 칸 · 40 SQL', () => {
+  const src = read('tools/resortinfo/index.html');
+  const m = src.match(/\{\s*k:'bookable',[^\n]*opts:\[([^\n]*)\]\],/);
+  assert.ok(m, 'bookable 항목(값·이름 짝 opts)을 못 읽었다');
+  for (const v of ["'O'", "'later'", "'offline'", "'X'"]) assert.ok(m[1].includes('[' + v + ','), '운영 상태 값 ' + v + ' 가 없다');
+  const core = [...src.matchAll(/\{\s*k:\s*'([a-z_]+)',[^\n]*core:true/g)].map(x => x[1]).sort();
+  assert.deepEqual(core, ['baggage_group', 'entry_address', 'flight_in', 'flight_out', 'staff']);
+  assert.match(src, /FREE_OPEN = Date\.parse\('2026-11-30T10:00:00\+09:00'\)/, '상시예약 오픈 시각이 바뀌었다');
+  const sql = read('supabase/migrations/40_resort_info_status.sql');
+  assert.match(sql, /\('nilai', 'offline'\)/, '닐라이는 2027 운영 · 온라인 미오픈(offline)');
+  assert.match(sql, /in \('', 'O'\)/, '담당자가 고친 값은 덮지 않는다');
+});
