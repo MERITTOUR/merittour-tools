@@ -202,7 +202,19 @@
   .fab-top{width:44px;height:44px;padding:0;font-size:16px;align-self:flex-end;
     opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
   .fab-top.on{opacity:1;visibility:visible;transition:opacity .2s}
-  @media (max-width:560px){ .fabs{right:12px;bottom:14px} .wrap{padding:0 18px} .step{padding:18px 16px 20px} }
+  @media (max-width:560px){ .wrap{padding:0 18px} .step{padding:18px 16px 20px} }
+  /* 폰(560px 이하)은 버튼 네 개를 화면 맨 아래 두 줄 막대로 — /2027/ 과 같은 모양(2026-11-21 · Min 「진행」 · 오른쪽에 쌓으면 본문 오른쪽 절반을 늘 가렸다).
+     윗줄 카카오톡 상담 · 예약 홈페이지 / 아랫줄 2027 안내 ↔ 예약 방법 · ↑ · 막대 높이만큼 body 아래 여백 */
+  @media (max-width:560px){
+    .fabs{left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr 44px;grid-template-areas:"k s s" "w w t";
+      gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--paper);
+      border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+    .fabs .fab{box-shadow:none;padding:10px 6px;font-size:13.5px;min-height:42px}
+    .fab-kakao{grid-area:k} .fab-site{grid-area:s} .fab-switch{grid-area:w;box-shadow:none}
+    .fab-top{grid-area:t;width:44px;height:42px;align-self:center}
+    .fab-long{display:none}
+    body{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  }
 
   /* ── 화면 크게 보기 ── */
   .zoom{position:fixed;inset:0;z-index:60;background:rgba(20,24,16,.82);display:none;
@@ -270,7 +282,7 @@
 
 <div class="fabs">
   <a class="fab fab-kakao" href="https://pf.kakao.com/_dxhWus/chat" target="_blank" rel="noopener">카카오톡 상담</a>
-  <a class="fab fab-site" href="https://www.merittour.co.kr" target="_blank" rel="noopener">예약 홈페이지 바로가기</a>
+  <a class="fab fab-site" href="https://www.merittour.co.kr" target="_blank" rel="noopener"><span>예약 홈페이지<span class="fab-long"> 바로가기</span></span></a>
   <nav class="fab-switch" aria-label="안내문 오가기">
     <a href="/2027/">2027 안내</a>
     <span aria-current="page">예약 방법</span>
