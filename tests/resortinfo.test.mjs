@@ -148,3 +148,19 @@ test('변경 이력 — 저장소 로더 · 화면 버튼 · 되돌리기는 저
   assert.match(src, /list="riStaffList"/);
   assert.match(src, /<datalist id="riStaffList">/);
 });
+
+/* 입국 신고 정보 특수문자 빼기(2026-11-22) — 리조트 정보 화면과 입국 안내 문안이 같은 규칙(en = 영문·숫자·띄어쓰기 · num = 숫자) */
+test('입국 신고 네 칸 — clean 규칙이 두 화면에 같고 41 SQL 이 있다', () => {
+  const ri = read('tools/resortinfo/index.html'), en = read('tools/entry/index.html');
+  for (const src of [ri, en]) {
+    assert.match(src, /k:'entry_name_en',[^\n]*clean:'en'/);
+    assert.match(src, /k:'entry_address',[^\n]*clean:'en'/);
+    assert.match(src, /k:'entry_postal',[^\n]*clean:'num'/);
+    assert.match(src, /k:'entry_phone',[^\n]*clean:'num'/);
+    assert.ok(src.includes("v.replace(/[^0-9]/g, '')") && src.includes("v.replace(/[^A-Za-z0-9 ]/g, ' ')"), 'cleanVal 규칙이 다르다');
+  }
+  assert.doesNotMatch(ri, /hint:'예: ASO YAMANAMI RESORT HOTEL & GOLF CLUB'/, '입력 예시에 특수문자가 남아 있다');
+  const sql = read('supabase/migrations/41_resort_info_entry_clean.sql');
+  assert.match(sql, /'\[\^A-Za-z0-9 \]'/);
+  assert.match(sql, /'입국 주소 메모'/);
+});
