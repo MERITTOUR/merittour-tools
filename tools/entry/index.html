@@ -115,12 +115,20 @@
     {key:'nilai', name:'닐라이스프링스 리조트', region:'쿠알라룸푸르', jp:false}
   ];
   /* 리조트 정보 화면의 항목 키(GROUPS id 'entry') — 저장된 값의 이름이라 바꾸지 않는다 */
+  /* clean — 특수문자 빼기(2026-11-22 · Min 「리조트 정보 입력한 곳에 특수문자를 모두 없애줘 ex) aso yamanami resort&hotel의 &」):
+       en = 영문·숫자·띄어쓰기만 · num = 숫자만. 리조트 정보 화면이 저장할 때 같은 규칙으로 빼고, 여기서도 한 번 더 뺀다(옛 저장본 대비). */
   var FIELDS = [
-    { k:'entry_name_en', l:'숙소 영문명', req:true },
-    { k:'entry_postal',  l:'우편번호' },
-    { k:'entry_address', l:'영문 주소', req:true },
-    { k:'entry_phone',   l:'전화' }
+    { k:'entry_name_en', l:'숙소 영문명', req:true, clean:'en' },
+    { k:'entry_postal',  l:'우편번호',               clean:'num' },
+    { k:'entry_address', l:'영문 주소',  req:true, clean:'en' },
+    { k:'entry_phone',   l:'전화',                   clean:'num' }
   ];
+  function cleanVal(kind, v) {
+    v = String(v == null ? '' : v);
+    if (kind === 'num') return v.replace(/[^0-9]/g, '');
+    if (kind === 'en') return v.replace(/[^A-Za-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    return v.trim();
+  }
 
   var state = { all: {}, cur: null };
 
@@ -132,7 +140,7 @@
   }
   function entryOf(key) {
     var row = state.all[key], o = {};
-    FIELDS.forEach(function (f) { o[f.k] = val(row, f.k); });
+    FIELDS.forEach(function (f) { o[f.k] = cleanVal(f.clean, val(row, f.k)); });
     o.ready = !!(o.entry_name_en && o.entry_address);
     return o;
   }
