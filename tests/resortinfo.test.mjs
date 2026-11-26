@@ -19,7 +19,9 @@ test('리조트 정보 화면의 리조트 목록 = 대시보드 리조트 마�
   assert.ok(dash.length >= 15, '대시보드 RESORT_DEFAULTS 를 못 읽었다 — 정규식이 형식을 못 따라간다');
   // 리조트 정보는 대시보드 마스터 한 줄을 상품별로 나눠 적을 수 있다(미야자키 · 2026-11-18) — 마스터 이름은 블록·웹오픈 조정 키라 그대로 둔다
   const SPLITS = { miyazaki: [['miyazaki', '미야자키 국제공항CC 상품'], ['miyazaki_city', '미야자키 시내 상품']] };
-  assert.deepEqual(page, dash.flatMap(([k, n]) => SPLITS[k] || [[k, n]]));
+  // 리조트 정보에만 있는 행(대시보드 마스터에 아직 없음 · 블록 조정이 없는 상품) — 바로 앞 마스터 행 뒤에 온다(2026-11-26 · 아소 트라이얼 리조트)
+  const EXTRA_AFTER = { shizu: [['trial', '아소 트라이얼 리조트']] };
+  assert.deepEqual(page, dash.flatMap(([k, n]) => (SPLITS[k] || [[k, n]]).concat(EXTRA_AFTER[k] || [])));
 });
 
 test('「전 리조트 공통」 항목이 목록 끝에 있다', () => {
